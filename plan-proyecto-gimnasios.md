@@ -102,13 +102,45 @@ Router, `src/`), React 19, Tailwind v4, Supabase (`@supabase/ssr`).
   "N sin leer" (`count` head en `mensaje_destinatarios`).
 - Pendiente: disparo de push al enviar (queda para Entregable 3 — Push). Marcado
   con `// TODO (Entregable 2 — Push)` en `panel/mensajes/actions.ts`.
+- Probado end-to-end en browser (dueño→cliente→respuesta→dueño). Bug RLS `42P17`
+  (recursión entre policies) resuelto en `0002_fix_mensajes_rls.sql` (aplicado) y
+  en `0001` para instalaciones nuevas: chequeos cruzados ahora via funciones
+  SECURITY DEFINER (`soy_destinatario`, `mensaje_gimnasio`, `mensaje_remitente`,
+  `mensaje_respondible`).
+- Infra ya corriendo: proyecto Supabase `adrkdortznimrlungwoy`, `.env.local`
+  cargado, seed hecho. Dueño: gimnasio `migym` / DNI `30111222`. Cliente de
+  prueba: Lucía Fernández, DNI `40123456`, plan Mensual.
+- `.claude/launch.json` con server `dev` (`npm run dev`, puerto 3000).
+- Detalle conocido: para el cliente el remitente figura "Gimnasio" (la policy
+  `prof_select` no deja al cliente leer el perfil del dueño). Sin resolver.
+
+### EN CURSO (sesión Cline) — Rediseño UI + colores personalizables
+Objetivo: que la UI no se lea genérica y que el dueño pueda personalizar la
+paleta desde su panel (branding por gimnasio).
+- **Dirección estética**: usar la skill `frontend-design` (ya instalada) antes de
+  tocar cualquier pantalla. Base actual: Bricolage Grotesque + Inter, tokens
+  papel/tinta/volt en `src/app/globals.css` (`--paper`, `--ink`, `--volt`,
+  `--danger`, `--warn`, `--ok`, etc.), componentes en `src/components/ui.tsx`.
+- **Colores personalizables**:
+  - Migración nueva (`0003_*`): agregar a `gimnasios` columnas de tema, p.ej.
+    `color_primario text`, `color_acento text`, `color_fondo text` (hex) — o un
+    `tema jsonb` único. RLS: lectura para todo el gimnasio, escrito solo dueño
+    (ya hay policy `gim_*`; revisar que haya UPDATE para dueño).
+  - Panel dueño: pantalla `src/app/panel/ajustes/` (o `marca/`) con color pickers
+    + preview en vivo. Server Action que actualiza `gimnasios`.
+  - Aplicar tema: el `PanelLayout` y el layout de `/mi` ya cargan el gimnasio;
+    inyectar los hex como CSS custom properties inline en un `<div style>` o en
+    `:root` vía `<style>` server-rendered, mapeando a los tokens existentes
+    (`--volt` → color de acento, etc.). Definir defaults si las columnas son null.
+  - Pantallas a repasar con el rediseño: login, `/panel` (resumen), `/panel/clientes`,
+    `/panel/mensajes`, `/mi`, `/mi/mensajes`.
 
 ### Próximos entregables (sin empezar)
-2. **Push web nativo**: tabla `push_subscriptions` ya existe. Falta VAPID keys,
+3. **Push web nativo**: tabla `push_subscriptions` ya existe. Falta VAPID keys,
    service worker, endpoint de envío, disparo en cuota por vencer.
-3. **Rutinas**: tablas `ejercicios` / `rutinas` / `rutina_items` ya existen. Falta
+4. **Rutinas**: tablas `ejercicios` / `rutinas` / `rutina_items` ya existen. Falta
    motor de reglas fijas + editor del cliente + seed de ejercicios (wger).
-4. **Cron** `recalcular_estado_cuota()` diario (pg_cron o Vercel cron).
+5. **Cron** `recalcular_estado_cuota()` diario (pg_cron o Vercel cron).
 
 ---
 
