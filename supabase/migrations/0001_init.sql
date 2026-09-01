@@ -246,38 +246,49 @@ create policy rutina_items_write on rutina_items for all
                  and (is_dueno() or r.cliente_id = current_cliente_id())));
 
 -- mensajes: el dueño los crea; se ven si sos remitente o destinatario.
+-- Los chequeos cruzados van por funciones SECURITY DEFINER para no reentrar en
+-- la policy de la otra tabla (evita "infinite recursion" 42P17).
+create or replace function soy_destinatario(_mensaje_id uuid)
+returns boolean language sql stable security definer set search_path = public as $$
+  select exists (select 1 from mensaje_destinatarios
+                 where mensaje_id = _mensaje_id and profile_id = auth.uid())
+$$;
+create or replace function mensaje_gimnasio(_mensaje_id uuid)
+returns uuid language sql stable security definer set search_path = public as $$
+  select gimnasio_id from mensajes where id = _mensaje_id
+$$;
+create or replace function mensaje_remitente(_mensaje_id uuid)
+returns uuid language sql stable security definer set search_path = public as $$
+  select remitente_id from mensajes where id = _mensaje_id
+$$;
+create or replace function mensaje_respondible(_mensaje_id uuid)
+returns boolean language sql stable security definer set search_path = public as $$
+  select respondible from mensajes where id = _mensaje_id
+$$;
+
 create policy mensajes_select on mensajes for select
   using (gimnasio_id = current_gimnasio_id()
-         and (remitente_id = auth.uid()
-              or exists (select 1 from mensaje_destinatarios d
-                         where d.mensaje_id = id and d.profile_id = auth.uid())));
+         and (remitente_id = auth.uid() or soy_destinatario(id)));
 create policy mensajes_dueno_insert on mensajes for insert
   with check (gimnasio_id = current_gimnasio_id() and is_dueno()
               and remitente_id = auth.uid());
 
 create policy md_select on mensaje_destinatarios for select
   using (profile_id = auth.uid()
-         or exists (select 1 from mensajes m where m.id = mensaje_id
-                    and m.gimnasio_id = current_gimnasio_id() and is_dueno()));
+         or (mensaje_gimnasio(mensaje_id) = current_gimnasio_id() and is_dueno()));
 create policy md_update_leido on mensaje_destinatarios for update
   using (profile_id = auth.uid())
   with check (profile_id = auth.uid());
 create policy md_dueno_insert on mensaje_destinatarios for insert
-  with check (exists (select 1 from mensajes m where m.id = mensaje_id
-                      and m.gimnasio_id = current_gimnasio_id() and is_dueno()));
+  with check (mensaje_gimnasio(mensaje_id) = current_gimnasio_id() and is_dueno());
 
 create policy resp_select on mensaje_respuestas for select
-  using (exists (select 1 from mensajes m where m.id = mensaje_id
-                 and (m.remitente_id = auth.uid()
-                      or exists (select 1 from mensaje_destinatarios d
-                                 where d.mensaje_id = m.id and d.profile_id = auth.uid()))));
+  using (mensaje_remitente(mensaje_id) = auth.uid() or soy_destinatario(mensaje_id));
 create policy resp_insert on mensaje_respuestas for insert
   with check (autor_id = auth.uid()
-              and exists (select 1 from mensajes m where m.id = mensaje_id
-                          and m.respondible
-                          and (m.remitente_id = auth.uid()
-                               or exists (select 1 from mensaje_destinatarios d
-                                          where d.mensaje_id = m.id and d.profile_id = auth.uid()))));
+              and mensaje_respondible(mensaje_id)
+              and (mensaje_remitente(mensaje_id) = auth.uid()
+                   or soy_destinatario(mensaje_id)));
 
 create policy push_own on push_subscriptions for all
   using (profile_id = auth.uid())

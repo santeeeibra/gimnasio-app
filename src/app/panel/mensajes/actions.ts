@@ -53,7 +53,10 @@ export async function enviarMensaje(
     })
     .select("id")
     .single();
-  if (msgErr || !msg) return { error: "No se pudo crear el mensaje." };
+  if (msgErr || !msg) {
+    console.error("enviarMensaje/mensajes.insert", msgErr);
+    return { error: "No se pudo crear el mensaje." };
+  }
 
   const { error: destErr } = await supabase.from("mensaje_destinatarios").insert(
     destinatarios.map((profile_id) => ({
