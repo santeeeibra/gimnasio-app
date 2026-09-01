@@ -60,6 +60,58 @@ aislados. Presupuesto: solo dominio pago, resto gratis (free tiers).
 
 ---
 
+## Estado del código (actualizado)
+
+Repo: https://github.com/santeeeibra/gimnasio-app · Stack real: Next.js 16 (App
+Router, `src/`), React 19, Tailwind v4, Supabase (`@supabase/ssr`).
+
+### Entregable 1 — HECHO (commit `Entregable 1` + push a main)
+- `supabase/migrations/0001_init.sql`: todas las tablas del plan + RLS multi-tenant.
+  Helpers SQL: `current_gimnasio_id()`, `is_dueno()`, `current_cliente_id()`,
+  `recalcular_estado_cuota()`.
+- Auth por **gimnasio (slug o nombre) + DNI + clave**. Internamente email sintético
+  `dni@<slug>.gym.local`. Clave inicial `gym`+últimos 4 del DNI. `debe_cambiar_clave`
+  fuerza cambio en primer login. Ver `src/lib/auth.ts`, `src/app/login/`,
+  `src/app/cambiar-clave/`.
+- Middleware (`src/middleware.ts`) protege todo salvo `/login`.
+- Panel dueño (`src/app/panel/`): layout con nav lateral; `page.tsx` resumen con
+  stats y alertas rojas; `clientes/` lista + alta (usa `service_role` en Server
+  Action tras `requireDueno()`); `clientes/[id]/` detalle + registrar pago
+  (recalcula `fecha_vencimiento`, suma sobre saldo si aún tiene días); `planes/`
+  alta + activar/desactivar.
+- Vista cliente (`src/app/mi/`): estado de cuota con días restantes.
+- `scripts/seed.mjs "Nombre" slug DNI "Dueño"` crea gimnasio + dueño.
+- UI: Bricolage Grotesque + Inter, paleta papel/tinta/volt en `globals.css`,
+  estado de cuota como borde izquierdo de color. Sin card-kit genérico.
+- `.env.local` necesita: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
+  `SUPABASE_SERVICE_ROLE_KEY`. `npm run build` pasa.
+
+### Pendiente de infra (lo hace el humano)
+- Crear proyecto Supabase, correr la migración, cargar `.env.local`, correr el seed.
+
+### Entregable 2 — Mensajería — HECHO
+- Panel dueño (`src/app/panel/mensajes/`): compositor con modo Todos / Por plan /
+  Un cliente, textarea, flag "permitir respuestas". `actions.ts` resuelve
+  destinatarios (query `clientes` por `gimnasio_id` + `plan_id`) e inserta
+  `mensajes` + `mensaje_destinatarios` con el client normal (RLS, sin service_role).
+  Lista de enviados con contador leído N/total. `[id]/` = hilo: destinatarios con
+  estado de lectura + conversación (si `respondible`) + responder.
+- Vista cliente (`src/app/mi/mensajes/`): bandeja ordenada por fecha, borde volt +
+  "nuevo" para no leídos. `[id]/` marca leído en `useEffect` (`marcarLeido`) y
+  muestra hilo + responder si `respondible`. `/mi` tiene tarjeta con badge
+  "N sin leer" (`count` head en `mensaje_destinatarios`).
+- Pendiente: disparo de push al enviar (queda para Entregable 3 — Push). Marcado
+  con `// TODO (Entregable 2 — Push)` en `panel/mensajes/actions.ts`.
+
+### Próximos entregables (sin empezar)
+2. **Push web nativo**: tabla `push_subscriptions` ya existe. Falta VAPID keys,
+   service worker, endpoint de envío, disparo en cuota por vencer.
+3. **Rutinas**: tablas `ejercicios` / `rutinas` / `rutina_items` ya existen. Falta
+   motor de reglas fijas + editor del cliente + seed de ejercicios (wger).
+4. **Cron** `recalcular_estado_cuota()` diario (pg_cron o Vercel cron).
+
+---
+
 ## Cómo vamos a trabajar (para ahorrar tokens)
 
 | Tipo de tarea | Herramienta |

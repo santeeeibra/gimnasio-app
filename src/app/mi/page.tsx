@@ -13,6 +13,12 @@ export default async function MiPage() {
     .eq("profile_id", profile.id)
     .maybeSingle();
 
+  const { count: noLeidos } = await supabase
+    .from("mensaje_destinatarios")
+    .select("id", { count: "exact", head: true })
+    .eq("profile_id", profile.id)
+    .eq("leido", false);
+
   const c = data as any;
   const dias = diasRestantes(c?.fecha_vencimiento ?? null);
   const estado = estadoDesdeDias(dias);
@@ -63,8 +69,22 @@ export default async function MiPage() {
         </p>
       </Panel>
 
+      <a
+        href="/mi/mensajes"
+        className="flex items-center justify-between border border-rule rounded-[6px] bg-white px-5 py-4 hover:bg-paper-2"
+      >
+        <span className="text-sm font-medium">Mensajes del gimnasio</span>
+        {noLeidos ? (
+          <span className="text-xs bg-volt text-ink rounded-full px-2 py-0.5 font-medium">
+            {noLeidos} sin leer
+          </span>
+        ) : (
+          <span className="text-xs text-ink-soft">ver</span>
+        )}
+      </a>
+
       <p className="text-sm text-ink-soft">
-        Tu rutina y los avisos del gimnasio llegan acá en el próximo entregable.
+        Tu rutina llega acá en el próximo entregable.
       </p>
     </main>
   );
