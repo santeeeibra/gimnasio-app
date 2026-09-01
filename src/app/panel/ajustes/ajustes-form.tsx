@@ -1,8 +1,9 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { actualizarColores, type AjustesState } from "./actions";
 import { Button } from "@/components/ui";
+import { TemaPreview } from "./tema-preview";
 
 type Gimnasio = {
   id: string;
@@ -12,77 +13,99 @@ type Gimnasio = {
   color_fondo: string | null;
 };
 
+const DEFAULTS = {
+  primario: "#16181d",
+  acento: "#cde94a",
+  fondo: "#faf9f6",
+};
+
 export function AjustesForm({ gimnasio }: { gimnasio: Gimnasio }) {
   const [state, formAction, pending] = useActionState<AjustesState, FormData>(
     actualizarColores,
     {},
   );
 
-  // Defaults si no hay colores guardados
-  const primario = gimnasio.color_primario ?? "#16181d";
-  const acento = gimnasio.color_acento ?? "#cde94a";
-  const fondo = gimnasio.color_fondo ?? "#faf9f6";
+  const [primario, setPrimario] = useState(
+    gimnasio.color_primario ?? DEFAULTS.primario,
+  );
+  const [acento, setAcento] = useState(gimnasio.color_acento ?? DEFAULTS.acento);
+  const [fondo, setFondo] = useState(gimnasio.color_fondo ?? DEFAULTS.fondo);
 
   return (
-    <form action={formAction} className="space-y-6">
-      <input type="hidden" name="gimnasio_id" value={gimnasio.id} />
+    <div className="grid gap-8 md:grid-cols-2">
+      <form action={formAction} className="space-y-6">
+        <input type="hidden" name="gimnasio_id" value={gimnasio.id} />
 
-      <div className="grid md:grid-cols-3 gap-4">
-        <ColorPicker
-          name="color_primario"
-          label="Color principal"
-          defaultValue={primario}
-          hint="Texto y elementos principales"
-        />
-        <ColorPicker
-          name="color_acento"
-          label="Color de acento"
-          defaultValue={acento}
-          hint="Botones y destacados"
-        />
-        <ColorPicker
-          name="color_fondo"
-          label="Color de fondo"
-          defaultValue={fondo}
-          hint="Fondo de la app"
-        />
-      </div>
+        <div className="space-y-4">
+          <ColorPicker
+            name="color_primario"
+            label="Color principal"
+            value={primario}
+            onChange={setPrimario}
+            hint="Texto y elementos principales"
+          />
+          <ColorPicker
+            name="color_acento"
+            label="Color de acento"
+            value={acento}
+            onChange={setAcento}
+            hint="Botones y destacados"
+          />
+          <ColorPicker
+            name="color_fondo"
+            label="Color de fondo"
+            value={fondo}
+            onChange={setFondo}
+            hint="Fondo de la app"
+          />
+        </div>
 
-      {state.error ? (
-        <p className="text-sm text-danger">{state.error}</p>
-      ) : null}
-      {state.ok ? <p className="text-sm text-ok">{state.ok}</p> : null}
+        {state.error ? (
+          <p className="text-sm text-danger">{state.error}</p>
+        ) : null}
+        {state.ok ? <p className="text-sm text-ok">{state.ok}</p> : null}
 
-      <div className="flex gap-3">
-        <Button type="submit" disabled={pending}>
-          {pending ? "Guardando…" : "Guardar cambios"}
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={() => {
-            const form = document.querySelector("form") as HTMLFormElement;
-            form.reset();
-          }}
-        >
-          Restablecer
-        </Button>
-      </div>
-    </form>
+        <div className="flex gap-3">
+          <Button type="submit" disabled={pending}>
+            {pending ? "Guardando…" : "Guardar cambios"}
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => {
+              setPrimario(DEFAULTS.primario);
+              setAcento(DEFAULTS.acento);
+              setFondo(DEFAULTS.fondo);
+            }}
+          >
+            Restablecer
+          </Button>
+        </div>
+      </form>
+
+      <TemaPreview primario={primario} acento={acento} fondo={fondo} />
+    </div>
   );
 }
+
+const HEX = /^#[0-9A-Fa-f]{6}$/;
 
 function ColorPicker({
   name,
   label,
-  defaultValue,
+  value,
+  onChange,
   hint,
 }: {
   name: string;
   label: string;
-  defaultValue: string;
+  value: string;
+  onChange: (v: string) => void;
   hint?: string;
 }) {
+  const [text, setText] = useState(value);
+  useEffect(() => setText(value), [value]);
+
   return (
     <label className="block">
       <span className="block text-[13px] font-medium text-ink-soft mb-1.5">
@@ -92,26 +115,22 @@ function ColorPicker({
         <input
           type="color"
           name={name}
-          defaultValue={defaultValue}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
           className="w-16 h-10 rounded-[5px] border border-rule cursor-pointer"
-          onChange={(e) => {
-            const textInput = e.target.nextElementSibling as HTMLInputElement;
-            textInput.value = e.target.value;
-          }}
         />
         <input
           type="text"
-          name={`${name}_text`}
-          defaultValue={defaultValue}
+          value={text}
+          onChange={(e) => {
+            const v = e.target.value;
+            setText(v);
+            if (HEX.test(v)) onChange(v);
+          }}
+          onBlur={() => setText(value)}
           pattern="^#[0-9A-Fa-f]{6}$"
           placeholder="#000000"
           className="flex-1 h-10 px-3 rounded-[5px] border border-rule bg-white text-sm outline-none focus:border-ink font-mono"
-          onChange={(e) => {
-            const colorInput = e.target.previousElementSibling as HTMLInputElement;
-            if (/^#[0-9A-Fa-f]{6}$/.test(e.target.value)) {
-              colorInput.value = e.target.value;
-            }
-          }}
         />
       </div>
       {hint ? (

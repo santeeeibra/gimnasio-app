@@ -21,7 +21,7 @@ export default async function AjustesPage() {
         inmediatamente en tu panel y en la app de tus clientes.
       </p>
 
-      <Panel className="p-6 max-w-2xl">
+      <Panel className="p-6 max-w-4xl">
         <h2 className="text-lg mb-4">Colores del gimnasio</h2>
         {gym ? <AjustesForm gimnasio={gym} /> : null}
       </Panel>
