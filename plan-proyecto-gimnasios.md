@@ -121,19 +121,23 @@ paleta desde su panel (branding por gimnasio).
   tocar cualquier pantalla. Base actual: Bricolage Grotesque + Inter, tokens
   papel/tinta/volt en `src/app/globals.css` (`--paper`, `--ink`, `--volt`,
   `--danger`, `--warn`, `--ok`, etc.), componentes en `src/components/ui.tsx`.
-- **Colores personalizables**:
-  - Migración nueva (`0003_*`): agregar a `gimnasios` columnas de tema, p.ej.
-    `color_primario text`, `color_acento text`, `color_fondo text` (hex) — o un
-    `tema jsonb` único. RLS: lectura para todo el gimnasio, escrito solo dueño
-    (ya hay policy `gim_*`; revisar que haya UPDATE para dueño).
-  - Panel dueño: pantalla `src/app/panel/ajustes/` (o `marca/`) con color pickers
-    + preview en vivo. Server Action que actualiza `gimnasios`.
-  - Aplicar tema: el `PanelLayout` y el layout de `/mi` ya cargan el gimnasio;
-    inyectar los hex como CSS custom properties inline en un `<div style>` o en
-    `:root` vía `<style>` server-rendered, mapeando a los tokens existentes
-    (`--volt` → color de acento, etc.). Definir defaults si las columnas son null.
-  - Pantallas a repasar con el rediseño: login, `/panel` (resumen), `/panel/clientes`,
-    `/panel/mensajes`, `/mi`, `/mi/mensajes`.
+- **Colores personalizables** ✅ HECHO:
+  - Migración `0003_tema_gimnasio.sql`: agregadas columnas `color_primario`,
+    `color_acento`, `color_fondo` a `gimnasios` (hex). RLS ya permite UPDATE
+    para dueño.
+  - Panel dueño: pantalla `src/app/panel/ajustes/` con color pickers + Server
+    Action `actualizarColores`. Los cambios se guardan en la base.
+  - Aplicar tema: `panel/layout.tsx` y las páginas de `/mi`, `/mi/mensajes`,
+    `/mi/mensajes/[id]` inyectan los hex como CSS custom properties inline
+    (`style={{...}}`), mapeando `color_primario` → `--ink`, `color_acento` →
+    `--volt`, `color_fondo` → `--paper`. Defaults si son null.
+  - **PENDIENTE**: aplicar migración en Supabase (ver `INSTRUCCIONES_TEMA.md`)
+    y probar end-to-end.
+  - Pantallas a repasar con el rediseño (usando skill `frontend-design`):
+    login, `/panel` (resumen), `/panel/clientes`, `/panel/mensajes`, `/mi`,
+    `/mi/mensajes`. Objetivo: que no se vea genérico, tipografía intencional,
+    layouts distintivos.
+
 
 ### Próximos entregables (sin empezar)
 3. **Push web nativo**: tabla `push_subscriptions` ya existe. Falta VAPID keys,

@@ -8,6 +8,7 @@ const NAV = [
   { href: "/panel/clientes", label: "Clientes" },
   { href: "/panel/planes", label: "Planes" },
   { href: "/panel/mensajes", label: "Mensajes" },
+  { href: "/panel/ajustes", label: "Ajustes" },
 ];
 
 export default async function PanelLayout({
@@ -19,12 +20,24 @@ export default async function PanelLayout({
   const supabase = await createClient();
   const { data: gym } = await supabase
     .from("gimnasios")
-    .select("nombre")
+    .select("nombre, color_primario, color_acento, color_fondo")
     .eq("id", profile.gimnasio_id)
     .single();
 
+  // Inyectar colores personalizados como CSS custom properties
+  const customColors = gym
+    ? {
+        "--ink": gym.color_primario || "#16181d",
+        "--volt": gym.color_acento || "#cde94a",
+        "--paper": gym.color_fondo || "#faf9f6",
+      }
+    : {};
+
   return (
-    <div className="min-h-screen md:grid md:grid-cols-[220px_1fr]">
+    <div
+      className="min-h-screen md:grid md:grid-cols-[220px_1fr]"
+      style={customColors as React.CSSProperties}
+    >
       <aside className="border-b md:border-b-0 md:border-r border-rule p-5 flex md:flex-col gap-6 md:sticky md:top-0 md:h-screen">
         <div>
           <p className="font-display text-lg leading-tight">{gym?.nombre}</p>

@@ -19,12 +19,30 @@ export default async function MiPage() {
     .eq("profile_id", profile.id)
     .eq("leido", false);
 
+  // Cargar colores del gimnasio
+  const { data: gym } = await supabase
+    .from("gimnasios")
+    .select("color_primario, color_acento, color_fondo")
+    .eq("id", profile.gimnasio_id)
+    .single();
+
+  const customColors = gym
+    ? {
+        "--ink": gym.color_primario || "#16181d",
+        "--volt": gym.color_acento || "#cde94a",
+        "--paper": gym.color_fondo || "#faf9f6",
+      }
+    : {};
+
   const c = data as any;
   const dias = diasRestantes(c?.fecha_vencimiento ?? null);
   const estado = estadoDesdeDias(dias);
 
   return (
-    <main className="max-w-md mx-auto p-6 space-y-6">
+    <main
+      className="max-w-md mx-auto p-6 space-y-6"
+      style={customColors as React.CSSProperties}
+    >
       <div className="flex items-baseline justify-between">
         <h1 className="text-2xl">Hola, {profile.nombre.split(" ")[0]}</h1>
         <form action={logout}>

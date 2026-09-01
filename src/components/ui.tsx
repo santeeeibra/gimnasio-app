@@ -7,7 +7,7 @@ export function Button({
   ...props
 }: ComponentProps<"button"> & { variant?: "primary" | "ghost" | "danger" }) {
   const base =
-    "inline-flex items-center justify-center gap-2 h-10 px-4 text-sm font-medium rounded-[5px] transition-colors disabled:opacity-50 disabled:pointer-events-none";
+    "inline-flex items-center justify-center gap-2 h-11 px-4 text-sm font-medium rounded-[5px] select-none touch-manipulation transition-[transform,background-color,border-color,color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] disabled:opacity-50 disabled:pointer-events-none";
   const styles = {
     primary: "bg-ink text-paper hover:bg-black",
     ghost: "border border-rule text-ink hover:bg-paper-2",
@@ -31,6 +31,7 @@ export function LinkButton({
 export function Field({
   label,
   hint,
+  className,
   ...props
 }: ComponentProps<"input"> & { label: string; hint?: string }) {
   return (
@@ -39,7 +40,7 @@ export function Field({
         {label}
       </span>
       <input
-        className="w-full h-10 px-3 rounded-[5px] border border-rule bg-white text-sm outline-none focus:border-ink"
+        className={`w-full h-11 px-3 rounded-[5px] border border-rule bg-white text-[16px] outline-none transition-[border-color,box-shadow] duration-150 [transition-timing-function:var(--ease-out)] focus:border-ink focus:shadow-[0_0_0_3px_rgb(22_24_29_/_0.08)] ${className ?? ""}`}
         {...props}
       />
       {hint ? (

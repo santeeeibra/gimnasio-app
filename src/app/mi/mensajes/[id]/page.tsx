@@ -28,6 +28,21 @@ export default async function MiHiloPage({
     .eq("mensaje_id", id)
     .order("creado_at");
 
+  // Cargar colores del gimnasio
+  const { data: gym } = await supabase
+    .from("gimnasios")
+    .select("color_primario, color_acento, color_fondo")
+    .eq("id", profile.gimnasio_id)
+    .single();
+
+  const customColors = gym
+    ? {
+        "--ink": gym.color_primario || "#16181d",
+        "--volt": gym.color_acento || "#cde94a",
+        "--paper": gym.color_fondo || "#faf9f6",
+      }
+    : {};
+
   const m = msg as unknown as {
     id: string;
     cuerpo: string;
@@ -44,7 +59,10 @@ export default async function MiHiloPage({
   }[];
 
   return (
-    <main className="max-w-md mx-auto p-6 space-y-6">
+    <main
+      className="max-w-md mx-auto p-6 space-y-6"
+      style={customColors as React.CSSProperties}
+    >
       <MarkRead mensajeId={m.id} />
       <Link
         href="/mi/mensajes"

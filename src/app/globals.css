@@ -11,6 +11,8 @@
   --danger: #c1362f;
   --warn: #b9791a;
   --ok: #2f7d4f;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
 }
 
 @theme inline {
@@ -52,6 +54,19 @@ h3 {
   font-weight: 600;
   letter-spacing: -0.02em;
   margin: 0;
+}
+
+/* Gentle one-shot entrance for occasional screens (login, cambiar-clave). */
+.animate-rise {
+  transition:
+    opacity 420ms var(--ease-out),
+    transform 420ms var(--ease-out);
+}
+@starting-style {
+  .animate-rise {
+    opacity: 0;
+    transform: translateY(10px);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
