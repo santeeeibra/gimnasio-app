@@ -79,6 +79,15 @@ export const ENFASIS_GRUPOS: Record<Enfasis, string[]> = {
   core: ["core"],
 };
 
+// Reverso de ENFASIS_GRUPOS: grupo_muscular real → zona de énfasis. Se usa para
+// inferir el énfasis desde los ejercicios que el cliente eligió en el armado
+// manual cuando pide "generar automático con lo que tengo".
+export const GRUPO_A_ENFASIS: Record<string, Enfasis> = Object.fromEntries(
+  (Object.entries(ENFASIS_GRUPOS) as [Enfasis, string[]][]).flatMap(
+    ([enf, grupos]) => grupos.map((g) => [g, enf] as const),
+  ),
+);
+
 export const MAX_ENFASIS = 2;
 
 // ── Modo manual (SPEC_PANEL_AVANZADO_RUTINA.md) ──

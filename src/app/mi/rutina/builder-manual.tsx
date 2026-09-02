@@ -3,14 +3,17 @@
 import { useActionState, useMemo, useState } from "react";
 import { Button } from "@/components/ui";
 import {
+  GRUPO_A_ENFASIS,
   MAX_DIAS_MANUAL,
   MAX_EJERCICIOS_DIA,
+  MAX_ENFASIS,
   REPS_OPCIONES,
   SERIES_OPCIONES,
   TECNICAS,
   TECNICA_DESC,
   TECNICA_LABEL,
   type Ejercicio,
+  type Enfasis,
   type Tecnica,
 } from "@/lib/rutina/tipos";
 import { guardarRutinaManual } from "./actions";
@@ -78,6 +81,38 @@ export function BuilderManual({ ejercicios }: { ejercicios: Ejercicio[] }) {
         ejercicios: [...ejs].sort((a, b) => a.nombre.localeCompare(b.nombre)),
       }));
   }, [ejercicios]);
+
+  const grupoPorId = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const e of ejercicios) if (e.grupo_muscular) m.set(e.id, e.grupo_muscular);
+    return m;
+  }, [ejercicios]);
+
+  // "Generar automático con lo que tengo": infiere días (los que ya armó) y las
+  // 2 zonas más repetidas entre los ejercicios elegidos, se los pasa al
+  // cuestionario de arriba y scrollea. No toca el motor ni borra el draft.
+  function generarAutoConManual() {
+    const conteo = new Map<Enfasis, number>();
+    for (const d of dias) {
+      for (const f of d.filas) {
+        const g = grupoPorId.get(f.ejercicioId);
+        const enf = g ? GRUPO_A_ENFASIS[g] : undefined;
+        if (enf) conteo.set(enf, (conteo.get(enf) ?? 0) + 1);
+      }
+    }
+    const enfasis = [...conteo.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, MAX_ENFASIS)
+      .map(([e]) => e);
+    window.dispatchEvent(
+      new CustomEvent("rutina:prefill", {
+        detail: { dias: dias.length, enfasis },
+      }),
+    );
+    const auto = document.getElementById("generar-rutina-auto");
+    auto?.closest("details")?.setAttribute("open", "");
+    auto?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
 
   const payload = {
     dias: dias.map((d) => ({
@@ -319,11 +354,20 @@ export function BuilderManual({ ejercicios }: { ejercicios: Ejercicio[] }) {
         {state?.ok ? <p className="text-sm text-ok">{state.ok}</p> : null}
       </div>
 
-      <p className="text-xs leading-snug text-ink-soft">
-        ¿Preferís que la app te arme el plan? Cerrá esta sección y usá el
-        generador automático de arriba — lo que cargaste acá queda guardado
-        mientras no salgas de la página.
-      </p>
+      <div className="border-t border-rule pt-4">
+        <button
+          type="button"
+          onClick={generarAutoConManual}
+          className="h-9 rounded-[5px] border border-rule px-3 text-sm text-ink-soft transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20"
+        >
+          Generar automático con lo que tengo
+        </button>
+        <p className="mt-2 text-xs leading-snug text-ink-soft">
+          Lleva {dias.length} {dias.length === 1 ? "día" : "días"} y las zonas que
+          más cargaste al cuestionario de arriba. Lo que armaste acá queda
+          guardado mientras no salgas de la página.
+        </p>
+      </div>
     </form>
   );
 }

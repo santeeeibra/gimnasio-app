@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { Button, Select } from "@/components/ui";
 import {
   ENFASIS,
@@ -46,6 +46,28 @@ export function GenerarRutinaForm({
 }) {
   const [state, formAction, pending] = useActionState<S, FormData>(action, {});
   const [enfasis, setEnfasis] = useState<Enfasis[]>(defaults?.enfasis ?? []);
+  const [dias, setDias] = useState(String(defaults?.dias ?? 3));
+  const [prefillNota, setPrefillNota] = useState<string | null>(null);
+
+  // "Generar automático con lo que tengo" (builder manual): precarga días y
+  // zonas inferidas sin pisar el resto del cuestionario. El submit sigue igual.
+  useEffect(() => {
+    function aplicar(e: Event) {
+      const d = (e as CustomEvent<{ dias: number; enfasis: Enfasis[] }>).detail;
+      if (!d) return;
+      if (d.dias >= 2 && d.dias <= 6) setDias(String(d.dias));
+      setEnfasis(d.enfasis.slice(0, MAX_ENFASIS));
+      setPrefillNota(
+        `Tomamos ${d.dias} ${d.dias === 1 ? "día" : "días"}` +
+          (d.enfasis.length
+            ? ` y ${d.enfasis.map((x) => ENFASIS_LABEL[x]).join(", ")}`
+            : "") +
+          " de tu armado manual. Revisá el resto y generá.",
+      );
+    }
+    window.addEventListener("rutina:prefill", aplicar);
+    return () => window.removeEventListener("rutina:prefill", aplicar);
+  }, []);
 
   function toggleEnfasis(e: Enfasis) {
     setEnfasis((prev) =>
@@ -76,7 +98,8 @@ export function GenerarRutinaForm({
       <Select
         label="Días por semana"
         name="dias"
-        defaultValue={String(defaults?.dias ?? 3)}
+        value={dias}
+        onChange={(e) => setDias(e.target.value)}
       >
         {[2, 3, 4, 5, 6].map((d) => (
           <option key={d} value={d}>
@@ -168,6 +191,12 @@ export function GenerarRutinaForm({
           ))}
         </div>
       </fieldset>
+
+      {prefillNota ? (
+        <p className="sm:col-span-2 text-xs leading-snug text-ink-soft animate-fade-in">
+          {prefillNota}
+        </p>
+      ) : null}
 
       <div className="sm:col-span-2 flex flex-wrap items-center gap-3">
         <Button

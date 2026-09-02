@@ -118,7 +118,9 @@ export default async function MiRutinaPage() {
             Respondé estas preguntas y armamos tu plan. Después podés ajustar
             series, repeticiones y cambiar ejercicios que no conozcas.
           </p>
-          <GenerarRutinaForm action={generarMiRutina} />
+          <div id="generar-rutina-auto" className="scroll-mt-4">
+            <GenerarRutinaForm action={generarMiRutina} />
+          </div>
           {entradaManual}
         </>
       ) : (
@@ -143,7 +145,10 @@ export default async function MiRutinaPage() {
               <span className="group-open:hidden">Regenerar rutina</span>
               <span className="hidden group-open:inline">Cerrar</span>
             </summary>
-            <div className="mt-3 rounded-[6px] border border-rule bg-paper-2 p-4 animate-fade-in">
+            <div
+              id="generar-rutina-auto"
+              className="mt-3 scroll-mt-4 rounded-[6px] border border-rule bg-paper-2 p-4 animate-fade-in"
+            >
               <p className="mb-3 text-xs text-ink-soft">
                 Cambiá lo que haga falta y armamos un plan nuevo. Reemplaza los
                 ejercicios actuales.
