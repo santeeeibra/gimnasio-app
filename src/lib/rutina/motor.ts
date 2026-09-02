@@ -245,16 +245,24 @@ function aplicarEnfasis(
     enfasis.length > 0 ? enfasis : sexo === "mujer" ? ["gluteos"] : [];
   if (zonas.length === 0) return ranuras;
 
-  const grupos = zonas.flatMap((z) => ENFASIS_GRUPOS[z]);
   const out = [...ranuras];
-  let sumadas = 0;
 
-  for (const grupo of grupos) {
-    const presentes = out.filter((r) => r.grupo === grupo).length;
-    for (let k = presentes; k < 2 && out.length < 8 && sumadas < 3; k++) {
+  // El presupuesto de ranuras extra (3) se reparte en partes iguales entre las
+  // zonas elegidas: cada zona recibe la misma cuota, sin importar el orden de
+  // inserción ni cuántas ranuras base ya tenga. División impar → el sobrante se
+  // descarta (no se prioriza una zona). Si después falta un ejercicio en la
+  // base para una zona, `elegir` la deja sin ese item y la otra no lo compensa.
+  const cuota = Math.floor(3 / zonas.length);
+
+  for (const zona of zonas) {
+    const grupos = ENFASIS_GRUPOS[zona];
+    const porGrupo = new Map<string, number>();
+    for (let i = 0; i < cuota && out.length < 8; i++) {
+      const grupo = grupos[i % grupos.length];
+      if ((porGrupo.get(grupo) ?? 0) >= 2) continue; // tope de densidad por grupo
+      porGrupo.set(grupo, (porGrupo.get(grupo) ?? 0) + 1);
       const patron = PATRON_ENFASIS[grupo];
       out.push({ grupo, patron, rol: patron ? "secundario" : "aislamiento" });
-      sumadas++;
     }
   }
   return out;
