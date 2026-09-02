@@ -10,9 +10,9 @@ alter table ejercicios add column if not exists patron      text;
 alter table ejercicios add column if not exists equipo      text;
 alter table ejercicios add column if not exists descripcion text;
 
--- slug único dentro de la base global (gimnasio_id null). El seed hace upsert por slug.
-create unique index if not exists ejercicios_slug_global
-  on ejercicios (slug) where gimnasio_id is null;
+-- slug único (varios NULL permitidos: los ejercicios propios de gimnasio no lo usan).
+-- El seed de la base global hace upsert por slug (ON CONFLICT lo necesita no-parcial).
+create unique index if not exists ejercicios_slug_key on ejercicios (slug);
 
 -- ─────────────────────────────────────────────────────────────
 -- rutinas: parámetros con los que se generó

@@ -4,6 +4,15 @@ import { revalidatePath } from "next/cache";
 import { requireDueno, dniAEmail, claveInicial } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { generarYGuardar } from "@/lib/rutina/generar";
+import {
+  NIVELES,
+  OBJETIVOS,
+  PREFERENCIAS_EQUIPO,
+  type Nivel,
+  type Objetivo,
+  type PreferenciaEquipo,
+} from "@/lib/rutina/tipos";
 
 export type AltaState = { error?: string; ok?: string; clave?: string };
 
