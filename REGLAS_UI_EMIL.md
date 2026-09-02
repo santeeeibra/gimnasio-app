@@ -43,6 +43,8 @@
 ```
 font-display  → títulos, números héroe
 font-sans     → cuerpo, UI (default)
+--font-hero   → números especiales (anillos de progreso, métricas destacadas)
+                Orbitron (pesos 700 y 900), fuente tecnológica para datos numéricos
 ```
 
 ### Escala de tamaños (mobile-first)
@@ -416,7 +418,41 @@ focus-visible:ring-ink/20
 
 ---
 
-## 14. Checklist pre-commit
+## 17. Componentes reusables
+
+### AnilloProgreso
+Indicador circular de progreso con número central en fuente héroe. Usado para métricas importantes (días restantes, porcentajes, contadores).
+
+**Ubicación**: `src/components/anillo-progreso.tsx`
+
+**Props**:
+- `valor: number` — valor actual
+- `max: number` — valor máximo para calcular el porcentaje
+- `label: string` — etiqueta descriptiva (ej: "días", "kg")
+- `className?: string` — clases adicionales opcionales
+
+**Características**:
+- Anillo SVG con círculo de fondo (`--rule`) y progreso (`--volt`)
+- Número central usa `--font-hero` (Orbitron) con `font-[700]`
+- Label en uppercase + tracking `[0.08em]` (estilo kicker)
+- Animación suave con `var(--ease-out)` en `stroke-dashoffset`
+- Radio fijo 54px, stroke 8px (tamaño compacto para cards)
+
+**Ejemplo de uso**:
+```jsx
+<AnilloProgreso
+  valor={diasRestantes}
+  max={duracionPlan}
+  label="días"
+/>
+```
+
+**Aplicado en**:
+- `/mi` (card "Tu cuota" — días restantes del plan)
+
+---
+
+## 18. Checklist pre-commit
 
 - [ ] Solo tokens CSS (sin `bg-white`, sin hex, sin `text-gray-*`)
 - [ ] Inputs con `text-[16px]` y `bg-paper`
@@ -436,11 +472,13 @@ focus-visible:ring-ink/20
 
 ```
 src/app/globals.css              → tokens, reset img, animaciones
-src/lib/tema.ts                  → DEFAULT_TEMA
+src/lib/tema.ts                  → DEFAULT_TEMA, --font-hero
 src/components/ui.tsx            → Button, Field
+src/components/anillo-progreso.tsx → AnilloProgreso (indicador circular)
 src/app/login/page.tsx          → mobile-first completo
 src/app/panel/page.tsx          → número héroe
 src/app/panel/ajustes/*         → validación contraste
+src/app/mi/page.tsx             → AnilloProgreso en card "Tu cuota"
 src/app/mi/rutina/rutina-editor.tsx → miniatura + fallback + visor modal
 src/lib/logo/comprimir.ts        → compresión canvas → WebP <300 KB
 src/lib/logo/paleta.ts           → color dominante + paletas sugeridas
@@ -462,7 +500,8 @@ src/app/panel/ajustes/logo-uploader.tsx → subida + caja fija + fallback
 **Última actualización**: 2026-09-02 (secciones 4-10 nuevas: bordes, imágenes,
 alineación, overflow, overlays, z-index — tras el bug de imágenes que rompían
 el layout en `/mi/rutina`; §5 subsección "Logo del gimnasio" tras el SPEC de
-logo + paletas).
+logo + paletas; §17 componente `AnilloProgreso` + token `--font-hero` (Orbitron)
+para números especiales en indicadores circulares).
 **Aplicar al editar**: `src/app/` y `src/components/`.
 
 **Crítico:** `text-[16px]` en inputs evita el zoom en iOS.

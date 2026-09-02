@@ -5,13 +5,14 @@ import { Panel } from "@/components/ui";
 import { diasRestantes, estadoDesdeDias, ESTADO_LABEL } from "@/lib/cuota";
 import { ActivarNotificaciones } from "./activar-notificaciones";
 import { VerTutorialDeNuevo } from "@/components/tutorial/tutorial";
+import { AnilloProgreso } from "@/components/anillo-progreso";
 
 export default async function MiPage() {
   const profile = await requireProfile();
   const supabase = await createClient();
   const { data } = await supabase
     .from("clientes")
-    .select("fecha_vencimiento, plan:planes(nombre)")
+    .select("fecha_vencimiento, plan:planes(nombre, duracion_dias)")
     .eq("profile_id", profile.id)
     .maybeSingle();
 
@@ -24,6 +25,8 @@ export default async function MiPage() {
   const c = data as any;
   const dias = diasRestantes(c?.fecha_vencimiento ?? null);
   const estado = estadoDesdeDias(dias);
+  const duracionTotal = c?.plan?.duracion_dias ?? 30; // fallback a 30 si no hay plan
+  const diasParaAnillo = dias !== null && dias >= 0 ? dias : 0;
 
   return (
     <main className="max-w-md mx-auto p-6 space-y-6">
@@ -48,30 +51,41 @@ export default async function MiPage() {
               : "border-l-ok"
         }`}
       >
-        <p className="text-xs text-ink-soft">Tu cuota</p>
-        <p
-          className={`font-display text-2xl ${
-            estado === "vencido"
-              ? "text-danger"
-              : estado === "por_vencer"
-                ? "text-warn"
-                : "text-ok"
-          }`}
-        >
-          {ESTADO_LABEL[estado]}
-        </p>
-        <p className="text-sm text-ink-soft mt-1">
-          {c?.plan?.nombre ?? "Sin plan"}
-          {c?.fecha_vencimiento
-            ? ` · vence ${c.fecha_vencimiento}${
-                dias !== null
-                  ? dias < 0
-                    ? ` (hace ${Math.abs(dias)} días)`
-                    : ` (en ${dias} días)`
-                  : ""
-              }`
-            : ""}
-        </p>
+        <p className="text-xs text-ink-soft mb-4">Tu cuota</p>
+        
+        <div className="flex items-center gap-6">
+          <AnilloProgreso
+            valor={diasParaAnillo}
+            max={duracionTotal}
+            label="días"
+          />
+          
+          <div className="min-w-0 flex-1">
+            <p
+              className={`font-display text-2xl leading-tight ${
+                estado === "vencido"
+                  ? "text-danger"
+                  : estado === "por_vencer"
+                    ? "text-warn"
+                    : "text-ok"
+              }`}
+            >
+              {ESTADO_LABEL[estado]}
+            </p>
+            <p className="text-sm text-ink-soft mt-1">
+              {c?.plan?.nombre ?? "Sin plan"}
+              {c?.fecha_vencimiento
+                ? ` · vence ${c.fecha_vencimiento}${
+                    dias !== null
+                      ? dias < 0
+                        ? ` (hace ${Math.abs(dias)} días)`
+                        : ` (en ${dias} días)`
+                      : ""
+                  }`
+                : ""}
+            </p>
+          </div>
+        </div>
       </Panel>
 
       <ul className="overflow-hidden rounded-[6px] border border-rule bg-paper-2 divide-y divide-rule">
