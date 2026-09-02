@@ -256,6 +256,20 @@ export const MOLESTIA_LABEL: Record<Molestia, string> = {
   codo: "Codo",
 };
 
+// Nombre en castellano llano del grupo muscular, para la vista del cliente.
+export const GRUPO_MUSCULAR_LABEL: Record<string, string> = {
+  pecho: "pecho",
+  espalda: "espalda",
+  hombros: "hombros",
+  biceps: "bíceps",
+  triceps: "tríceps",
+  cuadriceps: "cuádriceps",
+  isquios: "isquiotibiales",
+  gluteos: "glúteos",
+  gemelos: "gemelos",
+  core: "abdomen",
+};
+
 export type OpcionesAvanzadas = {
   split: Split;
   rango: Rango;

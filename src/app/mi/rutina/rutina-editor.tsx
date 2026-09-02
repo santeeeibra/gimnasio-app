@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { ejerciciosSimilares, estaBloqueado } from "@/lib/rutina/motor";
 import {
+  GRUPO_MUSCULAR_LABEL,
   MOLESTIAS,
   MOLESTIA_LABEL,
   REPS_OPCIONES,
@@ -162,8 +163,8 @@ function VisorEjercicio({
           <div className="min-w-0">
             <h3 className="font-display text-lg leading-tight">{ej.nombre}</h3>
             {ej.grupo_muscular ? (
-              <span className="mt-0.5 inline-block text-[11px] uppercase tracking-[0.08em] text-ink-soft">
-                {ej.grupo_muscular}
+              <span className="mt-0.5 inline-block text-[11px] tracking-[0.08em] text-ink-soft">
+                {GRUPO_MUSCULAR_LABEL[ej.grupo_muscular] ?? ej.grupo_muscular}
               </span>
             ) : null}
           </div>
@@ -216,22 +217,69 @@ export function RutinaEditor({
   const [visor, setVisor] = useState<Ejercicio | null>(null);
   return (
     <div className="stagger space-y-8">
-      {dias.map((dia) => (
-        <section key={dia.numero}>
-          <h2 className="font-display text-lg mb-3">{dia.titulo}</h2>
-          <ul className="card-cut border border-rule divide-y divide-rule bg-paper-2 overflow-hidden">
-            {dia.items.map((item) => (
-              <ItemFila
-                key={item.id}
-                item={item}
-                ejercicios={ejercicios}
-                mostrarTecnica={mostrarTecnica}
-                onVer={setVisor}
-              />
-            ))}
-          </ul>
-        </section>
-      ))}
+      {dias.map((dia) => {
+        const tiempoMin = Math.round(
+          dia.items.reduce((a, it) => a + it.series * 2.2, 0),
+        );
+        const musculos = [
+          ...new Set(
+            dia.items.map(
+              (i) => GRUPO_MUSCULAR_LABEL[i.ejercicio?.grupo_muscular ?? ""],
+            ),
+          ),
+        ]
+          .filter(Boolean)
+          .join(" · ");
+        const basicos = dia.items.filter(
+          (it) => it.ejercicio?.patron !== "aislamiento",
+        );
+        const accesorios = dia.items.filter(
+          (it) => it.ejercicio?.patron === "aislamiento",
+        );
+        const conSubtitulo = basicos.length > 0 && accesorios.length > 0;
+        const secciones: Array<[string, ItemEditable[]]> = [
+          ["Básicos", basicos],
+          ["Accesorios", accesorios],
+        ];
+        return (
+          <section key={dia.numero}>
+            <h2 className="font-display text-lg">{dia.titulo}</h2>
+            <p className="mt-0.5 text-xs text-ink-soft">
+              {dia.items.length} ejercicios · ~{tiempoMin} min
+            </p>
+            {musculos ? (
+              <p className="mt-0.5 text-[11px] tracking-[0.08em] text-ink-soft">
+                {musculos}
+              </p>
+            ) : null}
+
+            <div className="mt-3 space-y-4">
+              {secciones.map(([titulo, grupo]) =>
+                grupo.length === 0 ? null : (
+                  <div key={titulo}>
+                    {conSubtitulo ? (
+                      <p className="mb-1.5 text-[11px] uppercase tracking-[0.08em] text-ink-soft">
+                        {titulo}
+                      </p>
+                    ) : null}
+                    <ul className="card-cut border border-rule divide-y divide-rule bg-paper-2 overflow-hidden">
+                      {grupo.map((item) => (
+                        <ItemFila
+                          key={item.id}
+                          item={item}
+                          ejercicios={ejercicios}
+                          mostrarTecnica={mostrarTecnica}
+                          onVer={setVisor}
+                        />
+                      ))}
+                    </ul>
+                  </div>
+                ),
+              )}
+            </div>
+          </section>
+        );
+      })}
       {visor ? (
         <VisorEjercicio ej={visor} onClose={() => setVisor(null)} />
       ) : null}
@@ -336,8 +384,8 @@ function ItemFila({
             <div className="min-w-0">
               <p className="font-medium leading-tight">{ej?.nombre ?? "Ejercicio"}</p>
               {ej?.grupo_muscular ? (
-                <span className="mt-1 inline-block text-[11px] uppercase tracking-[0.08em] text-ink-soft">
-                  {ej.grupo_muscular}
+                <span className="mt-1 inline-block text-[11px] tracking-[0.08em] text-ink-soft">
+                  {GRUPO_MUSCULAR_LABEL[ej.grupo_muscular] ?? ej.grupo_muscular}
                 </span>
               ) : null}
             </div>
@@ -354,7 +402,17 @@ function ItemFila({
             <p className="mt-1.5 text-xs leading-snug text-ink-soft">{ej.descripcion}</p>
           ) : null}
 
-          <div className="mt-3 flex flex-wrap items-end gap-3">
+          <p className="mt-3 text-sm">
+            {series} series · {reps.replace("–", " a ")} repeticiones
+            {item.tecnica ? ` · técnica: ${TECNICA_LABEL[item.tecnica]}` : ""}
+          </p>
+
+          <details className="group mt-1.5">
+            <summary className="w-fit cursor-pointer select-none list-none text-xs text-ink-soft underline underline-offset-2 [&::-webkit-details-marker]:hidden">
+              <span className="group-open:hidden">Ajustar</span>
+              <span className="hidden group-open:inline">Listo</span>
+            </summary>
+            <div className="mt-3 flex flex-wrap items-end gap-3">
             <label className="block">
               <span className="block text-[11px] text-ink-soft mb-1">Series</span>
               <select
@@ -397,7 +455,8 @@ function ItemFila({
             {msg ? (
               <span className="pb-3 text-xs text-ok animate-fade-in">{msg}</span>
             ) : null}
-          </div>
+            </div>
+          </details>
 
           {mostrarTecnica ? (
             <div className="mt-3">

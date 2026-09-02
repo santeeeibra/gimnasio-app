@@ -6,6 +6,7 @@
 import { TEORIA } from "./teoria";
 import {
   ENFASIS_LABEL,
+  GRUPO_MUSCULAR_LABEL,
   OBJETIVO_LABEL,
   SPLIT_LABEL,
   RANGO_LABEL,
@@ -15,18 +16,7 @@ import {
   type PlanGenerado,
 } from "./tipos";
 
-const GRUPO_LABEL: Record<string, string> = {
-  pecho: "pecho",
-  espalda: "espalda",
-  hombros: "hombros",
-  biceps: "bíceps",
-  triceps: "tríceps",
-  cuadriceps: "cuádriceps",
-  isquios: "isquiotibiales",
-  gluteos: "glúteos",
-  gemelos: "gemelos",
-  core: "abdomen",
-};
+const GRUPO_LABEL = GRUPO_MUSCULAR_LABEL;
 
 function listar(palabras: string[]): string {
   if (palabras.length === 0) return "";
