@@ -114,8 +114,18 @@ export const FUENTES: Record<
   },
 };
 
+/** Claves de color del tema (excluye tipografía y opciones de layout). */
+export type ColorKey =
+  | "paper"
+  | "paper2"
+  | "ink"
+  | "inkSoft"
+  | "rule"
+  | "volt"
+  | "voltInk";
+
 export const CAMPOS_COLOR: {
-  key: keyof Omit<Tema, "fuente">;
+  key: ColorKey;
   label: string;
   hint: string;
 }[] = [

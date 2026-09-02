@@ -3,11 +3,11 @@
  * Mide la legibilidad de combinaciones texto/fondo, sin modificar colores.
  */
 
-import type { Tema } from "./tema";
+import type { ColorKey, Tema } from "./tema";
 
 type ParContraste = {
-  a: keyof Omit<Tema, "fuente">;
-  b: keyof Omit<Tema, "fuente">;
+  a: ColorKey;
+  b: ColorKey;
   label: string;
   umbral: number;
 };
@@ -131,6 +131,49 @@ export function ratio(hexA: string, hexB: string): number {
   return (l1 + 0.05) / (l2 + 0.05);
 }
 
+/**
+ * Pares texto/fondo que NO se pueden saltear ni con el checkbox: si el texto
+ * principal no se lee sobre el fondo o sobre las tarjetas, la app es inusable.
+ */
+export const PARES_BLOQUEANTES: ParContraste[] = [
+  { a: "ink", b: "paper", label: "Texto principal sobre el fondo", umbral: 4.5 },
+  { a: "ink", b: "paper2", label: "Texto principal sobre las tarjetas", umbral: 4.5 },
+];
+
+/**
+ * Separación mínima (ratio WCAG) entre el fondo y el fondo de tarjetas. No es un
+ * par texto/fondo: asegura que tarjetas e inputs no desaparezcan sobre el fondo.
+ * El default deriva ~1.09; 1.05 deja margen y sólo frena el caso patológico.
+ */
+export const SEPARACION_SUPERFICIES_MIN = 1.05;
+
+export type ResultadoBloqueo = { bloqueado: boolean; motivos: string[] };
+
+/**
+ * Chequeos que impiden guardar el tema (sin excepción por checkbox):
+ * legibilidad básica del texto principal + separación fondo/tarjetas.
+ */
+export function chequearBloqueos(tema: Tema): ResultadoBloqueo {
+  const motivos: string[] = [];
+
+  for (const par of PARES_BLOQUEANTES) {
+    const r = ratio(tema[par.a], tema[par.b]);
+    if (r < par.umbral) {
+      motivos.push(
+        `${par.label}: contraste ${r.toFixed(1)}:1 (mínimo ${par.umbral}:1).`,
+      );
+    }
+  }
+
+  if (ratio(tema.paper, tema.paper2) < SEPARACION_SUPERFICIES_MIN) {
+    motivos.push(
+      "El fondo y el fondo de tarjetas son casi idénticos: las tarjetas e inputs no se distinguen.",
+    );
+  }
+
+  return { bloqueado: motivos.length > 0, motivos };
+}
+
 /** Chequea todos los pares críticos del tema. */
 export function chequearContraste(tema: Tema): ResultadoContraste {
   const pares = PARES_CONTRASTE.map((par) => {
@@ -214,8 +257,20 @@ export function derivarPaleta(
 ): Pick<Tema, "paper2" | "inkSoft" | "rule" | "voltInk"> {
   const { paper, ink, volt } = base;
 
-  // Superficie de tarjeta: un paso mínimo del fondo hacia el texto.
-  const paper2 = mezclarHsl(paper, ink, 0.06);
+  // Superficie de tarjeta: un paso mínimo del fondo hacia el texto, empujando
+  // hasta garantizar que se distinga del fondo (SEPARACION_SUPERFICIES_MIN).
+  let paper2 = mezclarHsl(paper, ink, 0.06);
+  for (let mix = 0.1; mix <= 0.6 && ratio(paper, paper2) < SEPARACION_SUPERFICIES_MIN; mix += 0.04) {
+    paper2 = mezclarHsl(paper, ink, mix);
+  }
+  if (ratio(paper, paper2) < SEPARACION_SUPERFICIES_MIN) {
+    // El texto está demasiado cerca del fondo: separar hacia el extremo opuesto.
+    const paperClaro = luminanciaRelativa(...(hexToRgb(paper) ?? [0, 0, 0])) > 0.5;
+    const extremo = paperClaro ? "#000000" : "#ffffff";
+    for (let t = 0.03; t <= 0.4 && ratio(paper, paper2) < SEPARACION_SUPERFICIES_MIN; t += 0.03) {
+      paper2 = mezclarHsl(paper, extremo, t);
+    }
+  }
 
   // Borde hairline: un paso algo más marcado (estético, no forzamos WCAG).
   const rule = mezclarHsl(paper, ink, 0.14);

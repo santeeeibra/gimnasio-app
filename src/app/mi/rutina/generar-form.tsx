@@ -17,7 +17,7 @@ type S = { error?: string; ok?: string };
 
 const PREFS: PreferenciaEquipo[] = ["gimnasio", "mancuernas", "peso_corporal"];
 const selectCls =
-  "w-full h-11 px-3 rounded-[5px] border border-rule bg-white text-[16px] outline-none transition-[border-color,box-shadow] duration-150 [transition-timing-function:var(--ease-out)] focus:border-ink focus:shadow-[0_0_0_3px_rgb(22_24_29_/_0.08)]";
+  "w-full h-11 px-3 rounded-[5px] border border-rule bg-paper-2 text-[16px] outline-none transition-[border-color,box-shadow] duration-150 [transition-timing-function:var(--ease-out)] focus:border-ink focus:shadow-[0_0_0_3px_rgb(22_24_29_/_0.08)]";
 
 export function GenerarRutinaForm({
   action,

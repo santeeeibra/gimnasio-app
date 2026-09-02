@@ -31,7 +31,7 @@ export function RutinaEditor({
       {dias.map((dia) => (
         <section key={dia.numero}>
           <h2 className="font-display text-lg mb-3">{dia.titulo}</h2>
-          <ul className="border border-rule rounded-[6px] divide-y divide-rule bg-white">
+          <ul className="border border-rule rounded-[6px] divide-y divide-rule bg-paper-2">
             {dia.items.map((item) => (
               <ItemFila key={item.id} item={item} ejercicios={ejercicios} />
             ))}
@@ -124,7 +124,7 @@ function ItemFila({
             inputMode="numeric"
             value={series}
             onChange={(e) => setSeries(e.target.value.replace(/\D/g, "").slice(0, 2))}
-            className="h-11 w-16 px-2 text-center rounded-[5px] border border-rule bg-white text-[16px] outline-none focus:border-ink"
+            className="h-11 w-16 px-2 text-center rounded-[5px] border border-rule bg-paper text-[16px] outline-none focus:border-ink"
           />
         </label>
         <span className="pb-3 text-ink-soft">×</span>
@@ -133,7 +133,7 @@ function ItemFila({
           <input
             value={reps}
             onChange={(e) => setReps(e.target.value.slice(0, 12))}
-            className="h-11 w-24 px-3 rounded-[5px] border border-rule bg-white text-[16px] outline-none focus:border-ink"
+            className="h-11 w-24 px-3 rounded-[5px] border border-rule bg-paper text-[16px] outline-none focus:border-ink"
           />
         </label>
         {dirty ? (
@@ -168,7 +168,7 @@ function ItemFila({
                   type="button"
                   onClick={() => cambiar(alt)}
                   disabled={pending}
-                  className="h-9 px-3 rounded-[5px] border border-rule bg-white text-sm active:scale-95 transition-transform duration-150 [transition-timing-function:var(--ease-out)] disabled:opacity-50"
+                  className="h-9 px-3 rounded-[5px] border border-rule bg-paper text-sm active:scale-95 transition-transform duration-150 [transition-timing-function:var(--ease-out)] disabled:opacity-50"
                 >
                   {alt.nombre}
                 </button>

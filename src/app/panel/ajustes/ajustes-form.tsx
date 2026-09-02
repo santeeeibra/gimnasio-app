@@ -10,7 +10,12 @@ import {
   type FuenteKey,
   type Tema,
 } from "@/lib/tema";
-import { chequearContraste, derivarPaleta, sugerirAjuste } from "@/lib/contraste";
+import {
+  chequearBloqueos,
+  chequearContraste,
+  derivarPaleta,
+  sugerirAjuste,
+} from "@/lib/contraste";
 import { TemaPreviewCompleto } from "./tema-preview-completo";
 import { Radios } from "./radios";
 
@@ -37,6 +42,7 @@ export function AjustesForm({
     setDraft((d) => ({ ...d, [key]: value }));
 
   const resultado = chequearContraste(draft);
+  const bloqueos = chequearBloqueos(draft);
 
   // Reset del checkbox cuando cambia el draft
   useEffect(() => {
@@ -244,6 +250,22 @@ export function AjustesForm({
             />
           </Seccion>
 
+        {/* Bloqueos: no se pueden guardar */}
+        {bloqueos.bloqueado ? (
+          <div className="border-t border-rule pt-5 mt-5">
+            <span className="block text-[11px] uppercase tracking-[0.12em] text-danger mb-3">
+              No se puede guardar
+            </span>
+            <ul className="space-y-1.5 animate-error">
+              {bloqueos.motivos.map((m, i) => (
+                <li key={i} className="text-sm text-danger">
+                  {m}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+
         {/* Legibilidad */}
         {resultado.hayFallos ? (
           <div className="border-t border-rule pt-5 mt-5">
@@ -306,7 +328,7 @@ export function AjustesForm({
 
         <div className="space-y-4">
           {/* Checkbox de confirmación */}
-          {resultado.hayFallos ? (
+          {resultado.hayFallos && !bloqueos.bloqueado ? (
             <label className="flex items-start gap-3 cursor-pointer group active:scale-[0.99] transition-transform duration-150 [transition-timing-function:var(--ease-out)]">
               <div className="relative size-[18px] shrink-0 mt-0.5">
                 <input
@@ -345,7 +367,9 @@ export function AjustesForm({
             <Button
               type="submit"
               disabled={
-                pending || (resultado.hayFallos && !confirmarBajoContraste)
+                pending ||
+                bloqueos.bloqueado ||
+                (resultado.hayFallos && !confirmarBajoContraste)
               }
             >
               {pending ? "Guardando…" : "Guardar cambios"}

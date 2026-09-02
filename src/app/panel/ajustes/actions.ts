@@ -10,7 +10,7 @@ import {
   type FuenteKey,
   type Tema,
 } from "@/lib/tema";
-import { chequearContraste } from "@/lib/contraste";
+import { chequearBloqueos, chequearContraste } from "@/lib/contraste";
 
 export type AjustesState = { error?: string; ok?: string };
 
@@ -77,7 +77,13 @@ export async function actualizarTema(
   }
   tema.densidad = densidad as Tema["densidad"];
 
-  // Validar contraste
+  // Bloqueos duros: legibilidad básica y separación fondo/tarjetas. Sin excepción.
+  const { bloqueado, motivos } = chequearBloqueos(tema);
+  if (bloqueado) {
+    return { error: motivos.join(" ") };
+  }
+
+  // Validar contraste (avisos salteables con confirmación)
   const { hayFallos } = chequearContraste(tema);
   if (hayFallos && formData.get("confirmar_contraste") !== "1") {
     return {

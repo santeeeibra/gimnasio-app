@@ -50,11 +50,19 @@ usarlo para altas masivas).
   mano. El sistema calcula días restantes.
 - Alerta en rojo cuando quedan ≤5-6 días + push, para cliente y dueño.
 
-### Rutinas (sin empezar)
-- V1: motor de **reglas fijas** (sin IA). Variables: objetivo, peso, edad, días
-  de entrenamiento, preferencias.
-- Cliente puede editar su rutina (series/reps, sustituir ejercicios).
-- Base de ejercicios con imagen/GIF de fuente abierta (wger).
+### Rutinas (motor + generación + editor hechos; falta pulido/seed real)
+- V1: motor de **reglas fijas** (sin IA). Variables: objetivo, nivel, días de
+  entrenamiento, preferencia de equipo.
+- `src/lib/rutina/`: `tipos.ts` (tipos + labels OBJETIVO/NIVEL), `motor.ts`
+  (scoring de ejercicios con factores de equipo, `ejerciciosSimilares()` para
+  sustituciones), `generar.ts` (arma la rutina por día).
+- Cliente genera y edita su rutina en `/mi/rutina` (`generar-form.tsx`,
+  `rutina-editor.tsx`, `actions.ts`: `generarMiRutina`, `editarItem`,
+  `sustituirEjercicio`). Puede cambiar series/reps y sustituir ejercicios
+  ("No lo conozco" → alternativas del mismo grupo).
+- El dueño ve la rutina del cliente en `/panel/clientes/[id]/rutina-panel.tsx`.
+- Base de ejercicios con imagen/GIF de fuente abierta (wger) — **pendiente el
+  seed real**, hoy hay datos de ejemplo.
 - Fase 2 futura: capa de IA solo para ajustes finos.
 
 ### Mensajería
@@ -63,10 +71,21 @@ usarlo para altas masivas).
 - Llega a la bandeja dentro de la app + push.
 
 ### Branding por gimnasio
-- El dueño personaliza el tema desde `/panel/ajustes`: 7 colores independientes
-  (fondo, fondo tarjetas, texto, texto suave, bordes, acento, texto sobre
-  acento) + tipografía (9 presets: Moderno/Técnico/Neutro/Editorial/Humanista/
-  Redondeado/Condensado/Contemporáneo/Amigable). Sin tinte automático.
+- El dueño personaliza el tema desde `/panel/ajustes`. Ejes:
+  - **Colores (7)**: fondo, fondo tarjetas, texto, texto suave, bordes, acento,
+    texto sobre acento. Sin tinte automático.
+    - **Base vs derivados**: el dueño elige 3 (fondo, texto, acento); botón
+      **"Calcular desde la base"** deriva los otros 4 (fondo tarjetas, texto
+      suave, bordes, texto sobre acento) con `derivarPaleta()` en
+      `src/lib/contraste.ts` — mezcla HSL manteniendo tono/saturación y fuerza
+      contraste ≥ 4.5 en los pares de texto. Editables a mano después.
+  - **Tipografía**: 9 presets (Moderno/Técnico/Neutro/Editorial/Humanista/
+    Redondeado/Condensado/Contemporáneo/Amigable) + tamaño base
+    (0.875 / 1 / 1.125 / 1.25).
+  - **Bordes y espaciado**: redondeo (tight/normal/soft), escala de espaciado
+    (compact/normal/spacious).
+  - **Navegación**: móvil (bottom/top/sidebar), desktop (sidebar/top).
+  - **Densidad de información**.
 - **Validación de contraste WCAG 2.1**: 6 pares críticos (umbrales 3.0 y 4.5).
   Sugerencias automáticas ajustando luminosidad HSL. Checkbox obligatorio para
   guardar con fallos (`src/lib/contraste.ts`).
@@ -75,6 +94,10 @@ usarlo para altas masivas).
 - Se guarda en `gimnasios.tema` (jsonb). `null` → defaults.
 - `src/lib/tema.ts` centraliza tipo, defaults, validación y `temaToVars()`.
   Inyectado en `panel/layout.tsx` y `mi/layout.tsx`. Preview en vivo en Ajustes.
+- Componentes del editor: `ajustes-form.tsx` (form + estado), `radios.tsx`
+  (grupos de opciones), `tema-preview-completo.tsx` (preview), `Seccion`
+  (agrupador colapsable dentro de `ajustes-form.tsx`), tabs Editor/Preview en
+  móvil.
 
 ## Modelo de datos
 
@@ -93,10 +116,10 @@ SECURITY DEFINER (`soy_destinatario`, `mensaje_gimnasio`, `mensaje_remitente`,
 |---|---|
 | 1 — Scaffold, auth, panel dueño, vista cliente, seed | ✅ HECHO |
 | 2 — Mensajería (compositor, bandeja, hilos) | ✅ HECHO, probado end-to-end |
-| Branding / tema personalizable | ✅ **COMPLETO** — 7 colores + 9 presets tipográficos (10 fuentes) + validación contraste WCAG 2.1 + preview en vivo. Ver `VALIDACION_CONTRASTE.md` y `FUENTES_PERSONALIZABLES.md`. **Pendiente**: aplicar migración `0004_tema_jsonb.sql` + prueba end-to-end |
-| Rediseño UI mobile-first con `emil-design-eng` | 🔄 EN CURSO — `/login` ✅ hecho. `/panel/ajustes` ✅ validación de contraste estilo Emil. Próximo `/panel` (dashboard). Dirección y notas en `INSTRUCCIONES_TEMA.md` §4 |
+| Branding / tema personalizable | ✅ **COMPLETO y ampliado** — 7 colores (con base/derivados + "Calcular desde la base") + 9 presets tipográficos (10 fuentes) + tamaño base + redondeo + espaciado + estilo de navegación + densidad + validación contraste WCAG 2.1 (avisos salteables + **bloqueos duros no salteables**: `ink`/`paper`, `ink`/`paper-2` ≥ 4.5 y separación `paper`/`paper-2` ≥ 1.05, vía `chequearBloqueos()`) + preview en vivo. Ver `VALIDACION_CONTRASTE.md` y `FUENTES_PERSONALIZABLES.md`. **Pendiente**: aplicar migración `0004_tema_jsonb.sql` + prueba end-to-end |
+| Rediseño UI mobile-first con `emil-design-eng` | 🔄 EN CURSO — `/login` ✅. `/panel/ajustes` ✅ (editor de tema completo estilo Emil). Próximo `/panel` (dashboard). Dirección y notas en `INSTRUCCIONES_TEMA.md` §4 |
 | 3 — Push web nativo | Sin empezar. Tabla lista; faltan VAPID keys, service worker, endpoint, disparo en cuota por vencer. TODO marcado en `panel/mensajes/actions.ts` |
-| 4 — Rutinas (motor de reglas + editor + seed wger) | Sin empezar. Tablas listas |
+| 4 — Rutinas (motor de reglas + editor + seed wger) | 🔄 EN CURSO — motor (`src/lib/rutina/`), generación y editor cliente (`/mi/rutina`), panel dueño (`/panel/clientes/[id]/rutina-panel.tsx`) ✅. **Pendiente**: seed real de ejercicios wger (imágenes/GIF), pulido UI mobile del editor, prueba end-to-end |
 | 5 — Cron `recalcular_estado_cuota()` diario (pg_cron o Vercel cron) | Sin empezar |
 
 ### Datos de prueba
@@ -107,6 +130,39 @@ SECURITY DEFINER (`soy_destinatario`, `mensaje_gimnasio`, `mensaje_remitente`,
 ### Detalles conocidos
 - Para el cliente el remitente de un mensaje figura "Gimnasio" (la policy
   `prof_select` no deja al cliente leer el perfil del dueño). Sin resolver.
+
+### Bugs abiertos
+- **`/mi/rutina` no respeta el tema** (visto en captura, 2026-09-01).
+  - Causa 1: `bg-white` hardcodeado — ✅ RESUELTO. `rutina-editor.tsx` (`ul`
+    → `bg-paper-2`, inputs y botón alt → `bg-paper`) y `generar-form.tsx`
+    (`selectCls` → `bg-paper-2`). Quedan ~14 `bg-white` en el resto de `src/`
+    (`components/ui.tsx` `Field`/`Card` incluidos) para el barrido global.
+  - Causa 2: paleta del gimnasio que falla contraste (`ink`≈`paper`,
+    `paper`≈`paper-2`) → texto ilegible e inputs invisibles. Es app-wide, no
+    de rutina. Mitigado en el editor de tema (ver Estado / Branding): ahora
+    `chequearBloqueos()` en `src/lib/contraste.ts` impide guardar (sin
+    checkbox) si `ink`/`paper` o `ink`/`paper-2` < 4.5 o si la separación
+    `paper`/`paper-2` < 1.05; `derivarPaleta()` fuerza esa separación.
+    **Pendiente**: re-guardar la paleta del gimnasio de prueba desde Ajustes.
+
+## Cómo seguir (próxima sesión)
+
+Prioridad sugerida:
+
+1. ✅ **Fix `/mi/rutina` no respeta el tema** — `bg-white` de las pantallas de
+   rutina pasados a tokens. Validación de tema endurecida (`chequearBloqueos`).
+   Ver Bugs abiertos.
+2. **Migración `0004_tema_jsonb.sql`** + prueba end-to-end del editor de tema
+   con un gimnasio real (colores + fuente + nav + densidad se guardan y se
+   aplican en `panel/` y `mi/`). Manual del humano (`INSTRUCCIONES_TEMA.md`).
+   Incluir: re-guardar la paleta del gimnasio de prueba (hoy falla contraste)
+   y verificar que el editor ahora bloquea el guardado en ese caso.
+3. **Seed real de ejercicios wger** (imágenes/GIF) para el motor de rutinas y
+   pulido mobile del editor `/mi/rutina`.
+4. **Entregable 3 — Push web nativo**: VAPID keys, service worker, endpoint,
+   disparo en cuota por vencer (TODO en `panel/mensajes/actions.ts`).
+5. Barrer `bg-white` en todo `src/` (~19) → tokens.
+6. Rediseño UI: seguir con `/panel` (dashboard).
 
 ## Cómo trabajar (ahorrar tokens)
 
