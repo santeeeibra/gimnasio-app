@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/auth";
 import { logout } from "@/app/actions";
-import { Panel } from "@/components/ui";
 import { diasRestantes, estadoDesdeDias, ESTADO_LABEL } from "@/lib/cuota";
 import { ActivarNotificaciones } from "./activar-notificaciones";
 import { VerTutorialDeNuevo } from "@/components/tutorial/tutorial";
@@ -29,7 +28,7 @@ export default async function MiPage() {
   const diasParaAnillo = dias !== null && dias >= 0 ? dias : 0;
 
   return (
-    <main className="max-w-md mx-auto p-6 space-y-6">
+    <main className="stagger max-w-md mx-auto p-6 space-y-6">
       <div className="flex items-baseline justify-between">
         <h1 className="text-2xl">Hola, {profile.nombre.split(" ")[0]}</h1>
         <div className="flex shrink-0 items-baseline gap-3">
@@ -42,8 +41,8 @@ export default async function MiPage() {
         </div>
       </div>
 
-      <Panel
-        className={`futurista-fondo p-5 border-l-2 ${
+      <div
+        className={`card-cut card-cut-lg futurista-fondo border border-rule bg-paper-2 p-5 border-l-2 ${
           estado === "vencido"
             ? "border-l-danger"
             : estado === "por_vencer"
@@ -86,9 +85,9 @@ export default async function MiPage() {
             </p>
           </div>
         </div>
-      </Panel>
+      </div>
 
-      <ul className="overflow-hidden rounded-[6px] border border-rule bg-paper-2 divide-y divide-rule">
+      <ul className="card-cut overflow-hidden border border-rule bg-paper-2 divide-y divide-rule">
         <li>
           <a
             href="/mi/mensajes"

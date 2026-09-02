@@ -16,7 +16,7 @@ export function AltaForm({
   );
 
   return (
-    <form action={formAction} className="grid sm:grid-cols-2 gap-4">
+    <form action={formAction} className="stagger grid sm:grid-cols-2 gap-4">
       <Field label="Nombre y apellido" name="nombre" required />
       <Field label="DNI" name="dni" inputMode="numeric" required />
       <Field label="Teléfono" name="telefono" inputMode="tel" />

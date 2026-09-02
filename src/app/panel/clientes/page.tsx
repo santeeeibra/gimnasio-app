@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireDueno } from "@/lib/auth";
-import { Panel } from "@/components/ui";
 import { AltaForm } from "./alta-form";
 import { ClienteRow, type ClienteVista } from "./cliente-row";
 
@@ -31,13 +30,13 @@ export default async function ClientesPage() {
   );
 
   return (
-    <div className="space-y-10">
+    <div className="stagger space-y-10">
       <div>
         <h1 className="text-3xl mb-1">Clientes</h1>
         <p className="text-sm text-ink-soft">{clientes.length} en total</p>
       </div>
 
-      <Panel className="p-5">
+      <div className="card-cut card-cut-lg border border-rule bg-paper-2 p-5">
         <h2 className="text-lg mb-4">Nuevo cliente</h2>
         {planes.length === 0 ? (
           <p className="text-sm text-ink-soft">
@@ -46,12 +45,12 @@ export default async function ClientesPage() {
         ) : (
           <AltaForm planes={planes} />
         )}
-      </Panel>
+      </div>
 
       {clientes.length === 0 ? (
         <p className="text-sm text-ink-soft">Todavía no hay clientes cargados.</p>
       ) : (
-        <ul className="border border-rule rounded-[6px] divide-y divide-rule bg-paper-2 overflow-hidden">
+        <ul className="card-cut border border-rule divide-y divide-rule bg-paper-2 overflow-hidden">
           {clientes.map((c) => (
             <ClienteRow
               key={c.id}

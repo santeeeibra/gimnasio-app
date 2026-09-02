@@ -66,7 +66,7 @@ export default async function ResumenPage() {
         </Link>
       </div>
 
-      <div className="futurista-fondo mb-10 rounded-[6px] border border-rule bg-paper-2 p-6">
+      <div className="futurista-fondo mb-10 card-cut card-cut-lg border border-rule bg-paper-2 p-6">
         <p
           key={hero.n}
           className={`futurista-num-in font-display leading-[0.82] tracking-tight text-[clamp(4rem,22vw,7rem)] ${hero.tone}`}
@@ -113,7 +113,7 @@ export default async function ResumenPage() {
       <section>
         <h2 className="mb-3 text-lg">Atención esta semana</h2>
         {atencion.length === 0 ? (
-          <div className="rounded-[6px] border border-rule bg-paper-2 px-5 py-9 text-center">
+          <div className="card-cut border border-rule bg-paper-2 px-5 py-9 text-center">
             <span
               aria-hidden
               className="mx-auto mb-3 block size-2 rounded-full bg-volt"
@@ -124,7 +124,7 @@ export default async function ResumenPage() {
             </p>
           </div>
         ) : (
-          <ul className="stagger overflow-hidden rounded-[6px] border border-rule bg-paper-2 divide-y divide-rule">
+          <ul className="stagger card-cut overflow-hidden border border-rule bg-paper-2 divide-y divide-rule">
             {atencion.map((c) => (
               <ClienteRow key={c.id} cliente={c} />
             ))}

@@ -163,6 +163,25 @@ h3 {
   transition-delay: 225ms;
 }
 
+/* Firma visual: card con corte asimétrico en la esquina superior derecha.
+   Reemplaza el border-radius en superficies destacadas (ver
+   design/sysgym-10-pantallas.html). El clip-path recorta el borde sobre el
+   corte: es intencional, la diagonal queda limpia. El resto de los bordes
+   (incluido el border-l-* semántico) se conservan. */
+.card-cut {
+  --cut: 18px;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--cut)) 0,
+    100% var(--cut),
+    100% 100%,
+    0 100%
+  );
+}
+.card-cut-lg {
+  --cut: 22px;
+}
+
 /* Error text: snappy own entrance when it mounts after a failed submit. */
 .animate-error {
   transition:

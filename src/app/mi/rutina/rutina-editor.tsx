@@ -209,7 +209,7 @@ export function RutinaEditor({
       {dias.map((dia) => (
         <section key={dia.numero}>
           <h2 className="font-display text-lg mb-3">{dia.titulo}</h2>
-          <ul className="border border-rule rounded-[6px] divide-y divide-rule bg-paper-2 overflow-hidden">
+          <ul className="card-cut border border-rule divide-y divide-rule bg-paper-2 overflow-hidden">
             {dia.items.map((item) => (
               <ItemFila
                 key={item.id}

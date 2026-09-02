@@ -63,7 +63,7 @@ export default async function MiRutinaPage() {
   const ejercicios = (ejerciciosData ?? []) as Ejercicio[];
 
   return (
-    <main className="max-w-md mx-auto px-5 py-6 space-y-6">
+    <main className="stagger max-w-md mx-auto px-5 py-6 space-y-6">
       <div>
         <Link
           href="/mi"

@@ -58,7 +58,7 @@ export function GenerarRutinaForm({
   }
 
   return (
-    <form action={formAction} className="grid gap-4 sm:grid-cols-2">
+    <form action={formAction} className="stagger grid gap-4 sm:grid-cols-2">
       {clienteId ? <input type="hidden" name="cliente_id" value={clienteId} /> : null}
 
       <Select

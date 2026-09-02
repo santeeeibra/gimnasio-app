@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "ios-ux-prototype": {
+      "source": "tddworks/claude-skills",
+      "sourceType": "github",
+      "skillPath": "skills/ios-ux-prototype/SKILL.md",
+      "computedHash": "bef9b675c7a4039d8a3ce0541ce497f68f9b030af62e6349b454ef55f9ae5698"
+    }
+  }
+}

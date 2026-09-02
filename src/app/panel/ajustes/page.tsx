@@ -1,6 +1,5 @@
 import { requireDueno } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { Panel } from "@/components/ui";
 import { parseTema } from "@/lib/tema";
 import { AjustesForm } from "./ajustes-form";
 import { VerTutorialDeNuevo } from "@/components/tutorial/tutorial";
@@ -16,7 +15,7 @@ export default async function AjustesPage() {
     .single();
 
   return (
-    <div>
+    <div className="stagger">
       <h1 className="text-3xl mb-2">Ajustes</h1>
       <p className="text-sm text-ink-soft mb-4">
         Personalizá los colores y la tipografía de tu gimnasio. Los cambios se
@@ -26,7 +25,7 @@ export default async function AjustesPage() {
         <VerTutorialDeNuevo />
       </div>
 
-      <Panel className="p-6">
+      <div className="card-cut card-cut-lg border border-rule bg-paper-2 p-6">
         <h2 className="text-lg mb-4">Tema del gimnasio</h2>
         {gym ? (
           <AjustesForm
@@ -35,7 +34,7 @@ export default async function AjustesPage() {
             logoUrl={gym.logo_url ?? null}
           />
         ) : null}
-      </Panel>
+      </div>
     </div>
   );
 }

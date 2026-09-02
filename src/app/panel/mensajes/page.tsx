@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { requireDueno } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { Panel } from "@/components/ui";
 import { ComposeForm } from "./compose-form";
 
 export default async function MensajesPage() {
@@ -46,20 +45,20 @@ export default async function MensajesPage() {
   }[];
 
   return (
-    <div className="space-y-8">
+    <div className="stagger space-y-8">
       <h1 className="text-3xl">Mensajes</h1>
 
-      <Panel className="p-5">
+      <div className="card-cut card-cut-lg border border-rule bg-paper-2 p-5">
         <h2 className="text-lg mb-4">Nuevo mensaje</h2>
         <ComposeForm planes={planes} clientes={clientes} />
-      </Panel>
+      </div>
 
       <section className="space-y-3">
         <h2 className="text-lg">Enviados</h2>
         {mensajes.length === 0 ? (
           <p className="text-sm text-ink-soft">Todavía no enviaste mensajes.</p>
         ) : (
-          <ul className="border border-rule rounded-[6px] divide-y divide-rule">
+          <ul className="card-cut overflow-hidden border border-rule divide-y divide-rule">
             {mensajes.map((m) => {
               const total = m.destinatarios.length;
               const leidos = m.destinatarios.filter((d) => d.leido).length;

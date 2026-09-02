@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireDueno } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { Panel } from "@/components/ui";
 import { ReplyForm } from "./reply-form";
 
 export default async function MensajeHiloPage({
@@ -47,7 +46,7 @@ export default async function MensajeHiloPage({
   }[];
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="stagger space-y-6 max-w-2xl">
       <Link
         href="/panel/mensajes"
         className="text-xs text-ink-soft underline underline-offset-2"
@@ -55,18 +54,18 @@ export default async function MensajeHiloPage({
         ← Mensajes
       </Link>
 
-      <Panel className="p-5">
+      <div className="card-cut card-cut-lg border border-rule bg-paper-2 p-5">
         <p className="text-xs text-ink-soft">
           {new Date(msg.creado_at).toLocaleString()}
         </p>
         <p className="text-sm whitespace-pre-wrap mt-2">{msg.cuerpo}</p>
-      </Panel>
+      </div>
 
       <section>
         <h2 className="text-sm font-medium mb-2">
           Destinatarios ({destinatarios.length})
         </h2>
-        <ul className="border border-rule rounded-[6px] divide-y divide-rule text-sm">
+        <ul className="card-cut overflow-hidden border border-rule divide-y divide-rule text-sm">
           {destinatarios.map((d, i) => (
             <li key={i} className="px-4 py-2 flex justify-between gap-4">
               <span>{d.profile?.nombre ?? "—"}</span>

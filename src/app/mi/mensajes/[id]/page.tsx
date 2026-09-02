@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { Panel } from "@/components/ui";
 import { MarkRead } from "../mark-read";
 import { ReplyForm } from "../reply-form";
 
@@ -50,7 +49,7 @@ export default async function MiHiloPage({
   }[];
 
   return (
-    <main className="max-w-md mx-auto p-6 space-y-6">
+    <main className="stagger max-w-md mx-auto p-6 space-y-6">
       <MarkRead mensajeId={m.id} />
       <Link
         href="/mi/mensajes"
@@ -59,7 +58,7 @@ export default async function MiHiloPage({
         ← Mensajes
       </Link>
 
-      <Panel className="p-5">
+      <div className="card-cut card-cut-lg border border-rule bg-paper-2 p-5">
         <p className="text-xs text-ink-soft">
           {!m.remitente && gym?.logo_url ? (
             <span className="mr-1 inline-block size-4 overflow-hidden rounded-full border border-rule bg-paper-2 align-text-bottom">
@@ -75,7 +74,7 @@ export default async function MiHiloPage({
           {new Date(m.creado_at).toLocaleString()}
         </p>
         <p className="text-sm whitespace-pre-wrap mt-2">{m.cuerpo}</p>
-      </Panel>
+      </div>
 
       {m.respondible ? (
         <section className="space-y-3">

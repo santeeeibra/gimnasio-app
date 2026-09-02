@@ -137,6 +137,17 @@ rounded-full    → badges, pills, avatares
 - Separador de sección: `border-t border-rule pt-4`.
 - Card que contiene imagen: `overflow-hidden` para recortar la imagen al radio.
 
+### Firma visual: corte asimétrico (`.card-cut`)
+- Clase en `globals.css`: `.card-cut` (corte de `--cut:18px` en la esquina
+  superior derecha vía `clip-path`) + modificador `.card-cut-lg` (`22px`).
+- Se usa en **cards destacadas y `<ul>` de lista** en lugar del
+  `rounded-[6px]` (no combinar con `rounded-*`: el polígono tiene esquinas
+  rectas). Reemplaza a `<Panel>` cuando la superficie es protagonista.
+- El `clip-path` recorta el borde sobre la diagonal — es intencional. El
+  resto de bordes (incl. `border-l-*` semántico) se conservan; en `<ul>`
+  mantener `overflow-hidden` para el `divide-y`.
+- **No** aplicar a: chat bubbles, inputs/botones, nav, chips, modales.
+
 ---
 
 ## 5. Imágenes y media (⚠️ causa de regresión conocida)
@@ -480,7 +491,14 @@ contenedor de la métrica en `.futurista-fondo`, usar `AnilloProgreso` (o
 `--font-hero` + `--volt` a mano con los mismos tokens), y **no** agregar
 colores ni fuentes fuera de los listados arriba.
 
-**Aplicado en**:
+**Corte asimétrico `.card-cut` + `.stagger` aplicados en** (todas las pantallas
+principales, dirección visual de `design/sysgym-10-pantallas.html`): `/mi`,
+`/panel` (Resumen), `/panel/clientes` (+ alta-form), `/panel/planes`,
+`/panel/ajustes`, `/panel/mensajes` (+ hilo), `/mi/mensajes` (+ hilo),
+`/mi/rutina` (+ generar-form, rutina-editor). Login queda con su propio
+patrón (`animate-slide-up` escalonado + display grande).
+
+**Aplicado en** (`AnilloProgreso`):
 - `/mi` (card "Tu cuota" — días restantes del plan, con `AnilloProgreso`)
 - `/panel` (bloque héroe del Resumen — grid `futurista-fondo` + `futurista-num-in`
   en el número; **se conservan los tonos semánticos** `text-danger`/`text-warn`

@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { Panel } from "@/components/ui";
 
 export default async function MiBandejaPage() {
   const profile = await requireProfile();
@@ -38,7 +37,7 @@ export default async function MiBandejaPage() {
     );
 
   return (
-    <main className="max-w-md mx-auto p-6 space-y-6">
+    <main className="stagger max-w-md mx-auto p-6 space-y-6">
       <div className="flex items-baseline justify-between">
         <h1 className="text-2xl">Mensajes</h1>
         <Link
@@ -52,15 +51,18 @@ export default async function MiBandejaPage() {
       {items.length === 0 ? (
         <p className="text-sm text-ink-soft">No tenés mensajes.</p>
       ) : (
-        <ul className="space-y-2">
+        <ul className="card-cut overflow-hidden border border-rule bg-paper-2 divide-y divide-rule">
           {items.map((i) => (
-            <li key={i.mensaje_id}>
-              <Link href={`/mi/mensajes/${i.mensaje_id}`}>
-                <Panel
-                  className={`p-4 ${!i.leido ? "border-l-2 border-l-volt" : ""}`}
-                >
-                  <p className="text-sm line-clamp-2">{i.mensaje!.cuerpo}</p>
-                  <p className="text-xs text-ink-soft mt-1">
+            <li
+              key={i.mensaje_id}
+              className={!i.leido ? "border-l-2 border-l-volt" : ""}
+            >
+              <Link
+                href={`/mi/mensajes/${i.mensaje_id}`}
+                className="block px-4 py-4 transition-colors duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper active:bg-paper"
+              >
+                <p className="text-sm line-clamp-2">{i.mensaje!.cuerpo}</p>
+                <p className="text-xs text-ink-soft mt-1">
                     {!i.mensaje!.remitente && gym?.logo_url ? (
                       <span className="mr-1 inline-block size-4 overflow-hidden rounded-full border border-rule bg-paper-2 align-text-bottom">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -75,8 +77,7 @@ export default async function MiBandejaPage() {
                     {new Date(i.mensaje!.creado_at).toLocaleDateString()}
                     {!i.leido ? " · nuevo" : ""}
                     {i.mensaje!.respondible ? " · podés responder" : ""}
-                  </p>
-                </Panel>
+                </p>
               </Link>
             </li>
           ))}

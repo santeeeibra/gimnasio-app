@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireDueno } from "@/lib/auth";
-import { Panel } from "@/components/ui";
 import { PlanForm } from "./plan-form";
 import { alternarPlan } from "./actions";
 
@@ -21,18 +20,18 @@ export default async function PlanesPage() {
   }[];
 
   return (
-    <div className="space-y-8">
+    <div className="stagger space-y-8">
       <h1 className="text-3xl">Planes</h1>
 
-      <Panel className="p-5">
+      <div className="card-cut card-cut-lg border border-rule bg-paper-2 p-5">
         <h2 className="text-lg mb-4">Nuevo plan</h2>
         <PlanForm />
-      </Panel>
+      </div>
 
       {planes.length === 0 ? (
         <p className="text-sm text-ink-soft">Todavía no cargaste ningún plan.</p>
       ) : (
-        <ul className="border border-rule rounded-[6px] divide-y divide-rule">
+        <ul className="card-cut overflow-hidden border border-rule divide-y divide-rule">
           {planes.map((p) => (
             <li
               key={p.id}
