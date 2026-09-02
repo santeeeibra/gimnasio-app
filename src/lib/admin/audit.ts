@@ -11,7 +11,8 @@ type AccionAdmin =
   | "salir_impersonacion"
   | "editar_planes_plataforma"
   | "asignar_plan_plataforma"
-  | "renovar_plan_plataforma";
+  | "renovar_plan_plataforma"
+  | "confirmar_pago_plataforma";
 
 // Registra una acción del superadmin en admin_audit_log. No lanza: si falla,
 // solo lo loguea (la auditoría no debe romper la navegación de la consola).

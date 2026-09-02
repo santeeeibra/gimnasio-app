@@ -8,6 +8,7 @@ import { Button } from "@/components/ui";
 import { cupoExcedido, cupoTexto } from "@/lib/plataforma/planes";
 import { EstadoForm } from "./estado-form";
 import { PlanPlataformaForm } from "./plan-plataforma-form";
+import { PagosPlataforma, type PagoPlataformaRow } from "./pagos-plataforma";
 
 export const dynamic = "force-dynamic";
 
@@ -30,8 +31,13 @@ export default async function AdminGimnasioDetalle({
 
   if (!gym) notFound();
 
-  const [{ data: clientes }, { data: pagos }, { data: dueno }, { data: planesData }] =
-    await Promise.all([
+  const [
+    { data: clientes },
+    { data: pagos },
+    { data: dueno },
+    { data: planesData },
+    { data: pagosPlataformaData },
+  ] = await Promise.all([
     db
       .from("clientes")
       .select(
@@ -57,6 +63,12 @@ export default async function AdminGimnasioDetalle({
       .select("id, nombre, max_socios")
       .eq("activo", true)
       .order("orden", { ascending: true }),
+    db
+      .from("pagos_plataforma")
+      .select("id, monto_ars, dias, estado, proveedor, nota, creado_at")
+      .eq("gimnasio_id", id)
+      .order("creado_at", { ascending: false })
+      .limit(8),
   ]);
 
   await registrarAccionAdmin(admin.id, "ver_gym", id, {
@@ -86,6 +98,7 @@ export default async function AdminGimnasioDetalle({
     nombre: string;
     max_socios: number | null;
   }[];
+  const pagosPlataforma = (pagosPlataformaData ?? []) as PagoPlataformaRow[];
 
   const ultimosPagos = (pagos ?? []) as unknown as {
     id: string;
@@ -132,6 +145,17 @@ export default async function AdminGimnasioDetalle({
           planActualId={planP?.id ?? null}
           venceElActual={gym.plan_plataforma_vence_el ?? null}
         />
+      </div>
+
+      <div className="card-cut mb-8 border border-rule bg-paper-2 p-5">
+        <h2 className="mb-1 text-sm uppercase tracking-[0.14em] text-ink-soft">
+          Pagos de plataforma
+        </h2>
+        <p className="mb-3 text-xs text-ink-soft">
+          Confirmar un pago pendiente renueva el vencimiento del plan y deja el
+          gimnasio en <code>activo</code>.
+        </p>
+        <PagosPlataforma pagos={pagosPlataforma} />
       </div>
 
       <div className="card-cut mb-8 border border-rule bg-paper-2 p-5">

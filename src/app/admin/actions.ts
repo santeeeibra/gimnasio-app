@@ -156,6 +156,63 @@ export async function renovarPlanPlataforma(
   return { ok: true, msg: `Renovado hasta ${venceEl}, gimnasio activo.` };
 }
 
+// Confirma un pago pendiente de gimnasio -> plataforma: lo marca aprobado y
+// renueva plan_plataforma_vence_el (+ estado 'activo'). Idempotente: si el
+// pago ya no está pendiente, no hace nada. Superadmin, service_role, auditado.
+export async function confirmarPagoPlataforma(
+  _prev: { ok: boolean; msg: string } | null,
+  formData: FormData,
+): Promise<{ ok: boolean; msg: string }> {
+  const admin = await requireSuperadmin();
+  const pagoId = String(formData.get("pago_id") ?? "");
+  if (!pagoId) return { ok: false, msg: "Falta el pago." };
+
+  const db = createAdminClient();
+  const { data: pago } = await db
+    .from("pagos_plataforma")
+    .select("id, gimnasio_id, dias, estado")
+    .eq("id", pagoId)
+    .single();
+  if (!pago) return { ok: false, msg: "Pago inexistente." };
+  if (pago.estado !== "pendiente") {
+    return { ok: false, msg: `El pago ya está ${pago.estado}.` };
+  }
+
+  const { data: gym } = await db
+    .from("gimnasios")
+    .select("plan_plataforma_vence_el")
+    .eq("id", pago.gimnasio_id)
+    .single();
+
+  const hoy = new Date();
+  const vigente = gym?.plan_plataforma_vence_el
+    ? new Date(gym.plan_plataforma_vence_el)
+    : null;
+  const base = vigente && vigente > hoy ? vigente : hoy;
+  base.setDate(base.getDate() + (pago.dias ?? 30));
+  const venceEl = base.toISOString().slice(0, 10);
+
+  const { error: e1 } = await db
+    .from("pagos_plataforma")
+    .update({ estado: "aprobado", confirmado_at: new Date().toISOString() })
+    .eq("id", pagoId)
+    .eq("estado", "pendiente");
+  if (e1) return { ok: false, msg: e1.message };
+
+  const { error: e2 } = await db
+    .from("gimnasios")
+    .update({ plan_plataforma_vence_el: venceEl, estado: "activo" })
+    .eq("id", pago.gimnasio_id);
+  if (e2) return { ok: false, msg: e2.message };
+
+  await registrarAccionAdmin(admin.id, "confirmar_pago_plataforma", pago.gimnasio_id, {
+    pago_id: pagoId,
+    vence_el: venceEl,
+  });
+  revalidatePath(`/admin/gimnasios/${pago.gimnasio_id}`);
+  return { ok: true, msg: `Pago confirmado. Plan hasta ${venceEl}.` };
+}
+
 // Manda un push de prueba SOLO a los dispositivos del superadmin. Nunca a
 // clientes ni dueños de un gimnasio.
 export async function enviarPushPrueba(

@@ -2,7 +2,15 @@ import Link from "next/link";
 import { requireDueno } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { cupoSocios } from "@/lib/plataforma/cupo";
+import { DATOS_TRANSFERENCIA } from "@/lib/pagos/manual";
 import { SolicitarForm } from "./solicitar-form";
+import { PagoForm } from "./pago-form";
+
+const PAGO_ESTADO_LABEL: Record<string, string> = {
+  pendiente: "pendiente de confirmación",
+  aprobado: "aprobado",
+  rechazado: "rechazado",
+};
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +24,7 @@ export default async function PanelPlanPage() {
   const dueno = await requireDueno();
   const db = createAdminClient();
 
-  const [{ data: gym }, cupo] = await Promise.all([
+  const [{ data: gym }, cupo, { data: ultimoPago }] = await Promise.all([
     db
       .from("gimnasios")
       .select(
@@ -25,6 +33,13 @@ export default async function PanelPlanPage() {
       .eq("id", dueno.gimnasio_id)
       .single(),
     cupoSocios(db, dueno.gimnasio_id),
+    db
+      .from("pagos_plataforma")
+      .select("id, estado, monto_ars, creado_at")
+      .eq("gimnasio_id", dueno.gimnasio_id)
+      .order("creado_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
 
   const estado = gym?.estado ?? "prueba";
@@ -101,8 +116,39 @@ export default async function PanelPlanPage() {
         </p>
       ) : null}
 
+      {ultimoPago ? (
+        <p className="text-sm text-ink-soft">
+          Último pago:{" "}
+          <span
+            className={
+              ultimoPago.estado === "aprobado"
+                ? "text-ok"
+                : ultimoPago.estado === "rechazado"
+                  ? "text-danger"
+                  : "text-ink"
+            }
+          >
+            {PAGO_ESTADO_LABEL[ultimoPago.estado] ?? ultimoPago.estado}
+          </span>{" "}
+          ·{" "}
+          {new Date(ultimoPago.creado_at).toLocaleDateString("es-AR")}
+        </p>
+      ) : null}
+
       <div className="card-cut border border-rule bg-paper-2 p-5">
-        <h2 className="mb-3 text-lg">Activar o ampliar</h2>
+        <h2 className="mb-1 text-lg">Pagar el plan</h2>
+        <p className="mb-4 text-sm text-ink-soft">
+          Se registra el pago del período (30 días). Al confirmarse, tu plan se
+          renueva y el gimnasio queda activo.
+        </p>
+        <PagoForm
+          alias={DATOS_TRANSFERENCIA.alias}
+          titular={DATOS_TRANSFERENCIA.titular}
+        />
+      </div>
+
+      <div className="card-cut border border-rule bg-paper-2 p-5">
+        <h2 className="mb-3 text-lg">¿Dudas con el plan?</h2>
         <SolicitarForm />
       </div>
     </div>
