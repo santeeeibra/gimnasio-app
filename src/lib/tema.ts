@@ -325,6 +325,7 @@ export function temaToVars(t: Tema): React.CSSProperties {
     "--volt-ink": t.voltInk,
     "--app-font-display": f.display,
     "--app-font-sans": f.sans,
+    "--font-hero": `var(--font-orbitron), ${STACK}`,
     
     // Variables UI personalizadas
     "--font-scale": t.escalaFuente.toString(),

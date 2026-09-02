@@ -10,6 +10,7 @@ import {
   Archivo,
   Sora,
   Plus_Jakarta_Sans,
+  Orbitron,
 } from "next/font/google";
 import "./globals.css";
 
@@ -73,6 +74,13 @@ const plusJakarta = Plus_Jakarta_Sans({
   display: "swap",
 });
 
+const orbitron = Orbitron({
+  subsets: ["latin"],
+  variable: "--font-orbitron",
+  weight: ["700", "900"],
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "Gestión de gimnasio",
   description: "Cuotas, rutinas y avisos en un solo lugar.",
@@ -92,7 +100,7 @@ export default function RootLayout({
   return (
     <html
       lang="es"
-      className={`${bricolage.variable} ${inter.variable} ${spaceGrotesk.variable} ${geist.variable} ${fraunces.variable} ${dmSans.variable} ${manrope.variable} ${archivo.variable} ${sora.variable} ${plusJakarta.variable}`}
+      className={`${bricolage.variable} ${inter.variable} ${spaceGrotesk.variable} ${geist.variable} ${fraunces.variable} ${dmSans.variable} ${manrope.variable} ${archivo.variable} ${sora.variable} ${plusJakarta.variable} ${orbitron.variable}`}
     >
       <body>{children}</body>
     </html>
