@@ -74,7 +74,12 @@ está lleno.
 
 ---
 
-## FASE 5 — Vencimiento del plan → solo_lectura automático
+## FASE 5 — Vencimiento del plan → solo_lectura automático  ✅
+
+Migración `0016_plan_vencido.sql` (`chequear_plan_vencido()`), llamada en el
+cron `cuotas` junto a `chequear_trial_vencido`. En `/admin/gimnasios/[id]`,
+botón "Renovar y activar" (N días) que empuja `plan_plataforma_vence_el` y
+deja el gym en `activo` (`renovarPlanPlataforma`).
 
 - Extender `chequear_trial_vencido()` (migración 0013) o sumar
   `chequear_plan_vencido()`: `estado = 'solo_lectura'` donde

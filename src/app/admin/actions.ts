@@ -114,6 +114,48 @@ export async function asignarPlanPlataforma(
   return { ok: true, msg: planId ? "Plan asignado." : "Plan quitado." };
 }
 
+// Registra un pago del gimnasio a la plataforma: empuja el vencimiento
+// `dias` días (desde hoy o desde el vencimiento vigente si es futuro) y deja
+// el gimnasio en 'activo'. Superadmin, service_role, auditado.
+export async function renovarPlanPlataforma(
+  _prev: { ok: boolean; msg: string } | null,
+  formData: FormData,
+): Promise<{ ok: boolean; msg: string }> {
+  const admin = await requireSuperadmin();
+  const gimnasioId = String(formData.get("gimnasio_id") ?? "");
+  const dias = Math.trunc(Number(formData.get("dias") ?? 30)) || 30;
+  if (!gimnasioId) return { ok: false, msg: "Falta el gimnasio." };
+  if (dias < 1 || dias > 366) return { ok: false, msg: "Días fuera de rango." };
+
+  const db = createAdminClient();
+  const { data: gym } = await db
+    .from("gimnasios")
+    .select("plan_plataforma_vence_el")
+    .eq("id", gimnasioId)
+    .single();
+
+  const hoy = new Date();
+  const vigente = gym?.plan_plataforma_vence_el
+    ? new Date(gym.plan_plataforma_vence_el)
+    : null;
+  const base = vigente && vigente > hoy ? vigente : hoy;
+  base.setDate(base.getDate() + dias);
+  const venceEl = base.toISOString().slice(0, 10);
+
+  const { error } = await db
+    .from("gimnasios")
+    .update({ plan_plataforma_vence_el: venceEl, estado: "activo" })
+    .eq("id", gimnasioId);
+  if (error) return { ok: false, msg: error.message };
+
+  await registrarAccionAdmin(admin.id, "renovar_plan_plataforma", gimnasioId, {
+    dias,
+    vence_el: venceEl,
+  });
+  revalidatePath(`/admin/gimnasios/${gimnasioId}`);
+  return { ok: true, msg: `Renovado hasta ${venceEl}, gimnasio activo.` };
+}
+
 // Manda un push de prueba SOLO a los dispositivos del superadmin. Nunca a
 // clientes ni dueños de un gimnasio.
 export async function enviarPushPrueba(

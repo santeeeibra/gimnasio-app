@@ -122,6 +122,8 @@ export async function GET(req: NextRequest) {
 
   // ─── Chequear trials vencidos (gimnasios en prueba > 14 días) ───
   await admin.rpc("chequear_trial_vencido");
+  // ─── Chequear planes de plataforma vencidos (gimnasios activos) ───
+  await admin.rpc("chequear_plan_vencido");
 
   return NextResponse.json({ ok: true, avisos, avisosMorosidad });
 }

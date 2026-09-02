@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { asignarPlanPlataforma } from "../../actions";
+import { asignarPlanPlataforma, renovarPlanPlataforma } from "../../actions";
 import { Button } from "@/components/ui";
 
 type Opcion = { id: string; nombre: string; max_socios: number | null };
@@ -21,8 +21,13 @@ export function PlanPlataformaForm({
     asignarPlanPlataforma,
     null,
   );
+  const [renov, renovAction, renovPending] = useActionState(
+    renovarPlanPlataforma,
+    null,
+  );
 
   return (
+    <>
     <form action={formAction} className="mt-3 flex flex-wrap items-end gap-2">
       <input type="hidden" name="gimnasio_id" value={gimnasioId} />
 
@@ -62,5 +67,30 @@ export function PlanPlataformaForm({
         </span>
       ) : null}
     </form>
+
+    <form action={renovAction} className="mt-2 flex flex-wrap items-center gap-2">
+      <input type="hidden" name="gimnasio_id" value={gimnasioId} />
+      <span className="text-xs text-ink-soft">Registrar pago:</span>
+      <label className="flex items-center gap-1 text-xs text-ink-soft">
+        <input
+          type="number"
+          name="dias"
+          defaultValue={30}
+          min={1}
+          max={366}
+          className="h-9 w-16 rounded-[5px] border border-rule bg-paper px-2 text-center text-[15px] outline-none focus:border-ink"
+        />
+        días
+      </label>
+      <Button type="submit" variant="ghost" disabled={renovPending}>
+        {renovPending ? "…" : "Renovar y activar"}
+      </Button>
+      {renov?.msg ? (
+        <span className={`text-sm ${renov.ok ? "text-ok" : "text-danger"}`}>
+          {renov.msg}
+        </span>
+      ) : null}
+    </form>
+    </>
   );
 }
