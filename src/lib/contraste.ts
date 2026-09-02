@@ -189,3 +189,57 @@ export function sugerirAjuste(
   return rgbToHex(...hslToRgb(h, s, limiteL));
 }
 
+/** Mezcla dos hex en HSL. t=0 => hexA, t=1 => hexB (hue por el camino corto). */
+function mezclarHsl(hexA: string, hexB: string, t: number): string {
+  const a = hexToRgb(hexA);
+  const b = hexToRgb(hexB);
+  if (!a || !b) return hexA;
+  const [ha, sa, la] = rgbToHsl(...a);
+  const [hb, sb, lb] = rgbToHsl(...b);
+  let dh = hb - ha;
+  if (dh > 0.5) dh -= 1;
+  if (dh < -0.5) dh += 1;
+  const h = (ha + dh * t + 1) % 1;
+  return rgbToHex(...hslToRgb(h, sa + (sb - sa) * t, la + (lb - la) * t));
+}
+
+/**
+ * A partir de los tres colores que elige el usuario (fondo, texto y acento),
+ * deriva el resto de la paleta para que la UI quede coherente y legible:
+ * tarjetas apenas separadas del fondo, texto secundario atenuado pero con
+ * contraste >= 4.5, borde hairline y texto sobre el acento con contraste >= 4.5.
+ */
+export function derivarPaleta(
+  base: Pick<Tema, "paper" | "ink" | "volt">,
+): Pick<Tema, "paper2" | "inkSoft" | "rule" | "voltInk"> {
+  const { paper, ink, volt } = base;
+
+  // Superficie de tarjeta: un paso mínimo del fondo hacia el texto.
+  const paper2 = mezclarHsl(paper, ink, 0.06);
+
+  // Borde hairline: un paso algo más marcado (estético, no forzamos WCAG).
+  const rule = mezclarHsl(paper, ink, 0.14);
+
+  // Texto secundario: el texto principal atenuado hacia el fondo.
+  let inkSoft = mezclarHsl(ink, paper, 0.32);
+  // Debe leerse sobre el fondo y sobre las tarjetas: ajustar contra el peor caso.
+  const peorFondo =
+    ratio(inkSoft, paper) < ratio(inkSoft, paper2) ? paper : paper2;
+  if (ratio(inkSoft, peorFondo) < 4.5) {
+    inkSoft = sugerirAjuste(peorFondo, inkSoft, 4.5);
+  }
+
+  // Texto sobre el acento: claro u oscuro según el acento, teñido con su hue.
+  const vRgb = hexToRgb(volt) ?? [0, 0, 0];
+  const [vH, vS] = rgbToHsl(...vRgb);
+  const acentoClaro = luminanciaRelativa(...vRgb) > 0.4;
+  let voltInk = rgbToHex(
+    ...hslToRgb(vH, Math.min(vS, 0.4), acentoClaro ? 0.12 : 0.96),
+  );
+  if (ratio(voltInk, volt) < 4.5) {
+    voltInk = sugerirAjuste(volt, voltInk, 4.5);
+  }
+
+  return { paper2, inkSoft, rule, voltInk };
+}
+

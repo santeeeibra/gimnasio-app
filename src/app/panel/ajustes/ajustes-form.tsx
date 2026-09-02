@@ -10,8 +10,9 @@ import {
   type FuenteKey,
   type Tema,
 } from "@/lib/tema";
-import { chequearContraste, sugerirAjuste } from "@/lib/contraste";
-import { TemaPreview } from "./tema-preview";
+import { chequearContraste, derivarPaleta, sugerirAjuste } from "@/lib/contraste";
+import { TemaPreviewCompleto } from "./tema-preview-completo";
+import { Radios } from "./radios";
 
 export function AjustesForm({
   gimnasioId,
@@ -27,6 +28,7 @@ export function AjustesForm({
 
   const [draft, setDraft] = useState<Tema>(tema);
   const [confirmarBajoContraste, setConfirmarBajoContraste] = useState(false);
+  const [tabActivo, setTabActivo] = useState<"editor" | "preview">("editor");
 
   const set = <K extends keyof Tema>(key: K, value: Tema[K]) =>
     setDraft((d) => ({ ...d, [key]: value }));
@@ -39,40 +41,174 @@ export function AjustesForm({
   }, [draft]);
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
-      <form action={formAction} className="space-y-6">
-        <input type="hidden" name="gimnasio_id" value={gimnasioId} />
+    <div>
+      {/* Tabs móvil */}
+      <div className="lg:hidden mb-4 flex border-b border-rule">
+        <button
+          type="button"
+          onClick={() => setTabActivo("editor")}
+          className={`flex-1 py-3 text-sm font-medium transition-colors duration-150 [transition-timing-function:var(--ease-out)] ${
+            tabActivo === "editor"
+              ? "border-b-2 border-volt text-ink"
+              : "text-ink-soft"
+          }`}
+        >
+          Editor
+        </button>
+        <button
+          type="button"
+          onClick={() => setTabActivo("preview")}
+          className={`flex-1 py-3 text-sm font-medium transition-colors duration-150 [transition-timing-function:var(--ease-out)] ${
+            tabActivo === "preview"
+              ? "border-b-2 border-volt text-ink"
+              : "text-ink-soft"
+          }`}
+        >
+          Vista previa
+        </button>
+      </div>
 
-        <label className="block">
-          <span className="block text-[13px] font-medium text-ink-soft mb-1.5">
-            Tipografía
-          </span>
-          <select
-            name="fuente"
-            value={draft.fuente}
-            onChange={(e) => set("fuente", e.target.value as FuenteKey)}
-            className="w-full h-10 px-3 rounded-[5px] border border-rule bg-white text-sm outline-none focus:border-ink"
-          >
-            {Object.entries(FUENTES).map(([key, f]) => (
-              <option key={key} value={key}>
-                {f.label} — {f.hint}
-              </option>
-            ))}
-          </select>
-        </label>
+      <div className="grid gap-8 lg:grid-cols-[1fr_500px]">
+        <form action={formAction} className={`space-y-6 ${tabActivo === "preview" ? "hidden lg:block" : ""}`}>
+          <input type="hidden" name="gimnasio_id" value={gimnasioId} />
 
-        <div className="grid sm:grid-cols-2 gap-4">
-          {CAMPOS_COLOR.map(({ key, label, hint }) => (
-            <ColorPicker
-              key={key}
-              name={key}
-              label={label}
-              hint={hint}
-              value={draft[key]}
-              onChange={(v) => set(key, v)}
+          {/* Sección: Colores */}
+          <Seccion titulo="Colores">
+            <div className="grid sm:grid-cols-2 gap-4">
+              {CAMPOS_COLOR.map(({ key, label, hint }) => (
+                <ColorPicker
+                  key={key}
+                  name={key}
+                  label={label}
+                  hint={hint}
+                  value={draft[key]}
+                  onChange={(v) => set(key, v)}
+                />
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={() =>
+                setDraft((d) => ({
+                  ...d,
+                  ...derivarPaleta({ paper: d.paper, ink: d.ink, volt: d.volt }),
+                }))
+              }
+              className="mt-4 inline-flex items-center gap-2 text-sm text-ink-soft hover:text-ink underline underline-offset-2 active:scale-95 transition-transform duration-150 [transition-timing-function:var(--ease-out)]"
+            >
+              Sugerir combinación
+            </button>
+            <span className="block text-xs text-ink-soft mt-1.5">
+              Completa tarjetas, texto secundario, bordes y texto sobre el acento
+              a partir del fondo, el texto principal y el acento.
+            </span>
+          </Seccion>
+
+          {/* Sección: Tipografía */}
+          <Seccion titulo="Tipografía">
+            <label className="block">
+              <span className="block text-[13px] font-medium text-ink-soft mb-1.5">
+                Familia tipográfica
+              </span>
+              <select
+                name="fuente"
+                value={draft.fuente}
+                onChange={(e) => set("fuente", e.target.value as FuenteKey)}
+                className="w-full h-10 px-3 rounded-[5px] border border-rule bg-white text-sm outline-none focus:border-ink transition-[border-color] duration-150 [transition-timing-function:var(--ease-out)]"
+              >
+                {Object.entries(FUENTES).map(([key, f]) => (
+                  <option key={key} value={key}>
+                    {f.label} — {f.hint}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="block">
+              <span className="block text-[13px] font-medium text-ink-soft mb-1.5">
+                Tamaño de fuente base
+              </span>
+              <select
+                name="escalaFuente"
+                value={draft.escalaFuente}
+                onChange={(e) => set("escalaFuente", parseFloat(e.target.value))}
+                className="w-full h-10 px-3 rounded-[5px] border border-rule bg-white text-sm outline-none focus:border-ink transition-[border-color] duration-150 [transition-timing-function:var(--ease-out)]"
+              >
+                <option value="0.875">Pequeña (87.5%)</option>
+                <option value="1">Normal (100%)</option>
+                <option value="1.125">Grande (112.5%)</option>
+                <option value="1.25">Muy grande (125%)</option>
+              </select>
+            </label>
+          </Seccion>
+
+          {/* Sección: Bordes y espaciado */}
+          <Seccion titulo="Bordes y espaciado">
+            <Radios
+              label="Redondeo de bordes"
+              name="radiosBordes"
+              value={draft.radiosBordes}
+              options={[
+                { value: "tight", label: "Ajustado", hint: "3-6px" },
+                { value: "normal", label: "Normal", hint: "5-8px" },
+                { value: "soft", label: "Suave", hint: "6-10px" },
+              ]}
+              onChange={(v) => set("radiosBordes", v as Tema["radiosBordes"])}
             />
-          ))}
-        </div>
+
+            <Radios
+              label="Espaciado"
+              name="espaciado"
+              value={draft.espaciado}
+              options={[
+                { value: "compact", label: "Compacto", hint: "87.5%" },
+                { value: "normal", label: "Normal", hint: "100%" },
+                { value: "spacious", label: "Amplio", hint: "125%" },
+              ]}
+              onChange={(v) => set("espaciado", v as Tema["espaciado"])}
+            />
+          </Seccion>
+
+          {/* Sección: Navegación */}
+          <Seccion titulo="Navegación">
+            <Radios
+              label="Navegación móvil"
+              name="navegacionMovil"
+              value={draft.navegacionMovil}
+              options={[
+                { value: "bottom", label: "Barra inferior", hint: "Fija abajo (recomendado)" },
+                { value: "top", label: "Barra superior", hint: "Fija arriba" },
+                { value: "sidebar", label: "Menú lateral", hint: "Deslizable" },
+              ]}
+              onChange={(v) => set("navegacionMovil", v as Tema["navegacionMovil"])}
+            />
+
+            <Radios
+              label="Navegación desktop"
+              name="navegacionDesktop"
+              value={draft.navegacionDesktop}
+              options={[
+                { value: "sidebar", label: "Sidebar izquierdo", hint: "Layout clásico" },
+                { value: "top", label: "Barra superior", hint: "Horizontal" },
+              ]}
+              onChange={(v) => set("navegacionDesktop", v as Tema["navegacionDesktop"])}
+            />
+          </Seccion>
+
+          {/* Sección: Densidad */}
+          <Seccion titulo="Densidad de información">
+            <Radios
+              name="densidad"
+              value={draft.densidad}
+              options={[
+                { value: "compact", label: "Compacta", hint: "Más datos, menos espacio" },
+                { value: "comfortable", label: "Cómoda", hint: "Balance ideal" },
+                { value: "spacious", label: "Espaciosa", hint: "Máximo respiro visual" },
+              ]}
+              onChange={(v) => set("densidad", v as Tema["densidad"])}
+            />
+          </Seccion>
 
         {/* Legibilidad */}
         {resultado.hayFallos ? (
@@ -191,9 +327,21 @@ export function AjustesForm({
         </div>
       </form>
 
-      <div className="lg:sticky lg:top-6 self-start">
-        <TemaPreview tema={draft} />
+      <div className={`${tabActivo === "editor" ? "hidden lg:block" : ""} lg:sticky lg:top-4 self-start`}>
+        <TemaPreviewCompleto tema={draft} />
       </div>
+    </div>
+  </div>
+  );
+}
+
+function Seccion({ titulo, children }: { titulo: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-4">
+      <span className="block text-[11px] uppercase tracking-[0.12em] text-ink-soft">
+        {titulo}
+      </span>
+      {children}
     </div>
   );
 }

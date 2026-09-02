@@ -23,6 +23,14 @@ export type Tema = {
   volt: string; // acento (botones/badges) -> --volt
   voltInk: string; // texto sobre acento   -> --volt-ink
   fuente: FuenteKey; // familia tipográfica
+  
+  // Personalización UI
+  escalaFuente: number; // 0.875 | 1 | 1.125 | 1.25
+  radiosBordes: "tight" | "normal" | "soft";
+  espaciado: "compact" | "normal" | "spacious";
+  navegacionMovil: "bottom" | "sidebar" | "top";
+  navegacionDesktop: "sidebar" | "top";
+  densidad: "compact" | "comfortable" | "spacious";
 };
 
 export const DEFAULT_TEMA: Tema = {
@@ -34,6 +42,14 @@ export const DEFAULT_TEMA: Tema = {
   volt: "#cde94a",
   voltInk: "#1c2205",
   fuente: "moderno",
+  
+  // Defaults UI
+  escalaFuente: 1,
+  radiosBordes: "normal",
+  espaciado: "normal",
+  navegacionMovil: "bottom",
+  navegacionDesktop: "sidebar",
+  densidad: "comfortable",
 };
 
 const STACK = "ui-sans-serif, system-ui, sans-serif";
@@ -126,6 +142,32 @@ export function parseTema(raw: unknown): Tema {
       ? t.fuente
       : DEFAULT_TEMA.fuente
   ) as FuenteKey;
+  
+  // Parsear campos UI con defaults
+  const escalaFuente = typeof t.escalaFuente === "number" && [0.875, 1, 1.125, 1.25].includes(t.escalaFuente)
+    ? t.escalaFuente
+    : DEFAULT_TEMA.escalaFuente;
+  
+  const radiosBordes = ["tight", "normal", "soft"].includes(t.radiosBordes as string)
+    ? (t.radiosBordes as Tema["radiosBordes"])
+    : DEFAULT_TEMA.radiosBordes;
+  
+  const espaciado = ["compact", "normal", "spacious"].includes(t.espaciado as string)
+    ? (t.espaciado as Tema["espaciado"])
+    : DEFAULT_TEMA.espaciado;
+  
+  const navegacionMovil = ["bottom", "sidebar", "top"].includes(t.navegacionMovil as string)
+    ? (t.navegacionMovil as Tema["navegacionMovil"])
+    : DEFAULT_TEMA.navegacionMovil;
+  
+  const navegacionDesktop = ["sidebar", "top"].includes(t.navegacionDesktop as string)
+    ? (t.navegacionDesktop as Tema["navegacionDesktop"])
+    : DEFAULT_TEMA.navegacionDesktop;
+  
+  const densidad = ["compact", "comfortable", "spacious"].includes(t.densidad as string)
+    ? (t.densidad as Tema["densidad"])
+    : DEFAULT_TEMA.densidad;
+  
   return {
     paper: hex(t.paper, DEFAULT_TEMA.paper),
     paper2: hex(t.paper2, DEFAULT_TEMA.paper2),
@@ -135,12 +177,33 @@ export function parseTema(raw: unknown): Tema {
     volt: hex(t.volt, DEFAULT_TEMA.volt),
     voltInk: hex(t.voltInk, DEFAULT_TEMA.voltInk),
     fuente,
+    escalaFuente,
+    radiosBordes,
+    espaciado,
+    navegacionMovil,
+    navegacionDesktop,
+    densidad,
   };
 }
 
 /** CSS custom properties para inyectar en el `style` de un contenedor. */
 export function temaToVars(t: Tema): React.CSSProperties {
   const f = FUENTES[t.fuente];
+  
+  // Mapeo de radios según preset
+  const radios = {
+    tight: { sm: "3px", md: "4px", lg: "6px" },
+    normal: { sm: "5px", md: "6px", lg: "8px" },
+    soft: { sm: "6px", md: "8px", lg: "10px" },
+  }[t.radiosBordes];
+  
+  // Multiplicador de espaciado
+  const espaciadoMult = {
+    compact: 0.875,
+    normal: 1,
+    spacious: 1.25,
+  }[t.espaciado];
+  
   return {
     "--paper": t.paper,
     "--paper-2": t.paper2,
@@ -151,5 +214,15 @@ export function temaToVars(t: Tema): React.CSSProperties {
     "--volt-ink": t.voltInk,
     "--app-font-display": f.display,
     "--app-font-sans": f.sans,
+    
+    // Variables UI personalizadas
+    "--font-scale": t.escalaFuente.toString(),
+    "--radius-sm": radios.sm,
+    "--radius-md": radios.md,
+    "--radius-lg": radios.lg,
+    "--spacing-scale": espaciadoMult.toString(),
+    "--nav-mobile": t.navegacionMovil,
+    "--nav-desktop": t.navegacionDesktop,
+    "--density": t.densidad,
   } as React.CSSProperties;
 }
