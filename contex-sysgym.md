@@ -232,10 +232,13 @@ usarlo para altas masivas).
 ### Consola de soporte (`/admin`) — superadmin de la plataforma
 
 - Segmento `src/app/admin/**`, fuera de `/panel` y `/mi`, sin ningún link desde
-  el flujo normal de un gimnasio. **Doble gate** en `admin/layout.tsx`: flag de
-  entorno `ADMIN_CONSOLE=1` + `requireSuperadmin()` (que ahora hace `notFound()`,
-  no `redirect`, para no revelar la ruta). Sin el flag o sin ser el superadmin →
-  404 seco. `SUPERADMIN_ID` sigue en env (no hay columna en DB).
+  el flujo normal de un gimnasio. **Gate único** en `admin/layout.tsx`:
+  `requireSuperadmin()` → `notFound()` (no `redirect`, para no revelar la ruta)
+  salvo que la sesión sea la cuenta cuyo `profile.id === SUPERADMIN_ID`.
+- **Cuenta superadmin**: gimnasio dedicado y vacío slug `sante`, login usuario
+  (DNI) `admin`, clave `43553838`. La crea `scripts/seed-superadmin.mjs`
+  (idempotente), que imprime el `SUPERADMIN_ID` a copiar en `.env.local` y
+  Vercel. `SUPERADMIN_ID` vive en env, no hay columna en DB.
 - **Monitor** (`/admin`): uso de Supabase, ya existía.
 - **Gimnasios** (`/admin/gimnasios` + `[id]`): lista de todos los gimnasios
   reales y detalle **solo lectura** (socios, estado de cuota, últimos pagos) vía
@@ -248,8 +251,9 @@ usarlo para altas masivas).
   RLS on y sin policies → solo service_role). Helper
   `src/lib/admin/audit.ts` → `registrarAccionAdmin(actorId, action, gimnasioId?,
   meta?)`. Se registra `listar_gyms`, `ver_gym`, `push_prueba`.
-- **Pendiente manual**: aplicar `0014_admin_audit_log.sql`; agregar
-  `ADMIN_CONSOLE=1` a `.env.local` (y a Vercel solo cuando se hace soporte).
+- **Pendiente manual**: aplicar `0014_admin_audit_log.sql`; correr
+  `node scripts/seed-superadmin.mjs` y poner el `SUPERADMIN_ID` que imprime en
+  `.env.local` y en Vercel (redeploy).
 
 ## Modelo de datos
 

@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { requireSuperadmin } from "@/lib/auth";
 
 // Consola de soporte de la plataforma. Separada de /panel (por-gimnasio) y de
 // /mi (cliente). Nunca se enlaza desde el flujo normal de ningún gimnasio.
-// Doble gate: flag de entorno ADMIN_CONSOLE + requireSuperadmin() (que hace
-// notFound(), no redirect). Sin el flag y sin ser el superadmin => 404 seco.
+// Gate único: requireSuperadmin() -> notFound() (no redirect) salvo que la
+// sesión sea la cuenta cuyo profile.id === SUPERADMIN_ID (gimnasio "sante",
+// usuario "admin"). Cualquier otro login => 404 seco.
 // Usa los tokens de tema por defecto (:root en globals.css), sin tema de gym.
 
 const NAV = [
@@ -19,7 +19,6 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  if (process.env.ADMIN_CONSOLE !== "1") notFound();
   await requireSuperadmin();
 
   return (
