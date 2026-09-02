@@ -481,7 +481,16 @@ contenedor de la métrica en `.futurista-fondo`, usar `AnilloProgreso` (o
 colores ni fuentes fuera de los listados arriba.
 
 **Aplicado en**:
-- `/mi` (card "Tu cuota" — días restantes del plan)
+- `/mi` (card "Tu cuota" — días restantes del plan, con `AnilloProgreso`)
+- `/panel` (bloque héroe del Resumen — grid `futurista-fondo` + `futurista-num-in`
+  en el número; **se conservan los tonos semánticos** `text-danger`/`text-warn`
+  porque la urgencia manda sobre la pureza de `--volt`, y `font-display` en vez de
+  Orbitron para no romper la identidad de la pantalla principal del dueño)
+
+**No aplicado en `/mi/rutina`**: no hay una métrica de progreso-hacia-un-máximo
+que justifique el anillo. Meter `futurista-fondo` en la metadata (objetivo ·
+nivel · días) sería decorar texto, no una métrica. Si más adelante hay algo tipo
+"días completados / días de la semana", ahí sí entra `AnilloProgreso`.
 
 ---
 
@@ -526,7 +535,7 @@ src/lib/tema.ts                  → DEFAULT_TEMA, --font-hero
 src/components/ui.tsx            → Button, Field
 src/components/anillo-progreso.tsx → AnilloProgreso (indicador circular)
 src/app/login/page.tsx          → mobile-first completo
-src/app/panel/page.tsx          → número héroe
+src/app/panel/page.tsx          → número héroe + patrón Futurista (§17)
 src/app/panel/ajustes/*         → validación contraste
 src/app/mi/page.tsx             → AnilloProgreso en card "Tu cuota"
 src/app/mi/rutina/rutina-editor.tsx → miniatura + fallback + visor modal
@@ -554,7 +563,9 @@ logo + paletas; §17 componente `AnilloProgreso` + token `--font-hero` (Orbitron
 para números especiales en indicadores circulares; §18 `suppressHydrationWarning`
 en layout para prevenir errores de extensiones del navegador; §17 reescrita como
 patrón "Futurista" con animaciones ambientales pasivas — glow del anillo, grid
-de fondo y transición del número — todo CSS puro y con `prefers-reduced-motion`).
+de fondo y transición del número — todo CSS puro y con `prefers-reduced-motion`);
+§17 patrón Futurista propagado a `/panel` (héroe del Resumen) conservando tonos
+semánticos; se descartó `/mi/rutina` por no tener métrica de progreso).
 **Aplicar al editar**: `src/app/` y `src/components/`.
 
 **Crítico:** `text-[16px]` en inputs evita el zoom en iOS.

@@ -66,9 +66,10 @@ export default async function ResumenPage() {
         </Link>
       </div>
 
-      <div className="mb-10">
+      <div className="futurista-fondo mb-10 rounded-[6px] border border-rule bg-paper-2 p-6">
         <p
-          className={`font-display leading-[0.82] tracking-tight text-[clamp(4rem,22vw,7rem)] ${hero.tone}`}
+          key={hero.n}
+          className={`futurista-num-in font-display leading-[0.82] tracking-tight text-[clamp(4rem,22vw,7rem)] ${hero.tone}`}
         >
           {hero.n}
         </p>
