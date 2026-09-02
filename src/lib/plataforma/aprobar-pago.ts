@@ -1,6 +1,8 @@
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { enviarEmail } from "@/lib/mail/enviar";
+import { enviarPush } from "@/lib/push/enviar";
 
 export type ResultadoAprobacion = {
   ok: boolean;
@@ -23,7 +25,7 @@ export async function aprobarPagoPlataforma(
 ): Promise<ResultadoAprobacion> {
   const { data: pago } = await db
     .from("pagos_plataforma")
-    .select("id, gimnasio_id, dias, estado")
+    .select("id, gimnasio_id, dias, estado, monto_ars")
     .eq("id", pagoId)
     .single();
   if (!pago) return { ok: false, msg: "Pago inexistente." };
@@ -78,10 +80,74 @@ export async function aprobarPagoPlataforma(
     .eq("id", pago.gimnasio_id);
   if (e2) return { ok: false, msg: e2.message, gimnasioId: pago.gimnasio_id };
 
+  // Comprobante de la renovación: push al dueño + email a soporte.
+  // Best-effort: no debe romper la aprobación si el aviso falla.
+  await avisarRenovacion(
+    db,
+    pago.gimnasio_id,
+    venceEl,
+    Number(pago.monto_ars ?? 0),
+    pago.dias ?? 30,
+  );
+
   return {
     ok: true,
     msg: `Plan hasta ${venceEl}.`,
     gimnasioId: pago.gimnasio_id,
     venceEl,
   };
+}
+
+async function avisarRenovacion(
+  db: SupabaseClient,
+  gimnasioId: string,
+  venceEl: string,
+  montoARS: number,
+  dias: number,
+): Promise<void> {
+  try {
+    const [{ data: dueno }, { data: gym }] = await Promise.all([
+      db
+        .from("profiles")
+        .select("id")
+        .eq("gimnasio_id", gimnasioId)
+        .eq("rol", "dueno")
+        .limit(1)
+        .maybeSingle(),
+      db.from("gimnasios").select("nombre").eq("id", gimnasioId).single(),
+    ]);
+
+    const venceFmt = new Date(venceEl).toLocaleDateString("es-AR");
+    const montoFmt = montoARS.toLocaleString("es-AR", {
+      style: "currency",
+      currency: "ARS",
+    });
+
+    if (dueno?.id) {
+      await enviarPush([dueno.id], {
+        title: "Plan renovado",
+        body: `Tu plan quedó activo hasta el ${venceFmt}.`,
+        url: "/panel/plan",
+        tag: `plan-renovado-${venceEl}`,
+      });
+    }
+
+    const to = process.env.ADMIN_EMAIL;
+    if (to) {
+      await enviarEmail({
+        to,
+        subject: `[Pago] ${gym?.nombre ?? gimnasioId} — plan renovado hasta ${venceEl}`,
+        text: [
+          `Renovación de plan de plataforma confirmada.`,
+          ``,
+          `Gimnasio: ${gym?.nombre ?? gimnasioId}`,
+          `Monto: ${montoFmt}`,
+          `Período: ${dias} días`,
+          `Nuevo vencimiento: ${venceEl}`,
+        ].join("\n"),
+      });
+    }
+  } catch (err) {
+    console.error("[aprobar-pago] aviso:", err);
+  }
 }

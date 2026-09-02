@@ -63,7 +63,11 @@ cualquiera de las dos, pero dejar la del panel para el modo test.
 
 ---
 
-## FASE 3 — Recibo + histórico (opcional)
+## FASE 3 — Recibo + histórico  ✅
 
-- `/panel/plan`: histórico de pagos del gym (fecha, monto, período).
-- Email/onscreen con el comprobante al aprobar.
+- `/panel/plan`: card "Historial de pagos" (últimos 12: fecha, monto, días,
+  estado).
+- `aprobarPagoPlataforma` → `avisarRenovacion()`: al aprobar, push al dueño
+  ("Plan renovado hasta …") + email a `ADMIN_EMAIL` con el comprobante
+  (gimnasio, monto, período, vencimiento). Best-effort, no rompe la
+  aprobación. Sirve tanto para el webhook como para la confirmación manual.

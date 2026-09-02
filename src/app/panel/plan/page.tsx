@@ -24,7 +24,7 @@ export default async function PanelPlanPage() {
   const dueno = await requireDueno();
   const db = createAdminClient();
 
-  const [{ data: gym }, cupo, { data: ultimoPago }] = await Promise.all([
+  const [{ data: gym }, cupo, { data: pagosData }] = await Promise.all([
     db
       .from("gimnasios")
       .select(
@@ -35,12 +35,20 @@ export default async function PanelPlanPage() {
     cupoSocios(db, dueno.gimnasio_id),
     db
       .from("pagos_plataforma")
-      .select("id, estado, monto_ars, creado_at")
+      .select("id, estado, monto_ars, dias, creado_at, confirmado_at")
       .eq("gimnasio_id", dueno.gimnasio_id)
       .order("creado_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
+      .limit(12),
   ]);
+
+  const pagos = (pagosData ?? []) as {
+    id: string;
+    estado: string;
+    monto_ars: number;
+    dias: number;
+    creado_at: string;
+    confirmado_at: string | null;
+  }[];
 
   const estado = gym?.estado ?? "prueba";
   const plan = (gym?.plan ?? null) as {
@@ -116,25 +124,6 @@ export default async function PanelPlanPage() {
         </p>
       ) : null}
 
-      {ultimoPago ? (
-        <p className="text-sm text-ink-soft">
-          Último pago:{" "}
-          <span
-            className={
-              ultimoPago.estado === "aprobado"
-                ? "text-ok"
-                : ultimoPago.estado === "rechazado"
-                  ? "text-danger"
-                  : "text-ink"
-            }
-          >
-            {PAGO_ESTADO_LABEL[ultimoPago.estado] ?? ultimoPago.estado}
-          </span>{" "}
-          ·{" "}
-          {new Date(ultimoPago.creado_at).toLocaleDateString("es-AR")}
-        </p>
-      ) : null}
-
       <div className="card-cut border border-rule bg-paper-2 p-5">
         <h2 className="mb-1 text-lg">Pagar el plan</h2>
         <p className="mb-4 text-sm text-ink-soft">
@@ -146,6 +135,47 @@ export default async function PanelPlanPage() {
           titular={DATOS_TRANSFERENCIA.titular}
         />
       </div>
+
+      {pagos.length > 0 ? (
+        <div className="card-cut border border-rule bg-paper-2 p-5">
+          <h2 className="mb-3 text-lg">Historial de pagos</h2>
+          <ul className="divide-y divide-rule text-sm">
+            {pagos.map((p) => {
+              const fecha = new Date(
+                p.confirmado_at ?? p.creado_at,
+              ).toLocaleDateString("es-AR");
+              return (
+                <li
+                  key={p.id}
+                  className="flex items-center justify-between gap-3 py-2.5"
+                >
+                  <span className="min-w-0">
+                    <span className="block">
+                      {p.monto_ars.toLocaleString("es-AR", {
+                        style: "currency",
+                        currency: "ARS",
+                      })}{" "}
+                      <span className="text-ink-soft">· {p.dias} días</span>
+                    </span>
+                    <span className="block text-xs text-ink-soft">{fecha}</span>
+                  </span>
+                  <span
+                    className={`shrink-0 text-xs ${
+                      p.estado === "aprobado"
+                        ? "text-ok"
+                        : p.estado === "rechazado"
+                          ? "text-danger"
+                          : "text-ink-soft"
+                    }`}
+                  >
+                    {PAGO_ESTADO_LABEL[p.estado] ?? p.estado}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ) : null}
 
       <div className="card-cut border border-rule bg-paper-2 p-5">
         <h2 className="mb-3 text-lg">¿Dudas con el plan?</h2>
