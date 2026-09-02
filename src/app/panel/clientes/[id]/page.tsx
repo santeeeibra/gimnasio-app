@@ -4,7 +4,15 @@ import { createClient } from "@/lib/supabase/server";
 import { requireDueno } from "@/lib/auth";
 import { Panel } from "@/components/ui";
 import { diasRestantes, estadoDesdeDias, ESTADO_LABEL } from "@/lib/cuota";
+import {
+  NIVEL_LABEL,
+  OBJETIVO_LABEL,
+  type Nivel,
+  type Objetivo,
+  type PreferenciaEquipo,
+} from "@/lib/rutina/tipos";
 import { PagoForm } from "./pago-form";
+import { RutinaPanelDueno } from "./rutina-panel";
 
 export default async function ClienteDetallePage({
   params,
@@ -25,18 +33,26 @@ export default async function ClienteDetallePage({
 
   if (!cliente) notFound();
 
-  const [{ data: planesData }, { data: pagosData }] = await Promise.all([
-    supabase
-      .from("planes")
-      .select("id, nombre, precio")
-      .eq("activo", true)
-      .order("nombre"),
-    supabase
-      .from("pagos")
-      .select("id, monto, fecha_pago, cubre_hasta, plan:planes(nombre)")
-      .eq("cliente_id", id)
-      .order("fecha_pago", { ascending: false }),
-  ]);
+  const [{ data: planesData }, { data: pagosData }, { data: rutinaData }] =
+    await Promise.all([
+      supabase
+        .from("planes")
+        .select("id, nombre, precio")
+        .eq("activo", true)
+        .order("nombre"),
+      supabase
+        .from("pagos")
+        .select("id, monto, fecha_pago, cubre_hasta, plan:planes(nombre)")
+        .eq("cliente_id", id)
+        .order("fecha_pago", { ascending: false }),
+      supabase
+        .from("rutinas")
+        .select(
+          "id, objetivo, nivel, dias_por_semana, dias_titulos, preferencias, actualizado_at, rutina_items(dia, ejercicio:ejercicios(nombre))",
+        )
+        .eq("cliente_id", id)
+        .maybeSingle(),
+    ]);
 
   const c = cliente as any;
   const dias = diasRestantes(c.fecha_vencimiento);
@@ -47,6 +63,13 @@ export default async function ClienteDetallePage({
     precio: number;
   }[];
   const pagos = (pagosData ?? []) as any[];
+  const rutina = rutinaData as any;
+  const rutinaPorDia = new Map<number, string[]>();
+  for (const it of (rutina?.rutina_items ?? []) as any[]) {
+    const arr = rutinaPorDia.get(it.dia) ?? [];
+    if (it.ejercicio?.nombre) arr.push(it.ejercicio.nombre);
+    rutinaPorDia.set(it.dia, arr);
+  }
 
   return (
     <div className="space-y-8">
@@ -97,6 +120,61 @@ export default async function ClienteDetallePage({
             </p>
           </div>
         </div>
+      </Panel>
+
+      <Panel className="p-5">
+        <div className="flex items-baseline justify-between gap-3">
+          <h2 className="text-lg">Rutina</h2>
+          {rutina ? (
+            <span className="text-xs text-ink-soft">
+              {OBJETIVO_LABEL[rutina.objetivo as Objetivo] ?? rutina.objetivo}
+              {rutina.nivel
+                ? ` · ${NIVEL_LABEL[rutina.nivel as Nivel] ?? rutina.nivel}`
+                : ""}
+              {rutina.dias_por_semana ? ` · ${rutina.dias_por_semana} días` : ""}
+            </span>
+          ) : null}
+        </div>
+
+        {rutina ? (
+          <ul className="mt-3 mb-4 space-y-2 text-sm">
+            {[...rutinaPorDia.keys()]
+              .sort((a, b) => a - b)
+              .map((d) => (
+                <li key={d}>
+                  <span className="font-medium">
+                    {(rutina.dias_titulos as string[] | null)?.[d - 1] ??
+                      `Día ${d}`}
+                  </span>
+                  <span className="text-ink-soft">
+                    {" — "}
+                    {(rutinaPorDia.get(d) ?? []).join(", ")}
+                  </span>
+                </li>
+              ))}
+          </ul>
+        ) : (
+          <p className="mt-2 mb-4 text-sm text-ink-soft">
+            Sin rutina todavía. El cliente también puede generarla desde su panel.
+          </p>
+        )}
+
+        <RutinaPanelDueno
+          clienteId={c.id}
+          tieneRutina={!!rutina}
+          defaults={
+            rutina
+              ? {
+                  objetivo: rutina.objetivo as Objetivo,
+                  nivel: (rutina.nivel as Nivel) ?? undefined,
+                  dias: rutina.dias_por_semana ?? undefined,
+                  preferencia:
+                    (rutina.preferencias as { equipo?: PreferenciaEquipo } | null)
+                      ?.equipo ?? undefined,
+                }
+              : undefined
+          }
+        />
       </Panel>
 
       <Panel className="p-5">

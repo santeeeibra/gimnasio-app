@@ -83,9 +83,13 @@ export default async function MiPage() {
         )}
       </a>
 
-      <p className="text-sm text-ink-soft">
-        Tu rutina llega acá en el próximo entregable.
-      </p>
+      <a
+        href="/mi/rutina"
+        className="flex items-center justify-between border border-rule rounded-[6px] bg-white px-5 py-4 hover:bg-paper-2"
+      >
+        <span className="text-sm font-medium">Tu rutina</span>
+        <span className="text-xs text-ink-soft">ver</span>
+      </a>
     </main>
   );
 }

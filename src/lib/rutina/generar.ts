@@ -43,6 +43,7 @@ export async function generarYGuardar(
     nivel: entrada.nivel,
     generada_por: "reglas",
     preferencias: { equipo: entrada.preferencia },
+    dias_titulos: plan.dias.map((d) => d.titulo),
     actualizado_at: new Date().toISOString(),
   };
 

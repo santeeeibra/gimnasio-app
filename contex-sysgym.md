@@ -65,7 +65,13 @@ usarlo para altas masivas).
 ### Branding por gimnasio
 - El dueño personaliza el tema desde `/panel/ajustes`: 7 colores independientes
   (fondo, fondo tarjetas, texto, texto suave, bordes, acento, texto sobre
-  acento) + tipografía (Moderno/Técnico/Neutro/Editorial). Sin tinte automático.
+  acento) + tipografía (9 presets: Moderno/Técnico/Neutro/Editorial/Humanista/
+  Redondeado/Condensado/Contemporáneo/Amigable). Sin tinte automático.
+- **Validación de contraste WCAG 2.1**: 6 pares críticos (umbrales 3.0 y 4.5).
+  Sugerencias automáticas ajustando luminosidad HSL. Checkbox obligatorio para
+  guardar con fallos (`src/lib/contraste.ts`).
+- **10 fuentes Google Fonts**: Bricolage Grotesque, Inter, Space Grotesk, Geist,
+  Fraunces, DM Sans, Manrope, Archivo, Sora, Plus Jakarta Sans (~2-2.5MB).
 - Se guarda en `gimnasios.tema` (jsonb). `null` → defaults.
 - `src/lib/tema.ts` centraliza tipo, defaults, validación y `temaToVars()`.
   Inyectado en `panel/layout.tsx` y `mi/layout.tsx`. Preview en vivo en Ajustes.
@@ -87,8 +93,8 @@ SECURITY DEFINER (`soy_destinatario`, `mensaje_gimnasio`, `mensaje_remitente`,
 |---|---|
 | 1 — Scaffold, auth, panel dueño, vista cliente, seed | ✅ HECHO |
 | 2 — Mensajería (compositor, bandeja, hilos) | ✅ HECHO, probado end-to-end |
-| Branding / tema personalizable (7 colores + tipografía + preview en vivo) | ✅ Código listo + `next build` OK. **Falta aplicar migración `0004_tema_jsonb.sql` en Supabase + prueba end-to-end** (ver `INSTRUCCIONES_TEMA.md`) |
-| Rediseño UI mobile-first con `emil-design-eng` | 🔄 EN CURSO — `/login` ✅ hecho. Próximo `/panel`. Dirección y notas en `INSTRUCCIONES_TEMA.md` §4 |
+| Branding / tema personalizable | ✅ **COMPLETO** — 7 colores + 9 presets tipográficos (10 fuentes) + validación contraste WCAG 2.1 + preview en vivo. Ver `VALIDACION_CONTRASTE.md` y `FUENTES_PERSONALIZABLES.md`. **Pendiente**: aplicar migración `0004_tema_jsonb.sql` + prueba end-to-end |
+| Rediseño UI mobile-first con `emil-design-eng` | 🔄 EN CURSO — `/login` ✅ hecho. `/panel/ajustes` ✅ validación de contraste estilo Emil. Próximo `/panel` (dashboard). Dirección y notas en `INSTRUCCIONES_TEMA.md` §4 |
 | 3 — Push web nativo | Sin empezar. Tabla lista; faltan VAPID keys, service worker, endpoint, disparo en cuota por vencer. TODO marcado en `panel/mensajes/actions.ts` |
 | 4 — Rutinas (motor de reglas + editor + seed wger) | Sin empezar. Tablas listas |
 | 5 — Cron `recalcular_estado_cuota()` diario (pg_cron o Vercel cron) | Sin empezar |

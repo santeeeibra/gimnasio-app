@@ -5,6 +5,11 @@ import {
   Space_Grotesk,
   Geist,
   Fraunces,
+  DM_Sans,
+  Manrope,
+  Archivo,
+  Sora,
+  Plus_Jakarta_Sans,
 } from "next/font/google";
 import "./globals.css";
 
@@ -38,6 +43,36 @@ const fraunces = Fraunces({
   display: "swap",
 });
 
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  variable: "--font-dm-sans",
+  display: "swap",
+});
+
+const manrope = Manrope({
+  subsets: ["latin"],
+  variable: "--font-manrope",
+  display: "swap",
+});
+
+const archivo = Archivo({
+  subsets: ["latin"],
+  variable: "--font-archivo",
+  display: "swap",
+});
+
+const sora = Sora({
+  subsets: ["latin"],
+  variable: "--font-sora",
+  display: "swap",
+});
+
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-plus-jakarta",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "Gestión de gimnasio",
   description: "Cuotas, rutinas y avisos en un solo lugar.",
@@ -51,7 +86,7 @@ export default function RootLayout({
   return (
     <html
       lang="es"
-      className={`${bricolage.variable} ${inter.variable} ${spaceGrotesk.variable} ${geist.variable} ${fraunces.variable}`}
+      className={`${bricolage.variable} ${inter.variable} ${spaceGrotesk.variable} ${geist.variable} ${fraunces.variable} ${dmSans.variable} ${manrope.variable} ${archivo.variable} ${sora.variable} ${plusJakarta.variable}`}
     >
       <body>{children}</body>
     </html>

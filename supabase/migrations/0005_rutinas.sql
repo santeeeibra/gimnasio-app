@@ -20,6 +20,7 @@ create unique index if not exists ejercicios_slug_key on ejercicios (slug);
 alter table rutinas add column if not exists nivel        text
   check (nivel in ('principiante', 'intermedio', 'avanzado'));
 alter table rutinas add column if not exists preferencias jsonb;
+alter table rutinas add column if not exists dias_titulos text[];
 
 -- Una rutina activa por cliente (regenerar = upsert sobre esta fila).
 alter table rutinas drop constraint if exists rutinas_cliente_unico;

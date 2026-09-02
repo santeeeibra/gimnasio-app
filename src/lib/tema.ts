@@ -3,7 +3,16 @@
  * Se guarda en `gimnasios.tema` (jsonb). `null` => valores por defecto.
  */
 
-export type FuenteKey = "moderno" | "tecnico" | "neutro" | "editorial";
+export type FuenteKey =
+  | "moderno"
+  | "tecnico"
+  | "neutro"
+  | "editorial"
+  | "humanista"
+  | "redondeado"
+  | "condensado"
+  | "contemporaneo"
+  | "amigable";
 
 export type Tema = {
   paper: string; // fondo de la app        -> --paper
@@ -47,15 +56,45 @@ export const FUENTES: Record<
   },
   neutro: {
     label: "Neutro",
-    hint: "Geist",
+    hint: "Geist — minimalista sistema",
     display: `var(--font-geist), ${STACK}`,
     sans: `var(--font-geist), ${STACK}`,
   },
   editorial: {
     label: "Editorial",
-    hint: "Fraunces + Inter",
+    hint: "Fraunces + Inter — serif clásica",
     display: `var(--font-fraunces), Georgia, serif`,
     sans: `var(--font-inter), ${STACK}`,
+  },
+  humanista: {
+    label: "Humanista",
+    hint: "DM Sans — suave y profesional",
+    display: `var(--font-dm-sans), ${STACK}`,
+    sans: `var(--font-dm-sans), ${STACK}`,
+  },
+  redondeado: {
+    label: "Redondeado",
+    hint: "Manrope — geométrica amable",
+    display: `var(--font-manrope), ${STACK}`,
+    sans: `var(--font-manrope), ${STACK}`,
+  },
+  condensado: {
+    label: "Condensado",
+    hint: "Archivo — alta densidad",
+    display: `var(--font-archivo), ${STACK}`,
+    sans: `var(--font-inter), ${STACK}`,
+  },
+  contemporaneo: {
+    label: "Contemporáneo",
+    hint: "Sora — display moderno",
+    display: `var(--font-sora), ${STACK}`,
+    sans: `var(--font-sora), ${STACK}`,
+  },
+  amigable: {
+    label: "Amigable",
+    hint: "Plus Jakarta Sans — cálida",
+    display: `var(--font-plus-jakarta), ${STACK}`,
+    sans: `var(--font-plus-jakarta), ${STACK}`,
   },
 };
 

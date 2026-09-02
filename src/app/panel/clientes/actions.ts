@@ -154,3 +154,42 @@ export async function registrarPago(
   revalidatePath("/panel");
   return { ok: `Pago registrado. Cuota al día hasta ${cubreHasta}.` };
 }
+
+export async function generarRutinaCliente(
+  _prev: { error?: string; ok?: string },
+  formData: FormData,
+): Promise<{ error?: string; ok?: string }> {
+  const dueno = await requireDueno();
+  const clienteId = String(formData.get("cliente_id") ?? "");
+  const objetivo = String(formData.get("objetivo") ?? "") as Objetivo;
+  const nivel = String(formData.get("nivel") ?? "") as Nivel;
+  const preferencia = String(formData.get("preferencia") ?? "") as PreferenciaEquipo;
+  const dias = Number(formData.get("dias") ?? 0);
+
+  if (!clienteId) return { error: "Falta el cliente." };
+  if (!OBJETIVOS.includes(objetivo)) return { error: "Elegí un objetivo." };
+  if (!NIVELES.includes(nivel)) return { error: "Elegí el nivel." };
+  if (!(preferencia in PREFERENCIAS_EQUIPO)) return { error: "Elegí el equipamiento." };
+  if (!Number.isInteger(dias) || dias < 2 || dias > 6) {
+    return { error: "Los días por semana van de 2 a 6." };
+  }
+
+  const supabase = await createClient();
+  const { data: cli } = await supabase
+    .from("clientes")
+    .select("id")
+    .eq("id", clienteId)
+    .eq("gimnasio_id", dueno.gimnasio_id)
+    .maybeSingle();
+  if (!cli) return { error: "Cliente no encontrado." };
+
+  const res = await generarYGuardar(supabase, {
+    gimnasioId: dueno.gimnasio_id,
+    clienteId,
+    entrada: { objetivo, nivel, preferencia, dias },
+  });
+  if (res.error) return { error: res.error };
+
+  revalidatePath(`/panel/clientes/${clienteId}`);
+  return { ok: "Rutina generada para el cliente." };
+}

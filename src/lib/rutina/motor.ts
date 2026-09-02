@@ -273,7 +273,6 @@ export function generarPlan(
   const diasPlan = bloques.map((bloque, i) => {
     const usadosDia = new Set<string>();
     const items: ItemGenerado[] = [];
-    let primerCompuesto = true;
 
     for (const ranura of bloque.ranuras) {
       const ej = elegir(
@@ -289,10 +288,9 @@ export function generarPlan(
       usadosSemana.add(ej.id);
 
       const esComp = ranura.rol === "compuesto";
-      let series = esComp ? esquema.seriesCompuesto : esquema.seriesAislamiento;
-      // Un empujón extra solo al primer básico del día para avanzados.
-      if (esComp && primerCompuesto && entrada.nivel === "avanzado") series += 0;
-      primerCompuesto = primerCompuesto && !esComp;
+      const series = esComp
+        ? esquema.seriesCompuesto
+        : esquema.seriesAislamiento;
 
       items.push({
         ejercicio_slug: ej.slug,
