@@ -7,8 +7,10 @@ import { SEXOS, SEXO_LABEL } from "@/lib/rutina/tipos";
 
 export function AltaForm({
   planes,
+  full = false,
 }: {
   planes: { id: string; nombre: string }[];
+  full?: boolean;
 }) {
   const [state, formAction, pending] = useActionState<AltaState, FormData>(
     altaCliente,
@@ -40,7 +42,18 @@ export function AltaForm({
       </Select>
 
       <div className="sm:col-span-2 flex flex-wrap items-center gap-3">
-        <Button type="submit" name="modo" value="completa" disabled={pending}>
+        {full ? (
+          <p className="w-full text-sm text-danger">
+            Alcanzaste el límite de socios de tu plan. Contactá a soporte para
+            ampliarlo.
+          </p>
+        ) : null}
+        <Button
+          type="submit"
+          name="modo"
+          value="completa"
+          disabled={pending || full}
+        >
           {pending ? "Creando…" : "Dar de alta"}
         </Button>
         <Button
@@ -48,7 +61,7 @@ export function AltaForm({
           name="modo"
           value="prueba"
           variant="ghost"
-          disabled={pending}
+          disabled={pending || full}
         >
           1 día de prueba
         </Button>

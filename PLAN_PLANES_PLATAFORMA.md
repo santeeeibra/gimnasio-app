@@ -33,7 +33,7 @@ vencimiento y aviso si el cupo está alcanzado. Sin acción de asignar todavía.
 
 ---
 
-## FASE 2 — CRUD de planes + asignar plan al gym
+## FASE 2 — CRUD de planes + asignar plan al gym  ✅
 
 ### 2.1 `src/app/admin/planes/page.tsx` + `form.tsx` + acciones
 Lista + alta/edición/baja de `planes_plataforma` (superadmin, service_role,
@@ -48,7 +48,7 @@ Auditar con nueva `AccionAdmin` `asignar_plan_plataforma` en
 
 ---
 
-## FASE 3 — Enforcement en el alta de clientes
+## FASE 3 — Enforcement en el alta de clientes  ✅
 
 ### 3.1 `src/lib/plataforma/cupo.ts`
 `async puedeAgregarSocio(admin, gimnasioId): Promise<{ ok: boolean; usados: number; max: number | null }>`

@@ -5,6 +5,7 @@ import { requireDueno, dniAEmail, claveInicial } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generarYGuardar } from "@/lib/rutina/generar";
+import { cupoSocios } from "@/lib/plataforma/cupo";
 import {
   ENFASIS,
   MAX_ENFASIS,
@@ -55,6 +56,15 @@ export async function altaCliente(
     .eq("id", dueno.gimnasio_id)
     .single();
   if (!gym) return { error: "No se encontró el gimnasio." };
+
+  const cupo = await cupoSocios(admin, dueno.gimnasio_id);
+  if (!cupo.ok) {
+    return {
+      error: `Llegaste al límite de socios de tu plan${
+        cupo.plan ? ` (${cupo.plan})` : ""
+      }: ${cupo.max}. Contactá a soporte para ampliarlo.`,
+    };
+  }
 
   const clave = claveInicial(dni);
   const { data: created, error: authErr } = await admin.auth.admin.createUser({

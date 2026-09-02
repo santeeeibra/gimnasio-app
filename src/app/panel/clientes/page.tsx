@@ -1,11 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { requireDueno } from "@/lib/auth";
+import { cupoSocios } from "@/lib/plataforma/cupo";
 import { AltaForm } from "./alta-form";
 import { ClienteRow, type ClienteVista } from "./cliente-row";
 
 export default async function ClientesPage() {
-  await requireDueno();
+  const dueno = await requireDueno();
   const supabase = await createClient();
+  const cupo = await cupoSocios(createAdminClient(), dueno.gimnasio_id);
 
   const [{ data: clientesData }, { data: planesData }, { data: registrosData }] =
     await Promise.all([
@@ -37,13 +40,22 @@ export default async function ClientesPage() {
       </div>
 
       <div className="card-cut card-cut-lg border border-rule bg-paper-2 p-5">
-        <h2 className="text-lg mb-4">Nuevo cliente</h2>
+        <div className="mb-4 flex items-baseline justify-between gap-3">
+          <h2 className="text-lg">Nuevo cliente</h2>
+          {cupo.max != null ? (
+            <span
+              className={`text-xs ${cupo.ok ? "text-ink-soft" : "text-danger"}`}
+            >
+              {cupo.usados} / {cupo.max} socios
+            </span>
+          ) : null}
+        </div>
         {planes.length === 0 ? (
           <p className="text-sm text-ink-soft">
             Primero creá al menos un plan en la sección Planes.
           </p>
         ) : (
-          <AltaForm planes={planes} />
+          <AltaForm planes={planes} full={!cupo.ok} />
         )}
       </div>
 
