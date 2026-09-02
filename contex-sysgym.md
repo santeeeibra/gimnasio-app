@@ -116,7 +116,7 @@ SECURITY DEFINER (`soy_destinatario`, `mensaje_gimnasio`, `mensaje_remitente`,
 |---|---|
 | 1 — Scaffold, auth, panel dueño, vista cliente, seed | ✅ HECHO |
 | 2 — Mensajería (compositor, bandeja, hilos) | ✅ HECHO, probado end-to-end |
-| Branding / tema personalizable | ✅ **COMPLETO y ampliado** — 7 colores (con base/derivados + "Calcular desde la base") + 9 presets tipográficos (10 fuentes) + tamaño base + redondeo + espaciado + estilo de navegación + densidad + validación contraste WCAG 2.1 (avisos salteables + **bloqueos duros no salteables**: `ink`/`paper`, `ink`/`paper-2` ≥ 4.5 y separación `paper`/`paper-2` ≥ 1.05, vía `chequearBloqueos()`) + preview en vivo. Ver `VALIDACION_CONTRASTE.md` y `FUENTES_PERSONALIZABLES.md`. **Pendiente**: aplicar migración `0004_tema_jsonb.sql` + prueba end-to-end |
+| Branding / tema personalizable | ✅ **COMPLETO y ampliado** — 7 colores (con base/derivados + "Calcular desde la base") + 9 presets tipográficos (10 fuentes) + tamaño base + redondeo + espaciado + estilo de navegación + densidad + validación contraste WCAG 2.1 (avisos salteables + **bloqueos duros no salteables**: `ink`/`paper`, `ink`/`paper-2` ≥ 4.5 y separación `paper`/`paper-2` ≥ 1.05, vía `chequearBloqueos()`) + preview en vivo. Ver `VALIDACION_CONTRASTE.md` y `FUENTES_PERSONALIZABLES.md`. Migración `0004_tema_jsonb.sql` ✅ aplicada (2026-09-01). **Pendiente**: prueba end-to-end (guardar colores+fuente+nav+densidad y verlos en `panel/` y `mi/`) + re-guardar la paleta del gimnasio de prueba (hoy falla contraste; el editor ahora debería bloquear el guardado) |
 | Rediseño UI mobile-first con `emil-design-eng` | 🔄 EN CURSO — `/login` ✅. `/panel/ajustes` ✅ (editor de tema completo estilo Emil). Próximo `/panel` (dashboard). Dirección y notas en `INSTRUCCIONES_TEMA.md` §4 |
 | 3 — Push web nativo | Sin empezar. Tabla lista; faltan VAPID keys, service worker, endpoint, disparo en cuota por vencer. TODO marcado en `panel/mensajes/actions.ts` |
 | 4 — Rutinas (motor de reglas + editor + seed wger) | 🔄 EN CURSO — motor (`src/lib/rutina/`), generación y editor cliente (`/mi/rutina`), panel dueño (`/panel/clientes/[id]/rutina-panel.tsx`) ✅. **Pendiente**: seed real de ejercicios wger (imágenes/GIF), pulido UI mobile del editor, prueba end-to-end |
@@ -143,7 +143,8 @@ SECURITY DEFINER (`soy_destinatario`, `mensaje_gimnasio`, `mensaje_remitente`,
     `chequearBloqueos()` en `src/lib/contraste.ts` impide guardar (sin
     checkbox) si `ink`/`paper` o `ink`/`paper-2` < 4.5 o si la separación
     `paper`/`paper-2` < 1.05; `derivarPaleta()` fuerza esa separación.
-    **Pendiente**: re-guardar la paleta del gimnasio de prueba desde Ajustes.
+    **Pendiente**: re-guardar la paleta del gimnasio de prueba desde Ajustes
+    (migración `0004` ya aplicada, la columna `tema` jsonb existe).
 
 ## Cómo seguir (próxima sesión)
 
@@ -152,11 +153,11 @@ Prioridad sugerida:
 1. ✅ **Fix `/mi/rutina` no respeta el tema** — `bg-white` de las pantallas de
    rutina pasados a tokens. Validación de tema endurecida (`chequearBloqueos`).
    Ver Bugs abiertos.
-2. **Migración `0004_tema_jsonb.sql`** + prueba end-to-end del editor de tema
-   con un gimnasio real (colores + fuente + nav + densidad se guardan y se
-   aplican en `panel/` y `mi/`). Manual del humano (`INSTRUCCIONES_TEMA.md`).
-   Incluir: re-guardar la paleta del gimnasio de prueba (hoy falla contraste)
-   y verificar que el editor ahora bloquea el guardado en ese caso.
+2. Migración `0004_tema_jsonb.sql` ✅ aplicada (2026-09-01). Falta la **prueba
+   end-to-end** del editor de tema con un gimnasio real (colores + fuente + nav
+   + densidad se guardan y se aplican en `panel/` y `mi/`) + re-guardar la
+   paleta del gimnasio de prueba (hoy falla contraste) y verificar que el
+   editor ahora bloquea el guardado en ese caso.
 3. **Seed real de ejercicios wger** (imágenes/GIF) para el motor de rutinas y
    pulido mobile del editor `/mi/rutina`.
 4. **Entregable 3 — Push web nativo**: VAPID keys, service worker, endpoint,
