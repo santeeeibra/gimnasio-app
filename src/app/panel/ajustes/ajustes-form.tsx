@@ -155,7 +155,7 @@ export function AjustesForm({
                 name="fuente"
                 value={draft.fuente}
                 onChange={(e) => set("fuente", e.target.value as FuenteKey)}
-                className="w-full h-10 px-3 rounded-[5px] border border-rule bg-white text-sm outline-none focus:border-ink transition-[border-color] duration-150 [transition-timing-function:var(--ease-out)]"
+                className="w-full h-10 px-3 rounded-[5px] border border-rule bg-paper text-sm outline-none focus:border-ink transition-[border-color] duration-150 [transition-timing-function:var(--ease-out)]"
               >
                 {Object.entries(FUENTES).map(([key, f]) => (
                   <option key={key} value={key}>
@@ -173,7 +173,7 @@ export function AjustesForm({
                 name="escalaFuente"
                 value={draft.escalaFuente}
                 onChange={(e) => set("escalaFuente", parseFloat(e.target.value))}
-                className="w-full h-10 px-3 rounded-[5px] border border-rule bg-white text-sm outline-none focus:border-ink transition-[border-color] duration-150 [transition-timing-function:var(--ease-out)]"
+                className="w-full h-10 px-3 rounded-[5px] border border-rule bg-paper text-sm outline-none focus:border-ink transition-[border-color] duration-150 [transition-timing-function:var(--ease-out)]"
               >
                 <option value="0.875">Pequeña (87.5%)</option>
                 <option value="1">Normal (100%)</option>
@@ -446,7 +446,7 @@ function ColorPicker({
           onBlur={() => setText(value)}
           pattern="^#[0-9A-Fa-f]{6}$"
           placeholder="#000000"
-          className="min-w-0 flex-1 h-10 px-2.5 rounded-[5px] border border-rule bg-white text-sm outline-none focus:border-ink font-mono"
+          className="min-w-0 flex-1 h-10 px-2.5 rounded-[5px] border border-rule bg-paper text-sm outline-none focus:border-ink font-mono"
         />
       </div>
       {hint ? (

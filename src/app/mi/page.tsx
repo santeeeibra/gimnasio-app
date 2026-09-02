@@ -71,7 +71,7 @@ export default async function MiPage() {
 
       <a
         href="/mi/mensajes"
-        className="flex items-center justify-between border border-rule rounded-[6px] bg-white px-5 py-4 hover:bg-paper-2"
+        className="flex items-center justify-between border border-rule rounded-[6px] bg-paper px-5 py-4 hover:bg-paper-2"
       >
         <span className="text-sm font-medium">Mensajes del gimnasio</span>
         {noLeidos ? (
@@ -85,7 +85,7 @@ export default async function MiPage() {
 
       <a
         href="/mi/rutina"
-        className="flex items-center justify-between border border-rule rounded-[6px] bg-white px-5 py-4 hover:bg-paper-2"
+        className="flex items-center justify-between border border-rule rounded-[6px] bg-paper px-5 py-4 hover:bg-paper-2"
       >
         <span className="text-sm font-medium">Tu rutina</span>
         <span className="text-xs text-ink-soft">ver</span>

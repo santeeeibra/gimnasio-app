@@ -40,7 +40,7 @@ export function Field({
         {label}
       </span>
       <input
-        className={`w-full h-11 px-3 rounded-[5px] border border-rule bg-white text-[16px] outline-none transition-[border-color,box-shadow] duration-150 [transition-timing-function:var(--ease-out)] focus:border-ink focus:shadow-[0_0_0_3px_rgb(22_24_29_/_0.08)] ${className ?? ""}`}
+        className={`w-full h-11 px-3 rounded-[5px] border border-rule bg-paper text-[16px] outline-none transition-[border-color,box-shadow] duration-150 [transition-timing-function:var(--ease-out)] focus:border-ink focus:shadow-[0_0_0_3px_rgb(22_24_29_/_0.08)] ${className ?? ""}`}
         {...props}
       />
       {hint ? (
@@ -58,7 +58,7 @@ export function Panel({
   className?: string;
 }) {
   return (
-    <div className={`border border-rule rounded-[6px] bg-white ${className}`}>
+    <div className={`border border-rule rounded-[6px] bg-paper-2 ${className}`}>
       {children}
     </div>
   );

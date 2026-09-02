@@ -121,7 +121,7 @@ export function TemaPreviewCompleto({ tema }: { tema: Tema }) {
 
           {/* Input */}
           <input
-            className="w-full h-10 px-3 border border-[color:var(--rule)] bg-white text-sm"
+            className="w-full h-10 px-3 border border-[color:var(--rule)] bg-[color:var(--paper)] text-sm"
             placeholder="Buscar cliente…"
             readOnly
             style={{ 

@@ -20,7 +20,7 @@ export function ComposeForm({
   );
 
   const selectCls =
-    "w-full h-10 px-3 rounded-[5px] border border-rule bg-white text-sm outline-none focus:border-ink";
+    "w-full h-10 px-3 rounded-[5px] border border-rule bg-paper text-sm outline-none focus:border-ink";
 
   return (
     <form action={formAction} className="space-y-4">
@@ -82,7 +82,7 @@ export function ComposeForm({
         required
         rows={4}
         placeholder="Escribí el aviso…"
-        className="w-full px-3 py-2 rounded-[5px] border border-rule bg-white text-sm outline-none focus:border-ink resize-y"
+        className="w-full px-3 py-2 rounded-[5px] border border-rule bg-paper text-sm outline-none focus:border-ink resize-y"
       />
 
       <label className="flex items-center gap-2 text-sm text-ink-soft">

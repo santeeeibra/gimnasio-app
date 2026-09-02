@@ -25,7 +25,7 @@ export function PagoForm({
         <select
           name="plan_id"
           defaultValue={planActual ?? ""}
-          className="w-full h-10 px-3 rounded-[5px] border border-rule bg-white text-sm outline-none focus:border-ink"
+          className="w-full h-10 px-3 rounded-[5px] border border-rule bg-paper text-sm outline-none focus:border-ink"
         >
           <option value="">Elegir…</option>
           {planes.map((p) => (

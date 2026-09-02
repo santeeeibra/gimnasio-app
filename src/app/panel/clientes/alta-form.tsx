@@ -25,7 +25,7 @@ export function AltaForm({
         </span>
         <select
           name="plan_id"
-          className="w-full h-10 px-3 rounded-[5px] border border-rule bg-white text-sm outline-none focus:border-ink"
+          className="w-full h-10 px-3 rounded-[5px] border border-rule bg-paper text-sm outline-none focus:border-ink"
         >
           <option value="">Sin plan por ahora</option>
           {planes.map((p) => (
