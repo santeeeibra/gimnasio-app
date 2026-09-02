@@ -131,7 +131,7 @@ function ExThumb({
   if (!url || err) {
     return (
       <div
-        className="grid size-[72px] shrink-0 place-items-center rounded-[8px] border border-rule bg-paper-2 text-ink-soft"
+        className="grid w-24 min-h-[72px] shrink-0 self-stretch place-items-center rounded-[8px] border border-rule bg-paper-2 text-ink-soft"
         aria-hidden
       >
         <Glifo className="size-6" />
@@ -144,13 +144,13 @@ function ExThumb({
       type="button"
       onClick={onOpen}
       aria-label={`Ver ${ej?.nombre ?? "ejercicio"} en grande`}
-      className="group relative size-[72px] shrink-0 overflow-hidden rounded-[8px] border border-rule bg-paper-2 transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20"
+      className="group relative w-24 min-h-[72px] shrink-0 self-stretch overflow-hidden rounded-[8px] border border-rule bg-paper-2 transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20"
     >
       <ImagenAnimada
         url={url}
         activo={!reduce && !err}
         onError={() => setErr(true)}
-        className="h-full w-full object-contain"
+        className="h-full w-full object-cover"
       />
     </button>
   );

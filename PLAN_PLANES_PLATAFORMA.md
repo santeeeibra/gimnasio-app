@@ -65,7 +65,7 @@ está lleno.
 
 ---
 
-## FASE 4 — Vista del dueño: "activá / ampliá tu plan"
+## FASE 4 — Vista del dueño: "activá / ampliá tu plan"  ✅
 
 - Banner en `/panel` cuando el cupo está al 90%+ o `estado = 'prueba'`.
 - `/panel/plan`: plan actual, cupo, y botón "Solicitar activación / upgrade"

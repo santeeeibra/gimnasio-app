@@ -1,21 +1,30 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { requireDueno } from "@/lib/auth";
 import { diasRestantes } from "@/lib/cuota";
+import { cupoSocios } from "@/lib/plataforma/cupo";
 import { ClienteRow, type ClienteVista } from "./clientes/cliente-row";
 
 export default async function ResumenPage() {
-  await requireDueno();
+  const dueno = await requireDueno();
   const supabase = await createClient();
 
   const { data: gym } = await supabase
     .from("gimnasios")
     .select("estado")
-    .eq("id", (await supabase.from("profiles").select("gimnasio_id").eq("id", (await supabase.auth.getUser()).data.user!.id).single()).data!.gimnasio_id)
+    .eq("id", dueno.gimnasio_id)
     .single();
 
   const estadoGimnasio = gym?.estado ?? "prueba";
   const soloLectura = estadoGimnasio === "solo_lectura";
+
+  const cupo = await cupoSocios(createAdminClient(), dueno.gimnasio_id);
+  const cupoCasiLleno =
+    cupo.max != null && cupo.usados / cupo.max >= 0.9;
+  const mostrarBannerPlan =
+    !soloLectura &&
+    (estadoGimnasio === "prueba" || !cupo.ok || cupoCasiLleno);
 
   const { data } = await supabase
     .from("clientes")
@@ -71,12 +80,30 @@ export default async function ResumenPage() {
           <p className="mb-3 text-sm text-ink">
             Tu gimnasio está en modo solo lectura. Activá un plan para seguir usando todas las funciones de la app.
           </p>
-          <a
-            href="mailto:soporte@tudominio.com?subject=Activar plan para mi gimnasio"
+          <Link
+            href="/panel/plan"
             className="inline-block rounded-md bg-danger px-4 py-2 text-sm font-medium text-white hover:opacity-90"
           >
             Activar plan
-          </a>
+          </Link>
+        </div>
+      )}
+
+      {mostrarBannerPlan && (
+        <div className="mb-6 rounded-[6px] border border-rule bg-paper-2 p-4">
+          <p className="text-sm">
+            {!cupo.ok
+              ? "Llegaste al tope de socios de tu plan."
+              : cupoCasiLleno
+                ? `Estás cerca del tope de socios (${cupo.usados}/${cupo.max}).`
+                : "Estás en período de prueba."}{" "}
+            <Link
+              href="/panel/plan"
+              className="underline underline-offset-2 decoration-rule hover:decoration-ink"
+            >
+              Ver tu plan
+            </Link>
+          </p>
         </div>
       )}
 

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireDueno } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { parseTema } from "@/lib/tema";
@@ -50,6 +51,19 @@ export default async function AjustesPage() {
           />
         </div>
       ) : null}
+
+      <div className="card-cut card-cut-lg mt-6 border border-rule bg-paper-2 p-6">
+        <h2 className="text-lg mb-1">Tu plan</h2>
+        <p className="text-sm text-ink-soft mb-4">
+          Estado del gimnasio, límite de socios y activación.
+        </p>
+        <Link
+          href="/panel/plan"
+          className="text-sm underline underline-offset-2 decoration-rule hover:decoration-ink"
+        >
+          Ver tu plan
+        </Link>
+      </div>
     </div>
   );
 }
