@@ -7,10 +7,15 @@ import { diasRestantes, estadoDesdeDias, ESTADO_LABEL } from "@/lib/cuota";
 import {
   NIVEL_LABEL,
   OBJETIVO_LABEL,
+  RANGO_LABEL,
+  RIR_LABEL,
+  SPLIT_LABEL,
   TECNICA_LABEL,
+  VOLUMEN_LABEL,
   type Enfasis,
   type Nivel,
   type Objetivo,
+  type OpcionesAvanzadas,
   type PreferenciaEquipo,
   type Sexo,
   type Tecnica,
@@ -20,6 +25,8 @@ type Prefs = {
   equipo?: PreferenciaEquipo;
   sexo?: Sexo;
   enfasis?: Enfasis[];
+  avanzado?: OpcionesAvanzadas | null;
+  explicacionGeneral?: string;
 } | null;
 import { PagoForm } from "./pago-form";
 import { RutinaPanelDueno } from "./rutina-panel";
@@ -186,6 +193,35 @@ export default async function ClienteDetallePage({
           ) : null}
         </div>
 
+        {rutina && !esManual && (rutina.preferencias as Prefs)?.avanzado ? (
+          (() => {
+            const av = (rutina.preferencias as Prefs)!.avanzado!;
+            const chips = [
+              av.split !== "auto" ? SPLIT_LABEL[av.split] : null,
+              av.rango !== "estandar" ? RANGO_LABEL[av.rango] : null,
+              av.volumen !== "estandar" ? VOLUMEN_LABEL[av.volumen] : null,
+              av.rir !== "2-3" ? RIR_LABEL[av.rir] : null,
+              av.tecnicaAislamientos !== "ninguna"
+                ? `Aislam.: ${TECNICA_LABEL[av.tecnicaAislamientos]}`
+                : null,
+              ...av.evitar.map((m) => `Evita ${m}`),
+            ].filter(Boolean) as string[];
+            if (chips.length === 0) return null;
+            return (
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {chips.map((c) => (
+                  <span
+                    key={c}
+                    className="rounded-full border border-rule px-2 py-0.5 text-[11px] text-ink-soft"
+                  >
+                    {c}
+                  </span>
+                ))}
+              </div>
+            );
+          })()
+        ) : null}
+
         {rutina ? (
           <ul className="mt-3 mb-4 space-y-2 text-sm">
             {[...rutinaPorDia.keys()]
@@ -208,6 +244,17 @@ export default async function ClienteDetallePage({
             Sin rutina todavía. El cliente también puede generarla desde su panel.
           </p>
         )}
+
+        {rutina && !esManual && (rutina.preferencias as Prefs)?.explicacionGeneral ? (
+          <details className="mb-4 text-xs text-ink-soft">
+            <summary className="w-fit cursor-pointer select-none underline underline-offset-2">
+              Por qué está armada así
+            </summary>
+            <p className="mt-1.5 leading-snug">
+              {(rutina.preferencias as Prefs)!.explicacionGeneral}
+            </p>
+          </details>
+        ) : null}
 
         <RutinaPanelDueno
           clienteId={c.id}

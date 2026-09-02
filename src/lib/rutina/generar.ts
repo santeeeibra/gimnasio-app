@@ -4,6 +4,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { generarPlan } from "./motor";
+import { explicarGeneral, explicarPlan } from "./explicar";
 import type { Ejercicio, EntradaMotor } from "./tipos";
 
 type Resultado = { error?: string; ok?: string; rutinaId?: string };
@@ -26,6 +27,8 @@ export async function generarYGuardar(
   }
 
   const plan = generarPlan(entrada, ejercicios);
+  const explicacion = explicarPlan(plan, plan.entrada, ejercicios);
+  const explicacionGeneral = explicarGeneral(plan.entrada);
   const porSlug = new Map(ejercicios.filter((e) => e.slug).map((e) => [e.slug!, e.id]));
 
   // ── upsert de la rutina (una por cliente) ──
@@ -48,6 +51,8 @@ export async function generarYGuardar(
       sexo: entrada.sexo,
       enfasis: entrada.enfasis,
       avanzado: entrada.avanzado ?? null,
+      explicacion,
+      explicacionGeneral,
     },
     dias_titulos: plan.dias.map((d) => d.titulo),
     actualizado_at: new Date().toISOString(),

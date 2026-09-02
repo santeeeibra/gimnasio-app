@@ -183,6 +183,37 @@ export default async function MiRutinaPage() {
           {entradaManual}
           {linkAvanzado}
 
+          {(() => {
+            const p = rutina.preferencias as
+              | { explicacion?: string[]; explicacionGeneral?: string }
+              | null;
+            const pasos = p?.explicacion ?? [];
+            if (rutina.origen === "manual" || pasos.length === 0) return null;
+            return (
+              <details className="group rounded-[6px] border border-rule bg-paper-2 p-4">
+                <summary className="w-fit cursor-pointer select-none text-sm text-ink-soft underline underline-offset-2 [&::-webkit-details-marker]:hidden">
+                  <span className="group-open:hidden">Explicame esta rutina</span>
+                  <span className="hidden group-open:inline">Cerrar explicación</span>
+                </summary>
+                <div className="mt-3 space-y-2 text-sm leading-snug animate-fade-in">
+                  {p?.explicacionGeneral ? (
+                    <p className="text-ink-soft">{p.explicacionGeneral}</p>
+                  ) : null}
+                  <ol className="space-y-2">
+                    {pasos.map((t, i) => (
+                      <li key={i} className="flex gap-2">
+                        <span className="shrink-0 font-display text-ink-soft">
+                          Día {i + 1}
+                        </span>
+                        <span>{t}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              </details>
+            );
+          })()}
+
           <RutinaEditor
             dias={agruparPorDia(
               (itemsData ?? []) as any[],
