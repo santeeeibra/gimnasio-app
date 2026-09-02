@@ -27,12 +27,18 @@ export async function configurarPin(
   }
 
   const supabase = await createClient();
-  const { data: gym } = await supabase
+  const { data: gym, error: gymErr } = await supabase
     .from("gimnasios")
     .select("pin_ingresos")
     .eq("id", dueno.gimnasio_id)
-    .single();
+    .maybeSingle();
 
+  if (gymErr) {
+    console.error("[ingresos] configurarPin — lectura gimnasio:", gymErr);
+    return {
+      error: `No se pudo leer el gimnasio (${gymErr.message}). ¿Está aplicada la migración 0008_pin_ingresos.sql?`,
+    };
+  }
   if (!gym) return { error: "No se encontró el gimnasio." };
 
   // Si ya tiene PIN, validar el actual
@@ -46,7 +52,10 @@ export async function configurarPin(
     .update({ pin_ingresos: nuevoHash })
     .eq("id", dueno.gimnasio_id);
 
-  if (error) return { error: "No se pudo guardar el PIN." };
+  if (error) {
+    console.error("[ingresos] configurarPin — guardar PIN:", error);
+    return { error: `No se pudo guardar el PIN (${error.message}).` };
+  }
 
   revalidatePath("/panel/ingresos");
   return { ok: "PIN configurado correctamente." };

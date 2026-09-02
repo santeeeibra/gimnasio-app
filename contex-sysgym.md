@@ -158,13 +158,68 @@ usarlo para altas masivas).
   (agrupador colapsable dentro de `ajustes-form.tsx`), tabs Editor/Preview en
   móvil.
 
+### Check-in por DNI (modo kiosko) + día de prueba (SPEC `SPEC_CHECKIN_PRUEBA.md`)
+
+- **Día de prueba**: en el alta (`panel/clientes/alta-form.tsx`) hay 2 submits —
+  "Dar de alta" (flujo completo) y "1 día de prueba" (`name="modo" value="prueba"`).
+  El de prueba crea el cliente con `en_prueba = true`,
+  `prueba_iniciada_en = hoy`, sin plan ni pago. `altaCliente` en
+  `panel/clientes/actions.ts` ramifica por `modo`.
+- **Modo kiosko** (`/checkin`, **fuera de `/panel`** para no heredar el chrome
+  del panel): `src/app/checkin/` con su propio `layout.tsx` (`requireDueno()` +
+  tema del gym, header mínimo). Un solo input DNI grande + "Marcar ingreso".
+  Corre dentro de la sesión autenticada del dueño (cliente RLS, no ruta
+  pública). Para volver al panel: `SalirModoCheckin` abre modal que revalida la
+  clave del dueño con `signInWithPassword` (no un botón "volver" pelado).
+- **Lógica** (`src/app/checkin/actions.ts` → `marcarIngreso`): busca el cliente
+  por DNI en el gimnasio, cuenta `registros_entrada` previos, **inserta siempre**
+  (queda constancia). Si `en_prueba` y NO es el primer ingreso → estado
+  `prueba_vencida` en la pantalla + `enviarPush([dueno.id], …)`. DNI inexistente
+  → "DNI no encontrado, avisá al encargado" (sin más detalle).
+- **Conversión**: `registrarPago` (mismo `actions.ts`) ahora setea
+  `en_prueba = false` al registrar el plan/pago.
+- **Badge**: `cliente-row.tsx` muestra pill "En prueba" (neutra) / "Prueba
+  vencida" (roja, mismo criterio visual que cuota vencida). La lista
+  (`panel/clientes/page.tsx`) trae `registros_entrada` del gym y marca vencida
+  si `en_prueba` y hay ≥1 registro. `panel/clientes/[id]/page.tsx` muestra el
+  estado "Día de prueba" + nota para convertir.
+- **Entrada al modo**: link "Modo check-in" en el sidebar desktop
+  (`panel-nav.tsx`) + tarjeta en `/panel` (resumen, `md:hidden`).
+- **Migración `0009_checkin_prueba.sql`** (PENDIENTE de aplicar): `clientes` +
+  `en_prueba boolean not null default false` + `prueba_iniciada_en date`; tabla
+  nueva `registros_entrada` (`id`, `gimnasio_id` FK, `cliente_id` FK,
+  `creado_en timestamptz`) con RLS `is_dueno()` + `current_gimnasio_id()`. Fila
+  liviana a propósito (alimenta "racha de constancia" a futuro; NO confundir con
+  `registro_progreso` = series/pesos).
+
+### Ingresos — sección de pagos protegida por PIN (Cline, 2026-09-02)
+
+- `/panel/ingresos` (link en `NAV` de `panel-nav.tsx`): lista los pagos del
+  gimnasio agrupados por mes con totales. Los datos los sirve
+  `src/app/api/panel/ingresos/route.ts` (GET) y los consume
+  `listado-ingresos.tsx` client-side.
+- **PIN de 4-6 dígitos** en `gimnasios.pin_ingresos` (text nullable, migración
+  `0008_pin_ingresos.sql` — **PENDIENTE de aplicar**, ver Bugs abiertos).
+  `src/lib/pin.ts`: hash SHA-256 + salt (`PIN_SALT` env, default fijo).
+- `configurar-pin/` (page + actions + `configurar-pin-form.tsx`): crear/cambiar
+  PIN. `verificar-pin-modal.tsx`: modal que pide el PIN y guarda
+  `sessionStorage.pin_ingresos_verificado`. `recuperar-pin-form.tsx` +
+  `resetearPinConContrasena`: resetear el PIN validando la contraseña de la
+  cuenta del dueño (`supabase.auth.updateUser({ password })` como verificación).
+- Los server actions de `configurar-pin/actions.ts` ahora devuelven el mensaje
+  real de Postgres si la lectura del gimnasio falla (antes decía siempre "No se
+  encontró el gimnasio" y tapaba el "column pin_ingresos does not exist").
+
 ## Modelo de datos
 
-`gimnasios` (+ `tema` jsonb, `logo_url` text nullable), `planes`,
-`clientes` (+ `sexo` text nullable: `mujer`/`hombre`/`sin_especificar`, lo carga
-el dueño en el alta — migración `0007_cliente_sexo.sql`), `ejercicios`,
+`gimnasios` (+ `tema` jsonb, `logo_url` text nullable, `pin_ingresos` text
+nullable — migración `0008`, **pendiente**), `planes`,
+`clientes` (+ `sexo` text nullable: `mujer`/`hombre`/`sin_especificar`, migración
+`0007_cliente_sexo.sql`; + `en_prueba` bool + `prueba_iniciada_en` date —
+migración `0009`, **pendiente**), `ejercicios`,
 `rutinas` / `rutina_items`, `mensajes` / `mensaje_destinatarios`,
-`push_subscriptions`.
+`push_subscriptions`, `registros_entrada` (presencia puntual — migración `0009`,
+**pendiente**).
 
 Helpers SQL: `current_gimnasio_id()`, `is_dueno()`, `current_cliente_id()`,
 `recalcular_estado_cuota()`. Chequeos cruzados de mensajería vía funciones
@@ -182,6 +237,8 @@ SECURITY DEFINER (`soy_destinatario`, `mensaje_gimnasio`, `mensaje_remitente`,
 | 3 — Push web nativo | ✅ **COMPLETO (2026-09-02)** — Código completo y verificado (typecheck limpio, `/sw.js` y `/manifest` sirven 200, cron sin auth → 401, card "Notificaciones" renderiza en `/mi`). **Archivos nuevos**: `public/sw.js` (service worker con listeners `push` + `notificationclick`), `public/manifest.webmanifest` (PWA mínima, link + themeColor + appleWebApp en `layout.tsx`), `src/lib/push/cliente.ts` (registrar SW, pedir permiso, `pushManager.subscribe`), `src/lib/push/enviar.ts` (`enviarPush(profileIds, {title,body,url,tag})`, borra subs muertas 404/410), `src/app/mi/push-actions.ts` (`guardarSuscripcion` / `borrarSuscripcion`), `src/app/mi/activar-notificaciones.tsx` (botón en `/mi`), `src/app/api/cron/cuotas/route.ts` + `vercel.json` (cron diario 12:00, avisa a 6 y 1 días). **Modificados**: `middleware.ts` (whitelist `/sw.js`, `/manifest.webmanifest`, `/icon-`, `/badge-`, `/api/cron`), `panel/mensajes/actions.ts` (enviar + responder dueño), `mi/mensajes/actions.ts` (responder cliente → avisa dueño), `mi/page.tsx`. **Pendiente manual**: (1) Generar claves VAPID: `npx web-push generate-vapid-keys` → `.env.local` (`NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT=mailto:…`) + `CRON_SECRET`; las mismas 4 en Vercel → Project Settings → Environment Variables. (2) Iconos en `public/`: `icon-192.png`, `icon-512.png`, `badge-72.png` (referenciados por SW y manifest). (3) Reiniciar dev server (toma nuevo `.env.local`) y probar en navegador real con permiso: `/mi` → "Activar" → mensaje desde panel → debe llegar notificación. (4) Deploy a Vercel (cron se registra solo desde `vercel.json`). Disparar manualmente: `curl -H "authorization: Bearer $CRON_SECRET" https://<dominio>/api/cron/cuotas`. **Nota iOS**: solo funciona en 16.4+ y con app agregada a pantalla de inicio. |
 | 4 — Rutinas (motor de reglas + editor + seed imágenes) | ✅ **COMPLETO (2026-09-02)** — Motor con **sexo y énfasis** (generación liviana + zona a enfocar): `tipos.ts` nuevos `SEXOS`/`SEXO_LABEL`, `ENFASIS`/`ENFASIS_LABEL`/`ENFASIS_GRUPOS` (7 zonas: Glúteos, Piernas, Pecho, Espalda, Hombros, Brazos, Abdomen), `MAX_ENFASIS = 2`, `SERIES_OPCIONES`/`REPS_OPCIONES` para menús. `EntradaMotor` ahora lleva `sexo` y `enfasis[]`. `motor.ts`: `ajustarPorSexo()` — mujer baja 1 serie en compuestos/aislamientos (mín. 3/2), sin tocar reps; `aplicarEnfasis()` — agrega hasta 3 ranuras extra/día para las zonas elegidas (máx. 8 ejercicios/día), con patrón real. Si es mujer y no eligió zona → glúteos por defecto. `generar.ts`: persiste sexo/énfasis en `preferencias` jsonb (sin migración SQL). Actions (`mi/rutina/actions.ts`, `panel/clientes/actions.ts`): `parseSexo()` y `parseEnfasis()` validan campos. Formulario (`generar-form.tsx`): select "Sexo" **condicional** (solo se muestra si `clienteSexo` prop existe; sino pasa `"sin_especificar"` por defecto) + fieldset "Zona a enfocar" (chips, máx. 2, controlado). Defaults se releen en `mi/rutina/page.tsx`, `panel/clientes/[id]/page.tsx`, `rutina-panel.tsx`. **Series/Reps sin escribir** (`rutina-editor.tsx`): los 2 `<input>` ahora `<select>` — Series 1–5, Reps 10 opciones fijas (5, 6, 6–8, 8–10, 8–12, 10–12, 12–15, 15, 15–20, 20). Si el valor guardado no está en la lista se agrega como primera opción (compat. hacia atrás). Typecheck limpio ✅. **Imágenes**: cambió wger por **free-exercise-db** (fotos fondo blanco). Editor alterna `/0.jpg`↔`/1.jpg` cada 900 ms + visor grande al tocar. Fix mobile: `img,video{max-width:100%;height:auto}` en `globals.css` + miniatura caja fija 72px. Seed corrido (2026-09-02): `imagen_url` de 53 ejercicios en tabla (verificado, cargan desde jsdelivr). |
 | 5 — Cron `recalcular_estado_cuota()` diario (pg_cron o Vercel cron) | Sin empezar |
+| Check-in por DNI + día de prueba (SPEC `SPEC_CHECKIN_PRUEBA.md`) | ✅ código + typecheck (2026-09-02). **Falta aplicar `0009_checkin_prueba.sql`** y probar RLS end-to-end. Ver sección "Check-in por DNI…". |
+| Ingresos — pagos por mes protegidos por PIN (Cline) | ✅ código (2026-09-02). **Falta aplicar `0008_pin_ingresos.sql`** (bug "No se encontró el gimnasio" hasta entonces). |
 
 ### Datos de prueba
 - Dueño: gimnasio `migym`, DNI `30111222`
@@ -193,6 +250,15 @@ SECURITY DEFINER (`soy_destinatario`, `mensaje_gimnasio`, `mensaje_remitente`,
   `prof_select` no deja al cliente leer el perfil del dueño). Sin resolver.
 
 ### Bugs abiertos
+- **"No se encontró el gimnasio" al crear el PIN de Ingresos por primera vez**
+  (2026-09-02). Causa: la migración `0008_pin_ingresos.sql` (columna
+  `gimnasios.pin_ingresos`) **no está aplicada**; el `select("pin_ingresos")`
+  devuelve error 400 (columna inexistente), el código lo ignoraba y caía en
+  `if (!gym)` con un mensaje engañoso. Mismo motivo por el que `/checkin`,
+  `/panel/clientes` y `/panel/clientes/[id]` van a fallar hasta aplicar `0009`.
+  - Mitigado en código: `configurar-pin/actions.ts` ahora devuelve el mensaje
+    real de Postgres. **Fix definitivo: aplicar `0008` y `0009` en el SQL
+    Editor de Supabase.**
 - **`/mi/rutina` no respeta el tema** (visto en captura, 2026-09-01).
   - Causa 1: `bg-white` hardcodeado — ✅ RESUELTO y barrido global hecho.
     Editor de rutina + barrido de todo `src/`: inputs → `bg-paper`, `Panel`
@@ -258,6 +324,18 @@ Ya hecho (2026-09-02):
 - **Tutorial implementado y verificado a 375px** (dueño y cliente). **Archivos nuevos** — `src/components/tutorial/`: `overlay.tsx` (coach-mark: backdrop bg-ink/60, bottom-sheet en móvil / centrado en sm+, dots de progreso, Atrás / Siguiente / Saltear, Escape + scroll del body bloqueado, animate-fade-in/animate-slide-up); `pasos-dueno.tsx` (5 pasos: alta prellenada "Simular alta" avanza, cuota vencida→al día estado local, compositor "Simular envío", aviso in-app banner no push, cierre "Empezar"); `pasos-cliente.tsx` (4 pasos: cuota al día, rutina de ejemplo, mensaje del gimnasio, `<ActivarNotificaciones />` real como CTA final); `mock.tsx` (fragmentos de mentira con tokens); `tutorial.tsx` (`Tutorial` auto-abre según localStorage, escucha evento `abrir-tutorial`, marca flag al cerrar/saltear + `VerTutorialDeNuevo`). **Wiring**: `Tutorial` montado en `mi/layout.tsx` y `panel/layout.tsx`; `VerTutorialDeNuevo` en `mi/page.tsx` (junto a "Salir") y `panel/ajustes/page.tsx`. **Verificado**: Cero escrituras a Supabase (todo estado de React), flags `tutorial_dueno_visto` / `tutorial_cliente_visto` se setean a "1" al terminar o saltear (no reaparece), "Ver tutorial de nuevo" relanza sin tocar el flag ni el estado real, sin scroll horizontal a 375px, typecheck limpio ✅.
 - **Sección de Ingresos con PIN** (nueva): Apartado `/panel/ingresos` con protección por PIN (4-6 dígitos, hash SHA-256). Muestra listado completo de pagos agrupados por mes con totales mensuales y total general. **Archivos nuevos**: `supabase/migrations/0008_pin_ingresos.sql` (columna `gimnasios.pin_ingresos`), `src/lib/pin.ts` (hashPin/verificarPin con SHA-256), `src/app/panel/ingresos/configurar-pin/actions.ts` (configurarPin + verificarPinIngresos + resetearPinConContrasena), `src/app/panel/ingresos/configurar-pin/page.tsx` (UI configuración + recuperación), `src/app/panel/ingresos/configurar-pin-form.tsx` (form con validación), `src/app/panel/ingresos/recuperar-pin-form.tsx` (form recuperación en página de configuración), `src/app/panel/ingresos/page.tsx` (página principal), `src/app/panel/ingresos/verificar-pin-modal.tsx` (modal de verificación con "Olvidé mi PIN", usa sessionStorage), `src/app/panel/ingresos/listado-ingresos.tsx` (listado agrupado por mes), `src/app/api/panel/ingresos/route.ts` (endpoint GET para pagos). **Modificado**: `src/app/panel/panel-nav.tsx` (agregado enlace "Ingresos"). **Flujo**: (1) Primera vez → redirige a configurar PIN, (2) Con PIN configurado → modal de verificación (se guarda en sessionStorage), (3) PIN correcto → muestra listado con totales. Enlace "Cambiar PIN" en la vista de ingresos. **Recuperación de PIN**: (A) Desde modal de verificación: botón "Olvidé mi PIN" → pide contraseña → verifica y redirige a configurar nuevo; (B) Desde página de cambio: sección "Resetear PIN" debajo del formulario → pide contraseña → borra PIN y recarga → muestra formulario sin pedir PIN anterior. **Pendiente manual**: aplicar migración `0008_pin_ingresos.sql` en Supabase.
 
+- **Check-in por DNI (modo kiosko) + día de prueba** (SPEC
+  `SPEC_CHECKIN_PRUEBA.md`, 2026-09-02): alta con 2 submits ("Dar de alta" /
+  "1 día de prueba"), pantalla `/checkin` fuera de `/panel` (sesión del dueño,
+  salir revalida la clave), `marcarIngreso` (registro siempre + push si prueba
+  vencida), `registrarPago` apaga `en_prueba`, badges "En prueba" / "Prueba
+  vencida" en la lista y el detalle del cliente. Typecheck limpio ✅. Ver
+  sección "Check-in por DNI…" arriba. **Pendiente manual**: aplicar
+  `supabase/migrations/0009_checkin_prueba.sql` (`clientes.en_prueba`,
+  `clientes.prueba_iniciada_en`, tabla `registros_entrada` + RLS) — hasta
+  entonces `/checkin`, `/panel/clientes` y `/panel/clientes/[id]` fallan porque
+  los queries piden `en_prueba` / `registros_entrada`.
+
 - **Logo del gimnasio + paletas desde el logo** (SPEC `SPEC_LOGO_COLORES.md`):
   compresión client-side, extracción de color, chips de paleta sugerida, logo en
   panel/mi/mensajes. Código y typecheck ✅. **Pendiente manual**: aplicar
@@ -267,11 +345,18 @@ Ya hecho (2026-09-02):
 
 Pendiente, prioridad sugerida:
 
+0. **Aplicar migraciones pendientes en el SQL Editor de Supabase** (bloquean
+   funcionalidad ya mergeada): `0006_logo_gimnasio.sql`, `0007_cliente_sexo.sql`,
+   `0008_pin_ingresos.sql` (⚠️ causa del bug "No se encontró el gimnasio" al
+   crear el PIN de Ingresos) y `0009_checkin_prueba.sql`. Correrlas en orden.
 1. **Aplicar `0006_logo_gimnasio.sql`** y probar el flujo de logo
    (`/panel/ajustes` → subir → chip sugerido → guardar; verificar `.webp`
    <300 KB en el bucket y que un gimnasio sin logo no cambia).
 1b. **Aplicar `0007_cliente_sexo.sql`** (columna `clientes.sexo`) y probar el
    alta con sexo → `/mi/rutina` muestra el select de Sexo solo si está cargado.
+1d. **Aplicar `0008` + `0009`** y probar: crear PIN de Ingresos, alta "1 día de
+   prueba", 2º ingreso en `/checkin` → push + badge, convertir con pago → badge
+   se apaga. RLS: un dueño no ve/inserta `registros_entrada` de otro gimnasio.
 1c. **Panel: editar cliente ya creado** (nombre / DNI / contraseña / sexo) —
    chip de tarea creado. Ojo: DNI → email de login (`dniAEmail`), contraseña vía
    `admin.auth.admin.updateUserById`.

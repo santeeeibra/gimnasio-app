@@ -4,4 +4,4 @@
 alter table gimnasios
   add column pin_ingresos text;
 
-comment on column gimnasios.pin_ingresos is 'Hash bcrypt del PIN para acceder a la sección de ingresos (4-6 dígitos). Nullable: si es null, se redirige a configurar-pin en el primer acceso.';
+comment on column gimnasios.pin_ingresos is 'Hash SHA-256 + salt del PIN para acceder a la sección de ingresos (4-6 dígitos), ver src/lib/pin.ts. Nullable: si es null, se redirige a configurar-pin en el primer acceso.';
