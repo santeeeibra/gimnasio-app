@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { registrarAccionAdmin } from "@/lib/admin/audit";
 import { entrarComoAction } from "../../impersonar-actions";
 import { Button } from "@/components/ui";
+import { cupoExcedido, cupoTexto } from "@/lib/plataforma/planes";
 import { EstadoForm } from "./estado-form";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +21,9 @@ export default async function AdminGimnasioDetalle({
 
   const { data: gym } = await db
     .from("gimnasios")
-    .select("id, nombre, slug, estado, dias_aviso_morosidad, creado_at")
+    .select(
+      "id, nombre, slug, estado, dias_aviso_morosidad, creado_at, plan_plataforma_vence_el, plan:planes_plataforma(id, nombre, max_socios, precio_mensual)",
+    )
     .eq("id", id)
     .single();
 
@@ -65,6 +68,14 @@ export default async function AdminGimnasioDetalle({
 
   const duenoInfo = dueno as { id: string; nombre: string | null } | null;
 
+  const planP = (gym.plan ?? null) as unknown as {
+    id: string;
+    nombre: string;
+    max_socios: number | null;
+    precio_mensual: number;
+  } | null;
+  const socioCount = (clientes ?? []).length;
+
   const ultimosPagos = (pagos ?? []) as unknown as {
     id: string;
     monto: number | null;
@@ -85,6 +96,29 @@ export default async function AdminGimnasioDetalle({
         {gym.slug ?? "—"} · estado {gym.estado ?? "—"} · aviso morosidad{" "}
         {gym.dias_aviso_morosidad ?? "—"} días
       </p>
+
+      <div className="card-cut mb-8 border border-rule bg-paper-2 p-5">
+        <h2 className="mb-1 text-sm uppercase tracking-[0.14em] text-ink-soft">
+          Plan de plataforma
+        </h2>
+        <p className="text-sm">
+          {planP?.nombre ?? "Sin plan asignado"}
+          {" · "}
+          {cupoTexto(socioCount, planP?.max_socios ?? null)}
+        </p>
+        {gym.plan_plataforma_vence_el ? (
+          <p className="mt-1 text-xs text-ink-soft">
+            vence{" "}
+            {new Date(gym.plan_plataforma_vence_el).toLocaleDateString("es-AR")}
+          </p>
+        ) : null}
+        {cupoExcedido(socioCount, planP?.max_socios ?? null) ? (
+          <p className="mt-2 text-xs text-danger">Cupo alcanzado o superado.</p>
+        ) : null}
+        <p className="mt-3 text-xs text-ink-soft">
+          Asignar / cambiar plan: pendiente (fase 2).
+        </p>
+      </div>
 
       <div className="card-cut mb-8 border border-rule bg-paper-2 p-5">
         <h2 className="mb-1 text-sm uppercase tracking-[0.14em] text-ink-soft">
