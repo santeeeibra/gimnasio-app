@@ -22,6 +22,17 @@ const NIVEL_ORDEN: Record<Nivel, number> = {
   avanzado: 2,
 };
 
+// Cuánto "básico" es cada implemento para un ejercicio compuesto. Rompe empates
+// hacia los movimientos de barra/mancuerna cuando no hay restricción de equipo,
+// sin castigar a los compuestos de peso corporal difíciles (dominadas, fondos).
+const EQUIPO_PESO: Record<string, number> = {
+  barra: 6,
+  mancuernas: 5,
+  maquina: 3,
+  polea: 3,
+  peso_corporal: 3,
+};
+
 // ─────────────────────────────────────────────────────────────
 // Esquema de series / repeticiones / descanso por objetivo
 // ─────────────────────────────────────────────────────────────
@@ -221,7 +232,10 @@ function puntuar(
   if (usadosDia.has(ej.id)) return -Infinity; // nunca repetir en el mismo día
   if (ranura.patron && ej.patron === ranura.patron) p += 40;
   if (ranura.rol === "aislamiento" && ej.patron === "aislamiento") p += 15;
-  if (ranura.rol === "compuesto" && ej.patron !== "aislamiento") p += 15;
+  if (ranura.rol === "compuesto" && ej.patron !== "aislamiento") {
+    p += 15;
+    p += EQUIPO_PESO[ej.equipo ?? ""] ?? 0;
+  }
   if (equipoPrefs.length === 0 || (ej.equipo && equipoPrefs.includes(ej.equipo))) {
     p += 20;
   } else {
