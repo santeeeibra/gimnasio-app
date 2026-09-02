@@ -7,6 +7,7 @@ import { entrarComoAction } from "../../impersonar-actions";
 import { Button } from "@/components/ui";
 import { cupoExcedido, cupoTexto } from "@/lib/plataforma/planes";
 import { EstadoForm } from "./estado-form";
+import { PlanPlataformaForm } from "./plan-plataforma-form";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +30,7 @@ export default async function AdminGimnasioDetalle({
 
   if (!gym) notFound();
 
-  const [{ data: clientes }, { data: pagos }, { data: dueno }] =
+  const [{ data: clientes }, { data: pagos }, { data: dueno }, { data: planesData }] =
     await Promise.all([
     db
       .from("clientes")
@@ -51,6 +52,11 @@ export default async function AdminGimnasioDetalle({
       .eq("rol", "dueno")
       .limit(1)
       .maybeSingle(),
+    db
+      .from("planes_plataforma")
+      .select("id, nombre, max_socios")
+      .eq("activo", true)
+      .order("orden", { ascending: true }),
   ]);
 
   await registrarAccionAdmin(admin.id, "ver_gym", id, {
@@ -75,6 +81,11 @@ export default async function AdminGimnasioDetalle({
     precio_mensual: number;
   } | null;
   const socioCount = (clientes ?? []).length;
+  const planesOpciones = (planesData ?? []) as {
+    id: string;
+    nombre: string;
+    max_socios: number | null;
+  }[];
 
   const ultimosPagos = (pagos ?? []) as unknown as {
     id: string;
@@ -115,9 +126,12 @@ export default async function AdminGimnasioDetalle({
         {cupoExcedido(socioCount, planP?.max_socios ?? null) ? (
           <p className="mt-2 text-xs text-danger">Cupo alcanzado o superado.</p>
         ) : null}
-        <p className="mt-3 text-xs text-ink-soft">
-          Asignar / cambiar plan: pendiente (fase 2).
-        </p>
+        <PlanPlataformaForm
+          gimnasioId={gym.id}
+          planes={planesOpciones}
+          planActualId={planP?.id ?? null}
+          venceElActual={gym.plan_plataforma_vence_el ?? null}
+        />
       </div>
 
       <div className="card-cut mb-8 border border-rule bg-paper-2 p-5">

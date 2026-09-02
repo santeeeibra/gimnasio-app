@@ -11,6 +11,7 @@ import { requireSuperadmin } from "@/lib/auth";
 const NAV = [
   { href: "/admin", label: "Monitor" },
   { href: "/admin/gimnasios", label: "Gimnasios" },
+  { href: "/admin/planes", label: "Planes" },
   { href: "/admin/push-prueba", label: "Push de prueba" },
 ];
 
