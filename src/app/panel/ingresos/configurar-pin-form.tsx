@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { configurarPin } from "./actions";
+import { configurarPin } from "./configurar-pin/actions";
 import { Button, Field } from "@/components/ui";
 
 export function ConfigurarPinForm({ tienePinActual }: { tienePinActual: boolean }) {

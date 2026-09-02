@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireDueno } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { Panel } from "@/components/ui";
-import { ConfigurarPinForm } from "./configurar-pin-form";
+import { ConfigurarPinForm } from "../configurar-pin-form";
 
 export default async function ConfigurarPinPage() {
   const dueno = await requireDueno();

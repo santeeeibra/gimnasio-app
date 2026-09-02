@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { requireDueno } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { hashPin, verificarPin } from "@/lib/pin";
@@ -70,4 +69,36 @@ export async function verificarPinIngresos(pin: string): Promise<boolean> {
   if (!gym || !gym.pin_ingresos) return false;
 
   return verificarPin(pin, gym.pin_ingresos);
+}
+
+/**
+ * Resetea el PIN verificando la contraseña de la cuenta del dueño.
+ * Devuelve true si la contraseña es correcta y se borró el PIN.
+ */
+export async function resetearPinConContrasena(contrasena: string): Promise<boolean> {
+  try {
+    const dueno = await requireDueno();
+    const supabase = await createClient();
+
+    // Verificar la contraseña actual intentando actualizar el usuario
+    const { error: authError } = await supabase.auth.updateUser({
+      password: contrasena,
+    });
+
+    // Si hay error, la contraseña es incorrecta
+    if (authError) return false;
+
+    // Contraseña correcta: borrar el PIN para forzar reconfiguración
+    const { error: updateError } = await supabase
+      .from("gimnasios")
+      .update({ pin_ingresos: null })
+      .eq("id", dueno.gimnasio_id);
+
+    if (updateError) return false;
+
+    revalidatePath("/panel/ingresos");
+    return true;
+  } catch {
+    return false;
+  }
 }

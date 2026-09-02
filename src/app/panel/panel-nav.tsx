@@ -82,11 +82,19 @@ export function PanelSidebar({
           );
         })}
       </nav>
-      <form action={logout}>
-        <button className="text-xs text-ink-soft hover:text-ink underline underline-offset-2">
-          Salir
-        </button>
-      </form>
+      <div className="flex flex-col gap-3">
+        <Link
+          href="/checkin"
+          className="inline-flex h-9 items-center justify-center rounded-[5px] border border-rule px-3 text-sm text-ink transition-colors duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper-2 active:scale-[0.98]"
+        >
+          Modo check-in
+        </Link>
+        <form action={logout}>
+          <button className="text-xs text-ink-soft hover:text-ink underline underline-offset-2">
+            Salir
+          </button>
+        </form>
+      </div>
     </aside>
   );
 }

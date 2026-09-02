@@ -39,12 +39,21 @@ export function AltaForm({
         ))}
       </Select>
 
-      <div className="sm:col-span-2 flex items-center gap-4">
-        <Button type="submit" disabled={pending}>
+      <div className="sm:col-span-2 flex flex-wrap items-center gap-3">
+        <Button type="submit" name="modo" value="completa" disabled={pending}>
           {pending ? "Creando…" : "Dar de alta"}
         </Button>
+        <Button
+          type="submit"
+          name="modo"
+          value="prueba"
+          variant="ghost"
+          disabled={pending}
+        >
+          1 día de prueba
+        </Button>
         {state.error ? (
-          <p className="text-sm text-danger">{state.error}</p>
+          <p className="w-full text-sm text-danger">{state.error}</p>
         ) : null}
         {state.ok ? (
           <p className="text-sm text-ok">

@@ -94,6 +94,21 @@ export default async function ResumenPage() {
         </p>
       </div>
 
+      <Link
+        href="/checkin"
+        className="mb-10 flex items-center justify-between gap-3 rounded-[6px] border border-rule bg-paper-2 px-4 py-3.5 transition-colors duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper active:scale-[0.99] md:hidden"
+      >
+        <span className="min-w-0">
+          <span className="block text-[15px] font-medium">Modo check-in</span>
+          <span className="mt-0.5 block text-xs text-ink-soft">
+            Pantalla de ingreso por DNI para el mostrador
+          </span>
+        </span>
+        <span aria-hidden className="shrink-0 text-ink-soft">
+          →
+        </span>
+      </Link>
+
       <section>
         <h2 className="mb-3 text-lg">Atención esta semana</h2>
         {atencion.length === 0 ? (

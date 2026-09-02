@@ -35,7 +35,10 @@ export async function altaCliente(
   const nombre = String(formData.get("nombre") ?? "").trim();
   const dni = String(formData.get("dni") ?? "").trim();
   const telefono = String(formData.get("telefono") ?? "").trim() || null;
-  const planId = String(formData.get("plan_id") ?? "") || null;
+  const enPrueba = String(formData.get("modo") ?? "") === "prueba";
+  const planId = enPrueba
+    ? null
+    : String(formData.get("plan_id") ?? "") || null;
   const sexoRaw = String(formData.get("sexo") ?? "");
   const sexo: Sexo | null =
     sexoRaw === "mujer" || sexoRaw === "hombre" ? sexoRaw : null;
@@ -100,12 +103,18 @@ export async function altaCliente(
     fecha_inicio: fechaInicio,
     fecha_vencimiento: fechaVenc,
     estado_cuota: fechaVenc ? "al_dia" : "vencido",
+    en_prueba: enPrueba,
+    prueba_iniciada_en: enPrueba
+      ? new Date().toISOString().slice(0, 10)
+      : null,
   });
 
   revalidatePath("/panel/clientes");
   revalidatePath("/panel");
   return {
-    ok: `${nombre} quedó dado de alta.`,
+    ok: enPrueba
+      ? `${nombre} quedó en 1 día de prueba.`
+      : `${nombre} quedó dado de alta.`,
     clave: `DNI ${dni} · contraseña inicial: ${clave}`,
   };
 }
@@ -156,6 +165,7 @@ export async function registrarPago(
       plan_id: planId,
       fecha_vencimiento: cubreHasta,
       estado_cuota: "al_dia",
+      en_prueba: false,
     })
     .eq("id", clienteId);
 

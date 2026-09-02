@@ -34,12 +34,18 @@ export default async function ClienteDetallePage({
   const { data: cliente } = await supabase
     .from("clientes")
     .select(
-      "id, estado_cuota, fecha_inicio, fecha_vencimiento, plan_id, sexo, profile:profiles(nombre, dni, telefono), plan:planes(nombre)",
+      "id, estado_cuota, fecha_inicio, fecha_vencimiento, plan_id, sexo, en_prueba, prueba_iniciada_en, profile:profiles(nombre, dni, telefono), plan:planes(nombre)",
     )
     .eq("id", id)
     .maybeSingle();
 
   if (!cliente) notFound();
+
+  const { count: ingresosCount } = await supabase
+    .from("registros_entrada")
+    .select("id", { count: "exact", head: true })
+    .eq("cliente_id", id);
+  const pruebaVencida = !!(cliente as any).en_prueba && (ingresosCount ?? 0) > 0;
 
   const [{ data: planesData }, { data: pagosData }, { data: rutinaData }] =
     await Promise.all([
@@ -127,7 +133,25 @@ export default async function ClienteDetallePage({
               ) : null}
             </p>
           </div>
+          {c.en_prueba ? (
+            <div>
+              <p className="text-xs text-ink-soft">Día de prueba</p>
+              <p
+                className={`text-lg font-display ${
+                  pruebaVencida ? "text-danger" : "text-ink"
+                }`}
+              >
+                {pruebaVencida ? "Vencida — falta cobrar" : "En prueba"}
+              </p>
+            </div>
+          ) : null}
         </div>
+        {c.en_prueba ? (
+          <p className="mt-3 text-sm text-ink-soft">
+            Registrá un pago abajo para convertir al cliente: se le asigna el
+            plan y se apaga el día de prueba.
+          </p>
+        ) : null}
       </Panel>
 
       <Panel className="p-5">

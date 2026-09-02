@@ -8,18 +8,27 @@ export default async function ClientesPage() {
   await requireDueno();
   const supabase = await createClient();
 
-  const [{ data: clientesData }, { data: planesData }] = await Promise.all([
-    supabase
-      .from("clientes")
-      .select(
-        "id, estado_cuota, fecha_vencimiento, plan_id, profile:profiles(nombre, dni, telefono), plan:planes(nombre)",
-      )
-      .order("fecha_vencimiento", { ascending: true, nullsFirst: true }),
-    supabase.from("planes").select("id, nombre").eq("activo", true).order("nombre"),
-  ]);
+  const [{ data: clientesData }, { data: planesData }, { data: registrosData }] =
+    await Promise.all([
+      supabase
+        .from("clientes")
+        .select(
+          "id, estado_cuota, fecha_vencimiento, plan_id, en_prueba, profile:profiles(nombre, dni, telefono), plan:planes(nombre)",
+        )
+        .order("fecha_vencimiento", { ascending: true, nullsFirst: true }),
+      supabase
+        .from("planes")
+        .select("id, nombre")
+        .eq("activo", true)
+        .order("nombre"),
+      supabase.from("registros_entrada").select("cliente_id"),
+    ]);
 
   const clientes = (clientesData ?? []) as unknown as ClienteVista[];
   const planes = (planesData ?? []) as { id: string; nombre: string }[];
+  const conIngreso = new Set(
+    ((registrosData ?? []) as { cliente_id: string }[]).map((r) => r.cliente_id),
+  );
 
   return (
     <div className="space-y-10">
@@ -44,7 +53,11 @@ export default async function ClientesPage() {
       ) : (
         <ul className="border border-rule rounded-[6px] divide-y divide-rule bg-paper-2 overflow-hidden">
           {clientes.map((c) => (
-            <ClienteRow key={c.id} cliente={c} />
+            <ClienteRow
+              key={c.id}
+              cliente={c}
+              pruebaVencida={!!c.en_prueba && conIngreso.has(c.id)}
+            />
           ))}
         </ul>
       )}
