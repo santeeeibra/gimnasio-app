@@ -138,6 +138,107 @@ export const CAMPOS_COLOR: {
   { key: "voltInk", label: "Texto sobre acento", hint: "Texto encima del color de acento" },
 ];
 
+/** Solo las 7 claves de color de un tema. */
+export type ColoresTema = Pick<Tema, ColorKey>;
+
+export type PresetTema = {
+  key: string;
+  label: string;
+  hint: string;
+  colores: ColoresTema;
+};
+
+/**
+ * Paletas prearmadas y validadas (pasan los bloqueos de contraste). Un tap y
+ * listo: el dueño no necesita entender de color. Mantienen tipografía y layout.
+ */
+export const PRESETS_TEMA: PresetTema[] = [
+  {
+    key: "papel",
+    label: "Papel",
+    hint: "Claro y cálido",
+    colores: {
+      paper: "#faf9f6",
+      paper2: "#f2efe7",
+      ink: "#16181d",
+      inkSoft: "#5b5f68",
+      rule: "#d8d1bf",
+      volt: "#cde94a",
+      voltInk: "#1c2205",
+    },
+  },
+  {
+    key: "arena",
+    label: "Arena",
+    hint: "Terracota suave",
+    colores: {
+      paper: "#fbf7f2",
+      paper2: "#f1e8dc",
+      ink: "#2a201a",
+      inkSoft: "#67564a",
+      rule: "#ddcfba",
+      volt: "#a94e1e",
+      voltInk: "#ffffff",
+    },
+  },
+  {
+    key: "oceano",
+    label: "Océano",
+    hint: "Azul frío",
+    colores: {
+      paper: "#f3f6fa",
+      paper2: "#e4ebf3",
+      ink: "#122232",
+      inkSoft: "#45596b",
+      rule: "#b9c7d6",
+      volt: "#1f74d0",
+      voltInk: "#ffffff",
+    },
+  },
+  {
+    key: "bosque",
+    label: "Bosque",
+    hint: "Verde natural",
+    colores: {
+      paper: "#f5f7f2",
+      paper2: "#e7ede0",
+      ink: "#1a241a",
+      inkSoft: "#495741",
+      rule: "#c6d1b7",
+      volt: "#2f7d4f",
+      voltInk: "#ffffff",
+    },
+  },
+  {
+    key: "noche",
+    label: "Noche",
+    hint: "Oscuro",
+    colores: {
+      paper: "#14161a",
+      paper2: "#1e2128",
+      ink: "#f3f4f6",
+      inkSoft: "#9aa1ad",
+      rule: "#3a4048",
+      volt: "#cde94a",
+      voltInk: "#1c2205",
+    },
+  },
+  {
+    key: "carbon",
+    label: "Carbón",
+    hint: "Oscuro neutro",
+    colores: {
+      paper: "#181818",
+      paper2: "#232323",
+      ink: "#ededed",
+      inkSoft: "#9c9c9c",
+      rule: "#3d3d3d",
+      volt: "#ff5c39",
+      voltInk: "#1a1a1a",
+    },
+  },
+];
+
 const HEX = /^#[0-9A-Fa-f]{6}$/;
 
 export function isHex(v: unknown): v is string {

@@ -44,7 +44,10 @@ export const PARES_CONTRASTE: ParContraste[] = [
     umbral: 4.5,
   },
   { a: "voltInk", b: "volt", label: "Texto sobre acento", umbral: 4.5 },
-  { a: "rule", b: "paper", label: "Bordes sobre fondo", umbral: 3.0 },
+  // Los bordes son hairlines decorativos (no controles que WCAG 1.4.11 exija a
+  // 3:1): sólo hace falta que se distingan del fondo. 1.35 atrapa el caso
+  // patológico (borde ~invisible, rule ≈ paper) sin marcar hairlines normales.
+  { a: "rule", b: "paper", label: "Bordes sobre fondo", umbral: 1.35 },
 ];
 
 /** Convierte #RRGGBB a [r, g, b] en rango 0-255. */
