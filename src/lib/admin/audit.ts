@@ -2,7 +2,11 @@ import "server-only";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 
-type AccionAdmin = "ver_gym" | "listar_gyms" | "push_prueba";
+type AccionAdmin =
+  | "ver_gym"
+  | "listar_gyms"
+  | "push_prueba"
+  | "cambiar_estado_gym";
 
 // Registra una acción del superadmin en admin_audit_log. No lanza: si falla,
 // solo lo loguea (la auditoría no debe romper la navegación de la consola).
