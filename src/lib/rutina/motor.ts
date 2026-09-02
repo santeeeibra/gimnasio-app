@@ -260,6 +260,19 @@ function aplicarEnfasis(
   return out;
 }
 
+// Los ejercicios de las zonas que el cliente pidió priorizar van primero en la
+// sesión: más fuerza/energía disponible al inicio (Simão et al., ACSM — orden
+// de ejercicios por prioridad). Partición estable: dentro de cada grupo se
+// mantiene el orden previo (compuestos antes que aislamiento, etc.).
+function priorizarEnfasis(ranuras: Ranura[], enfasis: Enfasis[]): Ranura[] {
+  if (enfasis.length === 0) return ranuras;
+  const grupos = new Set(enfasis.flatMap((z) => ENFASIS_GRUPOS[z]));
+  return [
+    ...ranuras.filter((r) => grupos.has(r.grupo)),
+    ...ranuras.filter((r) => !grupos.has(r.grupo)),
+  ];
+}
+
 // ─────────────────────────────────────────────────────────────
 // Esquema de series / repeticiones / descanso por objetivo y rol
 // ─────────────────────────────────────────────────────────────
@@ -453,10 +466,13 @@ export function generarPlan(
   const diasPlan = bloques.map((bloque, di) => {
     const usadosDia = new Set<string>();
     const items: ItemGenerado[] = [];
-    const ranuras = aplicarEnfasis(
-      moldearPorObjetivo(bloque.ranuras, objetivo),
+    const ranuras = priorizarEnfasis(
+      aplicarEnfasis(
+        moldearPorObjetivo(bloque.ranuras, objetivo),
+        enfasis,
+        sexo,
+      ),
       enfasis,
-      sexo,
     );
 
     ranuras.forEach((ranura, si) => {
