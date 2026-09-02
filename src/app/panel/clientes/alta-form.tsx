@@ -2,7 +2,8 @@
 
 import { useActionState } from "react";
 import { altaCliente, type AltaState } from "./actions";
-import { Button, Field } from "@/components/ui";
+import { Button, Field, Select } from "@/components/ui";
+import { SEXOS, SEXO_LABEL } from "@/lib/rutina/tipos";
 
 export function AltaForm({
   planes,
@@ -19,22 +20,24 @@ export function AltaForm({
       <Field label="Nombre y apellido" name="nombre" required />
       <Field label="DNI" name="dni" inputMode="numeric" required />
       <Field label="Teléfono" name="telefono" inputMode="tel" />
-      <label className="block">
-        <span className="block text-[13px] font-medium text-ink-soft mb-1.5">
-          Plan
-        </span>
-        <select
-          name="plan_id"
-          className="w-full h-10 px-3 rounded-[5px] border border-rule bg-paper text-sm outline-none focus:border-ink"
-        >
-          <option value="">Sin plan por ahora</option>
-          {planes.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.nombre}
-            </option>
-          ))}
-        </select>
-      </label>
+
+      <Select label="Sexo" name="sexo" defaultValue="">
+        <option value="">Sin especificar todavía</option>
+        {SEXOS.filter((s) => s !== "sin_especificar").map((s) => (
+          <option key={s} value={s}>
+            {SEXO_LABEL[s]}
+          </option>
+        ))}
+      </Select>
+
+      <Select label="Plan" name="plan_id" defaultValue="">
+        <option value="">Sin plan por ahora</option>
+        {planes.map((p) => (
+          <option key={p.id} value={p.id}>
+            {p.nombre}
+          </option>
+        ))}
+      </Select>
 
       <div className="sm:col-span-2 flex items-center gap-4">
         <Button type="submit" disabled={pending}>

@@ -24,6 +24,7 @@
   --color-ink-soft: var(--ink-soft);
   --color-rule: var(--rule);
   --color-volt: var(--volt);
+  --color-volt-ink: var(--volt-ink);
   --color-danger: var(--danger);
   --color-warn: var(--warn);
   --color-ok: var(--ok);

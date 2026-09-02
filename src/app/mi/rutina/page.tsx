@@ -27,9 +27,11 @@ export default async function MiRutinaPage() {
 
   const { data: cliente } = await supabase
     .from("clientes")
-    .select("id")
+    .select("id, sexo")
     .eq("profile_id", profile.id)
     .maybeSingle();
+
+  const clienteSexo = (cliente?.sexo as Sexo | null) ?? null;
 
   const { data: rutina } = cliente
     ? await supabase
@@ -86,7 +88,7 @@ export default async function MiRutinaPage() {
             Respondé estas preguntas y armamos tu plan. Después podés ajustar
             series, repeticiones y cambiar ejercicios que no conozcas.
           </p>
-          <GenerarRutinaForm action={generarMiRutina} />
+          <GenerarRutinaForm action={generarMiRutina} clienteSexo={clienteSexo} />
         </>
       ) : (
         <>
@@ -118,6 +120,7 @@ export default async function MiRutinaPage() {
               <GenerarRutinaForm
                 action={generarMiRutina}
                 tieneRutina
+                clienteSexo={clienteSexo}
                 defaults={{
                   objetivo: rutina.objetivo as Objetivo,
                   nivel: (rutina.nivel as Nivel) ?? undefined,

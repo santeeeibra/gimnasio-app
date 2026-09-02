@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { Button } from "@/components/ui";
+import { Button, Select } from "@/components/ui";
 import {
   ENFASIS,
   ENFASIS_LABEL,
@@ -23,8 +23,6 @@ import {
 type S = { error?: string; ok?: string };
 
 const PREFS: PreferenciaEquipo[] = ["gimnasio", "mancuernas", "peso_corporal"];
-const selectCls =
-  "w-full h-11 px-3 rounded-[5px] border border-rule bg-paper-2 text-[16px] outline-none transition-[border-color,box-shadow] duration-150 [transition-timing-function:var(--ease-out)] focus:border-ink focus:shadow-[0_0_0_3px_rgb(22_24_29_/_0.08)]";
 
 export function GenerarRutinaForm({
   action,
@@ -63,62 +61,54 @@ export function GenerarRutinaForm({
     <form action={formAction} className="grid gap-4 sm:grid-cols-2">
       {clienteId ? <input type="hidden" name="cliente_id" value={clienteId} /> : null}
 
-      <label className="block">
-        <span className="block text-[13px] font-medium text-ink-soft mb-1.5">
-          Objetivo
-        </span>
-        <select name="objetivo" defaultValue={defaults?.objetivo ?? "hipertrofia"} className={selectCls}>
-          {OBJETIVOS.map((o) => (
-            <option key={o} value={o}>
-              {OBJETIVO_LABEL[o]}
-            </option>
-          ))}
-        </select>
-      </label>
+      <Select
+        label="Objetivo"
+        name="objetivo"
+        defaultValue={defaults?.objetivo ?? "hipertrofia"}
+      >
+        {OBJETIVOS.map((o) => (
+          <option key={o} value={o}>
+            {OBJETIVO_LABEL[o]}
+          </option>
+        ))}
+      </Select>
 
-      <label className="block">
-        <span className="block text-[13px] font-medium text-ink-soft mb-1.5">
-          Días por semana
-        </span>
-        <select name="dias" defaultValue={String(defaults?.dias ?? 3)} className={selectCls}>
-          {[2, 3, 4, 5, 6].map((d) => (
-            <option key={d} value={d}>
-              {d} días
-            </option>
-          ))}
-        </select>
-      </label>
+      <Select
+        label="Días por semana"
+        name="dias"
+        defaultValue={String(defaults?.dias ?? 3)}
+      >
+        {[2, 3, 4, 5, 6].map((d) => (
+          <option key={d} value={d}>
+            {d} días
+          </option>
+        ))}
+      </Select>
 
-      <label className="block">
-        <span className="block text-[13px] font-medium text-ink-soft mb-1.5">
-          Nivel
-        </span>
-        <select name="nivel" defaultValue={defaults?.nivel ?? "principiante"} className={selectCls}>
-          {NIVELES.map((n) => (
-            <option key={n} value={n}>
-              {NIVEL_LABEL[n]}
-            </option>
-          ))}
-        </select>
-      </label>
+      <Select
+        label="Nivel"
+        name="nivel"
+        defaultValue={defaults?.nivel ?? "principiante"}
+      >
+        {NIVELES.map((n) => (
+          <option key={n} value={n}>
+            {NIVEL_LABEL[n]}
+          </option>
+        ))}
+      </Select>
 
       {clienteSexo != null ? (
-        <label className="block">
-          <span className="block text-[13px] font-medium text-ink-soft mb-1.5">
-            Sexo
-          </span>
-          <select
-            name="sexo"
-            defaultValue={defaults?.sexo ?? clienteSexo}
-            className={selectCls}
-          >
-            {SEXOS.map((s) => (
-              <option key={s} value={s}>
-                {SEXO_LABEL[s]}
-              </option>
-            ))}
-          </select>
-        </label>
+        <Select
+          label="Sexo"
+          name="sexo"
+          defaultValue={defaults?.sexo ?? clienteSexo}
+        >
+          {SEXOS.map((s) => (
+            <option key={s} value={s}>
+              {SEXO_LABEL[s]}
+            </option>
+          ))}
+        </Select>
       ) : (
         <input type="hidden" name="sexo" value="sin_especificar" />
       )}
@@ -143,7 +133,7 @@ export function GenerarRutinaForm({
                   onChange={() => toggleEnfasis(e)}
                   className="peer sr-only"
                 />
-                <span className="inline-flex h-10 items-center rounded-[5px] border border-rule px-3 text-sm transition-colors duration-150 [transition-timing-function:var(--ease-out)] peer-checked:border-ink peer-checked:bg-ink peer-checked:text-paper peer-focus-visible:shadow-[0_0_0_3px_rgb(22_24_29_/_0.12)]">
+                <span className="inline-flex h-10 items-center rounded-[5px] border border-rule px-3 text-sm transition-colors duration-150 [transition-timing-function:var(--ease-out)] peer-checked:border-volt peer-checked:bg-volt peer-checked:text-volt-ink peer-focus-visible:shadow-[0_0_0_3px_rgb(22_24_29_/_0.12)]">
                   {ENFASIS_LABEL[e]}
                 </span>
               </label>
@@ -180,7 +170,11 @@ export function GenerarRutinaForm({
       </fieldset>
 
       <div className="sm:col-span-2 flex flex-wrap items-center gap-3">
-        <Button type="submit" disabled={pending}>
+        <Button
+          type="submit"
+          disabled={pending}
+          variant={tieneRutina ? "volt" : "primary"}
+        >
           {pending
             ? "Generando…"
             : tieneRutina

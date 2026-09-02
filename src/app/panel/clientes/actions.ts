@@ -36,6 +36,9 @@ export async function altaCliente(
   const dni = String(formData.get("dni") ?? "").trim();
   const telefono = String(formData.get("telefono") ?? "").trim() || null;
   const planId = String(formData.get("plan_id") ?? "") || null;
+  const sexoRaw = String(formData.get("sexo") ?? "");
+  const sexo: Sexo | null =
+    sexoRaw === "mujer" || sexoRaw === "hombre" ? sexoRaw : null;
 
   if (!nombre || !dni) return { error: "Nombre y DNI son obligatorios." };
   if (!/^\d{6,}$/.test(dni)) return { error: "El DNI debe ser numérico." };
@@ -93,6 +96,7 @@ export async function altaCliente(
     gimnasio_id: dueno.gimnasio_id,
     profile_id: created.user.id,
     plan_id: planId,
+    sexo,
     fecha_inicio: fechaInicio,
     fecha_vencimiento: fechaVenc,
     estado_cuota: fechaVenc ? "al_dia" : "vencido",

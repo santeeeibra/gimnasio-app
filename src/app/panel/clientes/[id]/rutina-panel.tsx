@@ -13,10 +13,12 @@ import { generarRutinaCliente } from "../actions";
 export function RutinaPanelDueno({
   clienteId,
   tieneRutina,
+  clienteSexo,
   defaults,
 }: {
   clienteId: string;
   tieneRutina: boolean;
+  clienteSexo?: Sexo | null;
   defaults?: {
     objetivo?: Objetivo;
     nivel?: Nivel;
@@ -36,6 +38,7 @@ export function RutinaPanelDueno({
           action={generarRutinaCliente}
           clienteId={clienteId}
           tieneRutina={tieneRutina}
+          clienteSexo={clienteSexo}
           defaults={defaults}
         />
       </div>

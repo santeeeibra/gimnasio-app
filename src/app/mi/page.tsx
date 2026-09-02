@@ -70,27 +70,63 @@ export default async function MiPage() {
         </p>
       </Panel>
 
-      <a
-        href="/mi/mensajes"
-        className="flex items-center justify-between border border-rule rounded-[6px] bg-paper px-5 py-4 hover:bg-paper-2"
-      >
-        <span className="text-sm font-medium">Mensajes del gimnasio</span>
-        {noLeidos ? (
-          <span className="text-xs bg-volt text-ink rounded-full px-2 py-0.5 font-medium">
-            {noLeidos} sin leer
-          </span>
-        ) : (
-          <span className="text-xs text-ink-soft">ver</span>
-        )}
-      </a>
-
-      <a
-        href="/mi/rutina"
-        className="flex items-center justify-between border border-rule rounded-[6px] bg-paper px-5 py-4 hover:bg-paper-2"
-      >
-        <span className="text-sm font-medium">Tu rutina</span>
-        <span className="text-xs text-ink-soft">ver</span>
-      </a>
+      <ul className="overflow-hidden rounded-[6px] border border-rule bg-paper-2 divide-y divide-rule">
+        <li>
+          <a
+            href="/mi/mensajes"
+            className="flex items-center gap-3 px-4 py-4 transition-colors duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper active:bg-paper"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden
+              className="shrink-0 text-ink-soft"
+            >
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+            <span className="min-w-0 flex-1 text-sm font-medium">
+              Mensajes del gimnasio
+            </span>
+            {noLeidos ? (
+              <span className="shrink-0 text-xs bg-volt text-volt-ink rounded-full px-2 py-0.5 font-medium">
+                {noLeidos} sin leer
+              </span>
+            ) : (
+              <span className="shrink-0 text-xs text-ink-soft">ver</span>
+            )}
+          </a>
+        </li>
+        <li>
+          <a
+            href="/mi/rutina"
+            className="flex items-center gap-3 px-4 py-4 transition-colors duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper active:bg-paper"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden
+              className="shrink-0 text-ink-soft"
+            >
+              <path d="M6.5 6.5h11v11h-11z" />
+              <path d="M2 9v6M22 9v6M4.5 8v8M19.5 8v8" />
+            </svg>
+            <span className="min-w-0 flex-1 text-sm font-medium">Tu rutina</span>
+            <span className="shrink-0 text-xs text-ink-soft">ver</span>
+          </a>
+        </li>
+      </ul>
 
       <ActivarNotificaciones />
     </main>

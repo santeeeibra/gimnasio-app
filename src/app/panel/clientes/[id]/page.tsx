@@ -34,7 +34,7 @@ export default async function ClienteDetallePage({
   const { data: cliente } = await supabase
     .from("clientes")
     .select(
-      "id, estado_cuota, fecha_inicio, fecha_vencimiento, plan_id, profile:profiles(nombre, dni, telefono), plan:planes(nombre)",
+      "id, estado_cuota, fecha_inicio, fecha_vencimiento, plan_id, sexo, profile:profiles(nombre, dni, telefono), plan:planes(nombre)",
     )
     .eq("id", id)
     .maybeSingle();
@@ -170,6 +170,7 @@ export default async function ClienteDetallePage({
         <RutinaPanelDueno
           clienteId={c.id}
           tieneRutina={!!rutina}
+          clienteSexo={(c.sexo as Sexo | null) ?? null}
           defaults={
             rutina
               ? {
