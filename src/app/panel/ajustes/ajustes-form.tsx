@@ -14,6 +14,9 @@ import { chequearContraste, derivarPaleta, sugerirAjuste } from "@/lib/contraste
 import { TemaPreviewCompleto } from "./tema-preview-completo";
 import { Radios } from "./radios";
 
+/** Colores que elige el usuario; el resto se deriva de estos. */
+const COLORES_BASE: (keyof Tema)[] = ["paper", "ink", "volt"];
+
 export function AjustesForm({
   gimnasioId,
   tema,
@@ -74,35 +77,66 @@ export function AjustesForm({
 
           {/* Sección: Colores */}
           <Seccion titulo="Colores">
+            <span className="block text-[11px] uppercase tracking-[0.12em] text-ink-soft mb-3">
+              Base — los elegís vos
+            </span>
             <div className="grid sm:grid-cols-2 gap-4">
-              {CAMPOS_COLOR.map(({ key, label, hint }) => (
-                <ColorPicker
-                  key={key}
-                  name={key}
-                  label={label}
-                  hint={hint}
-                  value={draft[key]}
-                  onChange={(v) => set(key, v)}
-                />
-              ))}
+              {CAMPOS_COLOR.filter((c) => COLORES_BASE.includes(c.key)).map(
+                ({ key, label, hint }) => (
+                  <ColorPicker
+                    key={key}
+                    name={key}
+                    label={label}
+                    hint={hint}
+                    value={draft[key]}
+                    onChange={(v) => set(key, v)}
+                  />
+                ),
+              )}
             </div>
 
-            <button
-              type="button"
-              onClick={() =>
-                setDraft((d) => ({
-                  ...d,
-                  ...derivarPaleta({ paper: d.paper, ink: d.ink, volt: d.volt }),
-                }))
-              }
-              className="mt-4 inline-flex items-center gap-2 text-sm text-ink-soft hover:text-ink underline underline-offset-2 active:scale-95 transition-transform duration-150 [transition-timing-function:var(--ease-out)]"
-            >
-              Sugerir combinación
-            </button>
-            <span className="block text-xs text-ink-soft mt-1.5">
-              Completa tarjetas, texto secundario, bordes y texto sobre el acento
-              a partir del fondo, el texto principal y el acento.
-            </span>
+            <div className="mt-5 border-t border-rule pt-4">
+              <div className="flex items-center justify-between gap-3 mb-1.5">
+                <span className="text-[11px] uppercase tracking-[0.12em] text-ink-soft">
+                  Derivados
+                </span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setDraft((d) => ({
+                      ...d,
+                      ...derivarPaleta({
+                        paper: d.paper,
+                        ink: d.ink,
+                        volt: d.volt,
+                      }),
+                    }))
+                  }
+                  className="text-xs underline underline-offset-2 text-ink-soft hover:text-ink active:scale-95 transition-transform duration-150 [transition-timing-function:var(--ease-out)]"
+                >
+                  Calcular desde la base
+                </button>
+              </div>
+              <p className="text-xs text-ink-soft mb-3">
+                Fondo de tarjetas, texto secundario, bordes y texto sobre el
+                acento. &laquo;Calcular&raquo; los recalcula a partir del fondo,
+                el texto principal y el acento; después podés retocarlos a mano.
+              </p>
+              <div className="grid sm:grid-cols-2 gap-4">
+                {CAMPOS_COLOR.filter(
+                  (c) => !COLORES_BASE.includes(c.key),
+                ).map(({ key, label, hint }) => (
+                  <ColorPicker
+                    key={key}
+                    name={key}
+                    label={label}
+                    hint={hint}
+                    value={draft[key]}
+                    onChange={(v) => set(key, v)}
+                  />
+                ))}
+              </div>
+            </div>
           </Seccion>
 
           {/* Sección: Tipografía */}
