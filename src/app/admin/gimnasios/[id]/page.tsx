@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { requireSuperadmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { registrarAccionAdmin } from "@/lib/admin/audit";
+import { entrarComoAction } from "../../impersonar-actions";
+import { Button } from "@/components/ui";
 import { EstadoForm } from "./estado-form";
 
 export const dynamic = "force-dynamic";
@@ -24,11 +26,12 @@ export default async function AdminGimnasioDetalle({
 
   if (!gym) notFound();
 
-  const [{ data: clientes }, { data: pagos }] = await Promise.all([
+  const [{ data: clientes }, { data: pagos }, { data: dueno }] =
+    await Promise.all([
     db
       .from("clientes")
       .select(
-        "id, estado_cuota, fecha_vencimiento, en_prueba, profile:profiles(nombre, dni)",
+        "id, estado_cuota, fecha_vencimiento, en_prueba, profile:profiles(id, nombre, dni)",
       )
       .eq("gimnasio_id", id)
       .order("fecha_vencimiento", { ascending: true, nullsFirst: true }),
@@ -38,6 +41,13 @@ export default async function AdminGimnasioDetalle({
       .eq("cliente.gimnasio_id", id)
       .order("fecha_pago", { ascending: false })
       .limit(10),
+    db
+      .from("profiles")
+      .select("id, nombre")
+      .eq("gimnasio_id", id)
+      .eq("rol", "dueno")
+      .limit(1)
+      .maybeSingle(),
   ]);
 
   await registrarAccionAdmin(admin.id, "ver_gym", id, {
@@ -50,8 +60,10 @@ export default async function AdminGimnasioDetalle({
     estado_cuota: string | null;
     fecha_vencimiento: string | null;
     en_prueba: boolean | null;
-    profile: { nombre: string | null; dni: string | null } | null;
+    profile: { id: string; nombre: string | null; dni: string | null } | null;
   }[];
+
+  const duenoInfo = dueno as { id: string; nombre: string | null } | null;
 
   const ultimosPagos = (pagos ?? []) as unknown as {
     id: string;
@@ -85,6 +97,26 @@ export default async function AdminGimnasioDetalle({
         <EstadoForm gimnasioId={gym.id} estadoActual={gym.estado} />
       </div>
 
+      <div className="card-cut mb-8 border border-rule bg-paper-2 p-5">
+        <h2 className="mb-1 text-sm uppercase tracking-[0.14em] text-ink-soft">
+          Entrar al gimnasio
+        </h2>
+        <p className="mb-4 text-xs text-ink-soft">
+          Abre una sesión real como esa persona para probar los flujos
+          end-to-end. El banner de arriba te devuelve a soporte.
+        </p>
+        {duenoInfo ? (
+          <form action={entrarComoAction}>
+            <input type="hidden" name="profile_id" value={duenoInfo.id} />
+            <Button type="submit">
+              Entrar como {duenoInfo.nombre ?? "el dueño"} (dueño)
+            </Button>
+          </form>
+        ) : (
+          <p className="text-xs text-ink-soft">Sin dueño cargado.</p>
+        )}
+      </div>
+
       <h2 className="mb-3 text-sm uppercase tracking-[0.14em] text-ink-soft">
         Socios ({socios.length})
       </h2>
@@ -112,6 +144,20 @@ export default async function AdminGimnasioDetalle({
                   ? new Date(s.fecha_vencimiento).toLocaleDateString("es-AR")
                   : "—"}
               </span>
+              <form action={entrarComoAction} className="shrink-0">
+                <input
+                  type="hidden"
+                  name="profile_id"
+                  value={s.profile?.id ?? ""}
+                />
+                <button
+                  type="submit"
+                  disabled={!s.profile?.id}
+                  className="text-xs underline decoration-rule underline-offset-2 hover:decoration-ink disabled:opacity-40"
+                >
+                  ver como
+                </button>
+              </form>
             </li>
           ))}
         </ul>

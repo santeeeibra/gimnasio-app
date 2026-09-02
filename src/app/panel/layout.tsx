@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { parseTema, temaToVars } from "@/lib/tema";
 import { PanelSidebar, PanelTopbar, PanelBottomNav } from "./panel-nav";
 import { Tutorial } from "@/components/tutorial/tutorial";
+import { ImpersonationBanner } from "@/components/impersonation/banner";
 
 export default async function PanelLayout({
   children,
@@ -26,6 +27,10 @@ export default async function PanelLayout({
       style={temaVars}
       data-estilo-visual={tema.estiloVisual}
     >
+      <div className="md:col-span-2">
+        <ImpersonationBanner />
+      </div>
+
       <PanelSidebar
         nombre={gym?.nombre}
         dueno={profile.nombre}
