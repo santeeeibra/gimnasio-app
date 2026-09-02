@@ -88,7 +88,7 @@ SECURITY DEFINER (`soy_destinatario`, `mensaje_gimnasio`, `mensaje_remitente`,
 | 1 — Scaffold, auth, panel dueño, vista cliente, seed | ✅ HECHO |
 | 2 — Mensajería (compositor, bandeja, hilos) | ✅ HECHO, probado end-to-end |
 | Branding / tema personalizable (7 colores + tipografía + preview en vivo) | ✅ Código listo + `next build` OK. **Falta aplicar migración `0004_tema_jsonb.sql` en Supabase + prueba end-to-end** (ver `INSTRUCCIONES_TEMA.md`) |
-| Rediseño UI mobile-first (login, /panel, /panel/clientes, /panel/mensajes, /mi, /mi/mensajes) | 🔜 EN CURSO — usar skill `emil-design-eng` |
+| Rediseño UI mobile-first con `emil-design-eng` | 🔄 EN CURSO — `/login` ✅ hecho. Próximo `/panel`. Dirección y notas en `INSTRUCCIONES_TEMA.md` §4 |
 | 3 — Push web nativo | Sin empezar. Tabla lista; faltan VAPID keys, service worker, endpoint, disparo en cuota por vencer. TODO marcado en `panel/mensajes/actions.ts` |
 | 4 — Rutinas (motor de reglas + editor + seed wger) | Sin empezar. Tablas listas |
 | 5 — Cron `recalcular_estado_cuota()` diario (pg_cron o Vercel cron) | Sin empezar |

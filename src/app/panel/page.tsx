@@ -27,47 +27,94 @@ export default async function ResumenPage() {
     return d === null || d < 0;
   });
 
-  const stats = [
-    { n: total, l: "clientes activos" },
-    { n: alDia, l: "al día" },
-    { n: porVencer.length, l: "por vencer", alert: porVencer.length > 0 },
-    { n: vencidos.length, l: "con cuota vencida", alert: vencidos.length > 0 },
-  ];
+  // El número que importa: primero lo urgente, si no hay, la calma.
+  const hero =
+    vencidos.length > 0
+      ? {
+          n: vencidos.length,
+          l: vencidos.length === 1 ? "cuota vencida" : "cuotas vencidas",
+          tone: "text-danger",
+        }
+      : porVencer.length > 0
+        ? {
+            n: porVencer.length,
+            l:
+              porVencer.length === 1
+                ? "cuota vence esta semana"
+                : "cuotas vencen esta semana",
+            tone: "text-warn",
+          }
+        : {
+            n: alDia,
+            l: alDia === 1 ? "cliente al día" : "clientes al día",
+            tone: "text-ink",
+          };
+
+  const atencion = [...vencidos, ...porVencer];
 
   return (
-    <div>
-      <div className="flex items-baseline justify-between mb-8">
-        <h1 className="text-3xl">Resumen</h1>
-        <Link href="/panel/clientes" className="text-sm underline underline-offset-2">
+    <div className="stagger">
+      <div className="mb-8 flex items-baseline justify-between">
+        <span className="text-xs uppercase tracking-[0.18em] text-ink-soft">
+          Resumen
+        </span>
+        <Link
+          href="/panel/clientes"
+          className="text-sm underline underline-offset-2 decoration-rule hover:decoration-ink"
+        >
           Ver todos
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-rule border border-rule rounded-[6px] overflow-hidden mb-10">
-        {stats.map((s) => (
-          <div key={s.l} className="bg-white p-4">
-            <p
-              className={`font-display text-3xl ${s.alert ? "text-danger" : ""}`}
-            >
-              {s.n}
-            </p>
-            <p className="text-xs text-ink-soft mt-1">{s.l}</p>
-          </div>
-        ))}
+      <div className="mb-10">
+        <p
+          className={`font-display leading-[0.82] tracking-tight text-[clamp(4rem,22vw,7rem)] ${hero.tone}`}
+        >
+          {hero.n}
+        </p>
+        <p className="mt-2 text-base text-ink-soft">{hero.l}</p>
+        <p className="mt-4 flex flex-wrap gap-x-3 gap-y-1 text-sm text-ink-soft">
+          <span>
+            <span className="font-medium text-ink">{total}</span> en total
+          </span>
+          <span aria-hidden>·</span>
+          <span>
+            <span className="font-medium text-ink">{alDia}</span> al día
+          </span>
+          <span aria-hidden>·</span>
+          <span>
+            <span className="font-medium text-ink">{porVencer.length}</span> por
+            vencer
+          </span>
+          <span aria-hidden>·</span>
+          <span>
+            <span className="font-medium text-ink">{vencidos.length}</span>{" "}
+            {vencidos.length === 1 ? "vencida" : "vencidas"}
+          </span>
+        </p>
       </div>
 
-      <h2 className="text-lg mb-3">Atención esta semana</h2>
-      {porVencer.length === 0 && vencidos.length === 0 ? (
-        <p className="text-sm text-ink-soft">
-          Nadie con la cuota por vencer. Todo en orden.
-        </p>
-      ) : (
-        <ul className="border border-rule rounded-[6px] divide-y divide-rule">
-          {[...vencidos, ...porVencer].map((c) => (
-            <ClienteRow key={c.id} cliente={c} />
-          ))}
-        </ul>
-      )}
+      <section>
+        <h2 className="mb-3 text-lg">Atención esta semana</h2>
+        {atencion.length === 0 ? (
+          <div className="rounded-[6px] border border-rule bg-paper-2 px-5 py-9 text-center">
+            <span
+              aria-hidden
+              className="mx-auto mb-3 block size-2 rounded-full bg-volt"
+            />
+            <p className="font-display text-xl">Todo en orden</p>
+            <p className="mt-1 text-sm text-ink-soft">
+              Nadie con la cuota por vencer esta semana.
+            </p>
+          </div>
+        ) : (
+          <ul className="stagger overflow-hidden rounded-[6px] border border-rule bg-paper-2 divide-y divide-rule">
+            {atencion.map((c) => (
+              <ClienteRow key={c.id} cliente={c} />
+            ))}
+          </ul>
+        )}
+      </section>
     </div>
   );
 }

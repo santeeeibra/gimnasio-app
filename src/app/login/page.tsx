@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { login, type LoginState } from "./actions";
-import { Button, Field } from "@/components/ui";
+import { Button } from "@/components/ui";
 
 export default function LoginPage() {
   const [state, formAction, pending] = useActionState<LoginState, FormData>(
@@ -12,91 +12,149 @@ export default function LoginPage() {
   const [showPass, setShowPass] = useState(false);
 
   return (
-    <main className="min-h-screen flex flex-col md:grid md:grid-cols-[1.1fr_1fr]">
-      <section className="shrink-0 bg-ink text-paper px-6 pt-9 pb-8 md:p-10 md:flex md:flex-col md:justify-between">
-        <span className="text-xs uppercase tracking-[0.18em] text-paper/50">
-          Gestión de gimnasio
-        </span>
-        <div className="mt-6 md:mt-0">
-          <h1 className="font-display text-[clamp(2rem,9vw,4.5rem)] leading-[0.95] text-volt">
+    <main className="min-h-screen flex flex-col bg-paper">
+      {/* Hero compacto mobile-first */}
+      <section className="shrink-0 bg-ink text-paper px-6 py-8 md:py-12">
+        <div className="max-w-2xl mx-auto">
+          <span className="text-[11px] uppercase tracking-[0.2em] text-paper/40 font-medium">
+            Gestión de gimnasio
+          </span>
+          <h1 className="mt-3 font-display leading-[0.92] text-volt text-[clamp(2rem,8vw,3.5rem)] md:text-[clamp(3rem,6vw,4.5rem)]">
             Tu cuota,
             <br />
             tu rutina,
             <br />
             tus avisos.
           </h1>
-          <p className="mt-4 md:mt-6 max-w-sm text-paper/70 text-sm leading-relaxed">
+          <p className="mt-4 text-paper/70 text-[15px] leading-relaxed max-w-md">
             Todo lo del gimnasio en un lugar. Sin planillas, sin grupos de
             WhatsApp perdidos.
           </p>
         </div>
-        <span className="hidden md:block text-xs text-paper/40">
-          Entrás con el DNI que cargó tu gimnasio.
-        </span>
       </section>
 
-      <section className="flex-1 flex items-start md:items-center justify-center px-6 py-10 md:p-6">
-        <form action={formAction} className="w-full max-w-sm animate-rise">
-          <h2 className="text-2xl mb-1">Entrar</h2>
-          <p className="text-sm text-ink-soft mb-6">
-            Primera vez: la contraseña es la que te dieron en recepción.
-          </p>
+      {/* Form */}
+      <section className="flex-1 px-6 py-8 md:py-12">
+        <form
+          action={formAction}
+          className="max-w-md mx-auto space-y-5 animate-fade-in"
+        >
+          {/* Header */}
+          <div className="animate-slide-up" style={{ animationDelay: "50ms" }}>
+            <h2 className="text-2xl font-display">Entrar</h2>
+            <p className="mt-1 text-[13px] text-ink-soft leading-relaxed">
+              Primera vez: la contraseña es la que te dieron en recepción.
+            </p>
+          </div>
 
-          <div className="space-y-4">
-            <Field
-              label="Gimnasio"
+          {/* Gimnasio */}
+          <label
+            className="block animate-slide-up"
+            style={{ animationDelay: "100ms" }}
+          >
+            <span className="block text-[13px] font-medium text-ink-soft mb-2">
+              Gimnasio
+            </span>
+            <input
               name="gimnasio"
               autoComplete="organization"
               placeholder="nombre o código"
               required
+              className="w-full h-12 px-4 rounded-lg border border-rule bg-paper-2 text-[16px] placeholder:text-ink-soft/40 outline-none transition-[border-color,box-shadow] duration-200 ease-out focus:border-ink focus:shadow-[0_0_0_3px_var(--ink)]/8 focus:bg-paper"
             />
-            <Field
-              label="DNI"
+          </label>
+
+          {/* DNI */}
+          <label
+            className="block animate-slide-up"
+            style={{ animationDelay: "150ms" }}
+          >
+            <span className="block text-[13px] font-medium text-ink-soft mb-2">
+              DNI
+            </span>
+            <input
               name="dni"
               inputMode="numeric"
               autoComplete="username"
+              placeholder="12345678"
               required
+              className="w-full h-12 px-4 rounded-lg border border-rule bg-paper-2 text-[16px] placeholder:text-ink-soft/40 outline-none transition-[border-color,box-shadow] duration-200 ease-out focus:border-ink focus:shadow-[0_0_0_3px_var(--ink)]/8 focus:bg-paper"
             />
+          </label>
 
-            <label className="block">
-              <span className="block text-[13px] font-medium text-ink-soft mb-1.5">
-                Contraseña
-              </span>
-              <div className="relative">
-                <input
-                  name="clave"
-                  type={showPass ? "text" : "password"}
-                  autoComplete="current-password"
-                  required
-                  className="w-full h-11 pl-3 pr-16 rounded-[5px] border border-rule bg-white text-[16px] outline-none transition-[border-color,box-shadow] duration-150 [transition-timing-function:var(--ease-out)] focus:border-ink focus:shadow-[0_0_0_3px_rgb(22_24_29_/_0.08)]"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPass((v) => !v)}
-                  aria-label={
-                    showPass ? "Ocultar contraseña" : "Mostrar contraseña"
-                  }
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-9 px-2.5 text-xs font-medium text-ink-soft rounded-[4px] select-none touch-manipulation transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-95"
-                >
-                  {showPass ? "Ocultar" : "Ver"}
-                </button>
-              </div>
-            </label>
-          </div>
+          {/* Contraseña */}
+          <label
+            className="block animate-slide-up"
+            style={{ animationDelay: "200ms" }}
+          >
+            <span className="block text-[13px] font-medium text-ink-soft mb-2">
+              Contraseña
+            </span>
+            <div className="relative">
+              <input
+                name="clave"
+                type={showPass ? "text" : "password"}
+                autoComplete="current-password"
+                required
+                className="w-full h-12 pl-4 pr-20 rounded-lg border border-rule bg-paper-2 text-[16px] outline-none transition-[border-color,box-shadow] duration-200 ease-out focus:border-ink focus:shadow-[0_0_0_3px_var(--ink)]/8 focus:bg-paper"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPass((v) => !v)}
+                aria-pressed={showPass}
+                aria-label={
+                  showPass ? "Ocultar contraseña" : "Mostrar contraseña"
+                }
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 h-9 min-w-[3.5rem] px-3 text-xs font-medium text-ink-soft rounded-md select-none touch-manipulation transition-[transform,background-color] duration-150 ease-out active:scale-95 hover:bg-rule/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20"
+              >
+                {showPass ? "Ocultar" : "Ver"}
+              </button>
+            </div>
+          </label>
 
+          {/* Error */}
           {state.error ? (
-            <p role="alert" className="mt-4 text-sm text-danger animate-rise">
-              {state.error}
-            </p>
+            <div
+              role="alert"
+              className="px-4 py-3 rounded-lg bg-danger/10 border border-danger/20 animate-shake"
+            >
+              <p className="text-[13px] text-danger font-medium">
+                {state.error}
+              </p>
+            </div>
           ) : null}
 
-          <Button
-            type="submit"
-            className="w-full mt-6 h-12 text-base"
-            disabled={pending}
+          {/* Submit */}
+          <div
+            className="pt-1 animate-slide-up"
+            style={{ animationDelay: "250ms" }}
           >
-            {pending ? "Entrando…" : "Entrar"}
-          </Button>
+            <Button
+              type="submit"
+              className="w-full h-12 text-base font-semibold"
+              disabled={pending}
+            >
+              {pending ? (
+                <>
+                  <span
+                    aria-hidden
+                    className="size-4 rounded-full border-2 border-paper/30 border-t-paper animate-spin"
+                  />
+                  Entrando…
+                </>
+              ) : (
+                "Entrar"
+              )}
+            </Button>
+          </div>
+
+          {/* Hint */}
+          <p
+            className="text-center text-[11px] text-ink-soft/60 animate-fade-in"
+            style={{ animationDelay: "300ms" }}
+          >
+            Entrás con el DNI que cargó tu gimnasio
+          </p>
         </form>
       </section>
     </main>

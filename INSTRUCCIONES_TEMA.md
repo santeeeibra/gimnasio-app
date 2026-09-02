@@ -59,7 +59,53 @@ end $$;
 - Ajustes: `panel/ajustes/page.tsx` (carga), `ajustes-form.tsx` (form + estado),
   `tema-preview.tsx` (maqueta en vivo), `actions.ts` (`actualizarTema`).
 
-## 4. Siguiente paso: rediseño con `emil-design-eng`
+## 4. Rediseño con `emil-design-eng` — estado
 
-Pantallas a repasar: `/login`, `/panel`, `/panel/clientes`, `/panel/mensajes`,
-`/mi`, `/mi/mensajes`.
+Pantallas: `/login` ✅ · `/panel` ✅ · `/panel/clientes` 🔜 · `/panel/mensajes` ·
+`/mi` · `/mi/mensajes`.
+
+> Pendiente global: `components/ui.tsx` (`Panel`, `Field`) usan `bg-white` literal
+> y no fuerzan `text-ink`, así que en gimnasios con tema oscuro el texto sale
+> negro sobre blanco. Se ve en el card "Nuevo cliente" de `/panel/clientes`.
+> Arreglar al pasar por esa pantalla (usar `bg-paper-2` + heredar `text-ink`).
+
+### `/login` (hecho)
+
+`src/app/login/page.tsx` + utilidades en `globals.css`: `.stagger` (entrada
+escalonada, 45 ms por fila), `.animate-error` (180 ms, snappy), `.spin-fast`
+(spinner en el submit). Hero mobile comprimido para que el form entre sin scroll.
+Toggle de contraseña con ancho fijo + `aria-pressed`.
+
+### `/panel` Resumen (hecho)
+
+`layout.tsx` + `panel-nav.tsx` (nuevo, client): sidebar solo en `md:`, cabecera
+compacta + **bottom nav fija** en mobile (5 items, barra volt en el activo,
+instantánea). `text-ink` en el contenedor con `temaVars` para que el color del
+tema cascadee (antes solo lo tomaban los elementos con clase `text-*`).
+`page.tsx`: se mató la grilla de 4 cards → número héroe en `font-display`
+(`clamp` hasta 7rem, el que importa según urgencia) + línea de stats inline +
+estado vacío con carácter. `cliente-row.tsx`: contador de días dominante
+(`font-display text-2xl`, kicker chico arriba), riel izquierdo volt/danger,
+target `py-4`, `bg-paper-2` en el `<ul>` para que herede el tema.
+
+### notas de dirección originales
+
+Archivos: `src/app/panel/page.tsx`, `layout.tsx`, `clientes/cliente-row.tsx`.
+
+Problema: se ve genérico = card-kit de template. La fila de 4 stat cards iguales
+y las filas de lista planas no tienen jerarquía ni personalidad.
+
+Ideas (mismo lenguaje que login: Bricolage display, ink/volt/paper, editorial):
+
+- **Matar la grilla de 4 cards iguales.** Un número héroe grande en `font-display`
+  (el que importa: "por vencer" o "vencidos" si hay; si no, "al día"), y el resto
+  como línea de stats compacta inline debajo. Jerarquía, no 4 cajas.
+- **"Atención esta semana":** las filas deben sentirse físicas. El contador de
+  días (`quedan 2 d`) es el elemento dominante, no texto rojo chico. Riel de
+  color a la izquierda (volt / danger) según urgencia. Target táctil grande,
+  toda la fila es `Link` al cliente.
+- **Estado vacío** con carácter, no un `<p>` gris.
+- Entrada: `.stagger` en el bloque de stats + lista.
+- Mobile-first: en el screenshot el sidebar tapa contenido; revisar el layout de
+  `aside` en mobile (hoy es una barra horizontal con scroll).
+- Pasar por la skill `emil-design-eng` antes de tocar.

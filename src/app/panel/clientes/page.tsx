@@ -42,7 +42,7 @@ export default async function ClientesPage() {
       {clientes.length === 0 ? (
         <p className="text-sm text-ink-soft">Todavía no hay clientes cargados.</p>
       ) : (
-        <ul className="border border-rule rounded-[6px] divide-y divide-rule">
+        <ul className="border border-rule rounded-[6px] divide-y divide-rule bg-paper-2 overflow-hidden">
           {clientes.map((c) => (
             <ClienteRow key={c.id} cliente={c} />
           ))}
