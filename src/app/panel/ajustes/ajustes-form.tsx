@@ -10,7 +10,7 @@ import {
   type FuenteKey,
   type Tema,
 } from "@/lib/tema";
-import { chequearContraste } from "@/lib/contraste";
+import { chequearContraste, sugerirAjuste } from "@/lib/contraste";
 import { TemaPreview } from "./tema-preview";
 
 export function AjustesForm({
@@ -74,22 +74,58 @@ export function AjustesForm({
           ))}
         </div>
 
-        {/* Avisos de contraste */}
+        {/* Legibilidad */}
         {resultado.hayFallos ? (
-          <div className="rounded-lg border border-warn/30 bg-warn/5 p-4">
-            <p className="text-sm font-medium text-warn mb-2">
-              ⚠ Contraste bajo detectado
-            </p>
-            <ul className="space-y-1.5 text-xs text-ink-soft">
+          <div className="border-t border-rule pt-5 mt-5">
+            <span className="block text-[11px] uppercase tracking-[0.12em] text-ink-soft mb-3">
+              Legibilidad
+            </span>
+
+            <div className="divide-y divide-rule animate-error">
               {resultado.pares
                 .filter((p) => !p.ok)
                 .map((par, i) => (
-                  <li key={i}>
-                    {par.label}: {par.ratio.toFixed(1)}:1 (mínimo {par.umbral}
-                    :1). Puede costar leerse.
-                  </li>
+                  <div key={i} className="py-2.5 flex items-center gap-3">
+                    {/* Swatches visuales */}
+                    <div className="flex shrink-0">
+                      <div
+                        className="size-4 rounded-l-[3px] border border-rule"
+                        style={{ backgroundColor: draft[par.a] }}
+                      />
+                      <div
+                        className="size-4 rounded-r-[3px] border border-rule border-l-0"
+                        style={{ backgroundColor: draft[par.b] }}
+                      />
+                    </div>
+
+                    {/* Label */}
+                    <span className="text-sm text-ink flex-1 min-w-0 truncate">
+                      {par.label}
+                    </span>
+
+                    {/* Ratio */}
+                    <span className="text-sm font-mono tabular-nums text-warn shrink-0">
+                      {par.ratio.toFixed(1)}:1
+                    </span>
+
+                    {/* Botón sugerir */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const sugerido = sugerirAjuste(
+                          draft[par.b],
+                          draft[par.a],
+                          par.umbral,
+                        );
+                        set(par.a, sugerido);
+                      }}
+                      className="text-xs underline underline-offset-2 text-ink-soft hover:text-ink active:scale-95 transition-transform duration-150 [transition-timing-function:var(--ease-out)] shrink-0"
+                    >
+                      Sugerir
+                    </button>
+                  </div>
                 ))}
-            </ul>
+            </div>
           </div>
         ) : null}
 
@@ -101,16 +137,32 @@ export function AjustesForm({
         <div className="space-y-4">
           {/* Checkbox de confirmación */}
           {resultado.hayFallos ? (
-            <label className="flex items-start gap-2.5 text-sm">
-              <input
-                type="checkbox"
-                checked={confirmarBajoContraste}
-                onChange={(e) => setConfirmarBajoContraste(e.target.checked)}
-                className="mt-0.5 size-4 rounded border-rule"
-              />
-              <span className="text-ink-soft">
-                Entiendo que algunas combinaciones pueden ser difíciles de leer
-                y quiero guardar igual
+            <label className="flex items-start gap-3 cursor-pointer group active:scale-[0.99] transition-transform duration-150 [transition-timing-function:var(--ease-out)]">
+              <div className="relative size-[18px] shrink-0 mt-0.5">
+                <input
+                  type="checkbox"
+                  checked={confirmarBajoContraste}
+                  onChange={(e) => setConfirmarBajoContraste(e.target.checked)}
+                  className="peer sr-only"
+                />
+                <div className="size-[18px] rounded-[4px] border border-rule peer-checked:bg-ink peer-checked:border-ink transition-colors duration-150 [transition-timing-function:var(--ease-out)]" />
+                {confirmarBajoContraste ? (
+                  <svg
+                    className="absolute inset-0 m-auto size-3 text-paper pointer-events-none"
+                    fill="none"
+                    viewBox="0 0 12 12"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <polyline points="2,6 5,9 10,3" />
+                  </svg>
+                ) : null}
+              </div>
+              <span className="text-sm text-ink-soft">
+                Entiendo que algunas combinaciones pueden costar leerse y quiero
+                guardar igual
               </span>
             </label>
           ) : null}
