@@ -1,10 +1,12 @@
-// Crea el gimnasio "sante" y la cuenta de superadmin de la plataforma.
-// Login: gimnasio "sante" | usuario (DNI) "admin" | clave "43553838".
+// Crea/actualiza el gimnasio "sante" y la cuenta de superadmin de la plataforma.
+// Login: gimnasio "sante" | usuario (DNI) "43553838" | clave "admin123".
 // Imprime el profile.id para copiar a SUPERADMIN_ID (.env.local y Vercel).
 //
 //   node scripts/seed-superadmin.mjs
 //
-// Idempotente: si el gimnasio o el usuario ya existen, los reutiliza.
+// Idempotente: reutiliza el gimnasio y el usuario si ya existen (busca por
+// SUPERADMIN_ID del .env.local o por cualquiera de los emails conocidos) y
+// sincroniza email + clave + profile.
 import { readFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 
@@ -15,9 +17,10 @@ for (const line of readFileSync(".env.local", "utf8").split("\n")) {
 
 const NOMBRE = "Sante";
 const SLUG = "sante";
-const DNI = "admin";
-const CLAVE = "43553838";
+const DNI = "43553838";
+const CLAVE = "admin123";
 const EMAIL = `${DNI}@${SLUG}.gym.local`;
+const EMAILS_VIEJOS = [`admin@${SLUG}.gym.local`];
 
 const db = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -41,13 +44,21 @@ if (!gym) {
   gym = data;
 }
 
-// 2) Usuario en Auth (busca por email; si no está, lo crea)
-let userId = null;
+// 2) Usuario en Auth: buscar por SUPERADMIN_ID o por email (nuevo o viejo)
 const { data: list } = await db.auth.admin.listUsers({ perPage: 1000 });
-const existing = list?.users?.find((u) => u.email === EMAIL);
+const objetivo = new Set([EMAIL, ...EMAILS_VIEJOS]);
+const existing = list?.users?.find(
+  (u) => u.id === process.env.SUPERADMIN_ID || objetivo.has(u.email),
+);
+
+let userId = null;
 if (existing) {
   userId = existing.id;
-  await db.auth.admin.updateUserById(userId, { password: CLAVE });
+  await db.auth.admin.updateUserById(userId, {
+    email: EMAIL,
+    password: CLAVE,
+    email_confirm: true,
+  });
 } else {
   const { data, error } = await db.auth.admin.createUser({
     email: EMAIL,
