@@ -7,11 +7,13 @@ import { diasRestantes, estadoDesdeDias, ESTADO_LABEL } from "@/lib/cuota";
 import {
   NIVEL_LABEL,
   OBJETIVO_LABEL,
+  TECNICA_LABEL,
   type Enfasis,
   type Nivel,
   type Objetivo,
   type PreferenciaEquipo,
   type Sexo,
+  type Tecnica,
 } from "@/lib/rutina/tipos";
 
 type Prefs = {
@@ -62,7 +64,7 @@ export default async function ClienteDetallePage({
       supabase
         .from("rutinas")
         .select(
-          "id, objetivo, nivel, dias_por_semana, dias_titulos, preferencias, actualizado_at, rutina_items(dia, ejercicio:ejercicios(nombre))",
+          "id, objetivo, nivel, dias_por_semana, dias_titulos, preferencias, origen, actualizado_at, rutina_items(dia, orden, tecnica, ejercicio:ejercicios(nombre))",
         )
         .eq("cliente_id", id)
         .maybeSingle(),
@@ -78,10 +80,16 @@ export default async function ClienteDetallePage({
   }[];
   const pagos = (pagosData ?? []) as any[];
   const rutina = rutinaData as any;
+  const esManual = rutina?.origen === "manual";
+  const rutinaItems = [...((rutina?.rutina_items ?? []) as any[])].sort(
+    (a, b) => (a.dia - b.dia) || ((a.orden ?? 0) - (b.orden ?? 0)),
+  );
   const rutinaPorDia = new Map<number, string[]>();
-  for (const it of (rutina?.rutina_items ?? []) as any[]) {
+  for (const it of rutinaItems) {
+    if (!it.ejercicio?.nombre) continue;
     const arr = rutinaPorDia.get(it.dia) ?? [];
-    if (it.ejercicio?.nombre) arr.push(it.ejercicio.nombre);
+    const tec = it.tecnica as Tecnica | null;
+    arr.push(tec ? `${it.ejercicio.nombre} · ${TECNICA_LABEL[tec]}` : it.ejercicio.nombre);
     rutinaPorDia.set(it.dia, arr);
   }
 
@@ -156,10 +164,20 @@ export default async function ClienteDetallePage({
 
       <Panel className="p-5">
         <div className="flex items-baseline justify-between gap-3">
-          <h2 className="text-lg">Rutina</h2>
+          <div className="flex min-w-0 items-baseline gap-2">
+            <h2 className="text-lg">Rutina</h2>
+            {rutina ? (
+              <span className="shrink-0 rounded-full border border-rule px-2 py-0.5 text-[11px] uppercase tracking-[0.08em] text-ink-soft">
+                {esManual ? "A mano" : "Generada"}
+              </span>
+            ) : null}
+          </div>
           {rutina ? (
             <span className="text-xs text-ink-soft">
-              {OBJETIVO_LABEL[rutina.objetivo as Objetivo] ?? rutina.objetivo}
+              {esManual
+                ? "Armada a mano"
+                : (OBJETIVO_LABEL[rutina.objetivo as Objetivo] ??
+                  rutina.objetivo)}
               {rutina.nivel
                 ? ` · ${NIVEL_LABEL[rutina.nivel as Nivel] ?? rutina.nivel}`
                 : ""}

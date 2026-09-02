@@ -81,6 +81,43 @@ export const ENFASIS_GRUPOS: Record<Enfasis, string[]> = {
 
 export const MAX_ENFASIS = 2;
 
+// ── Modo manual (SPEC_PANEL_AVANZADO_RUTINA.md) ──
+// Técnicas de intensidad que el cliente puede asignar por ejercicio cuando arma
+// la rutina a mano. "ninguna" es el default; en la base se guarda como null.
+// La descripción se muestra siempre como texto de ayuda, nunca solo el nombre.
+export const TECNICAS = [
+  "ninguna",
+  "dropset",
+  "rest_pause",
+  "myo_reps",
+  "superserie",
+  "cluster_set",
+] as const;
+export type Tecnica = (typeof TECNICAS)[number];
+
+export const TECNICA_LABEL: Record<Tecnica, string> = {
+  ninguna: "Sin técnica",
+  dropset: "Dropset",
+  rest_pause: "Rest-pause",
+  myo_reps: "Myo-reps",
+  superserie: "Superserie",
+  cluster_set: "Cluster set",
+};
+
+export const TECNICA_DESC: Record<Tecnica, string> = {
+  ninguna: "",
+  dropset: "Bajás el peso sin descansar y seguís hasta el fallo.",
+  rest_pause: "Descanso corto de 10-15s dentro de la misma serie.",
+  myo_reps: "Una serie de activación + mini-series cortas con poco descanso.",
+  superserie: "Dos ejercicios seguidos sin descanso entre ellos.",
+  cluster_set: "Repeticiones divididas en bloques con micro-pausas.",
+};
+
+// Tope de ejercicios por día: el mismo que usa aplicarEnfasis() en el motor.
+export const MAX_EJERCICIOS_DIA = 8;
+// Tope de días en el armado manual (el motor automático llega hasta 6).
+export const MAX_DIAS_MANUAL = 6;
+
 // Opciones fijas para el editor de la rutina (menús desplegables, sin escritura
 // libre). Los valores de REPS_OPCIONES cubren todo lo que emite el motor.
 export const SERIES_OPCIONES = [1, 2, 3, 4, 5] as const;

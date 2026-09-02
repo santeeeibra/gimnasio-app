@@ -5,18 +5,23 @@ import { ejerciciosSimilares } from "@/lib/rutina/motor";
 import {
   REPS_OPCIONES,
   SERIES_OPCIONES,
+  TECNICAS,
+  TECNICA_DESC,
+  TECNICA_LABEL,
   type Ejercicio,
+  type Tecnica,
 } from "@/lib/rutina/tipos";
 
 const campoCls =
   "h-11 rounded-[5px] border border-rule bg-paper text-[16px] outline-none transition-[border-color] duration-150 [transition-timing-function:var(--ease-out)] focus:border-ink";
-import { editarItem, sustituirEjercicio } from "./actions";
+import { editarItem, editarTecnica, sustituirEjercicio } from "./actions";
 
 export type ItemEditable = {
   id: string;
   series: number;
   repeticiones: string;
   nota: string;
+  tecnica: Tecnica | null;
   ejercicio: Ejercicio | null;
 };
 
@@ -199,9 +204,11 @@ function VisorEjercicio({
 export function RutinaEditor({
   dias,
   ejercicios,
+  mostrarTecnica = false,
 }: {
   dias: DiaEditable[];
   ejercicios: Ejercicio[];
+  mostrarTecnica?: boolean;
 }) {
   const [visor, setVisor] = useState<Ejercicio | null>(null);
   return (
@@ -215,6 +222,7 @@ export function RutinaEditor({
                 key={item.id}
                 item={item}
                 ejercicios={ejercicios}
+                mostrarTecnica={mostrarTecnica}
                 onVer={setVisor}
               />
             ))}
@@ -231,14 +239,17 @@ export function RutinaEditor({
 function ItemFila({
   item,
   ejercicios,
+  mostrarTecnica,
   onVer,
 }: {
   item: ItemEditable;
   ejercicios: Ejercicio[];
+  mostrarTecnica: boolean;
   onVer: (ej: Ejercicio) => void;
 }) {
   const [series, setSeries] = useState(String(item.series));
   const [reps, setReps] = useState(item.repeticiones);
+  const [tecnica, setTecnica] = useState<Tecnica>(item.tecnica ?? "ninguna");
   const [ej, setEj] = useState(item.ejercicio);
   const [abrirCambio, setAbrirCambio] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -279,6 +290,21 @@ function ItemFila({
       setEj(nuevo);
       setAbrirCambio(false);
       flash("Ejercicio cambiado ✓");
+    });
+  }
+
+  function cambiarTecnica(nueva: Tecnica) {
+    const previa = tecnica;
+    setTecnica(nueva);
+    startTransition(async () => {
+      const r = await editarTecnica(item.id, nueva);
+      if (r.error) {
+        setTecnica(previa);
+        flash(r.error);
+        return;
+      }
+      item.tecnica = nueva === "ninguna" ? null : nueva;
+      flash("Técnica actualizada ✓");
     });
   }
 
@@ -363,6 +389,33 @@ function ItemFila({
               <span className="pb-3 text-xs text-ok animate-fade-in">{msg}</span>
             ) : null}
           </div>
+
+          {mostrarTecnica ? (
+            <div className="mt-3">
+              <label className="block">
+                <span className="mb-1 block text-[11px] text-ink-soft">
+                  Técnica
+                </span>
+                <select
+                  value={tecnica}
+                  onChange={(e) => cambiarTecnica(e.target.value as Tecnica)}
+                  disabled={pending}
+                  className={`${campoCls} w-full max-w-[16rem] px-2 disabled:opacity-50`}
+                >
+                  {TECNICAS.map((t) => (
+                    <option key={t} value={t}>
+                      {TECNICA_LABEL[t]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {tecnica !== "ninguna" ? (
+                <p className="mt-1.5 text-xs leading-snug text-ink-soft">
+                  {TECNICA_DESC[tecnica]}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
 
           {item.nota ? (
             <p className="mt-2 text-[11px] text-ink-soft">{item.nota}</p>

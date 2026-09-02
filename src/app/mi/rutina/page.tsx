@@ -20,6 +20,7 @@ type Prefs = {
 import { generarMiRutina } from "./actions";
 import { GenerarRutinaForm } from "./generar-form";
 import { RutinaEditor, type DiaEditable } from "./rutina-editor";
+import { BuilderManual } from "./builder-manual";
 import { BannerMotivacional } from "@/components/rutinas/banner-motivacional";
 
 export default async function MiRutinaPage() {
@@ -37,7 +38,9 @@ export default async function MiRutinaPage() {
   const { data: rutina } = cliente
     ? await supabase
         .from("rutinas")
-        .select("id, objetivo, nivel, dias_por_semana, dias_titulos, preferencias")
+        .select(
+          "id, objetivo, nivel, dias_por_semana, dias_titulos, preferencias, origen",
+        )
         .eq("cliente_id", cliente.id)
         .maybeSingle()
     : { data: null };
@@ -47,7 +50,7 @@ export default async function MiRutinaPage() {
       ? supabase
           .from("rutina_items")
           .select(
-            "id, dia, orden, series, repeticiones, nota, ejercicio:ejercicios(id, slug, nombre, grupo_muscular, patron, equipo, nivel, imagen_url, descripcion)",
+            "id, dia, orden, series, repeticiones, nota, tecnica, ejercicio:ejercicios(id, slug, nombre, grupo_muscular, patron, equipo, nivel, imagen_url, descripcion)",
           )
           .eq("rutina_id", rutina.id)
           .order("dia")
@@ -62,6 +65,27 @@ export default async function MiRutinaPage() {
 
   const ejercicios = (ejerciciosData ?? []) as Ejercicio[];
 
+  // SPEC modo manual: nunca es el flujo por default, siempre detrás de un
+  // <details> cerrado, debajo del generador automático.
+  const entradaManual = (
+    <details className="group">
+      <summary className="flex w-fit cursor-pointer select-none list-none items-center gap-1.5 text-sm text-ink-soft underline underline-offset-2 [&::-webkit-details-marker]:hidden">
+        <span className="group-open:hidden">
+          ¿Ya entrenás y querés armar tu rutina a mano?
+        </span>
+        <span className="hidden group-open:inline">Cerrar armado manual</span>
+      </summary>
+      <div className="mt-3 rounded-[6px] border border-rule bg-paper-2 p-4 animate-fade-in">
+        <p className="mb-3 text-xs leading-snug text-ink-soft">
+          Elegí ejercicios, series y reps, y sumá una técnica de intensidad por
+          ejercicio si la usás. Se guarda como tu rutina y reemplaza la que
+          tengas.
+        </p>
+        <BuilderManual ejercicios={ejercicios} />
+      </div>
+    </details>
+  );
+
   return (
     <main className="stagger max-w-md mx-auto px-5 py-6 space-y-6">
       <div>
@@ -74,7 +98,10 @@ export default async function MiRutinaPage() {
         <h1 className="text-2xl mt-2">Tu rutina</h1>
         {rutina ? (
           <p className="text-sm text-ink-soft">
-            {OBJETIVO_LABEL[rutina.objetivo as Objetivo] ?? rutina.objetivo}
+            {rutina.origen === "manual"
+              ? "Armada a mano"
+              : (OBJETIVO_LABEL[rutina.objetivo as Objetivo] ??
+                rutina.objetivo)}
             {rutina.nivel
               ? ` · ${NIVEL_LABEL[rutina.nivel as Nivel] ?? rutina.nivel}`
               : ""}
@@ -92,6 +119,7 @@ export default async function MiRutinaPage() {
             series, repeticiones y cambiar ejercicios que no conozcas.
           </p>
           <GenerarRutinaForm action={generarMiRutina} />
+          {entradaManual}
         </>
       ) : (
         <>
@@ -135,12 +163,15 @@ export default async function MiRutinaPage() {
             </div>
           </details>
 
+          {entradaManual}
+
           <RutinaEditor
             dias={agruparPorDia(
               (itemsData ?? []) as any[],
               (rutina.dias_titulos as string[] | null) ?? null,
             )}
             ejercicios={ejercicios}
+            mostrarTecnica={rutina.origen === "manual"}
           />
         </>
       )}
@@ -167,6 +198,7 @@ function agruparPorDia(
       series: it.series ?? 3,
       repeticiones: it.repeticiones ?? "10",
       nota: it.nota ?? "",
+      tecnica: (it.tecnica ?? null) as DiaEditable["items"][number]["tecnica"],
       ejercicio: (it.ejercicio ?? null) as Ejercicio | null,
     });
   }

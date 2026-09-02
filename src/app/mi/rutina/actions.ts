@@ -6,16 +6,22 @@ import { createClient } from "@/lib/supabase/server";
 import { generarYGuardar } from "@/lib/rutina/generar";
 import {
   ENFASIS,
+  MAX_DIAS_MANUAL,
+  MAX_EJERCICIOS_DIA,
   MAX_ENFASIS,
   NIVELES,
   OBJETIVOS,
   PREFERENCIAS_EQUIPO,
+  REPS_OPCIONES,
+  SERIES_OPCIONES,
   SEXOS,
+  TECNICAS,
   type Enfasis,
   type Nivel,
   type Objetivo,
   type PreferenciaEquipo,
   type Sexo,
+  type Tecnica,
 } from "@/lib/rutina/tipos";
 
 function parseSexo(fd: FormData): Sexo {
@@ -94,6 +100,185 @@ export async function editarItem(
     .update({ series, repeticiones, nota })
     .eq("id", itemId);
   if (error) return { error: "No se pudo guardar el cambio." };
+
+  revalidatePath("/mi/rutina");
+  return { ok: "Guardado." };
+}
+
+// ── Modo manual (SPEC_PANEL_AVANZADO_RUTINA.md) ──────────────────────────────
+// El cliente arma la rutina a mano: no pasa por generarPlan(), escribe en la
+// misma estructura (rutinas + rutina_items) marcando origen 'manual'.
+
+const SERIES_VALIDAS = new Set<number>(SERIES_OPCIONES as readonly number[]);
+const REPS_VALIDAS = new Set<string>(REPS_OPCIONES as readonly string[]);
+const TECNICAS_VALIDAS = new Set<string>(TECNICAS as readonly string[]);
+
+type ItemManual = {
+  ejercicio_id: string;
+  series: number;
+  repeticiones: string;
+  tecnica: Tecnica;
+};
+
+export async function guardarRutinaManual(
+  _prev: RutinaState,
+  formData: FormData,
+): Promise<RutinaState> {
+  const { supabase, cliente } = await clienteActual();
+  if (!cliente) return { error: "No encontramos tu ficha de cliente." };
+
+  let parsed: { dias?: unknown };
+  try {
+    parsed = JSON.parse(String(formData.get("plan") ?? "{}"));
+  } catch {
+    return { error: "No se pudo leer la rutina." };
+  }
+
+  const diasRaw = Array.isArray(parsed.dias) ? parsed.dias : [];
+  if (diasRaw.length < 1 || diasRaw.length > MAX_DIAS_MANUAL) {
+    return { error: `Elegí entre 1 y ${MAX_DIAS_MANUAL} días.` };
+  }
+
+  const dias: { titulo: string; items: ItemManual[] }[] = [];
+  for (let i = 0; i < diasRaw.length; i++) {
+    const d = diasRaw[i] as { titulo?: unknown; items?: unknown };
+    const itemsRaw = Array.isArray(d?.items) ? d.items : [];
+    if (itemsRaw.length === 0) {
+      return { error: `El día ${i + 1} no tiene ejercicios.` };
+    }
+    if (itemsRaw.length > MAX_EJERCICIOS_DIA) {
+      return { error: `Máximo ${MAX_EJERCICIOS_DIA} ejercicios por día.` };
+    }
+
+    const items: ItemManual[] = [];
+    for (const it of itemsRaw as Record<string, unknown>[]) {
+      const ejercicio_id = String(it?.ejercicio_id ?? "");
+      if (!ejercicio_id) return { error: "Elegí un ejercicio en cada fila." };
+
+      const series = Math.round(Number(it?.series));
+      if (!SERIES_VALIDAS.has(series)) return { error: "Series inválidas." };
+
+      const repeticiones = String(it?.repeticiones ?? "");
+      if (!REPS_VALIDAS.has(repeticiones)) {
+        return { error: "Repeticiones inválidas." };
+      }
+
+      const tecnicaRaw = String(it?.tecnica ?? "ninguna");
+      const tecnica = (
+        TECNICAS_VALIDAS.has(tecnicaRaw) ? tecnicaRaw : "ninguna"
+      ) as Tecnica;
+
+      items.push({ ejercicio_id, series, repeticiones, tecnica });
+    }
+
+    const titulo =
+      String(d?.titulo ?? "").trim().slice(0, 40) || `Día ${i + 1}`;
+    dias.push({ titulo, items });
+  }
+
+  // Los ejercicios tienen que existir y ser visibles para el cliente (la RLS
+  // del select ya limita a globales + del propio gimnasio).
+  const ids = [
+    ...new Set(dias.flatMap((d) => d.items.map((it) => it.ejercicio_id))),
+  ];
+  const { data: ejData, error: ejErr } = await supabase
+    .from("ejercicios")
+    .select("id")
+    .in("id", ids);
+  if (ejErr) return { error: "No se pudieron validar los ejercicios." };
+  const validos = new Set((ejData ?? []).map((e) => e.id as string));
+  if (ids.some((id) => !validos.has(id))) {
+    return { error: "Hay un ejercicio que no existe." };
+  }
+
+  // ── upsert de la rutina (una por cliente) ──
+  const { data: existente } = await supabase
+    .from("rutinas")
+    .select("id")
+    .eq("cliente_id", cliente.id)
+    .maybeSingle();
+
+  const payload = {
+    gimnasio_id: cliente.gimnasio_id,
+    cliente_id: cliente.id,
+    objetivo: null,
+    nivel: null,
+    dias_por_semana: dias.length,
+    generada_por: "manual",
+    origen: "manual",
+    preferencias: null,
+    dias_titulos: dias.map((d) => d.titulo),
+    actualizado_at: new Date().toISOString(),
+  };
+
+  let rutinaId: string;
+  if (existente?.id) {
+    rutinaId = existente.id as string;
+    const { error } = await supabase
+      .from("rutinas")
+      .update(payload)
+      .eq("id", rutinaId);
+    if (error) return { error: "No se pudo actualizar la rutina." };
+  } else {
+    const { data, error } = await supabase
+      .from("rutinas")
+      .insert(payload)
+      .select("id")
+      .single();
+    if (error || !data) return { error: "No se pudo crear la rutina." };
+    rutinaId = data.id as string;
+  }
+
+  // ── reemplazar items ──
+  const { error: delErr } = await supabase
+    .from("rutina_items")
+    .delete()
+    .eq("rutina_id", rutinaId);
+  if (delErr) {
+    return { error: "No se pudieron limpiar los ejercicios anteriores." };
+  }
+
+  const filas: Record<string, unknown>[] = [];
+  dias.forEach((dia, di) => {
+    dia.items.forEach((it, oi) => {
+      filas.push({
+        rutina_id: rutinaId,
+        ejercicio_id: it.ejercicio_id,
+        dia: di + 1,
+        orden: oi,
+        series: it.series,
+        repeticiones: it.repeticiones,
+        nota: "",
+        tecnica: it.tecnica === "ninguna" ? null : it.tecnica,
+      });
+    });
+  });
+
+  if (filas.length > 0) {
+    const { error: insErr } = await supabase
+      .from("rutina_items")
+      .insert(filas);
+    if (insErr) return { error: "No se pudieron guardar los ejercicios." };
+  }
+
+  revalidatePath("/mi/rutina");
+  revalidatePath("/mi");
+  return { ok: "Rutina guardada." };
+}
+
+export async function editarTecnica(
+  itemId: string,
+  tecnica: string,
+): Promise<RutinaState> {
+  await requireProfile();
+  const supabase = await createClient();
+
+  const t = TECNICAS_VALIDAS.has(tecnica) ? tecnica : "ninguna";
+  const { error } = await supabase
+    .from("rutina_items")
+    .update({ tecnica: t === "ninguna" ? null : t })
+    .eq("id", itemId);
+  if (error) return { error: "No se pudo guardar la técnica." };
 
   revalidatePath("/mi/rutina");
   return { ok: "Guardado." };

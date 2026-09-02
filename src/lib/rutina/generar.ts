@@ -42,6 +42,7 @@ export async function generarYGuardar(
     dias_por_semana: plan.entrada.dias,
     nivel: entrada.nivel,
     generada_por: "reglas",
+    origen: "auto",
     preferencias: {
       equipo: entrada.preferencia,
       sexo: entrada.sexo,
