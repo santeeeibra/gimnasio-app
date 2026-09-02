@@ -1,6 +1,15 @@
 /**
  * Componente AnilloProgreso: anillo SVG con número central en fuente héroe.
  * Usado para indicadores circulares de progreso (ej: días restantes de cuota).
+ *
+ * Patrón visual "Futurista" (ver REGLAS_UI_EMIL.md §17): fondo oscuro,
+ * `--volt` como acento, números en `--font-hero` (Orbitron). Incluye
+ * animaciones ambientales pasivas (CSS puro en globals.css, sin JS):
+ *  - `.futurista-anillo-glow`: glow lento del anillo `--volt` (pulso de 6s).
+ *  - `.futurista-num-in` + `key={valor}`: transición suave del número al
+ *    cambiar de valor, en vez de saltar directo.
+ * Todo respeta `prefers-reduced-motion: reduce`. Sin blink ni indicadores
+ * "en vivo" (se quitaron a propósito).
  */
 
 type AnilloProgresoProps = {
@@ -51,7 +60,7 @@ export function AnilloProgreso({
           strokeDasharray={circunferencia}
           strokeDashoffset={offset}
           strokeLinecap="round"
-          className="transition-[stroke-dashoffset] duration-500 [transition-timing-function:var(--ease-out)]"
+          className="futurista-anillo-glow transition-[stroke-dashoffset] duration-500 [transition-timing-function:var(--ease-out)]"
         />
       </svg>
       {/* Número central */}
@@ -61,7 +70,9 @@ export function AnilloProgreso({
           style={{ fontFamily: "var(--font-hero)" }}
           aria-label={`${valor} ${label}`}
         >
-          <span className="text-4xl">{valor}</span>
+          <span key={valor} className="futurista-num-in inline-block text-4xl">
+            {valor}
+          </span>
         </p>
         <p className="mt-1 text-[11px] uppercase tracking-[0.08em] text-ink-soft">
           {label}

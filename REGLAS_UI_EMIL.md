@@ -418,10 +418,38 @@ focus-visible:ring-ink/20
 
 ---
 
-## 17. Componentes reusables
+## 17. Patrón "Futurista"
 
-### AnilloProgreso
-Indicador circular de progreso con número central en fuente héroe. Usado para métricas importantes (días restantes, porcentajes, contadores).
+Patrón visual para métricas destacadas: **fondo oscuro**, `--volt` como único
+acento, números en `--font-hero` (Orbitron). Da un aire de instrumento /
+consola sin caer en lo genérico. (Antes lo llamábamos "Cronómetro de box";
+el nombre en código y docs es **"Futurista"**.)
+
+### Tokens (nada nuevo suelto)
+- Acento: `--volt` (y derivados vía `color-mix`, no colores nuevos)
+- Números: `--font-hero` → Orbitron, `font-[700]`
+- Líneas / textura: `--rule`
+- Curvas: `--ease-out`, `--ease-in-out`
+
+### Animaciones ambientales (pasivas)
+Todo en `src/app/globals.css`, **CSS puro** (`@keyframes` / `transition`),
+**sin JS ni librerías**. Son ambientales: dan sensación de "vivo" sin
+distraer ni pesar en mobile. **Prohibido**: parpadeo agresivo, spinners
+rápidos como decoración, indicadores "en vivo" con blink (se quitaron a
+propósito de una versión anterior — no volver a meterlos).
+
+| Clase | Efecto | Detalle |
+|---|---|---|
+| `.futurista-anillo-glow` | Glow del anillo `--volt` | `drop-shadow` animado, pulso lento de 6s (no parpadeo) |
+| `.futurista-fondo` | Grid muy tenue de fondo | `::before` con `repeating-linear-gradient` de `--rule`, `opacity` baja, desplazamiento de 40s. Los hijos directos van con `z-index:1` |
+| `.futurista-num-in` | Entrada suave del número | Se combina con `key={valor}` para remontar y animar el cambio en vez de saltar |
+
+**`prefers-reduced-motion: reduce`**: un bloque `@media` al final de
+`globals.css` desactiva las tres (`animation: none !important`). Al agregar
+animaciones nuevas a este patrón, sumarlas a ese bloque.
+
+### Componente `AnilloProgreso`
+Indicador circular de progreso con número central. Implementa el patrón.
 
 **Ubicación**: `src/components/anillo-progreso.tsx`
 
@@ -433,26 +461,47 @@ Indicador circular de progreso con número central en fuente héroe. Usado para 
 
 **Características**:
 - Anillo SVG con círculo de fondo (`--rule`) y progreso (`--volt`)
-- Número central usa `--font-hero` (Orbitron) con `font-[700]`
+- Círculo de progreso lleva `.futurista-anillo-glow`
+- Número central usa `--font-hero` (Orbitron) con `font-[700]` + `.futurista-num-in` con `key={valor}`
 - Label en uppercase + tracking `[0.08em]` (estilo kicker)
-- Animación suave con `var(--ease-out)` en `stroke-dashoffset`
+- Transición suave con `var(--ease-out)` en `stroke-dashoffset`
 - Radio fijo 54px, stroke 8px (tamaño compacto para cards)
 
 **Ejemplo de uso**:
 ```jsx
-<AnilloProgreso
-  valor={diasRestantes}
-  max={duracionPlan}
-  label="días"
-/>
+<div className="futurista-fondo p-5">
+  <AnilloProgreso valor={diasRestantes} max={duracionPlan} label="días" />
+</div>
 ```
+
+### Cómo propagarlo a otras pantallas
+Al llevar el patrón al dashboard del dueño o a la rutina: envolver el
+contenedor de la métrica en `.futurista-fondo`, usar `AnilloProgreso` (o
+`--font-hero` + `--volt` a mano con los mismos tokens), y **no** agregar
+colores ni fuentes fuera de los listados arriba.
 
 **Aplicado en**:
 - `/mi` (card "Tu cuota" — días restantes del plan)
 
 ---
 
-## 18. Checklist pre-commit
+## 18. Hidratación y SSR
+
+### suppressHydrationWarning en layout
+El elemento `<html>` en `src/app/layout.tsx` incluye `suppressHydrationWarning` para evitar errores de hidratación causados por:
+- Extensiones del navegador que inyectan atributos (ej: `his_skin_checked`, `data-*`)
+- Herramientas de seguridad/privacidad que modifican el DOM
+- Diferencias menores entre renderizado del servidor y cliente
+
+```tsx
+<html lang="es" suppressHydrationWarning>
+```
+
+**No aplicar** `suppressHydrationWarning` a otros elementos sin justificación. Solo usar en `<html>` o `<body>` cuando sea necesario para ignorar modificaciones externas al código.
+
+---
+
+## 19. Checklist pre-commit
 
 - [ ] Solo tokens CSS (sin `bg-white`, sin hex, sin `text-gray-*`)
 - [ ] Inputs con `text-[16px]` y `bg-paper`
@@ -471,6 +520,7 @@ Indicador circular de progreso con número central en fuente héroe. Usado para 
 ## 15. Archivos de referencia
 
 ```
+src/app/layout.tsx              → Orbitron font, suppressHydrationWarning
 src/app/globals.css              → tokens, reset img, animaciones
 src/lib/tema.ts                  → DEFAULT_TEMA, --font-hero
 src/components/ui.tsx            → Button, Field
@@ -501,7 +551,10 @@ src/app/panel/ajustes/logo-uploader.tsx → subida + caja fija + fallback
 alineación, overflow, overlays, z-index — tras el bug de imágenes que rompían
 el layout en `/mi/rutina`; §5 subsección "Logo del gimnasio" tras el SPEC de
 logo + paletas; §17 componente `AnilloProgreso` + token `--font-hero` (Orbitron)
-para números especiales en indicadores circulares).
+para números especiales en indicadores circulares; §18 `suppressHydrationWarning`
+en layout para prevenir errores de extensiones del navegador; §17 reescrita como
+patrón "Futurista" con animaciones ambientales pasivas — glow del anillo, grid
+de fondo y transición del número — todo CSS puro y con `prefers-reduced-motion`).
 **Aplicar al editar**: `src/app/` y `src/components/`.
 
 **Crítico:** `text-[16px]` en inputs evita el zoom en iOS.

@@ -100,6 +100,7 @@ export default function RootLayout({
   return (
     <html
       lang="es"
+      suppressHydrationWarning
       className={`${bricolage.variable} ${inter.variable} ${spaceGrotesk.variable} ${geist.variable} ${fraunces.variable} ${dmSans.variable} ${manrope.variable} ${archivo.variable} ${sora.variable} ${plusJakarta.variable} ${orbitron.variable}`}
     >
       <body>{children}</body>

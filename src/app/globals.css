@@ -192,3 +192,100 @@ h3 {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ============================================================
+   Patrón "Futurista" (ver REGLAS_UI_EMIL.md §17)
+   Fondo oscuro · --volt como acento · números en --font-hero (Orbitron).
+   Animaciones AMBIENTALES: pasivas, CSS puro, sin JS, sin blink,
+   sin indicadores "en vivo". Solo dan sensación de "vivo".
+   ============================================================ */
+
+/* 1 · Glow lento del anillo --volt. Pulso de 6s (no parpadeo). */
+@keyframes futurista-glow {
+  0%,
+  100% {
+    filter: drop-shadow(
+      0 0 2px color-mix(in srgb, var(--volt) 30%, transparent)
+    );
+  }
+  50% {
+    filter: drop-shadow(
+      0 0 7px color-mix(in srgb, var(--volt) 60%, transparent)
+    );
+  }
+}
+.futurista-anillo-glow {
+  animation: futurista-glow 6s var(--ease-in-out) infinite;
+}
+
+/* 2 · Textura de grid muy tenue con desplazamiento lentísimo (40s).
+   Apenas perceptible; no compite con el contenido. */
+@keyframes futurista-scan {
+  to {
+    background-position:
+      40px 40px,
+      40px 40px;
+  }
+}
+.futurista-fondo {
+  position: relative;
+}
+.futurista-fondo > * {
+  position: relative;
+  z-index: 1;
+}
+.futurista-fondo::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      color-mix(in srgb, var(--rule) 55%, transparent) 0 1px,
+      transparent 1px 40px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--rule) 55%, transparent) 0 1px,
+      transparent 1px 40px
+    );
+  background-size:
+    40px 40px,
+    40px 40px;
+  opacity: 0.4;
+  animation: futurista-scan 40s linear infinite;
+}
+
+/* 3 · Transición suave del número central al cambiar de valor
+   (el consumidor remonta el nodo con key={valor}). */
+@keyframes futurista-num-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.18em);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.futurista-num-in {
+  animation: futurista-num-in 320ms var(--ease-out);
+}
+
+/* Respeta prefers-reduced-motion: sin animaciones ambientales.
+   (Va después del bloque global para ganar por orden.) */
+@media (prefers-reduced-motion: reduce) {
+  .futurista-anillo-glow {
+    animation: none !important;
+    filter: none !important;
+  }
+  .futurista-fondo::before {
+    animation: none !important;
+  }
+  .futurista-num-in {
+    animation: none !important;
+  }
+}

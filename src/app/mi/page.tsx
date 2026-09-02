@@ -43,7 +43,7 @@ export default async function MiPage() {
       </div>
 
       <Panel
-        className={`p-5 border-l-2 ${
+        className={`futurista-fondo p-5 border-l-2 ${
           estado === "vencido"
             ? "border-l-danger"
             : estado === "por_vencer"
