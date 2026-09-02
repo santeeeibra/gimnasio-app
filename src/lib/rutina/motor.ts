@@ -303,11 +303,16 @@ const ESQUEMA: Record<Objetivo, EsquemaObj> = {
     aislamiento: { series: 3, reps: "8–10" },
     descanso: "Descanso 2–3 min",
   },
+  // Hipertrofia = volumen a intensidad media, no fuerza. El primario arranca en
+  // 3 series base (avanzado sube a 4 vía ajustarSeries) y 8–10 reps: un rango
+  // productivo para el básico sin caer en el 5×5 de fuerza. Descanso 90–120 s:
+  // suficiente para sostener la carga entre series (Schoenfeld et al. 2016, "Longer
+  // inter-set rest periods enhance muscle strength and hypertrophy").
   hipertrofia: {
-    primario: { series: 4, reps: "6–8" },
-    secundario: { series: 3, reps: "8–12" },
+    primario: { series: 3, reps: "8–10" },
+    secundario: { series: 3, reps: "10–12" },
     aislamiento: { series: 3, reps: "12–15" },
-    descanso: "Descanso 60–90 s",
+    descanso: "Descanso 90–120 s",
   },
   resistencia: {
     primario: { series: 3, reps: "15–20" },
@@ -358,6 +363,9 @@ function sesgoObjetivo(ej: Ejercicio, ranura: Ranura, objetivo: Objetivo): numbe
       }
       return aislado ? -8 : 0;
     case "hipertrofia":
+      // barra en el primario: más carga absoluta para el estímulo de arranque
+      // (rompe el empate alfabético que hacía salir mancuerna).
+      if (ranura.rol === "primario" && eq === "barra") return 6;
       // mancuerna / máquina / polea en secundarios y aislados: tensión estable.
       if (
         ranura.rol !== "primario" &&
