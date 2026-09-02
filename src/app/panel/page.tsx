@@ -8,6 +8,15 @@ export default async function ResumenPage() {
   await requireDueno();
   const supabase = await createClient();
 
+  const { data: gym } = await supabase
+    .from("gimnasios")
+    .select("estado")
+    .eq("id", (await supabase.from("profiles").select("gimnasio_id").eq("id", (await supabase.auth.getUser()).data.user!.id).single()).data!.gimnasio_id)
+    .single();
+
+  const estadoGimnasio = gym?.estado ?? "prueba";
+  const soloLectura = estadoGimnasio === "solo_lectura";
+
   const { data } = await supabase
     .from("clientes")
     .select(
@@ -54,6 +63,23 @@ export default async function ResumenPage() {
 
   return (
     <div className="stagger">
+      {soloLectura && (
+        <div className="mb-6 rounded-lg border-2 border-danger bg-danger/10 p-4">
+          <h2 className="mb-2 text-lg font-semibold text-danger">
+            Período de prueba finalizado
+          </h2>
+          <p className="mb-3 text-sm text-ink">
+            Tu gimnasio está en modo solo lectura. Activá un plan para seguir usando todas las funciones de la app.
+          </p>
+          <a
+            href="mailto:soporte@tudominio.com?subject=Activar plan para mi gimnasio"
+            className="inline-block rounded-md bg-danger px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+          >
+            Activar plan
+          </a>
+        </div>
+      )}
+
       <div className="mb-8 flex items-baseline justify-between">
         <span className="text-xs uppercase tracking-[0.18em] text-ink-soft">
           Resumen

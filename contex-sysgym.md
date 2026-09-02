@@ -229,6 +229,28 @@ usarlo para altas masivas).
   real de Postgres si la lectura del gimnasio falla (antes decía siempre "No se
   encontró el gimnasio" y tapaba el "column pin_ingresos does not exist").
 
+### Consola de soporte (`/admin`) — superadmin de la plataforma
+
+- Segmento `src/app/admin/**`, fuera de `/panel` y `/mi`, sin ningún link desde
+  el flujo normal de un gimnasio. **Doble gate** en `admin/layout.tsx`: flag de
+  entorno `ADMIN_CONSOLE=1` + `requireSuperadmin()` (que ahora hace `notFound()`,
+  no `redirect`, para no revelar la ruta). Sin el flag o sin ser el superadmin →
+  404 seco. `SUPERADMIN_ID` sigue en env (no hay columna en DB).
+- **Monitor** (`/admin`): uso de Supabase, ya existía.
+- **Gimnasios** (`/admin/gimnasios` + `[id]`): lista de todos los gimnasios
+  reales y detalle **solo lectura** (socios, estado de cuota, últimos pagos) vía
+  `createAdminClient()` (service_role, saltea RLS). Sin cambio de sesión / sin
+  impersonación real (queda como follow-up con cookie `act_as` firmada si hace
+  falta reproducir bugs logueado como el dueño).
+- **Push de prueba** (`/admin/push-prueba`): `enviarPush([SUPERADMIN_ID], …)`,
+  solo a los dispositivos del superadmin. Nunca a clientes/dueños.
+- **Auditoría**: tabla `admin_audit_log` (migración `0014_admin_audit_log.sql`,
+  RLS on y sin policies → solo service_role). Helper
+  `src/lib/admin/audit.ts` → `registrarAccionAdmin(actorId, action, gimnasioId?,
+  meta?)`. Se registra `listar_gyms`, `ver_gym`, `push_prueba`.
+- **Pendiente manual**: aplicar `0014_admin_audit_log.sql`; agregar
+  `ADMIN_CONSOLE=1` a `.env.local` (y a Vercel solo cuando se hace soporte).
+
 ## Modelo de datos
 
 `gimnasios` (+ `tema` jsonb, `logo_url` text nullable, `pin_ingresos` text

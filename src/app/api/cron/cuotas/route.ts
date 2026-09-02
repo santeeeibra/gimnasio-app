@@ -120,5 +120,8 @@ export async function GET(req: NextRequest) {
     avisos++;
   }
 
+  // ─── Chequear trials vencidos (gimnasios en prueba > 14 días) ───
+  await admin.rpc("chequear_trial_vencido");
+
   return NextResponse.json({ ok: true, avisos, avisosMorosidad });
 }

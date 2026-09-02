@@ -9,6 +9,16 @@ import { AnilloProgreso } from "@/components/anillo-progreso";
 export default async function MiPage() {
   const profile = await requireProfile();
   const supabase = await createClient();
+
+  const { data: gym } = await supabase
+    .from("gimnasios")
+    .select("estado")
+    .eq("id", profile.gimnasio_id)
+    .single();
+
+  const estadoGimnasio = gym?.estado ?? "prueba";
+  const soloLectura = estadoGimnasio === "solo_lectura";
+
   const { data } = await supabase
     .from("clientes")
     .select("fecha_vencimiento, plan:planes(nombre, duracion_dias)")
@@ -29,6 +39,17 @@ export default async function MiPage() {
 
   return (
     <main className="stagger max-w-md mx-auto p-6 space-y-6">
+      {soloLectura && (
+        <div className="rounded-lg border-2 border-danger bg-danger/10 p-4">
+          <h2 className="mb-2 text-base font-semibold text-danger">
+            Período de prueba finalizado
+          </h2>
+          <p className="text-sm text-ink">
+            El gimnasio está en modo solo lectura. Contactá a la administración para activar un plan.
+          </p>
+        </div>
+      )}
+
       <div className="flex items-baseline justify-between">
         <h1 className="text-2xl">Hola, {profile.nombre.split(" ")[0]}</h1>
         <div className="flex shrink-0 items-baseline gap-3">

@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
 export type Profile = {
@@ -52,9 +52,11 @@ export async function requireDueno(): Promise<Profile> {
 
 // ADMIN de la plataforma (vos), no dueño de un gimnasio. Check aparte:
 // el id del perfil tiene que coincidir con SUPERADMIN_ID (env).
+// Devuelve 404 (no redirect) para no revelar que la ruta existe a un dueño
+// que la esté probando: indistinguible de una ruta inexistente.
 export async function requireSuperadmin(): Promise<Profile> {
-  const profile = await requireProfile();
+  const profile = await getSessionProfile();
   const superId = process.env.SUPERADMIN_ID;
-  if (!superId || profile.id !== superId) redirect("/panel");
+  if (!profile || !superId || profile.id !== superId) notFound();
   return profile;
 }
