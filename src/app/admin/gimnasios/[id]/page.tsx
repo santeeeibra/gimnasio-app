@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { requireSuperadmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { registrarAccionAdmin } from "@/lib/admin/audit";
+import { EstadoForm } from "./estado-form";
 
 export const dynamic = "force-dynamic";
 
@@ -72,6 +73,17 @@ export default async function AdminGimnasioDetalle({
         {gym.slug ?? "—"} · estado {gym.estado ?? "—"} · aviso morosidad{" "}
         {gym.dias_aviso_morosidad ?? "—"} días
       </p>
+
+      <div className="card-cut mb-8 border border-rule bg-paper-2 p-5">
+        <h2 className="mb-1 text-sm uppercase tracking-[0.14em] text-ink-soft">
+          Estado del gimnasio
+        </h2>
+        <p className="mb-4 text-xs text-ink-soft">
+          <code>solo_lectura</code> bloquea toda escritura del dueño y los socios
+          (para probar el modo trial vencido).
+        </p>
+        <EstadoForm gimnasioId={gym.id} estadoActual={gym.estado} />
+      </div>
 
       <h2 className="mb-3 text-sm uppercase tracking-[0.14em] text-ink-soft">
         Socios ({socios.length})

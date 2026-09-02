@@ -247,6 +247,9 @@ usarlo para altas masivas).
   falta reproducir bugs logueado como el dueño).
 - **Push de prueba** (`/admin/push-prueba`): `enviarPush([SUPERADMIN_ID], …)`,
   solo a los dispositivos del superadmin. Nunca a clientes/dueños.
+- **Estado del gimnasio** (en `/admin/gimnasios/[id]`): selector
+  prueba/activo/solo_lectura → `cambiarEstadoGimnasio` (service_role, auditado
+  `cambiar_estado_gym`) para probar el modo solo-lectura sin abrir el SQL Editor.
 - **Auditoría**: tabla `admin_audit_log` (migración `0014_admin_audit_log.sql`,
   RLS on y sin policies → solo service_role). Helper
   `src/lib/admin/audit.ts` → `registrarAccionAdmin(actorId, action, gimnasioId?,
