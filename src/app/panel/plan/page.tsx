@@ -41,20 +41,24 @@ export default async function PanelPlanPage() {
       .limit(12),
   ]);
 
-  const pagos = (pagosData ?? []) as {
+  const pagos = ((pagosData ?? []) as {
     id: string;
     estado: string;
-    monto_ars: number;
+    monto_ars: number | string;
     dias: number;
     creado_at: string;
     confirmado_at: string | null;
-  }[];
+  }[]).map((p) => ({ ...p, monto_ars: Number(p.monto_ars) }));
 
   const estado = gym?.estado ?? "prueba";
-  const plan = (gym?.plan ?? null) as {
+  const planRaw = (gym?.plan ?? null) as {
     nombre: string;
-    precio_mensual: number;
+    precio_mensual: number | string;
   } | null;
+  // Supabase devuelve numeric como string.
+  const plan = planRaw
+    ? { nombre: planRaw.nombre, precio_mensual: Number(planRaw.precio_mensual) }
+    : null;
   const vence = gym?.plan_plataforma_vence_el
     ? new Date(gym.plan_plataforma_vence_el).toLocaleDateString("es-AR")
     : null;

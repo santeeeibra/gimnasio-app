@@ -44,7 +44,7 @@ export function PagosPlataforma({ pagos }: { pagos: PagoPlataformaRow[] }) {
         >
           <span className="min-w-0">
             <span className="block">
-              {p.monto_ars.toLocaleString("es-AR", {
+              {Number(p.monto_ars).toLocaleString("es-AR", {
                 style: "currency",
                 currency: "ARS",
               })}{" "}

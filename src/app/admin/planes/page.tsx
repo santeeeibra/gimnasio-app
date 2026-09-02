@@ -53,7 +53,7 @@ export default async function AdminPlanesPage() {
                 <span className="text-xs text-ink-soft">
                   {p.max_socios == null ? "sin límite" : `tope ${p.max_socios}`}
                   {" · "}
-                  {p.precio_mensual.toLocaleString("es-AR", {
+                  {Number(p.precio_mensual).toLocaleString("es-AR", {
                     style: "currency",
                     currency: "ARS",
                   })}

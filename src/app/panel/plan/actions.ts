@@ -32,9 +32,10 @@ export async function generarPagoPlan(
   const plan = (gym?.plan ?? null) as {
     id: string;
     nombre: string;
-    precio_mensual: number;
+    precio_mensual: number | string;
   } | null;
-  const montoARS = plan?.precio_mensual ?? 0;
+  // Supabase devuelve numeric como string.
+  const montoARS = Number(plan?.precio_mensual ?? 0);
   const dias = 30;
   const via = pasarela();
 

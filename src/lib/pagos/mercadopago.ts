@@ -24,7 +24,8 @@ export function pasarelaMercadoPago(): PasarelaPago {
     automatica: true,
 
     async crearLink(s) {
-      if (!(s.montoARS > 0)) {
+      const monto = Number(s.montoARS);
+      if (!(monto > 0)) {
         throw new Error("El monto del pago debe ser mayor a 0.");
       }
       const webhookUrl = new URL("/api/pagos/webhook", s.urlRetorno).toString();
@@ -40,7 +41,7 @@ export function pasarelaMercadoPago(): PasarelaPago {
             {
               title: s.concepto.slice(0, 250),
               quantity: 1,
-              unit_price: Number(s.montoARS.toFixed(2)),
+              unit_price: Number(monto.toFixed(2)),
               currency_id: "ARS",
             },
           ],
