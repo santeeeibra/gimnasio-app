@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button, Select } from "@/components/ui";
 import {
   ENFASIS,
@@ -44,6 +45,7 @@ export function GenerarRutinaForm({
   };
   clienteSexo?: Sexo | null;
 }) {
+  const router = useRouter();
   const [state, formAction, pending] = useActionState<S, FormData>(action, {});
   const [enfasis, setEnfasis] = useState<Enfasis[]>(defaults?.enfasis ?? []);
   const [dias, setDias] = useState(String(defaults?.dias ?? 3));
@@ -68,6 +70,12 @@ export function GenerarRutinaForm({
     window.addEventListener("rutina:prefill", aplicar);
     return () => window.removeEventListener("rutina:prefill", aplicar);
   }, []);
+
+  // El revalidatePath del server action no purga la Router Cache del cliente:
+  // tras regenerar con éxito, forzamos un refresh para no mostrar la rutina vieja.
+  useEffect(() => {
+    if (state.ok) router.refresh();
+  }, [state.ok, router]);
 
   function toggleEnfasis(e: Enfasis) {
     setEnfasis((prev) =>

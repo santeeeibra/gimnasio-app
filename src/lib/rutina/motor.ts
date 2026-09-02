@@ -129,7 +129,43 @@ const LEGS: Ranura[] = [
 
 type Bloque = { titulo: string; ranuras: Ranura[] };
 
-function splitPorDias(dias: number): Bloque[] {
+// Avanzado nunca hace full body puro: el volumen semanal por grupo que tolera
+// sin fatiga excesiva no entra en sesiones de cuerpo completo (Schoenfeld et
+// al., ACSM). Desde 2 días va Upper/Lower; 5–6 pasa a Push/Pull/Legs.
+function splitAvanzado(dias: number): Bloque[] {
+  const UP: Bloque = { titulo: "Tren superior", ranuras: TORSO };
+  const LO: Bloque = { titulo: "Tren inferior", ranuras: PIERNA };
+  switch (dias) {
+    case 2:
+      return [UP, LO];
+    case 3:
+      return [UP, LO, UP];
+    case 4:
+      return [UP, LO, UP, LO];
+    case 5:
+      return [
+        { titulo: "Empuje", ranuras: PUSH },
+        { titulo: "Tracción", ranuras: PULL },
+        { titulo: "Pierna", ranuras: LEGS },
+        { titulo: "Empuje", ranuras: PUSH },
+        { titulo: "Tracción", ranuras: PULL },
+      ];
+    default: // 6
+      return [
+        { titulo: "Empuje", ranuras: PUSH },
+        { titulo: "Tracción", ranuras: PULL },
+        { titulo: "Pierna", ranuras: LEGS },
+        { titulo: "Empuje", ranuras: PUSH },
+        { titulo: "Tracción", ranuras: PULL },
+        { titulo: "Pierna", ranuras: LEGS },
+      ];
+  }
+}
+
+// El tipo de split depende del nivel, no solo de los días: principiante e
+// intermedio toleran full body en 2–4 días; avanzado se deriva a splitAvanzado.
+function splitPorDias(dias: number, nivel: Nivel): Bloque[] {
+  if (nivel === "avanzado") return splitAvanzado(dias);
   switch (dias) {
     case 2:
       return [
@@ -411,7 +447,7 @@ export function generarPlan(
   const objetivo = entrada.objetivo;
   const equipoPrefs = PREFERENCIAS_EQUIPO[entrada.preferencia] ?? [];
   const esquema = ESQUEMA[objetivo];
-  const bloques = splitPorDias(dias);
+  const bloques = splitPorDias(dias, entrada.nivel);
   const usadosSemana = new Set<string>();
 
   const diasPlan = bloques.map((bloque, di) => {

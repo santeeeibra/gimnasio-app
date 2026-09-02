@@ -23,6 +23,8 @@ import { RutinaEditor, type DiaEditable } from "./rutina-editor";
 import { BuilderManual } from "./builder-manual";
 import { BannerMotivacional } from "@/components/rutinas/banner-motivacional";
 
+export const dynamic = "force-dynamic";
+
 export default async function MiRutinaPage() {
   const profile = await requireProfile();
   const supabase = await createClient();
