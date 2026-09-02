@@ -15,14 +15,19 @@
 import {
   ENFASIS_GRUPOS,
   PREFERENCIAS_EQUIPO,
+  VOLUMEN_PARAMS,
   type Ejercicio,
   type Enfasis,
   type EntradaMotor,
+  type Molestia,
   type Nivel,
   type Objetivo,
+  type OpcionesAvanzadas,
   type PlanGenerado,
   type ItemGenerado,
+  type Rango,
   type Sexo,
+  type Tecnica,
 } from "./tipos";
 
 const NIVEL_ORDEN: Record<Nivel, number> = {
@@ -205,9 +210,43 @@ function splitPorDias(dias: number, nivel: Nivel): Bloque[] {
   }
 }
 
+// Modo avanzado: el cliente fuerza el split en vez de derivarlo de días+nivel.
+// Reusa los mismos arrays de ranuras. La validación días/split la hace el form;
+// acá es permisivo (si algo no cierra, cae de nuevo en splitPorDias).
+function splitExplicito(
+  split: OpcionesAvanzadas["split"],
+  dias: number,
+): Bloque[] {
+  const B = (titulo: string, ranuras: Ranura[]): Bloque => ({ titulo, ranuras });
+  switch (split) {
+    case "full_body": {
+      const arr = [FULL_BODY_A, FULL_BODY_B, FULL_BODY_C];
+      return Array.from({ length: dias }, (_, i) =>
+        B(`Cuerpo completo ${String.fromCharCode(65 + (i % 3))}`, arr[i % 3]),
+      );
+    }
+    case "upper_lower":
+      return Array.from({ length: dias }, (_, i) =>
+        i % 2 === 0
+          ? B("Tren superior", TORSO)
+          : B("Tren inferior", PIERNA),
+      );
+    case "push_pull_legs": {
+      const seq = [B("Empuje", PUSH), B("Tracción", PULL), B("Pierna", LEGS)];
+      return Array.from({ length: dias }, (_, i) => seq[i % 3]);
+    }
+    case "torso_pierna":
+      return Array.from({ length: dias }, (_, i) =>
+        i % 2 === 0 ? B("Torso", TORSO) : B("Pierna", PIERNA),
+      );
+    default:
+      return [];
+  }
+}
+
 // El objetivo también moldea la sesión, no solo el rango de reps:
 // - fuerza: pocas accesorias (máx. 2), sesión corta y pesada.
-// - resistencia / bajar grasa: garantiza core al cierre (tono de circuito).
+// - resistencia / bajar grasa / tonificar: garantiza core al cierre.
 // - hipertrofia: se deja como viene.
 function moldearPorObjetivo(ranuras: Ranura[], objetivo: Objetivo): Ranura[] {
   if (objetivo === "fuerza") {
@@ -215,7 +254,11 @@ function moldearPorObjetivo(ranuras: Ranura[], objetivo: Objetivo): Ranura[] {
     const accesorias = ranuras.filter((r) => r.rol === "aislamiento").slice(0, 2);
     return [...compuestos, ...accesorias];
   }
-  if (objetivo === "resistencia" || objetivo === "bajar_grasa") {
+  if (
+    objetivo === "resistencia" ||
+    objetivo === "bajar_grasa" ||
+    objetivo === "tonificar"
+  ) {
     return ranuras.some((r) => r.grupo === "core") ? ranuras : [...ranuras, A("core")];
   }
   return ranuras;
@@ -240,6 +283,8 @@ function aplicarEnfasis(
   ranuras: Ranura[],
   enfasis: Enfasis[],
   sexo: Sexo,
+  extras = 3,
+  maxDia = 8,
 ): Ranura[] {
   const zonas: Enfasis[] =
     enfasis.length > 0 ? enfasis : sexo === "mujer" ? ["gluteos"] : [];
@@ -252,12 +297,12 @@ function aplicarEnfasis(
   // inserción ni cuántas ranuras base ya tenga. División impar → el sobrante se
   // descarta (no se prioriza una zona). Si después falta un ejercicio en la
   // base para una zona, `elegir` la deja sin ese item y la otra no lo compensa.
-  const cuota = Math.floor(3 / zonas.length);
+  const cuota = Math.floor(extras / zonas.length);
 
   for (const zona of zonas) {
     const grupos = ENFASIS_GRUPOS[zona];
     const porGrupo = new Map<string, number>();
-    for (let i = 0; i < cuota && out.length < 8; i++) {
+    for (let i = 0; i < cuota && out.length < maxDia; i++) {
       const grupo = grupos[i % grupos.length];
       if ((porGrupo.get(grupo) ?? 0) >= 2) continue; // tope de densidad por grupo
       porGrupo.set(grupo, (porGrupo.get(grupo) ?? 0) + 1);
@@ -279,6 +324,29 @@ function priorizarEnfasis(ranuras: Ranura[], enfasis: Enfasis[]): Ranura[] {
     ...ranuras.filter((r) => grupos.has(r.grupo)),
     ...ranuras.filter((r) => !grupos.has(r.grupo)),
   ];
+}
+
+// Modo avanzado, orden = "prefatiga_zona": dentro de las ranuras de las zonas de
+// énfasis, el aislamiento va antes del compuesto (pre-fatiga del músculo objetivo
+// antes del básico). Solo reordena dentro de esos grupos; el resto queda igual.
+// Simão et al. 2012: el orden define qué recibe más volumen efectivo.
+function aplicarPrefatiga(ranuras: Ranura[], enfasis: Enfasis[]): Ranura[] {
+  if (enfasis.length === 0) return ranuras;
+  const grupos = new Set(enfasis.flatMap((z) => ENFASIS_GRUPOS[z]));
+  const rango = ranuras
+    .map((r, i) => ({ r, i }))
+    .filter((x) => grupos.has(x.r.grupo));
+  if (rango.length < 2) return ranuras;
+  const orden = [...rango].sort((a, b) => {
+    const pa = a.r.rol === "aislamiento" ? 0 : 1;
+    const pb = b.r.rol === "aislamiento" ? 0 : 1;
+    return pa - pb || a.i - b.i;
+  });
+  const out = [...ranuras];
+  rango.forEach((slot, k) => {
+    out[slot.i] = orden[k].r;
+  });
+  return out;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -314,6 +382,15 @@ const ESQUEMA: Record<Objetivo, EsquemaObj> = {
     aislamiento: { series: 3, reps: "12–15" },
     descanso: "Descanso 90–120 s",
   },
+  // Tonificar / marcar: hipertrofia liviana + densidad. Reps altas y descanso
+  // corto, sin las series pesadas de "masa muscular". La palabra que usa mucha
+  // gente para "bajar algo de grasa y dar forma".
+  tonificar: {
+    primario: { series: 3, reps: "10–12" },
+    secundario: { series: 3, reps: "12–15" },
+    aislamiento: { series: 3, reps: "15" },
+    descanso: "Descanso 45–60 s",
+  },
   resistencia: {
     primario: { series: 3, reps: "15–20" },
     secundario: { series: 3, reps: "15–20" },
@@ -327,6 +404,79 @@ const ESQUEMA: Record<Objetivo, EsquemaObj> = {
     descanso: "Descanso 45 s · ritmo de circuito",
   },
 };
+
+// ── Modo avanzado: esquemas de reps alternativos (SPEC §2.2) ──
+// Cada `rango` define un EsquemaObj completo, independiente del objetivo. Todos
+// los rangos de reps salen de REPS_OPCIONES (menús del editor).
+const ESQUEMA_RANGO: Record<
+  "fuerza_hipertrofia" | "hipertrofia" | "metabolico",
+  EsquemaObj
+> = {
+  fuerza_hipertrofia: {
+    primario: { series: 4, reps: "6–8" },
+    secundario: { series: 3, reps: "8–10" },
+    aislamiento: { series: 3, reps: "10–12" },
+    descanso: "Descanso 2–3 min",
+  },
+  hipertrofia: {
+    primario: { series: 4, reps: "8–10" },
+    secundario: { series: 3, reps: "10–12" },
+    aislamiento: { series: 3, reps: "12–15" },
+    descanso: "Descanso 90–120 s",
+  },
+  metabolico: {
+    primario: { series: 3, reps: "12–15" },
+    secundario: { series: 3, reps: "15–20" },
+    aislamiento: { series: 2, reps: "20" },
+    descanso: "Descanso 30–45 s",
+  },
+};
+
+// Periodización ondulante diaria (DUP): el rango rota pesado → medio → liviano
+// según el índice de día. Rhea et al. 2002.
+const ESQUEMA_ONDULANTE: EsquemaObj[] = [
+  {
+    primario: { series: 5, reps: "5" },
+    secundario: { series: 4, reps: "6–8" },
+    aislamiento: { series: 3, reps: "8–10" },
+    descanso: "Día pesado · Descanso 2–3 min",
+  },
+  {
+    primario: { series: 4, reps: "8–10" },
+    secundario: { series: 3, reps: "10–12" },
+    aislamiento: { series: 3, reps: "12–15" },
+    descanso: "Día medio · Descanso 90–120 s",
+  },
+  {
+    primario: { series: 3, reps: "12–15" },
+    secundario: { series: 3, reps: "15–20" },
+    aislamiento: { series: 2, reps: "20" },
+    descanso: "Día liviano · Descanso 45–60 s",
+  },
+];
+
+function resolverEsquema(
+  objetivo: Objetivo,
+  avanzado: OpcionesAvanzadas | undefined,
+  diaIdx: number,
+): EsquemaObj {
+  const rango: Rango = avanzado?.rango ?? "estandar";
+  if (rango === "estandar") return ESQUEMA[objetivo];
+  if (rango === "ondulante") {
+    return ESQUEMA_ONDULANTE[diaIdx % ESQUEMA_ONDULANTE.length];
+  }
+  return ESQUEMA_RANGO[rango];
+}
+
+// Texto de RIR que se anexa a la nota de cada ítem (SPEC §2.4). No toca
+// series/reps. Grgic et al. 2022.
+function notaRir(rir: OpcionesAvanzadas["rir"], rol: Rol): string {
+  if (rir === "2-3") return " · Dejá 2–3 repeticiones en reserva";
+  if (rir === "1-2") return " · Dejá 1–2 repeticiones en reserva";
+  return rol === "primario"
+    ? " · Cerca del fallo, sin perder técnica"
+    : " · Última serie al fallo";
+}
 
 // Nivel y sexo ajustan volumen sobre la serie base (nunca tocan el rango de
 // reps). Principiante entrena más liviano; avanzado sube el trabajo pesado;
@@ -374,6 +524,14 @@ function sesgoObjetivo(ej: Ejercicio, ranura: Ranura, objetivo: Objetivo): numbe
         return 8;
       }
       return 0;
+    case "tonificar":
+      // como hipertrofia pero con leve preferencia por compuestos de pie /
+      // unilaterales y accesorios en polea / máquina.
+      if (ranura.rol !== "primario" && (eq === "maquina" || eq === "polea")) {
+        return 8;
+      }
+      if (!aislado && (eq === "mancuernas" || eq === "peso_corporal")) return 4;
+      return 0;
     case "resistencia":
       // máquina / polea / peso corporal; evitar barra pesada en primarios.
       if (eq === "maquina" || eq === "polea" || eq === "peso_corporal") return 10;
@@ -388,12 +546,62 @@ function sesgoObjetivo(ej: Ejercicio, ranura: Ranura, objetivo: Objetivo): numbe
   return 0;
 }
 
+// Sesgo automático para clientes con sexo = "mujer" (SPEC §8.1). Empujón chico,
+// del mismo orden que sesgoObjetivo. Es un sesgo de puntaje, NO un filtro:
+// ningún ejercicio queda excluido, y un hombre nunca pasa por acá.
+// Preferencia de práctica y adherencia; la respuesta al entrenamiento no
+// difiere por sexo (Roberts et al. 2020).
+const GRUPOS_CADERA = new Set(["gluteos", "isquios"]);
+
+function sesgoSexo(ej: Ejercicio, ranura: Ranura, sexo: Sexo): number {
+  if (sexo !== "mujer") return 0;
+  const eq = ej.equipo ?? "";
+  let p = 0;
+  // Cadera / glúteo / isquios en cualquier rol.
+  if (GRUPOS_CADERA.has(ej.grupo_muscular ?? "")) p += 6;
+  if (ej.patron === "dominante_cadera") p += 4;
+  // Accesorios en polea / máquina: fáciles de dosificar, tensión constante.
+  if (ranura.rol !== "primario" && (eq === "maquina" || eq === "polea")) p += 4;
+  // En el primario del día de empuje, no penaliza barra pero la iguala con
+  // mancuerna / máquina (deja de ganar solo por EQUIPO_PESO).
+  if (ranura.rol === "primario" && (eq === "mancuernas" || eq === "maquina")) {
+    p += 2;
+  }
+  return p;
+}
+
+// Sustitución por molestia (SPEC §7.2). Cada molestia descarta patrones/equipos
+// que suelen provocar dolor en esa articulación. Conservador y por patrón, no
+// por nombre. Si tras el recorte no queda candidato para la ranura, `elegir`
+// ignora el filtro para ese hueco.
+const MOLESTIA_BLOQUEA: Record<Molestia, (ej: Ejercicio) => boolean> = {
+  hombro: (e) =>
+    (e.patron === "empuje_vertical" && e.equipo === "barra") ||
+    (e.grupo_muscular === "pecho" && e.patron === "aislamiento"), // aperturas
+  rodilla: (e) =>
+    (e.patron === "dominante_rodilla" && e.equipo === "barra") ||
+    (e.grupo_muscular === "cuadriceps" && e.patron === "aislamiento"),
+  lumbar: (e) =>
+    e.patron === "dominante_cadera" && e.equipo === "barra",
+  muñeca: (e) =>
+    (e.grupo_muscular === "biceps" && e.equipo === "barra") ||
+    (e.patron === "empuje_horizontal" && e.equipo === "barra"),
+  codo: (e) =>
+    (e.grupo_muscular === "triceps" && e.equipo === "barra") ||
+    (e.patron === "empuje_vertical" && e.equipo === "barra"),
+};
+
+function estaBloqueado(ej: Ejercicio, evitar: readonly Molestia[]): boolean {
+  return evitar.some((m) => MOLESTIA_BLOQUEA[m](ej));
+}
+
 function puntuar(
   ej: Ejercicio,
   ranura: Ranura,
   equipoPrefs: readonly string[],
   nivelCliente: Nivel,
   objetivo: Objetivo,
+  sexo: Sexo,
   usadosSemana: Set<string>,
   usadosDia: Set<string>,
 ): number {
@@ -415,6 +623,7 @@ function puntuar(
   else p -= 15 * (nivelIdx(ej.nivel) - NIVEL_ORDEN[nivelCliente]);
   if (!usadosSemana.has(ej.id)) p += 8; // preferir variedad en la semana
   p += sesgoObjetivo(ej, ranura, objetivo);
+  p += sesgoSexo(ej, ranura, sexo);
   return p;
 }
 
@@ -435,20 +644,37 @@ function elegir(
   equipoPrefs: readonly string[],
   nivelCliente: Nivel,
   objetivo: Objetivo,
+  sexo: Sexo,
+  evitar: readonly Molestia[],
   usadosSemana: Set<string>,
   usadosDia: Set<string>,
   seed: number,
   claveSlot: string,
 ): Ejercicio | null {
-  const rankeados = ejercicios
+  const todos = ejercicios
     .filter((e) => e.grupo_muscular === ranura.grupo && e.slug)
     .map((ej) => ({
       ej,
-      p: puntuar(ej, ranura, equipoPrefs, nivelCliente, objetivo, usadosSemana, usadosDia),
+      p: puntuar(
+        ej,
+        ranura,
+        equipoPrefs,
+        nivelCliente,
+        objetivo,
+        sexo,
+        usadosSemana,
+        usadosDia,
+      ),
     }))
     .filter((r) => Number.isFinite(r.p))
     // Desempate estable por slug para que la salida sea determinista sin seed.
     .sort((x, y) => y.p - x.p || (x.ej.slug ?? "").localeCompare(y.ej.slug ?? ""));
+
+  // Sustitución por molestia: sacar los bloqueados; si eso vacía el hueco,
+  // ignorar el filtro para esta ranura (mejor subóptimo que un día incompleto).
+  const filtrados =
+    evitar.length > 0 ? todos.filter((r) => !estaBloqueado(r.ej, evitar)) : todos;
+  const rankeados = filtrados.length > 0 ? filtrados : todos;
 
   if (rankeados.length === 0) return null;
   if (!seed) return rankeados[0].ej;
@@ -474,22 +700,44 @@ export function generarPlan(
   const enfasis = entrada.enfasis ?? [];
   const seed = entrada.seed ?? 0;
   const objetivo = entrada.objetivo;
+  const avanzado = entrada.avanzado;
   const equipoPrefs = PREFERENCIAS_EQUIPO[entrada.preferencia] ?? [];
-  const esquema = ESQUEMA[objetivo];
-  const bloques = splitPorDias(dias, entrada.nivel);
+  const evitar: Molestia[] = avanzado?.evitar ?? [];
+
+  // Volumen: modo avanzado ajusta el presupuesto de ranuras extra y el tope
+  // por día. Sin avanzado, los valores por defecto reproducen los hardcodes.
+  const vol = VOLUMEN_PARAMS[avanzado?.volumen ?? "estandar"];
+
+  // Split: explícito si el avanzado lo pidió y la combinación cierra; si no,
+  // el automático de siempre.
+  const explicito =
+    avanzado && avanzado.split !== "auto"
+      ? splitExplicito(avanzado.split, dias)
+      : [];
+  const bloques =
+    explicito.length > 0 ? explicito : splitPorDias(dias, entrada.nivel);
+
   const usadosSemana = new Set<string>();
 
   const diasPlan = bloques.map((bloque, di) => {
     const usadosDia = new Set<string>();
     const items: ItemGenerado[] = [];
-    const ranuras = priorizarEnfasis(
+    const rolItems: Rol[] = [];
+    const esquema = resolverEsquema(objetivo, avanzado, di);
+
+    let ranuras = priorizarEnfasis(
       aplicarEnfasis(
         moldearPorObjetivo(bloque.ranuras, objetivo),
         enfasis,
         sexo,
+        vol.extras,
+        vol.maxDia,
       ),
       enfasis,
     );
+    if (avanzado?.orden === "prefatiga_zona") {
+      ranuras = aplicarPrefatiga(ranuras, enfasis);
+    }
 
     ranuras.forEach((ranura, si) => {
       const ej = elegir(
@@ -498,6 +746,8 @@ export function generarPlan(
         equipoPrefs,
         entrada.nivel,
         objetivo,
+        sexo,
+        evitar,
         usadosSemana,
         usadosDia,
         seed,
@@ -508,13 +758,27 @@ export function generarPlan(
       usadosSemana.add(ej.id);
 
       const rx = esquema[ranura.rol];
+      const nota = avanzado
+        ? esquema.descanso + notaRir(avanzado.rir, ranura.rol)
+        : esquema.descanso;
       items.push({
         ejercicio_slug: ej.slug,
         series: ajustarSeries(rx.series, ranura.rol, entrada.nivel, sexo),
         repeticiones: rx.reps,
-        nota: esquema.descanso,
+        nota,
       });
+      rolItems.push(ranura.rol);
     });
+
+    // Técnica de intensidad en la última serie de los últimos 1–2 aislamientos.
+    const tec = avanzado?.tecnicaAislamientos ?? "ninguna";
+    if (tec !== "ninguna") {
+      const aisl = rolItems
+        .map((r, i) => (r === "aislamiento" ? i : -1))
+        .filter((i) => i >= 0)
+        .slice(-2);
+      for (const i of aisl) items[i].tecnica = tec as Tecnica;
+    }
 
     return { titulo: `Día ${di + 1} · ${bloque.titulo}`, items };
   });

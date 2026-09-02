@@ -1,6 +1,12 @@
 // Tipos compartidos del motor de rutinas.
 
-export const OBJETIVOS = ["fuerza", "hipertrofia", "resistencia", "bajar_grasa"] as const;
+export const OBJETIVOS = [
+  "fuerza",
+  "hipertrofia",
+  "tonificar",
+  "resistencia",
+  "bajar_grasa",
+] as const;
 export const NIVELES = ["principiante", "intermedio", "avanzado"] as const;
 export const EQUIPOS = ["barra", "mancuernas", "maquina", "polea", "peso_corporal"] as const;
 
@@ -11,8 +17,19 @@ export type Equipo = (typeof EQUIPOS)[number];
 export const OBJETIVO_LABEL: Record<Objetivo, string> = {
   fuerza: "Fuerza",
   hipertrofia: "Masa muscular",
+  tonificar: "Tonificar / marcar",
   resistencia: "Resistencia",
   bajar_grasa: "Bajar grasa",
+};
+
+// Texto de ayuda bajo cada opción de objetivo (una línea, sin jerga).
+export const OBJETIVO_AYUDA: Record<Objetivo, string> = {
+  fuerza: "Levantar más peso. Series pesadas, pocas repeticiones, descansos largos.",
+  hipertrofia: "Ganar volumen muscular. Series medias, repeticiones moderadas.",
+  tonificar:
+    "Bajar algo de grasa y dar forma sin buscar volumen. Repeticiones altas, descansos cortos.",
+  resistencia: "Aguantar más. Muchas repeticiones, descansos muy cortos.",
+  bajar_grasa: "Perder grasa. Circuito de compuestos, ritmo sostenido.",
 };
 
 export const NIVEL_LABEL: Record<Nivel, string> = {
@@ -143,6 +160,122 @@ export const REPS_OPCIONES = [
   "20",
 ] as const;
 
+// ── Modo avanzado (SPEC_RUTINA_AVANZADA.md) ──
+// Solo se ofrece a clientes de nivel avanzado. Afinan la generación automática:
+// el motor sigue siendo el mismo, con más entrada. Si `EntradaMotor.avanzado`
+// es undefined, la salida es idéntica a la de antes.
+
+export const SPLITS = [
+  "auto",
+  "full_body",
+  "upper_lower",
+  "push_pull_legs",
+  "torso_pierna",
+] as const;
+export type Split = (typeof SPLITS)[number];
+
+export const SPLIT_LABEL: Record<Split, string> = {
+  auto: "Automático (según días y nivel)",
+  full_body: "Cuerpo completo",
+  upper_lower: "Tren superior / Tren inferior",
+  push_pull_legs: "Empuje / Tracción / Pierna",
+  torso_pierna: "Torso / Pierna",
+};
+
+// Días válidos por split. El form bloquea las combinaciones que no cierran.
+export const SPLIT_DIAS_OK: Record<Split, number[]> = {
+  auto: [2, 3, 4, 5, 6],
+  full_body: [2, 3, 4],
+  upper_lower: [2, 3, 4, 5, 6],
+  push_pull_legs: [3, 6],
+  torso_pierna: [4],
+};
+
+export const RANGOS = [
+  "estandar",
+  "fuerza_hipertrofia",
+  "hipertrofia",
+  "metabolico",
+  "ondulante",
+] as const;
+export type Rango = (typeof RANGOS)[number];
+
+export const RANGO_LABEL: Record<Rango, string> = {
+  estandar: "Según el objetivo (por defecto)",
+  fuerza_hipertrofia: "Fuerza-hipertrofia (6–8)",
+  hipertrofia: "Hipertrofia clásica (8–12)",
+  metabolico: "Metabólico (12–20)",
+  ondulante: "Ondulante: pesado / medio / liviano por día",
+};
+
+export const VOLUMENES = ["mev", "estandar", "mav"] as const;
+export type Volumen = (typeof VOLUMENES)[number];
+
+export const VOLUMEN_LABEL: Record<Volumen, string> = {
+  mev: "Mínimo efectivo (~10 series/grupo/semana)",
+  estandar: "Estándar (~14)",
+  mav: "Alto (~18–20)",
+};
+
+// Presupuesto de ranuras extra de énfasis y tope de ejercicios por día, por
+// nivel de volumen. `estandar` reproduce los hardcodes actuales (3 y 8).
+export const VOLUMEN_PARAMS: Record<
+  Volumen,
+  { extras: number; maxDia: number }
+> = {
+  mev: { extras: 1, maxDia: 6 },
+  estandar: { extras: 3, maxDia: 8 },
+  mav: { extras: 5, maxDia: 10 },
+};
+
+export const RIR_OPCIONES = ["2-3", "1-2", "0-1"] as const;
+export type Rir = (typeof RIR_OPCIONES)[number];
+
+export const RIR_LABEL: Record<Rir, string> = {
+  "2-3": "Suave: dejá 2–3 repeticiones en reserva",
+  "1-2": "Exigente: dejá 1–2 repeticiones en reserva",
+  "0-1": "Al límite: 0–1 en reserva (permite fallo)",
+};
+
+export const ORDENES = ["compuestos_primero", "prefatiga_zona"] as const;
+export type Orden = (typeof ORDENES)[number];
+
+export const ORDEN_LABEL: Record<Orden, string> = {
+  compuestos_primero: "Compuestos primero (por defecto)",
+  prefatiga_zona: "Prefatiga: aislar la zona de énfasis antes del compuesto",
+};
+
+export const MOLESTIAS = ["hombro", "rodilla", "lumbar", "muñeca", "codo"] as const;
+export type Molestia = (typeof MOLESTIAS)[number];
+
+export const MOLESTIA_LABEL: Record<Molestia, string> = {
+  hombro: "Hombro",
+  rodilla: "Rodilla",
+  lumbar: "Zona lumbar",
+  muñeca: "Muñeca",
+  codo: "Codo",
+};
+
+export type OpcionesAvanzadas = {
+  split: Split;
+  rango: Rango;
+  volumen: Volumen;
+  rir: Rir;
+  orden: Orden;
+  tecnicaAislamientos: Tecnica; // "ninguna" = sin técnica
+  evitar: Molestia[];
+};
+
+export const OPCIONES_AVANZADAS_DEFAULT: OpcionesAvanzadas = {
+  split: "auto",
+  rango: "estandar",
+  volumen: "estandar",
+  rir: "2-3",
+  orden: "compuestos_primero",
+  tecnicaAislamientos: "ninguna",
+  evitar: [],
+};
+
 export type Ejercicio = {
   id: string;
   slug: string | null;
@@ -163,13 +296,15 @@ export type EntradaMotor = {
   sexo: Sexo;
   enfasis: Enfasis[]; // 0..MAX_ENFASIS zonas a priorizar
   seed?: number; // varía la selección entre candidatos equivalentes (regenerar)
+  avanzado?: OpcionesAvanzadas; // solo nivel avanzado; undefined = flujo actual
 };
 
 export type ItemGenerado = {
   ejercicio_slug: string;
   series: number;
   repeticiones: string;
-  nota: string; // descanso / cue corto
+  nota: string; // descanso / cue corto / RIR
+  tecnica?: Tecnica; // técnica de intensidad en la última serie (modo avanzado)
 };
 
 export type DiaGenerado = {
