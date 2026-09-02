@@ -65,10 +65,11 @@ export async function generarMiRutina(
     return { error: "Los días por semana van de 2 a 6." };
   }
 
+  const seed = Math.floor(Math.random() * 1_000_000_000);
   const res = await generarYGuardar(supabase, {
     gimnasioId: cliente.gimnasio_id,
     clienteId: cliente.id,
-    entrada: { objetivo, nivel, preferencia, dias, sexo, enfasis },
+    entrada: { objetivo, nivel, preferencia, dias, sexo, enfasis, seed },
   });
   if (res.error) return { error: res.error };
 

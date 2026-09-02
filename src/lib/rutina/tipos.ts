@@ -116,6 +116,7 @@ export type EntradaMotor = {
   preferencia: PreferenciaEquipo;
   sexo: Sexo;
   enfasis: Enfasis[]; // 0..MAX_ENFASIS zonas a priorizar
+  seed?: number; // varía la selección entre candidatos equivalentes (regenerar)
 };
 
 export type ItemGenerado = {

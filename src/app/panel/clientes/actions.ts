@@ -197,10 +197,11 @@ export async function generarRutinaCliente(
     .maybeSingle();
   if (!cli) return { error: "Cliente no encontrado." };
 
+  const seed = Math.floor(Math.random() * 1_000_000_000);
   const res = await generarYGuardar(supabase, {
     gimnasioId: dueno.gimnasio_id,
     clienteId,
-    entrada: { objetivo, nivel, preferencia, dias, sexo, enfasis },
+    entrada: { objetivo, nivel, preferencia, dias, sexo, enfasis, seed },
   });
   if (res.error) return { error: res.error };
 

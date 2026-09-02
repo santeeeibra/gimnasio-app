@@ -184,6 +184,27 @@ SECURITY DEFINER (`soy_destinatario`, `mensaje_gimnasio`, `mensaje_remitente`,
   en `REGLAS_UI_EMIL.md` §5 (Imágenes y media).
 
 ### Feedback de UX pendiente (dueño, 2026-09-02)
+- ✅ **Motor de rutinas — realismo y variedad** (2026-09-02). Quejas: botón
+  "Regenerar" al fondo del todo; siempre "series de 5"; las 4 objetivos daban
+  la misma rutina; regenerar repetía el plan.
+  - `src/lib/rutina/motor.ts`: prescripción por **rol de ranura**
+    (`primario` / `secundario` / `aislamiento`) en vez de un valor único por
+    compuesto → el plan mezcla p. ej. 5×5, 4×6, 3×8–10. `sesgoObjetivo()`
+    sesga la **selección de ejercicios** por objetivo (fuerza→barra pesada;
+    hipertrofia→mancuerna/máquina; resistencia→máquina/polea/peso corporal;
+    bajar grasa→compuestos de mancuerna/peso corporal). `moldearPorObjetivo()`
+    recorta accesorias en fuerza y agrega core al cierre en
+    resistencia/bajar_grasa. `ajustarSeries()` aplica nivel + sexo por rol.
+  - **Semilla**: `EntradaMotor.seed?` (opcional). Las actions
+    (`mi/rutina/actions.ts`, `panel/clientes/actions.ts`) pasan un `seed`
+    aleatorio en cada generación → `elegir()` rota entre los candidatos a
+    ≤10 pts del mejor (hasta 3), así "Regenerar" devuelve un plan distinto
+    pero válido. Sin seed sigue siendo determinista (previews).
+  - **UI** (`mi/rutina/page.tsx`): el `<details>` de regenerar pasó del fondo
+    a un chip compacto alineado a la derecha, justo bajo el encabezado.
+  - Typecheck limpio ✅. Probado end-to-end (fuerza vs bajar_grasa dan planes
+    y esquemas de series distintos; regenerar cambia el plan).
+
 - ✅ **Editor de tema demasiado difícil** — RESUELTO (2026-09-02). Rediseño
   guiado de `src/app/panel/ajustes/*`: (a) 6 paletas prearmadas validadas
   (`PRESETS_TEMA`), un tap y guardar; (b) mini-preview sticky pegado a los
