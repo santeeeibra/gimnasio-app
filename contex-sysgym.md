@@ -117,9 +117,9 @@ SECURITY DEFINER (`soy_destinatario`, `mensaje_gimnasio`, `mensaje_remitente`,
 | 1 — Scaffold, auth, panel dueño, vista cliente, seed | ✅ HECHO |
 | 2 — Mensajería (compositor, bandeja, hilos) | ✅ HECHO, probado end-to-end |
 | Branding / tema personalizable | ✅ **COMPLETO y ampliado** — 7 colores (con base/derivados + "Calcular desde la base") + 9 presets tipográficos (10 fuentes) + tamaño base + redondeo + espaciado + estilo de navegación + densidad + validación contraste WCAG 2.1 (avisos salteables + **bloqueos duros no salteables**: `ink`/`paper`, `ink`/`paper-2` ≥ 4.5 y separación `paper`/`paper-2` ≥ 1.05, vía `chequearBloqueos()`) + preview en vivo. Ver `VALIDACION_CONTRASTE.md` y `FUENTES_PERSONALIZABLES.md`. Migración `0004_tema_jsonb.sql` ✅ aplicada (2026-09-01). **Pendiente**: prueba end-to-end (guardar colores+fuente+nav+densidad y verlos en `panel/` y `mi/`) + re-guardar la paleta del gimnasio de prueba (hoy falla contraste; el editor ahora debería bloquear el guardado) |
-| Rediseño UI mobile-first con `emil-design-eng` | 🔄 EN CURSO — `/login` ✅. `/panel/ajustes` ✅ (editor de tema completo estilo Emil). Próximo `/panel` (dashboard). Dirección y notas en `INSTRUCCIONES_TEMA.md` §4 |
+| Rediseño UI mobile-first con `emil-design-eng` | 🔄 EN CURSO — `/login` ✅. `/panel/ajustes` ✅ (falta rediseño guiado, ver Feedback UX). `/mi/rutina` editor ✅ (miniaturas + visor + táctil). Próximo `/panel` (dashboard). Reglas en `REGLAS_UI_EMIL.md` (ampliado 2026-09-02: §5 imágenes, §6 alineación, §7 overflow, §9 modales). Dirección de tema en `INSTRUCCIONES_TEMA.md` §4 |
 | 3 — Push web nativo | Sin empezar. Tabla lista; faltan VAPID keys, service worker, endpoint, disparo en cuota por vencer. TODO marcado en `panel/mensajes/actions.ts` |
-| 4 — Rutinas (motor de reglas + editor + seed wger) | 🔄 EN CURSO — motor (`src/lib/rutina/`), generación y editor cliente (`/mi/rutina`), panel dueño (`/panel/clientes/[id]/rutina-panel.tsx`) ✅. **Pendiente**: seed real de ejercicios wger (imágenes/GIF), pulido UI mobile del editor, prueba end-to-end |
+| 4 — Rutinas (motor de reglas + editor + seed imágenes) | 🔄 EN CURSO — motor (`src/lib/rutina/`), generación y editor cliente (`/mi/rutina`), panel dueño (`/panel/clientes/[id]/rutina-panel.tsx`) ✅. **Imágenes**: se cambió wger (línea, fondo transparente, feas) por **free-exercise-db** (dominio público, fotos fondo blanco centradas, 2 cuadros por ejercicio). `src/data/ejercicios.json` tiene `imagen_url` = frame `/0.jpg` en los 53, vía `scripts/ejercicios-img.mjs` (+ cache `scripts/fedb-cache.json`). El editor alterna `/0.jpg`↔`/1.jpg` cada 900 ms para simular GIF y abre un visor grande al tocar la miniatura. Fix mobile clave: `img,video{max-width:100%;height:auto}` en `globals.css` (faltaba el reset → las imágenes reventaban el layout en 375px) + miniatura en caja fija 72 px. **Pendiente**: correr `node scripts/seed-ejercicios.mjs` (manual, service_role) para subir las URLs nuevas a la tabla; rediseño guiado del editor de tema (ver fila de abajo). |
 | 5 — Cron `recalcular_estado_cuota()` diario (pg_cron o Vercel cron) | Sin empezar |
 
 ### Datos de prueba
@@ -145,6 +145,21 @@ SECURITY DEFINER (`soy_destinatario`, `mensaje_gimnasio`, `mensaje_remitente`,
     `paper`/`paper-2` < 1.05; `derivarPaleta()` fuerza esa separación.
     **Pendiente**: re-guardar la paleta del gimnasio de prueba desde Ajustes
     (migración `0004` ya aplicada, la columna `tema` jsonb existe).
+- **Imágenes reventaban el layout mobile en `/mi/rutina`** (2026-09-02) —
+  ✅ RESUELTO. Faltaba el reset `img,video{max-width:100%;height:auto}` en
+  `src/app/globals.css`; una `<img>` con `shrink-0` empujaba el texto fuera de
+  pantalla en 375px. Reset agregado + miniatura en caja fija 72px + regla nueva
+  en `REGLAS_UI_EMIL.md` §5 (Imágenes y media).
+
+### Feedback de UX pendiente (dueño, 2026-09-02)
+- **Editor de tema demasiado difícil**: "mucha gente no entiende de gustos".
+  Pide (a) **paletas prearmadas** tipo "Noche / Papel / Océano" ya validadas →
+  un tap y guarda; (b) la **vista previa en vivo pegada** a los controles (hoy
+  está lejos / en otra tab). Decisión tomada: **rediseño guiado** de
+  `src/app/panel/ajustes/*`. Sin empezar.
+- **Imágenes de ejercicio**: se cambió wger por free-exercise-db (ver Estado
+  entregable 4). Si siguen sin gustar, la alternativa es GIFs reales vía
+  ExerciseDB (RapidAPI, con API key y límite en el free tier).
 
 ## Cómo seguir (próxima sesión)
 
@@ -158,11 +173,20 @@ Prioridad sugerida:
    + densidad se guardan y se aplican en `panel/` y `mi/`) + re-guardar la
    paleta del gimnasio de prueba (hoy falla contraste) y verificar que el
    editor ahora bloquea el guardado en ese caso.
-3. **Seed real de ejercicios wger** (imágenes/GIF) para el motor de rutinas y
-   pulido mobile del editor `/mi/rutina`.
-4. **Entregable 3 — Push web nativo**: VAPID keys, service worker, endpoint,
+3. ✅ **Seed de imágenes de ejercicios** — se cambió wger por **free-exercise-db**
+   (dominio público, fotos fondo blanco centradas, 2 cuadros). `imagen_url` en
+   `src/data/ejercicios.json` vía `scripts/ejercicios-img.mjs` (+ cache
+   `scripts/fedb-cache.json`). Editor `/mi/rutina`: miniatura 72px animada
+   (0.jpg↔1.jpg cada 900ms, respeta reduce-motion) + visor modal al tocar +
+   táctil + stagger + focus-visible. Fix reset `img` en `globals.css`.
+   **Falta que corra el humano**: `node scripts/ejercicios-img.mjs && node scripts/seed-ejercicios.mjs`.
+   Login de prueba que SÍ entra: cliente `migym/46697615/697615`,
+   dueño `migym/30111222/gym1222`.
+4. **Rediseño guiado del editor de tema** (`src/app/panel/ajustes/*`): paletas
+   prearmadas validadas + preview pegada a los controles. Ver "Feedback de UX
+   pendiente". Es lo próximo acordado.
+5. **Entregable 3 — Push web nativo**: VAPID keys, service worker, endpoint,
    disparo en cuota por vencer (TODO en `panel/mensajes/actions.ts`).
-5. ✅ Barrer `bg-white` en todo `src/` → tokens (hecho).
 6. Rediseño UI: seguir con `/panel` (dashboard).
 
 ## Cómo trabajar (ahorrar tokens)

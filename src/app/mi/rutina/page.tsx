@@ -52,7 +52,7 @@ export default async function MiRutinaPage() {
   const ejercicios = (ejerciciosData ?? []) as Ejercicio[];
 
   return (
-    <main className="max-w-md mx-auto p-6 space-y-6">
+    <main className="max-w-md mx-auto px-5 py-6 space-y-6">
       <div>
         <Link
           href="/mi"
@@ -91,7 +91,7 @@ export default async function MiRutinaPage() {
           />
 
           <details className="border-t border-rule pt-4">
-            <summary className="text-sm text-ink-soft cursor-pointer select-none">
+            <summary className="-mx-1 px-1 py-2 flex items-center text-sm text-ink-soft cursor-pointer select-none rounded-[5px] transition-colors duration-150 [transition-timing-function:var(--ease-out)] active:bg-paper-2">
               Regenerar rutina
             </summary>
             <div className="mt-4">

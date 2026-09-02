@@ -1,65 +1,532 @@
 [
-  { "slug": "press-banca-barra", "nombre": "Press de banca con barra", "grupo_muscular": "pecho", "patron": "empuje_horizontal", "equipo": "barra", "nivel": "intermedio", "descripcion": "Escápulas retraídas, baja la barra al esternón y controla." },
-  { "slug": "press-banca-mancuernas", "nombre": "Press de banca con mancuernas", "grupo_muscular": "pecho", "patron": "empuje_horizontal", "equipo": "mancuernas", "nivel": "principiante", "descripcion": "Recorrido completo, muñecas firmes sobre los codos." },
-  { "slug": "press-inclinado-mancuernas", "nombre": "Press inclinado con mancuernas", "grupo_muscular": "pecho", "patron": "empuje_horizontal", "equipo": "mancuernas", "nivel": "intermedio", "descripcion": "Banco a 30°, foco en pecho superior." },
-  { "slug": "flexiones", "nombre": "Flexiones de brazos", "grupo_muscular": "pecho", "patron": "empuje_horizontal", "equipo": "peso_corporal", "nivel": "principiante", "descripcion": "Cuerpo en línea, codos a unos 45°." },
-  { "slug": "press-pecho-maquina", "nombre": "Press de pecho en máquina", "grupo_muscular": "pecho", "patron": "empuje_horizontal", "equipo": "maquina", "nivel": "principiante", "descripcion": "Espalda apoyada, empuje parejo con ambos brazos." },
-  { "slug": "aperturas-polea", "nombre": "Aperturas en polea", "grupo_muscular": "pecho", "patron": "aislamiento", "equipo": "polea", "nivel": "intermedio", "descripcion": "Codos algo flexionados fijos, junta las manos al frente." },
-
-  { "slug": "dominadas", "nombre": "Dominadas", "grupo_muscular": "espalda", "patron": "traccion_vertical", "equipo": "peso_corporal", "nivel": "avanzado", "descripcion": "Pecho hacia la barra, sin balanceo." },
-  { "slug": "jalon-al-pecho", "nombre": "Jalón al pecho en polea", "grupo_muscular": "espalda", "patron": "traccion_vertical", "equipo": "polea", "nivel": "principiante", "descripcion": "Lleva la barra al pecho, codos abajo y atrás." },
-  { "slug": "remo-barra", "nombre": "Remo con barra", "grupo_muscular": "espalda", "patron": "traccion_horizontal", "equipo": "barra", "nivel": "intermedio", "descripcion": "Tronco a 45°, tira a la parte baja del abdomen." },
-  { "slug": "remo-mancuerna", "nombre": "Remo a una mano con mancuerna", "grupo_muscular": "espalda", "patron": "traccion_horizontal", "equipo": "mancuernas", "nivel": "principiante", "descripcion": "Apoyo en banco, codo pegado al cuerpo." },
-  { "slug": "remo-maquina", "nombre": "Remo sentado en máquina", "grupo_muscular": "espalda", "patron": "traccion_horizontal", "equipo": "maquina", "nivel": "principiante", "descripcion": "Pecho apoyado, junta las escápulas al final." },
-  { "slug": "remo-polea-baja", "nombre": "Remo en polea baja", "grupo_muscular": "espalda", "patron": "traccion_horizontal", "equipo": "polea", "nivel": "principiante", "descripcion": "Espalda recta, tira al ombligo sin usar impulso." },
-  { "slug": "peso-muerto-barra", "nombre": "Peso muerto convencional", "grupo_muscular": "espalda", "patron": "dominante_cadera", "equipo": "barra", "nivel": "avanzado", "descripcion": "Barra pegada a las piernas, cadera y hombros suben juntos." },
-
-  { "slug": "press-militar-barra", "nombre": "Press militar con barra", "grupo_muscular": "hombros", "patron": "empuje_vertical", "equipo": "barra", "nivel": "intermedio", "descripcion": "Glúteos y abdomen firmes, barra sobre la cabeza." },
-  { "slug": "press-hombro-mancuernas", "nombre": "Press de hombros con mancuernas", "grupo_muscular": "hombros", "patron": "empuje_vertical", "equipo": "mancuernas", "nivel": "principiante", "descripcion": "Sentado con respaldo, no arquees la lumbar." },
-  { "slug": "press-hombro-maquina", "nombre": "Press de hombros en máquina", "grupo_muscular": "hombros", "patron": "empuje_vertical", "equipo": "maquina", "nivel": "principiante", "descripcion": "Recorrido completo, sin bloquear de golpe." },
-  { "slug": "elevaciones-laterales", "nombre": "Elevaciones laterales", "grupo_muscular": "hombros", "patron": "aislamiento", "equipo": "mancuernas", "nivel": "principiante", "descripcion": "Sube hasta la línea de los hombros, sin balanceo." },
-  { "slug": "pajaros", "nombre": "Elevaciones posteriores (pájaros)", "grupo_muscular": "hombros", "patron": "aislamiento", "equipo": "mancuernas", "nivel": "intermedio", "descripcion": "Tronco inclinado, abre los brazos hacia atrás." },
-
-  { "slug": "curl-barra", "nombre": "Curl de bíceps con barra", "grupo_muscular": "biceps", "patron": "aislamiento", "equipo": "barra", "nivel": "principiante", "descripcion": "Codos quietos al costado, sin mover el tronco." },
-  { "slug": "curl-mancuernas", "nombre": "Curl alternado con mancuernas", "grupo_muscular": "biceps", "patron": "aislamiento", "equipo": "mancuernas", "nivel": "principiante", "descripcion": "Sube controlando, gira la muñeca al final." },
-  { "slug": "curl-martillo", "nombre": "Curl martillo", "grupo_muscular": "biceps", "patron": "aislamiento", "equipo": "mancuernas", "nivel": "principiante", "descripcion": "Agarre neutro, foco en braquial y antebrazo." },
-  { "slug": "curl-polea", "nombre": "Curl en polea", "grupo_muscular": "biceps", "patron": "aislamiento", "equipo": "polea", "nivel": "principiante", "descripcion": "Tensión constante, no adelantes los codos." },
-
-  { "slug": "fondos-banco", "nombre": "Fondos en banco", "grupo_muscular": "triceps", "patron": "empuje_vertical", "equipo": "peso_corporal", "nivel": "principiante", "descripcion": "Codos hacia atrás, baja hasta 90°." },
-  { "slug": "extension-polea", "nombre": "Extensión de tríceps en polea", "grupo_muscular": "triceps", "patron": "aislamiento", "equipo": "polea", "nivel": "principiante", "descripcion": "Codos pegados al cuerpo, extiende sin abrir." },
-  { "slug": "press-frances", "nombre": "Press francés con mancuernas", "grupo_muscular": "triceps", "patron": "aislamiento", "equipo": "mancuernas", "nivel": "intermedio", "descripcion": "Codos apuntando al techo, baja hacia la frente." },
-  { "slug": "fondos-paralelas", "nombre": "Fondos en paralelas", "grupo_muscular": "triceps", "patron": "empuje_vertical", "equipo": "peso_corporal", "nivel": "avanzado", "descripcion": "Tronco vertical para cargar tríceps, baja controlado." },
-
-  { "slug": "sentadilla-barra", "nombre": "Sentadilla con barra", "grupo_muscular": "cuadriceps", "patron": "dominante_rodilla", "equipo": "barra", "nivel": "intermedio", "descripcion": "Baja hasta que el muslo pase la paralela, pecho arriba." },
-  { "slug": "sentadilla-goblet", "nombre": "Sentadilla goblet con mancuerna", "grupo_muscular": "cuadriceps", "patron": "dominante_rodilla", "equipo": "mancuernas", "nivel": "principiante", "descripcion": "Mancuerna al pecho, codos por dentro de las rodillas." },
-  { "slug": "prensa-piernas", "nombre": "Prensa de piernas", "grupo_muscular": "cuadriceps", "patron": "dominante_rodilla", "equipo": "maquina", "nivel": "principiante", "descripcion": "No bloquees las rodillas ni despegues la cadera." },
-  { "slug": "zancadas-mancuernas", "nombre": "Zancadas con mancuernas", "grupo_muscular": "cuadriceps", "patron": "dominante_rodilla", "equipo": "mancuernas", "nivel": "intermedio", "descripcion": "Paso largo, rodilla de atrás cerca del piso." },
-  { "slug": "extension-cuadriceps", "nombre": "Extensión de cuádriceps en máquina", "grupo_muscular": "cuadriceps", "patron": "aislamiento", "equipo": "maquina", "nivel": "principiante", "descripcion": "Extiende completo, baja lento." },
-  { "slug": "sentadilla-peso-corporal", "nombre": "Sentadilla libre", "grupo_muscular": "cuadriceps", "patron": "dominante_rodilla", "equipo": "peso_corporal", "nivel": "principiante", "descripcion": "Peso en el medio del pie, rodillas siguen a los pies." },
-
-  { "slug": "peso-muerto-rumano", "nombre": "Peso muerto rumano con barra", "grupo_muscular": "isquios", "patron": "dominante_cadera", "equipo": "barra", "nivel": "intermedio", "descripcion": "Lleva la cadera atrás, espalda recta, leve flexión de rodilla." },
-  { "slug": "peso-muerto-rumano-mancuernas", "nombre": "Peso muerto rumano con mancuernas", "grupo_muscular": "isquios", "patron": "dominante_cadera", "equipo": "mancuernas", "nivel": "principiante", "descripcion": "Mancuernas cerca de las piernas, siente el estiramiento atrás." },
-  { "slug": "curl-femoral", "nombre": "Curl femoral en máquina", "grupo_muscular": "isquios", "patron": "aislamiento", "equipo": "maquina", "nivel": "principiante", "descripcion": "Cadera apoyada, flexiona sin despegar." },
-  { "slug": "buenos-dias", "nombre": "Buenos días con barra", "grupo_muscular": "isquios", "patron": "dominante_cadera", "equipo": "barra", "nivel": "avanzado", "descripcion": "Carga liviana, bisagra de cadera con lumbar neutra." },
-
-  { "slug": "hip-thrust", "nombre": "Hip thrust con barra", "grupo_muscular": "gluteos", "patron": "dominante_cadera", "equipo": "barra", "nivel": "intermedio", "descripcion": "Apoya la espalda en el banco, empuja con talones, bloquea arriba." },
-  { "slug": "puente-gluteo", "nombre": "Puente de glúteos", "grupo_muscular": "gluteos", "patron": "dominante_cadera", "equipo": "peso_corporal", "nivel": "principiante", "descripcion": "Aprieta glúteos arriba, sin arquear la lumbar." },
-  { "slug": "patada-gluteo-polea", "nombre": "Patada de glúteo en polea", "grupo_muscular": "gluteos", "patron": "aislamiento", "equipo": "polea", "nivel": "principiante", "descripcion": "Lleva el talón atrás y arriba, tronco firme." },
-  { "slug": "abduccion-maquina", "nombre": "Abducción de cadera en máquina", "grupo_muscular": "gluteos", "patron": "aislamiento", "equipo": "maquina", "nivel": "principiante", "descripcion": "Abre las piernas contra la resistencia, vuelve lento." },
-
-  { "slug": "elevacion-gemelos-pie", "nombre": "Elevación de gemelos de pie", "grupo_muscular": "gemelos", "patron": "aislamiento", "equipo": "maquina", "nivel": "principiante", "descripcion": "Rango completo, pausa arriba y abajo." },
-  { "slug": "elevacion-gemelos-mancuerna", "nombre": "Elevación de gemelos con mancuerna", "grupo_muscular": "gemelos", "patron": "aislamiento", "equipo": "mancuernas", "nivel": "principiante", "descripcion": "Sobre un escalón para ganar recorrido." },
-
-  { "slug": "plancha", "nombre": "Plancha abdominal", "grupo_muscular": "core", "patron": "core_anti_extension", "equipo": "peso_corporal", "nivel": "principiante", "descripcion": "Glúteos y abdomen apretados, cuerpo en línea." },
-  { "slug": "rueda-abdominal", "nombre": "Rueda abdominal", "grupo_muscular": "core", "patron": "core_anti_extension", "equipo": "peso_corporal", "nivel": "avanzado", "descripcion": "Estira sin que la lumbar se hunda, vuelve con el abdomen." },
-  { "slug": "crunch-polea", "nombre": "Crunch en polea", "grupo_muscular": "core", "patron": "aislamiento", "equipo": "polea", "nivel": "intermedio", "descripcion": "Enrolla la columna acercando el pecho a la pelvis." },
-  { "slug": "elevacion-piernas", "nombre": "Elevación de piernas colgado", "grupo_muscular": "core", "patron": "core_anti_extension", "equipo": "peso_corporal", "nivel": "intermedio", "descripcion": "Sube las piernas sin balanceo, controla la bajada." },
-  { "slug": "pallof-press", "nombre": "Pallof press en polea", "grupo_muscular": "core", "patron": "core_anti_rotacion", "equipo": "polea", "nivel": "intermedio", "descripcion": "De perfil a la polea, extiende los brazos sin girar el tronco." },
-
-  { "slug": "remo-invertido", "nombre": "Remo invertido", "grupo_muscular": "espalda", "patron": "traccion_horizontal", "equipo": "peso_corporal", "nivel": "principiante", "descripcion": "Barra a la altura de la cintura, cuerpo recto, lleva el pecho a la barra." },
-  { "slug": "sentadilla-bulgara", "nombre": "Sentadilla búlgara", "grupo_muscular": "cuadriceps", "patron": "dominante_rodilla", "equipo": "peso_corporal", "nivel": "intermedio", "descripcion": "Pie de atrás elevado en un banco, baja recto con el torso firme." },
-  { "slug": "peso-muerto-rumano-una-pierna", "nombre": "Peso muerto rumano a una pierna", "grupo_muscular": "isquios", "patron": "dominante_cadera", "equipo": "peso_corporal", "nivel": "intermedio", "descripcion": "Bisagra de cadera sobre una pierna, espalda recta, controla el equilibrio." },
-  { "slug": "curl-nordico", "nombre": "Curl nórdico", "grupo_muscular": "isquios", "patron": "aislamiento", "equipo": "peso_corporal", "nivel": "avanzado", "descripcion": "Rodillas fijas, baja el tronco lo más lento posible y frená con las manos." },
-  { "slug": "hip-thrust-una-pierna", "nombre": "Hip thrust a una pierna", "grupo_muscular": "gluteos", "patron": "dominante_cadera", "equipo": "peso_corporal", "nivel": "intermedio", "descripcion": "Espalda apoyada en el banco, empuje con un talón, cadera arriba sin arquear." },
-  { "slug": "elevacion-gemelos-una-pierna", "nombre": "Elevación de gemelos a una pierna", "grupo_muscular": "gemelos", "patron": "aislamiento", "equipo": "peso_corporal", "nivel": "principiante", "descripcion": "Sobre un escalón, una pierna, rango completo con pausa arriba." }
+  {
+    "slug": "press-banca-barra",
+    "nombre": "Press de banca con barra",
+    "grupo_muscular": "pecho",
+    "patron": "empuje_horizontal",
+    "equipo": "barra",
+    "nivel": "intermedio",
+    "descripcion": "Escápulas retraídas, baja la barra al esternón y controla.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Barbell_Bench_Press_-_Medium_Grip/0.jpg"
+  },
+  {
+    "slug": "press-banca-mancuernas",
+    "nombre": "Press de banca con mancuernas",
+    "grupo_muscular": "pecho",
+    "patron": "empuje_horizontal",
+    "equipo": "mancuernas",
+    "nivel": "principiante",
+    "descripcion": "Recorrido completo, muñecas firmes sobre los codos.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Dumbbell_Bench_Press/0.jpg"
+  },
+  {
+    "slug": "press-inclinado-mancuernas",
+    "nombre": "Press inclinado con mancuernas",
+    "grupo_muscular": "pecho",
+    "patron": "empuje_horizontal",
+    "equipo": "mancuernas",
+    "nivel": "intermedio",
+    "descripcion": "Banco a 30°, foco en pecho superior.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Incline_Dumbbell_Press/0.jpg"
+  },
+  {
+    "slug": "flexiones",
+    "nombre": "Flexiones de brazos",
+    "grupo_muscular": "pecho",
+    "patron": "empuje_horizontal",
+    "equipo": "peso_corporal",
+    "nivel": "principiante",
+    "descripcion": "Cuerpo en línea, codos a unos 45°.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Pushups/0.jpg"
+  },
+  {
+    "slug": "press-pecho-maquina",
+    "nombre": "Press de pecho en máquina",
+    "grupo_muscular": "pecho",
+    "patron": "empuje_horizontal",
+    "equipo": "maquina",
+    "nivel": "principiante",
+    "descripcion": "Espalda apoyada, empuje parejo con ambos brazos.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Machine_Bench_Press/0.jpg"
+  },
+  {
+    "slug": "aperturas-polea",
+    "nombre": "Aperturas en polea",
+    "grupo_muscular": "pecho",
+    "patron": "aislamiento",
+    "equipo": "polea",
+    "nivel": "intermedio",
+    "descripcion": "Codos algo flexionados fijos, junta las manos al frente.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Flat_Bench_Cable_Flyes/0.jpg"
+  },
+  {
+    "slug": "dominadas",
+    "nombre": "Dominadas",
+    "grupo_muscular": "espalda",
+    "patron": "traccion_vertical",
+    "equipo": "peso_corporal",
+    "nivel": "avanzado",
+    "descripcion": "Pecho hacia la barra, sin balanceo.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Pullups/0.jpg"
+  },
+  {
+    "slug": "jalon-al-pecho",
+    "nombre": "Jalón al pecho en polea",
+    "grupo_muscular": "espalda",
+    "patron": "traccion_vertical",
+    "equipo": "polea",
+    "nivel": "principiante",
+    "descripcion": "Lleva la barra al pecho, codos abajo y atrás.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Close-Grip_Front_Lat_Pulldown/0.jpg"
+  },
+  {
+    "slug": "remo-barra",
+    "nombre": "Remo con barra",
+    "grupo_muscular": "espalda",
+    "patron": "traccion_horizontal",
+    "equipo": "barra",
+    "nivel": "intermedio",
+    "descripcion": "Tronco a 45°, tira a la parte baja del abdomen.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Bent_Over_Barbell_Row/0.jpg"
+  },
+  {
+    "slug": "remo-mancuerna",
+    "nombre": "Remo a una mano con mancuerna",
+    "grupo_muscular": "espalda",
+    "patron": "traccion_horizontal",
+    "equipo": "mancuernas",
+    "nivel": "principiante",
+    "descripcion": "Apoyo en banco, codo pegado al cuerpo.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/One-Arm_Dumbbell_Row/0.jpg"
+  },
+  {
+    "slug": "remo-maquina",
+    "nombre": "Remo sentado en máquina",
+    "grupo_muscular": "espalda",
+    "patron": "traccion_horizontal",
+    "equipo": "maquina",
+    "nivel": "principiante",
+    "descripcion": "Pecho apoyado, junta las escápulas al final.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Lying_T-Bar_Row/0.jpg"
+  },
+  {
+    "slug": "remo-polea-baja",
+    "nombre": "Remo en polea baja",
+    "grupo_muscular": "espalda",
+    "patron": "traccion_horizontal",
+    "equipo": "polea",
+    "nivel": "principiante",
+    "descripcion": "Espalda recta, tira al ombligo sin usar impulso.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Seated_Cable_Rows/0.jpg"
+  },
+  {
+    "slug": "peso-muerto-barra",
+    "nombre": "Peso muerto convencional",
+    "grupo_muscular": "espalda",
+    "patron": "dominante_cadera",
+    "equipo": "barra",
+    "nivel": "avanzado",
+    "descripcion": "Barra pegada a las piernas, cadera y hombros suben juntos.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Barbell_Deadlift/0.jpg"
+  },
+  {
+    "slug": "press-militar-barra",
+    "nombre": "Press militar con barra",
+    "grupo_muscular": "hombros",
+    "patron": "empuje_vertical",
+    "equipo": "barra",
+    "nivel": "intermedio",
+    "descripcion": "Glúteos y abdomen firmes, barra sobre la cabeza.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Barbell_Shoulder_Press/0.jpg"
+  },
+  {
+    "slug": "press-hombro-mancuernas",
+    "nombre": "Press de hombros con mancuernas",
+    "grupo_muscular": "hombros",
+    "patron": "empuje_vertical",
+    "equipo": "mancuernas",
+    "nivel": "principiante",
+    "descripcion": "Sentado con respaldo, no arquees la lumbar.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Dumbbell_Shoulder_Press/0.jpg"
+  },
+  {
+    "slug": "press-hombro-maquina",
+    "nombre": "Press de hombros en máquina",
+    "grupo_muscular": "hombros",
+    "patron": "empuje_vertical",
+    "equipo": "maquina",
+    "nivel": "principiante",
+    "descripcion": "Recorrido completo, sin bloquear de golpe.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Machine_Shoulder_Military_Press/0.jpg"
+  },
+  {
+    "slug": "elevaciones-laterales",
+    "nombre": "Elevaciones laterales",
+    "grupo_muscular": "hombros",
+    "patron": "aislamiento",
+    "equipo": "mancuernas",
+    "nivel": "principiante",
+    "descripcion": "Sube hasta la línea de los hombros, sin balanceo.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Side_Lateral_Raise/0.jpg"
+  },
+  {
+    "slug": "pajaros",
+    "nombre": "Elevaciones posteriores (pájaros)",
+    "grupo_muscular": "hombros",
+    "patron": "aislamiento",
+    "equipo": "mancuernas",
+    "nivel": "intermedio",
+    "descripcion": "Tronco inclinado, abre los brazos hacia atrás.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Reverse_Flyes/0.jpg"
+  },
+  {
+    "slug": "curl-barra",
+    "nombre": "Curl de bíceps con barra",
+    "grupo_muscular": "biceps",
+    "patron": "aislamiento",
+    "equipo": "barra",
+    "nivel": "principiante",
+    "descripcion": "Codos quietos al costado, sin mover el tronco.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Barbell_Curl/0.jpg"
+  },
+  {
+    "slug": "curl-mancuernas",
+    "nombre": "Curl alternado con mancuernas",
+    "grupo_muscular": "biceps",
+    "patron": "aislamiento",
+    "equipo": "mancuernas",
+    "nivel": "principiante",
+    "descripcion": "Sube controlando, gira la muñeca al final.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Dumbbell_Bicep_Curl/0.jpg"
+  },
+  {
+    "slug": "curl-martillo",
+    "nombre": "Curl martillo",
+    "grupo_muscular": "biceps",
+    "patron": "aislamiento",
+    "equipo": "mancuernas",
+    "nivel": "principiante",
+    "descripcion": "Agarre neutro, foco en braquial y antebrazo.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Hammer_Curls/0.jpg"
+  },
+  {
+    "slug": "curl-polea",
+    "nombre": "Curl en polea",
+    "grupo_muscular": "biceps",
+    "patron": "aislamiento",
+    "equipo": "polea",
+    "nivel": "principiante",
+    "descripcion": "Tensión constante, no adelantes los codos.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Standing_Biceps_Cable_Curl/0.jpg"
+  },
+  {
+    "slug": "fondos-banco",
+    "nombre": "Fondos en banco",
+    "grupo_muscular": "triceps",
+    "patron": "empuje_vertical",
+    "equipo": "peso_corporal",
+    "nivel": "principiante",
+    "descripcion": "Codos hacia atrás, baja hasta 90°.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Bench_Dips/0.jpg"
+  },
+  {
+    "slug": "extension-polea",
+    "nombre": "Extensión de tríceps en polea",
+    "grupo_muscular": "triceps",
+    "patron": "aislamiento",
+    "equipo": "polea",
+    "nivel": "principiante",
+    "descripcion": "Codos pegados al cuerpo, extiende sin abrir.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Triceps_Pushdown/0.jpg"
+  },
+  {
+    "slug": "press-frances",
+    "nombre": "Press francés con mancuernas",
+    "grupo_muscular": "triceps",
+    "patron": "aislamiento",
+    "equipo": "mancuernas",
+    "nivel": "intermedio",
+    "descripcion": "Codos apuntando al techo, baja hacia la frente.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Standing_Dumbbell_Triceps_Extension/0.jpg"
+  },
+  {
+    "slug": "fondos-paralelas",
+    "nombre": "Fondos en paralelas",
+    "grupo_muscular": "triceps",
+    "patron": "empuje_vertical",
+    "equipo": "peso_corporal",
+    "nivel": "avanzado",
+    "descripcion": "Tronco vertical para cargar tríceps, baja controlado.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Dips_-_Triceps_Version/0.jpg"
+  },
+  {
+    "slug": "sentadilla-barra",
+    "nombre": "Sentadilla con barra",
+    "grupo_muscular": "cuadriceps",
+    "patron": "dominante_rodilla",
+    "equipo": "barra",
+    "nivel": "intermedio",
+    "descripcion": "Baja hasta que el muslo pase la paralela, pecho arriba.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Barbell_Squat/0.jpg"
+  },
+  {
+    "slug": "sentadilla-goblet",
+    "nombre": "Sentadilla goblet con mancuerna",
+    "grupo_muscular": "cuadriceps",
+    "patron": "dominante_rodilla",
+    "equipo": "mancuernas",
+    "nivel": "principiante",
+    "descripcion": "Mancuerna al pecho, codos por dentro de las rodillas.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Goblet_Squat/0.jpg"
+  },
+  {
+    "slug": "prensa-piernas",
+    "nombre": "Prensa de piernas",
+    "grupo_muscular": "cuadriceps",
+    "patron": "dominante_rodilla",
+    "equipo": "maquina",
+    "nivel": "principiante",
+    "descripcion": "No bloquees las rodillas ni despegues la cadera.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Leg_Press/0.jpg"
+  },
+  {
+    "slug": "zancadas-mancuernas",
+    "nombre": "Zancadas con mancuernas",
+    "grupo_muscular": "cuadriceps",
+    "patron": "dominante_rodilla",
+    "equipo": "mancuernas",
+    "nivel": "intermedio",
+    "descripcion": "Paso largo, rodilla de atrás cerca del piso.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Dumbbell_Lunges/0.jpg"
+  },
+  {
+    "slug": "extension-cuadriceps",
+    "nombre": "Extensión de cuádriceps en máquina",
+    "grupo_muscular": "cuadriceps",
+    "patron": "aislamiento",
+    "equipo": "maquina",
+    "nivel": "principiante",
+    "descripcion": "Extiende completo, baja lento.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Leg_Extensions/0.jpg"
+  },
+  {
+    "slug": "sentadilla-peso-corporal",
+    "nombre": "Sentadilla libre",
+    "grupo_muscular": "cuadriceps",
+    "patron": "dominante_rodilla",
+    "equipo": "peso_corporal",
+    "nivel": "principiante",
+    "descripcion": "Peso en el medio del pie, rodillas siguen a los pies.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Bodyweight_Squat/0.jpg"
+  },
+  {
+    "slug": "peso-muerto-rumano",
+    "nombre": "Peso muerto rumano con barra",
+    "grupo_muscular": "isquios",
+    "patron": "dominante_cadera",
+    "equipo": "barra",
+    "nivel": "intermedio",
+    "descripcion": "Lleva la cadera atrás, espalda recta, leve flexión de rodilla.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Romanian_Deadlift/0.jpg"
+  },
+  {
+    "slug": "peso-muerto-rumano-mancuernas",
+    "nombre": "Peso muerto rumano con mancuernas",
+    "grupo_muscular": "isquios",
+    "patron": "dominante_cadera",
+    "equipo": "mancuernas",
+    "nivel": "principiante",
+    "descripcion": "Mancuernas cerca de las piernas, siente el estiramiento atrás.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Stiff-Legged_Dumbbell_Deadlift/0.jpg"
+  },
+  {
+    "slug": "curl-femoral",
+    "nombre": "Curl femoral en máquina",
+    "grupo_muscular": "isquios",
+    "patron": "aislamiento",
+    "equipo": "maquina",
+    "nivel": "principiante",
+    "descripcion": "Cadera apoyada, flexiona sin despegar.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Lying_Leg_Curls/0.jpg"
+  },
+  {
+    "slug": "buenos-dias",
+    "nombre": "Buenos días con barra",
+    "grupo_muscular": "isquios",
+    "patron": "dominante_cadera",
+    "equipo": "barra",
+    "nivel": "avanzado",
+    "descripcion": "Carga liviana, bisagra de cadera con lumbar neutra.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Good_Morning/0.jpg"
+  },
+  {
+    "slug": "hip-thrust",
+    "nombre": "Hip thrust con barra",
+    "grupo_muscular": "gluteos",
+    "patron": "dominante_cadera",
+    "equipo": "barra",
+    "nivel": "intermedio",
+    "descripcion": "Apoya la espalda en el banco, empuja con talones, bloquea arriba.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Barbell_Hip_Thrust/0.jpg"
+  },
+  {
+    "slug": "puente-gluteo",
+    "nombre": "Puente de glúteos",
+    "grupo_muscular": "gluteos",
+    "patron": "dominante_cadera",
+    "equipo": "peso_corporal",
+    "nivel": "principiante",
+    "descripcion": "Aprieta glúteos arriba, sin arquear la lumbar.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Butt_Lift_Bridge/0.jpg"
+  },
+  {
+    "slug": "patada-gluteo-polea",
+    "nombre": "Patada de glúteo en polea",
+    "grupo_muscular": "gluteos",
+    "patron": "aislamiento",
+    "equipo": "polea",
+    "nivel": "principiante",
+    "descripcion": "Lleva el talón atrás y arriba, tronco firme.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/One-Legged_Cable_Kickback/0.jpg"
+  },
+  {
+    "slug": "abduccion-maquina",
+    "nombre": "Abducción de cadera en máquina",
+    "grupo_muscular": "gluteos",
+    "patron": "aislamiento",
+    "equipo": "maquina",
+    "nivel": "principiante",
+    "descripcion": "Abre las piernas contra la resistencia, vuelve lento.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Thigh_Abductor/0.jpg"
+  },
+  {
+    "slug": "elevacion-gemelos-pie",
+    "nombre": "Elevación de gemelos de pie",
+    "grupo_muscular": "gemelos",
+    "patron": "aislamiento",
+    "equipo": "maquina",
+    "nivel": "principiante",
+    "descripcion": "Rango completo, pausa arriba y abajo.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Standing_Calf_Raises/0.jpg"
+  },
+  {
+    "slug": "elevacion-gemelos-mancuerna",
+    "nombre": "Elevación de gemelos con mancuerna",
+    "grupo_muscular": "gemelos",
+    "patron": "aislamiento",
+    "equipo": "mancuernas",
+    "nivel": "principiante",
+    "descripcion": "Sobre un escalón para ganar recorrido.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Standing_Dumbbell_Calf_Raise/0.jpg"
+  },
+  {
+    "slug": "plancha",
+    "nombre": "Plancha abdominal",
+    "grupo_muscular": "core",
+    "patron": "core_anti_extension",
+    "equipo": "peso_corporal",
+    "nivel": "principiante",
+    "descripcion": "Glúteos y abdomen apretados, cuerpo en línea.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Plank/0.jpg"
+  },
+  {
+    "slug": "rueda-abdominal",
+    "nombre": "Rueda abdominal",
+    "grupo_muscular": "core",
+    "patron": "core_anti_extension",
+    "equipo": "peso_corporal",
+    "nivel": "avanzado",
+    "descripcion": "Estira sin que la lumbar se hunda, vuelve con el abdomen.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Ab_Roller/0.jpg"
+  },
+  {
+    "slug": "crunch-polea",
+    "nombre": "Crunch en polea",
+    "grupo_muscular": "core",
+    "patron": "aislamiento",
+    "equipo": "polea",
+    "nivel": "intermedio",
+    "descripcion": "Enrolla la columna acercando el pecho a la pelvis.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Cable_Crunch/0.jpg"
+  },
+  {
+    "slug": "elevacion-piernas",
+    "nombre": "Elevación de piernas colgado",
+    "grupo_muscular": "core",
+    "patron": "core_anti_extension",
+    "equipo": "peso_corporal",
+    "nivel": "intermedio",
+    "descripcion": "Sube las piernas sin balanceo, controla la bajada.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Hanging_Leg_Raise/0.jpg"
+  },
+  {
+    "slug": "pallof-press",
+    "nombre": "Pallof press en polea",
+    "grupo_muscular": "core",
+    "patron": "core_anti_rotacion",
+    "equipo": "polea",
+    "nivel": "intermedio",
+    "descripcion": "De perfil a la polea, extiende los brazos sin girar el tronco.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Pallof_Press/0.jpg"
+  },
+  {
+    "slug": "remo-invertido",
+    "nombre": "Remo invertido",
+    "grupo_muscular": "espalda",
+    "patron": "traccion_horizontal",
+    "equipo": "peso_corporal",
+    "nivel": "principiante",
+    "descripcion": "Barra a la altura de la cintura, cuerpo recto, lleva el pecho a la barra.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Inverted_Row/0.jpg"
+  },
+  {
+    "slug": "sentadilla-bulgara",
+    "nombre": "Sentadilla búlgara",
+    "grupo_muscular": "cuadriceps",
+    "patron": "dominante_rodilla",
+    "equipo": "peso_corporal",
+    "nivel": "intermedio",
+    "descripcion": "Pie de atrás elevado en un banco, baja recto con el torso firme.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Split_Squats/0.jpg"
+  },
+  {
+    "slug": "peso-muerto-rumano-una-pierna",
+    "nombre": "Peso muerto rumano a una pierna",
+    "grupo_muscular": "isquios",
+    "patron": "dominante_cadera",
+    "equipo": "peso_corporal",
+    "nivel": "intermedio",
+    "descripcion": "Bisagra de cadera sobre una pierna, espalda recta, controla el equilibrio.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Kettlebell_One-Legged_Deadlift/0.jpg"
+  },
+  {
+    "slug": "curl-nordico",
+    "nombre": "Curl nórdico",
+    "grupo_muscular": "isquios",
+    "patron": "aislamiento",
+    "equipo": "peso_corporal",
+    "nivel": "avanzado",
+    "descripcion": "Rodillas fijas, baja el tronco lo más lento posible y frená con las manos.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Natural_Glute_Ham_Raise/0.jpg"
+  },
+  {
+    "slug": "hip-thrust-una-pierna",
+    "nombre": "Hip thrust a una pierna",
+    "grupo_muscular": "gluteos",
+    "patron": "dominante_cadera",
+    "equipo": "peso_corporal",
+    "nivel": "intermedio",
+    "descripcion": "Espalda apoyada en el banco, empuje con un talón, cadera arriba sin arquear.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Single_Leg_Glute_Bridge/0.jpg"
+  },
+  {
+    "slug": "elevacion-gemelos-una-pierna",
+    "nombre": "Elevación de gemelos a una pierna",
+    "grupo_muscular": "gemelos",
+    "patron": "aislamiento",
+    "equipo": "peso_corporal",
+    "nivel": "principiante",
+    "descripcion": "Sobre un escalón, una pierna, rango completo con pausa arriba.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Dumbbell_Seated_One-Leg_Calf_Raise/0.jpg"
+  }
 ]
