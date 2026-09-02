@@ -38,6 +38,27 @@ bien; si querés foto, buscar el nombre en
 | `buenos-dias-mancuerna` | Buenos días con mancuerna | isquios | dominante_cadera | mancuernas | principiante |
 | `curl-femoral-sentado` | Curl femoral sentado | isquios | aislamiento | maquina | principiante |
 
+## Lote 2 — definido con el usuario (prioridad)
+
+Agregar/actualizar estas filas en `src/data/ejercicios.json`. El seed hace
+upsert por `slug`: las que ya existen se **reescriben** con estos valores
+(reclasifican grupo/equipo).
+
+| slug | nombre | grupo_muscular | patron | equipo | nivel | nota |
+|---|---|---|---|---|---|---|
+| `patada-burro-polea` | Patada de burro en polea | gluteos | aislamiento | polea | principiante | nuevo |
+| `hip-thrust-barra` | Hip thrust con barra | gluteos | dominante_cadera | barra | intermedio | nuevo (equivale a `hip-thrust`; si querés, unificá slug) |
+| `zancada-inversa-deficit` | Zancada inversa en déficit | gluteos | dominante_rodilla | mancuernas | avanzado | nuevo |
+| `curl-femoral-acostado` | Curl femoral acostado | isquios | aislamiento | maquina | principiante | nuevo |
+| `rdl-unilateral-mancuerna` | Peso muerto rumano unilateral | isquios | dominante_cadera | mancuernas | intermedio | nuevo (similar a `peso-muerto-rumano-una-pierna`) |
+| `puente-gluteo-barra` | Puente de glúteo con barra | gluteos | dominante_cadera | barra | intermedio | nuevo |
+| `peso-muerto-rumano` | Peso muerto rumano (RDL) | isquios | dominante_cadera | barra | intermedio | **ya existe** — el upsert lo deja igual (equipo único, elegí `barra`) |
+| `sentadilla-bulgara` | Sentadilla búlgara | gluteos | dominante_rodilla | mancuernas | intermedio | **ya existe** como `cuadriceps`/`peso_corporal` → el upsert lo reclasifica a `gluteos`/`mancuernas` |
+| `abduccion-maquina-sentada` | Abducción en máquina sentada | gluteos | aislamiento | maquina | principiante | nuevo (variante de `abduccion-maquina`) |
+
+`equipo` es un valor único (no "barra/mancuernas"). `descripcion` e
+`imagen_url` pueden ir en `null`.
+
 ## Aplicar
 
 ```bash
