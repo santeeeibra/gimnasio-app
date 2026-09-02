@@ -133,10 +133,10 @@ SECURITY DEFINER (`soy_destinatario`, `mensaje_gimnasio`, `mensaje_remitente`,
 
 ### Bugs abiertos
 - **`/mi/rutina` no respeta el tema** (visto en captura, 2026-09-01).
-  - Causa 1: `bg-white` hardcodeado — ✅ RESUELTO. `rutina-editor.tsx` (`ul`
-    → `bg-paper-2`, inputs y botón alt → `bg-paper`) y `generar-form.tsx`
-    (`selectCls` → `bg-paper-2`). Quedan ~14 `bg-white` en el resto de `src/`
-    (`components/ui.tsx` `Field`/`Card` incluidos) para el barrido global.
+  - Causa 1: `bg-white` hardcodeado — ✅ RESUELTO y barrido global hecho.
+    Editor de rutina + barrido de todo `src/`: inputs → `bg-paper`, `Panel`
+    → `bg-paper-2`, filas de nav de `mi/page` → `bg-paper`, input del
+    `tema-preview` → `var(--paper)`. No quedan `bg-white` en `src/`.
   - Causa 2: paleta del gimnasio que falla contraste (`ink`≈`paper`,
     `paper`≈`paper-2`) → texto ilegible e inputs invisibles. Es app-wide, no
     de rutina. Mitigado en el editor de tema (ver Estado / Branding): ahora
@@ -161,7 +161,7 @@ Prioridad sugerida:
    pulido mobile del editor `/mi/rutina`.
 4. **Entregable 3 — Push web nativo**: VAPID keys, service worker, endpoint,
    disparo en cuota por vencer (TODO en `panel/mensajes/actions.ts`).
-5. Barrer `bg-white` en todo `src/` (~19) → tokens.
+5. ✅ Barrer `bg-white` en todo `src/` → tokens (hecho).
 6. Rediseño UI: seguir con `/panel` (dashboard).
 
 ## Cómo trabajar (ahorrar tokens)
