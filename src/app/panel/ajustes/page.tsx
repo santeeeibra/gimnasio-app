@@ -10,7 +10,7 @@ export default async function AjustesPage() {
 
   const { data: gym } = await supabase
     .from("gimnasios")
-    .select("id, nombre, tema")
+    .select("id, nombre, tema, logo_url")
     .eq("id", profile.gimnasio_id)
     .single();
 
@@ -25,7 +25,11 @@ export default async function AjustesPage() {
       <Panel className="p-6">
         <h2 className="text-lg mb-4">Tema del gimnasio</h2>
         {gym ? (
-          <AjustesForm gimnasioId={gym.id} tema={parseTema(gym.tema)} />
+          <AjustesForm
+            gimnasioId={gym.id}
+            tema={parseTema(gym.tema)}
+            logoUrl={gym.logo_url ?? null}
+          />
         ) : null}
       </Panel>
     </div>

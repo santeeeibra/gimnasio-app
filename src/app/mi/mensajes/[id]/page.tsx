@@ -22,6 +22,12 @@ export default async function MiHiloPage({
     .maybeSingle();
   if (!msg) notFound();
 
+  const { data: gym } = await supabase
+    .from("gimnasios")
+    .select("logo_url")
+    .eq("id", profile.gimnasio_id)
+    .single();
+
   const { data: respData } = await supabase
     .from("mensaje_respuestas")
     .select("id, cuerpo, creado_at, autor_id, autor:profiles(nombre)")
@@ -55,6 +61,16 @@ export default async function MiHiloPage({
 
       <Panel className="p-5">
         <p className="text-xs text-ink-soft">
+          {!m.remitente && gym?.logo_url ? (
+            <span className="mr-1 inline-block size-4 overflow-hidden rounded-full border border-rule bg-paper-2 align-text-bottom">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={gym.logo_url}
+                alt=""
+                className="h-full w-full object-contain"
+              />
+            </span>
+          ) : null}
           {m.remitente?.nombre ?? "Gimnasio"} ·{" "}
           {new Date(m.creado_at).toLocaleString()}
         </p>

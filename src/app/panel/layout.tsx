@@ -12,7 +12,7 @@ export default async function PanelLayout({
   const supabase = await createClient();
   const { data: gym } = await supabase
     .from("gimnasios")
-    .select("nombre, tema")
+    .select("nombre, tema, logo_url")
     .eq("id", profile.gimnasio_id)
     .single();
 
@@ -23,10 +23,14 @@ export default async function PanelLayout({
       className="min-h-screen bg-paper text-ink md:grid md:grid-cols-[220px_1fr]"
       style={temaVars}
     >
-      <PanelSidebar nombre={gym?.nombre} dueno={profile.nombre} />
+      <PanelSidebar
+        nombre={gym?.nombre}
+        dueno={profile.nombre}
+        logo={gym?.logo_url ?? null}
+      />
 
       <div className="flex min-h-screen flex-col">
-        <PanelTopbar nombre={gym?.nombre} />
+        <PanelTopbar nombre={gym?.nombre} logo={gym?.logo_url ?? null} />
         <main className="w-full max-w-5xl flex-1 p-6 pb-24 md:p-10 md:pb-10">
           {children}
         </main>

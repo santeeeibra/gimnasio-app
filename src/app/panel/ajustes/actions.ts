@@ -14,6 +14,35 @@ import { chequearBloqueos, chequearContraste } from "@/lib/contraste";
 
 export type AjustesState = { error?: string; ok?: string };
 
+/** Persiste (o limpia) la URL pública del logo del gimnasio. */
+export async function guardarLogo(
+  gimnasioId: string,
+  logoUrl: string | null,
+): Promise<{ error?: string; ok?: boolean }> {
+  const dueno = await requireDueno();
+  if (gimnasioId !== dueno.gimnasio_id) {
+    return { error: "No podés modificar este gimnasio" };
+  }
+  if (logoUrl !== null && !/^https?:\/\/\S+$/.test(logoUrl)) {
+    return { error: "URL de logo inválida" };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("gimnasios")
+    .update({ logo_url: logoUrl })
+    .eq("id", gimnasioId);
+
+  if (error) {
+    console.error("[guardarLogo]", error);
+    return { error: "No se pudo guardar el logo" };
+  }
+
+  revalidatePath("/panel", "layout");
+  revalidatePath("/mi", "layout");
+  return { ok: true };
+}
+
 export async function actualizarTema(
   _prev: AjustesState,
   formData: FormData,

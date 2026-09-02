@@ -31,6 +31,7 @@ export function GenerarRutinaForm({
   clienteId,
   tieneRutina = false,
   defaults,
+  clienteSexo,
 }: {
   action: (prev: S, fd: FormData) => Promise<S>;
   clienteId?: string;
@@ -43,6 +44,7 @@ export function GenerarRutinaForm({
     sexo?: Sexo;
     enfasis?: Enfasis[];
   };
+  clienteSexo?: Sexo | null;
 }) {
   const [state, formAction, pending] = useActionState<S, FormData>(action, {});
   const [enfasis, setEnfasis] = useState<Enfasis[]>(defaults?.enfasis ?? []);
@@ -100,22 +102,26 @@ export function GenerarRutinaForm({
         </select>
       </label>
 
-      <label className="block">
-        <span className="block text-[13px] font-medium text-ink-soft mb-1.5">
-          Sexo
-        </span>
-        <select
-          name="sexo"
-          defaultValue={defaults?.sexo ?? "sin_especificar"}
-          className={selectCls}
-        >
-          {SEXOS.map((s) => (
-            <option key={s} value={s}>
-              {SEXO_LABEL[s]}
-            </option>
-          ))}
-        </select>
-      </label>
+      {clienteSexo != null ? (
+        <label className="block">
+          <span className="block text-[13px] font-medium text-ink-soft mb-1.5">
+            Sexo
+          </span>
+          <select
+            name="sexo"
+            defaultValue={defaults?.sexo ?? clienteSexo}
+            className={selectCls}
+          >
+            {SEXOS.map((s) => (
+              <option key={s} value={s}>
+                {SEXO_LABEL[s]}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : (
+        <input type="hidden" name="sexo" value="sin_especificar" />
+      )}
 
       <fieldset className="sm:col-span-2">
         <legend className="text-[13px] font-medium text-ink-soft mb-1.5">

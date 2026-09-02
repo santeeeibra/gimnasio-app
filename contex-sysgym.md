@@ -103,6 +103,29 @@ usarlo para altas masivas).
 - Llega a la bandeja dentro de la app + push.
 
 ### Branding por gimnasio
+- **Logo del gimnasio** (2026-09-02). El dueño sube el logo desde
+  `/panel/ajustes`. Se comprime **en el navegador** (canvas → resize ≤512² →
+  WebP q0.8, baja calidad en escalones hasta <300 KB o rechaza) — sin librerías
+  ni Edge Functions. Se sube al bucket `logos` (`<gimnasio_id>.webp`, un archivo,
+  se sobreescribe, no se versiona; lectura pública, escritura del dueño vía
+  `is_dueno()` + `current_gimnasio_id()`). La URL pública queda en
+  `gimnasios.logo_url` (nullable; null → nombre en texto / ícono genérico, no
+  rompe nada). Migración `0006_logo_gimnasio.sql` (columna + bucket + RLS).
+  - **Paletas desde el logo**: `src/lib/logo/paleta.ts` extrae el color
+    dominante del canvas (histograma + descarte de grises/casi blanco-negro/
+    transparencia, sin `colorthief`) y genera 2-3 variantes (claro / suave /
+    oscuro) con pares fondo/texto ya validados + `derivarPaleta()` + filtro
+    `chequearBloqueos()`. Se muestran como chips ("Sugeridas por tu logo") con
+    el mismo componente y flujo de guardado que `PRESETS_TEMA`. No se tocó
+    `derivarPaleta()` / `chequearBloqueos()`, sólo se consumen.
+  - **Dónde se muestra**: sidebar + topbar de `/panel` (`panel-nav.tsx`),
+    franja de header en `/mi` (`mi/layout.tsx`), avatar "Gimnasio" en la
+    bandeja y el hilo de `/mi/mensajes`. Pendiente / fuera de scope: íconos PWA
+    desde el logo; `/login` (no sabe el gimnasio hasta enviar el form).
+  - **Archivos**: `src/lib/logo/comprimir.ts` (compresión + `ImageData`),
+    `src/lib/logo/paleta.ts` (`colorDominante`, `paletasDesdeColor`),
+    `src/app/panel/ajustes/logo-uploader.tsx`, acción `guardarLogo` en
+    `panel/ajustes/actions.ts`.
 - El dueño personaliza el tema desde `/panel/ajustes`. Ejes:
   - **Colores (7)**: fondo, fondo tarjetas, texto, texto suave, bordes, acento,
     texto sobre acento. Sin tinte automático.
@@ -133,7 +156,7 @@ usarlo para altas masivas).
 
 ## Modelo de datos
 
-`gimnasios` (+ `tema` jsonb), `planes`,
+`gimnasios` (+ `tema` jsonb, `logo_url` text nullable), `planes`,
 `clientes`, `ejercicios`, `rutinas` / `rutina_items`, `mensajes` /
 `mensaje_destinatarios`, `push_subscriptions`.
 
@@ -148,10 +171,10 @@ SECURITY DEFINER (`soy_destinatario`, `mensaje_gimnasio`, `mensaje_remitente`,
 |---|---|
 | 1 — Scaffold, auth, panel dueño, vista cliente, seed | ✅ HECHO |
 | 2 — Mensajería (compositor, bandeja, hilos) | ✅ HECHO, probado end-to-end |
-| Branding / tema personalizable | ✅ **COMPLETO y ampliado** — 7 colores (con base/derivados + "Calcular desde la base") + 9 presets tipográficos (10 fuentes) + tamaño base + redondeo + espaciado + estilo de navegación + densidad + validación contraste WCAG 2.1 (avisos salteables + **bloqueos duros no salteables**: `ink`/`paper`, `ink`/`paper-2` ≥ 4.5 y separación `paper`/`paper-2` ≥ 1.05, vía `chequearBloqueos()`) + preview en vivo. Ver `VALIDACION_CONTRASTE.md` y `FUENTES_PERSONALIZABLES.md`. Migración `0004_tema_jsonb.sql` ✅ aplicada (2026-09-01). **Rediseño guiado ✅ (2026-09-02)**: 6 paletas prearmadas validadas (`PRESETS_TEMA` en `src/lib/tema.ts`: Papel/Arena/Océano/Bosque/Noche/Carbón) — un tap y guardar; los controles finos quedan bajo "Personalizar a mano" (plegado); mini-preview sticky pegado a los controles en móvil + preview completo en columna en desktop. Umbral del par `rule`/`paper` bajado a 1.35 (hairline decorativo, no control WCAG 1.4.11). Prueba end-to-end ✅ y paleta del gimnasio de prueba re-guardada como **Océano** (reemplaza la vieja `#05fffb` cian que rompía la UI). |
+| Branding / tema personalizable | ✅ **COMPLETO y ampliado** — 7 colores (con base/derivados + "Calcular desde la base") + 9 presets tipográficos (10 fuentes) + tamaño base + redondeo + espaciado + estilo de navegación + densidad + validación contraste WCAG 2.1 (avisos salteables + **bloqueos duros no salteables**: `ink`/`paper`, `ink`/`paper-2` ≥ 4.5 y separación `paper`/`paper-2` ≥ 1.05, vía `chequearBloqueos()`) + preview en vivo. Ver `VALIDACION_CONTRASTE.md` y `FUENTES_PERSONALIZABLES.md`. Migración `0004_tema_jsonb.sql` ✅ aplicada (2026-09-01). **Rediseño guiado ✅ (2026-09-02)**: 6 paletas prearmadas validadas (`PRESETS_TEMA` en `src/lib/tema.ts`: Papel/Arena/Océano/Bosque/Noche/Carbón) — un tap y guardar; los controles finos quedan bajo "Personalizar a mano" (plegado); mini-preview sticky pegado a los controles en móvil + preview completo en columna en desktop. Umbral del par `rule`/`paper` bajado a 1.35 (hairline decorativo, no control WCAG 1.4.11). Prueba end-to-end ✅ y paleta del gimnasio de prueba re-guardada como **Océano** (reemplaza la vieja `#05fffb` cian que rompía la UI). **Logo del gimnasio ✅ (2026-09-02)**: subida con compresión client-side a WebP <300 KB (bucket `logos`, `gimnasios.logo_url`), paletas sugeridas desde el color dominante del logo (mismo flujo que `PRESETS_TEMA`), logo mostrado en `/panel` (nav), `/mi` (header) y avatar de mensajes. Migración `0006_logo_gimnasio.sql` (pendiente de aplicar). Ver sección "Branding por gimnasio → Logo". |
 | Rediseño UI mobile-first con `emil-design-eng` | 🔄 EN CURSO — `/login` ✅. `/panel/ajustes` ✅ (rediseño guiado hecho 2026-09-02: paletas prearmadas + "Personalizar a mano" plegado + preview sticky). `/mi/rutina` editor ✅ (miniaturas + visor + táctil). Próximo `/panel` (dashboard). Reglas en `REGLAS_UI_EMIL.md` (ampliado 2026-09-02: §5 imágenes, §6 alineación, §7 overflow, §9 modales). Dirección de tema en `INSTRUCCIONES_TEMA.md` §4 |
 | 3 — Push web nativo | ✅ **COMPLETO (2026-09-02)** — Código completo y verificado (typecheck limpio, `/sw.js` y `/manifest` sirven 200, cron sin auth → 401, card "Notificaciones" renderiza en `/mi`). **Archivos nuevos**: `public/sw.js` (service worker con listeners `push` + `notificationclick`), `public/manifest.webmanifest` (PWA mínima, link + themeColor + appleWebApp en `layout.tsx`), `src/lib/push/cliente.ts` (registrar SW, pedir permiso, `pushManager.subscribe`), `src/lib/push/enviar.ts` (`enviarPush(profileIds, {title,body,url,tag})`, borra subs muertas 404/410), `src/app/mi/push-actions.ts` (`guardarSuscripcion` / `borrarSuscripcion`), `src/app/mi/activar-notificaciones.tsx` (botón en `/mi`), `src/app/api/cron/cuotas/route.ts` + `vercel.json` (cron diario 12:00, avisa a 6 y 1 días). **Modificados**: `middleware.ts` (whitelist `/sw.js`, `/manifest.webmanifest`, `/icon-`, `/badge-`, `/api/cron`), `panel/mensajes/actions.ts` (enviar + responder dueño), `mi/mensajes/actions.ts` (responder cliente → avisa dueño), `mi/page.tsx`. **Pendiente manual**: (1) Generar claves VAPID: `npx web-push generate-vapid-keys` → `.env.local` (`NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT=mailto:…`) + `CRON_SECRET`; las mismas 4 en Vercel → Project Settings → Environment Variables. (2) Iconos en `public/`: `icon-192.png`, `icon-512.png`, `badge-72.png` (referenciados por SW y manifest). (3) Reiniciar dev server (toma nuevo `.env.local`) y probar en navegador real con permiso: `/mi` → "Activar" → mensaje desde panel → debe llegar notificación. (4) Deploy a Vercel (cron se registra solo desde `vercel.json`). Disparar manualmente: `curl -H "authorization: Bearer $CRON_SECRET" https://<dominio>/api/cron/cuotas`. **Nota iOS**: solo funciona en 16.4+ y con app agregada a pantalla de inicio. |
-| 4 — Rutinas (motor de reglas + editor + seed imágenes) | ✅ **COMPLETO (2026-09-02)** — Motor con **sexo y énfasis** (generación liviana + zona a enfocar): `tipos.ts` nuevos `SEXOS`/`SEXO_LABEL`, `ENFASIS`/`ENFASIS_LABEL`/`ENFASIS_GRUPOS` (7 zonas: Glúteos, Piernas, Pecho, Espalda, Hombros, Brazos, Abdomen), `MAX_ENFASIS = 2`, `SERIES_OPCIONES`/`REPS_OPCIONES` para menús. `EntradaMotor` ahora lleva `sexo` y `enfasis[]`. `motor.ts`: `ajustarPorSexo()` — mujer baja 1 serie en compuestos/aislamientos (mín. 3/2), sin tocar reps; `aplicarEnfasis()` — agrega hasta 3 ranuras extra/día para las zonas elegidas (máx. 8 ejercicios/día), con patrón real. Si es mujer y no eligió zona → glúteos por defecto. `generar.ts`: persiste sexo/énfasis en `preferencias` jsonb (sin migración SQL). Actions (`mi/rutina/actions.ts`, `panel/clientes/actions.ts`): `parseSexo()` y `parseEnfasis()` validan campos. Formulario (`generar-form.tsx`): select "Sexo" + fieldset "Zona a enfocar" (chips, máx. 2, controlado). Defaults se releen en `mi/rutina/page.tsx`, `panel/clientes/[id]/page.tsx`, `rutina-panel.tsx`. **Series/Reps sin escribir** (`rutina-editor.tsx`): los 2 `<input>` ahora `<select>` — Series 1–5, Reps 10 opciones fijas (5, 6, 6–8, 8–10, 8–12, 10–12, 12–15, 15, 15–20, 20). Si el valor guardado no está en la lista se agrega como primera opción (compat. hacia atrás). Typecheck limpio ✅. **Imágenes**: cambió wger por **free-exercise-db** (fotos fondo blanco). Editor alterna `/0.jpg`↔`/1.jpg` cada 900 ms + visor grande al tocar. Fix mobile: `img,video{max-width:100%;height:auto}` en `globals.css` + miniatura caja fija 72px. Seed corrido (2026-09-02): `imagen_url` de 53 ejercicios en tabla (verificado, cargan desde jsdelivr). |
+| 4 — Rutinas (motor de reglas + editor + seed imágenes) | ✅ **COMPLETO (2026-09-02)** — Motor con **sexo y énfasis** (generación liviana + zona a enfocar): `tipos.ts` nuevos `SEXOS`/`SEXO_LABEL`, `ENFASIS`/`ENFASIS_LABEL`/`ENFASIS_GRUPOS` (7 zonas: Glúteos, Piernas, Pecho, Espalda, Hombros, Brazos, Abdomen), `MAX_ENFASIS = 2`, `SERIES_OPCIONES`/`REPS_OPCIONES` para menús. `EntradaMotor` ahora lleva `sexo` y `enfasis[]`. `motor.ts`: `ajustarPorSexo()` — mujer baja 1 serie en compuestos/aislamientos (mín. 3/2), sin tocar reps; `aplicarEnfasis()` — agrega hasta 3 ranuras extra/día para las zonas elegidas (máx. 8 ejercicios/día), con patrón real. Si es mujer y no eligió zona → glúteos por defecto. `generar.ts`: persiste sexo/énfasis en `preferencias` jsonb (sin migración SQL). Actions (`mi/rutina/actions.ts`, `panel/clientes/actions.ts`): `parseSexo()` y `parseEnfasis()` validan campos. Formulario (`generar-form.tsx`): select "Sexo" **condicional** (solo se muestra si `clienteSexo` prop existe; sino pasa `"sin_especificar"` por defecto) + fieldset "Zona a enfocar" (chips, máx. 2, controlado). Defaults se releen en `mi/rutina/page.tsx`, `panel/clientes/[id]/page.tsx`, `rutina-panel.tsx`. **Series/Reps sin escribir** (`rutina-editor.tsx`): los 2 `<input>` ahora `<select>` — Series 1–5, Reps 10 opciones fijas (5, 6, 6–8, 8–10, 8–12, 10–12, 12–15, 15, 15–20, 20). Si el valor guardado no está en la lista se agrega como primera opción (compat. hacia atrás). Typecheck limpio ✅. **Imágenes**: cambió wger por **free-exercise-db** (fotos fondo blanco). Editor alterna `/0.jpg`↔`/1.jpg` cada 900 ms + visor grande al tocar. Fix mobile: `img,video{max-width:100%;height:auto}` en `globals.css` + miniatura caja fija 72px. Seed corrido (2026-09-02): `imagen_url` de 53 ejercicios en tabla (verificado, cargan desde jsdelivr). |
 | 5 — Cron `recalcular_estado_cuota()` diario (pg_cron o Vercel cron) | Sin empezar |
 
 ### Datos de prueba
@@ -222,13 +245,26 @@ Ya hecho (2026-09-02):
 - Rediseño guiado del editor de tema + prueba end-to-end + gimnasio de prueba re-guardado como Océano
 - **Entregable 4 — Rutinas**: motor con sexo y énfasis (generación liviana + zona a enfocar), series/reps como selectores (sin escritura libre), typecheck limpio ✅
 - **Entregable 3 — Push web nativo**: código completo y verificado (SW, manifest, suscripción, emisor, wiring en mensajería, cron de cuota + `vercel.json`). Typecheck limpio ✅, `/sw.js` y `/manifest` sirven 200 ✅, cron sin auth → 401 ✅, card "Notificaciones" renderiza en `/mi` ✅
+- **Select "Sexo" condicional en `generar-form.tsx`**: solo se renderiza si viene `clienteSexo` prop (desde alta del dueño). Si es null/undefined, no se muestra el select y pasa `sexo: "sin_especificar"` por defecto al motor. Nota: tabla `profiles` NO tiene campo `sexo` (solo se guarda en `rutinas.preferencias` jsonb), por lo que actualmente siempre se muestra el select hasta que se implemente captura de sexo en alta.
+
+- **Logo del gimnasio + paletas desde el logo** (SPEC `SPEC_LOGO_COLORES.md`):
+  compresión client-side, extracción de color, chips de paleta sugerida, logo en
+  panel/mi/mensajes. Código y typecheck ✅. **Pendiente manual**: aplicar
+  `supabase/migrations/0006_logo_gimnasio.sql` (columna `logo_url` + bucket
+  `logos` + RLS) — hasta entonces `/panel`, `/mi` y `/panel/ajustes` fallan
+  porque los queries piden `logo_url`.
 
 Pendiente, prioridad sugerida:
 
-1. **Cerrar Entregable 3 — manual**: generar VAPID keys + `CRON_SECRET` → `.env.local` y Vercel, agregar iconos PNG (`icon-192.png`, `icon-512.png`, `badge-72.png`) a `public/`, probar suscripción + envío real en navegador con permiso, deploy a Vercel.
-2. **Entregable 5 — Cron `recalcular_estado_cuota()`**: falta implementar (actualmente se calcula on-demand).
-3. Rediseño UI: seguir con `/panel` (dashboard).
-4. Imágenes de ejercicio: si las fotos de free-exercise-db no convencen a 375px, evaluar GIFs reales vía ExerciseDB (RapidAPI, API key + límite free).
+1. **Aplicar `0006_logo_gimnasio.sql`** y probar el flujo de logo
+   (`/panel/ajustes` → subir → chip sugerido → guardar; verificar `.webp`
+   <300 KB en el bucket y que un gimnasio sin logo no cambia).
+2. **Cerrar Entregable 3 — manual**: generar VAPID keys + `CRON_SECRET` → `.env.local` y Vercel, agregar iconos PNG (`icon-192.png`, `icon-512.png`, `badge-72.png`) a `public/`, probar suscripción + envío real en navegador con permiso, deploy a Vercel.
+3. **Entregable 5 — Cron `recalcular_estado_cuota()`**: falta implementar (actualmente se calcula on-demand).
+4. Rediseño UI: seguir con `/panel` (dashboard).
+5. Imágenes de ejercicio: si las fotos de free-exercise-db no convencen a 375px, evaluar GIFs reales vía ExerciseDB (RapidAPI, API key + límite free).
+6. Logo: íconos PWA generados desde el logo; logo en `/login` (requiere resolver
+   el gimnasio antes de enviar el form). Ambos fuera de scope del SPEC inicial.
 
 Login de prueba: cliente `migym/46697615/697615`, dueño `migym/30111222/gym1222`.
 

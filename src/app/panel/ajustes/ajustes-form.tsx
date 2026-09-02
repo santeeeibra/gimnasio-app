@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import { actualizarTema, type AjustesState } from "./actions";
 import { Button } from "@/components/ui";
 import {
@@ -22,6 +22,8 @@ import {
 } from "@/lib/contraste";
 import { TemaPreviewCompleto } from "./tema-preview-completo";
 import { Radios } from "./radios";
+import { LogoUploader } from "./logo-uploader";
+import { paletasDesdeColor } from "@/lib/logo/paleta";
 
 /** Colores que elige el usuario; el resto se deriva de estos. */
 const COLORES_BASE: ColorKey[] = ["paper", "ink", "volt"];
@@ -30,9 +32,11 @@ const CLAVES_COLOR = CAMPOS_COLOR.map((c) => c.key);
 export function AjustesForm({
   gimnasioId,
   tema,
+  logoUrl: logoUrlInicial,
 }: {
   gimnasioId: string;
   tema: Tema;
+  logoUrl: string | null;
 }) {
   const [state, formAction, pending] = useActionState<AjustesState, FormData>(
     actualizarTema,
@@ -42,6 +46,13 @@ export function AjustesForm({
   const [draft, setDraft] = useState<Tema>(tema);
   const [confirmarBajoContraste, setConfirmarBajoContraste] = useState(false);
   const [personalizarAbierto, setPersonalizarAbierto] = useState(false);
+  const [logoUrl, setLogoUrl] = useState<string | null>(logoUrlInicial);
+  const [colorLogo, setColorLogo] = useState<string | null>(null);
+
+  const paletasLogo = useMemo(
+    () => (colorLogo ? paletasDesdeColor(colorLogo) : []),
+    [colorLogo],
+  );
 
   const set = <K extends keyof Tema>(key: K, value: Tema[K]) =>
     setDraft((d) => ({ ...d, [key]: value }));
@@ -72,6 +83,39 @@ export function AjustesForm({
           <MiniPreview tema={draft} />
         </div>
 
+        {/* Logo del gimnasio + paletas derivadas de su color */}
+        <div className="space-y-4">
+          <LogoUploader
+            gimnasioId={gimnasioId}
+            logoUrl={logoUrl}
+            onLogo={setLogoUrl}
+            onColor={setColorLogo}
+          />
+
+          {paletasLogo.length > 0 ? (
+            <div className="space-y-3 border-t border-rule pt-4">
+              <div>
+                <span className="block text-[11px] uppercase tracking-[0.12em] text-ink-soft">
+                  Sugeridas por tu logo
+                </span>
+                <p className="mt-1 text-xs text-ink-soft">
+                  Derivadas del color dominante. Elegí una y guardá.
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+                {paletasLogo.map((p) => (
+                  <PaletaChip
+                    key={p.key}
+                    preset={p}
+                    activo={presetActivo(p)}
+                    onClick={() => aplicarPreset(p)}
+                  />
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </div>
+
         {/* Paletas prearmadas: el camino de un solo tap */}
         <div className="space-y-3">
           <div>
@@ -83,53 +127,14 @@ export function AjustesForm({
             </p>
           </div>
           <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
-            {PRESETS_TEMA.map((p) => {
-              const activo = presetActivo(p);
-              return (
-                <button
-                  key={p.key}
-                  type="button"
-                  aria-pressed={activo}
-                  onClick={() => aplicarPreset(p)}
-                  className="group rounded-[6px] border bg-paper p-2 text-left transition-[transform,border-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20"
-                  style={{
-                    borderColor: activo ? "var(--ink)" : "var(--rule)",
-                    borderWidth: activo ? 2 : 1,
-                    padding: activo ? 7 : 8,
-                  }}
-                >
-                  <span
-                    className="flex h-11 items-center gap-1.5 overflow-hidden rounded-[4px] border px-2"
-                    style={{
-                      background: p.colores.paper,
-                      borderColor: p.colores.rule,
-                    }}
-                  >
-                    <span
-                      className="h-5 flex-1 rounded-[3px]"
-                      style={{ background: p.colores.ink }}
-                    />
-                    <span
-                      className="size-5 shrink-0 rounded-full"
-                      style={{ background: p.colores.volt }}
-                    />
-                    <span
-                      className="h-5 w-2.5 shrink-0 rounded-[3px] border"
-                      style={{
-                        background: p.colores.paper2,
-                        borderColor: p.colores.rule,
-                      }}
-                    />
-                  </span>
-                  <span className="mt-1.5 block text-[13px] font-medium text-ink">
-                    {p.label}
-                  </span>
-                  <span className="block text-[11px] text-ink-soft">
-                    {p.hint}
-                  </span>
-                </button>
-              );
-            })}
+            {PRESETS_TEMA.map((p) => (
+              <PaletaChip
+                key={p.key}
+                preset={p}
+                activo={presetActivo(p)}
+                onClick={() => aplicarPreset(p)}
+              />
+            ))}
           </div>
         </div>
 
@@ -509,6 +514,54 @@ export function AjustesForm({
         <TemaPreviewCompleto tema={draft} />
       </div>
     </div>
+  );
+}
+
+/** Chip de paleta: swatch + nombre. Mismo diseño para prearmadas y sugeridas. */
+function PaletaChip({
+  preset,
+  activo,
+  onClick,
+}: {
+  preset: PresetTema;
+  activo: boolean;
+  onClick: () => void;
+}) {
+  const c = preset.colores;
+  return (
+    <button
+      type="button"
+      aria-pressed={activo}
+      onClick={onClick}
+      className="group rounded-[6px] border bg-paper text-left transition-[transform,border-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20"
+      style={{
+        borderColor: activo ? "var(--ink)" : "var(--rule)",
+        borderWidth: activo ? 2 : 1,
+        padding: activo ? 7 : 8,
+      }}
+    >
+      <span
+        className="flex h-11 items-center gap-1.5 overflow-hidden rounded-[4px] border px-2"
+        style={{ background: c.paper, borderColor: c.rule }}
+      >
+        <span
+          className="h-5 flex-1 rounded-[3px]"
+          style={{ background: c.ink }}
+        />
+        <span
+          className="size-5 shrink-0 rounded-full"
+          style={{ background: c.volt }}
+        />
+        <span
+          className="h-5 w-2.5 shrink-0 rounded-[3px] border"
+          style={{ background: c.paper2, borderColor: c.rule }}
+        />
+      </span>
+      <span className="mt-1.5 block text-[13px] font-medium text-ink">
+        {preset.label}
+      </span>
+      <span className="block text-[11px] text-ink-soft">{preset.hint}</span>
+    </button>
   );
 }
 

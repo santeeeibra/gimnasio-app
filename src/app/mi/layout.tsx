@@ -11,12 +11,31 @@ export default async function MiLayout({
   const supabase = await createClient();
   const { data: gym } = await supabase
     .from("gimnasios")
-    .select("tema")
+    .select("nombre, tema, logo_url")
     .eq("id", profile.gimnasio_id)
     .single();
 
   return (
-    <div className="min-h-screen bg-paper" style={temaToVars(parseTema(gym?.tema))}>
+    <div
+      className="min-h-screen bg-paper"
+      style={temaToVars(parseTema(gym?.tema))}
+    >
+      {gym?.logo_url ? (
+        <header className="flex items-center gap-2.5 border-b border-rule px-5 py-2.5">
+          <span className="size-8 shrink-0 overflow-hidden rounded-[6px] border border-rule bg-paper-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={gym.logo_url}
+              alt={gym.nombre ?? "Logo del gimnasio"}
+              className="h-full w-full object-contain"
+              decoding="async"
+            />
+          </span>
+          <span className="min-w-0 truncate font-display text-sm">
+            {gym.nombre}
+          </span>
+        </header>
+      ) : null}
       {children}
     </div>
   );

@@ -14,6 +14,12 @@ export default async function MiBandejaPage() {
     )
     .eq("profile_id", profile.id);
 
+  const { data: gym } = await supabase
+    .from("gimnasios")
+    .select("logo_url")
+    .eq("id", profile.gimnasio_id)
+    .single();
+
   const items = ((data ?? []) as unknown as {
     mensaje_id: string;
     leido: boolean;
@@ -55,6 +61,16 @@ export default async function MiBandejaPage() {
                 >
                   <p className="text-sm line-clamp-2">{i.mensaje!.cuerpo}</p>
                   <p className="text-xs text-ink-soft mt-1">
+                    {!i.mensaje!.remitente && gym?.logo_url ? (
+                      <span className="mr-1 inline-block size-4 overflow-hidden rounded-full border border-rule bg-paper-2 align-text-bottom">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={gym.logo_url}
+                          alt=""
+                          className="h-full w-full object-contain"
+                        />
+                      </span>
+                    ) : null}
                     {i.mensaje!.remitente?.nombre ?? "Gimnasio"} ·{" "}
                     {new Date(i.mensaje!.creado_at).toLocaleDateString()}
                     {!i.leido ? " · nuevo" : ""}

@@ -180,6 +180,22 @@ url && !err ? (
 )
 ```
 
+### Logo del gimnasio (branding dinámico)
+- El logo (`gimnasios.logo_url`, puede ser `null`) siempre va en **caja de
+  tamaño fijo** con `object-contain` — nunca `object-cover` (recortaría un
+  isotipo). Tamaños por contexto: `size-9` sidebar `/panel`, `size-7` topbar
+  móvil, `size-8` header `/mi`, `size-4` avatar inline en mensajes.
+- Caja: `overflow-hidden rounded-[6px] border border-rule bg-paper-2`
+  (`rounded-full` sólo para el avatar de mensajes). `shrink-0` en filas flex;
+  el bloque de texto al lado `min-w-0` + `truncate`.
+- `null` ⇒ **no** renderizar la caja: caer al nombre en texto / ícono genérico.
+  Ninguna pantalla debe cambiar de layout por tener o no logo.
+- Es imagen de terceros servida desde Storage: `<img>` plano (no `next/image`),
+  `alt=""` si va acompañado del nombre, `decoding="async"` + `loading="lazy"`
+  fuera del primer viewport.
+- Subida: comprimir **en el navegador** a WebP ≤512² y <300 KB antes de tocar
+  Storage (`src/lib/logo/comprimir.ts`). Nunca subir el archivo crudo.
+
 ---
 
 ## 6. Alineación
@@ -426,6 +442,9 @@ src/app/login/page.tsx          → mobile-first completo
 src/app/panel/page.tsx          → número héroe
 src/app/panel/ajustes/*         → validación contraste
 src/app/mi/rutina/rutina-editor.tsx → miniatura + fallback + visor modal
+src/lib/logo/comprimir.ts        → compresión canvas → WebP <300 KB
+src/lib/logo/paleta.ts           → color dominante + paletas sugeridas
+src/app/panel/ajustes/logo-uploader.tsx → subida + caja fija + fallback
 ```
 
 ---
@@ -442,7 +461,8 @@ src/app/mi/rutina/rutina-editor.tsx → miniatura + fallback + visor modal
 
 **Última actualización**: 2026-09-02 (secciones 4-10 nuevas: bordes, imágenes,
 alineación, overflow, overlays, z-index — tras el bug de imágenes que rompían
-el layout en `/mi/rutina`).
+el layout en `/mi/rutina`; §5 subsección "Logo del gimnasio" tras el SPEC de
+logo + paletas).
 **Aplicar al editar**: `src/app/` y `src/components/`.
 
 **Crítico:** `text-[16px]` en inputs evita el zoom en iOS.

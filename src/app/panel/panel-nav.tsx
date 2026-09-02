@@ -16,21 +16,51 @@ function isActive(pathname: string, href: string) {
   return href === "/panel" ? pathname === "/panel" : pathname.startsWith(href);
 }
 
+/** Miniatura del logo del gimnasio, con caja de tamaño fijo. */
+function LogoMark({
+  logo,
+  size,
+}: {
+  logo?: string | null;
+  size: string;
+}) {
+  if (!logo) return null;
+  return (
+    <span
+      className={`${size} shrink-0 overflow-hidden rounded-[6px] border border-rule bg-paper-2`}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={logo}
+        alt=""
+        className="h-full w-full object-contain"
+        loading="lazy"
+        decoding="async"
+      />
+    </span>
+  );
+}
+
 /** Desktop: columna fija a la izquierda. */
 export function PanelSidebar({
   nombre,
   dueno,
+  logo,
 }: {
   nombre?: string | null;
   dueno: string;
+  logo?: string | null;
 }) {
   const pathname = usePathname();
 
   return (
     <aside className="hidden md:flex md:flex-col gap-6 border-r border-rule p-5 md:sticky md:top-0 md:h-screen">
-      <div>
-        <p className="font-display text-lg leading-tight">{nombre}</p>
-        <p className="text-xs text-ink-soft">{dueno}</p>
+      <div className="flex items-center gap-2.5">
+        <LogoMark logo={logo} size="size-9" />
+        <div className="min-w-0">
+          <p className="font-display text-lg leading-tight truncate">{nombre}</p>
+          <p className="text-xs text-ink-soft truncate">{dueno}</p>
+        </div>
       </div>
       <nav className="flex flex-col gap-0.5 flex-1">
         {NAV.map((item) => {
@@ -61,10 +91,19 @@ export function PanelSidebar({
 }
 
 /** Mobile: cabecera compacta arriba. */
-export function PanelTopbar({ nombre }: { nombre?: string | null }) {
+export function PanelTopbar({
+  nombre,
+  logo,
+}: {
+  nombre?: string | null;
+  logo?: string | null;
+}) {
   return (
     <header className="md:hidden flex items-center justify-between border-b border-rule px-5 py-3">
-      <p className="font-display text-base leading-tight truncate">{nombre}</p>
+      <div className="flex min-w-0 items-center gap-2">
+        <LogoMark logo={logo} size="size-7" />
+        <p className="font-display text-base leading-tight truncate">{nombre}</p>
+      </div>
       <form action={logout}>
         <button className="text-xs text-ink-soft underline underline-offset-2 active:scale-95 transition-transform duration-150 [transition-timing-function:var(--ease-out)]">
           Salir
