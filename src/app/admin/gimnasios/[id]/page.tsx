@@ -9,6 +9,7 @@ import { cupoExcedido, cupoTexto } from "@/lib/plataforma/planes";
 import { EstadoForm } from "./estado-form";
 import { PlanPlataformaForm } from "./plan-plataforma-form";
 import { PagosPlataforma, type PagoPlataformaRow } from "./pagos-plataforma";
+import { DisparadoresSocio } from "./disparadores-socio";
 
 export const dynamic = "force-dynamic";
 
@@ -234,6 +235,22 @@ export default async function AdminGimnasioDetalle({
           ))}
         </ul>
       )}
+
+      <div className="card-cut mb-8 border border-rule bg-paper-2 p-5">
+        <h2 className="mb-1 text-sm uppercase tracking-[0.14em] text-ink-soft">
+          Forzar estado de un socio (pruebas)
+        </h2>
+        <p className="mb-3 text-xs text-ink-soft">
+          Setea fechas / flags de un socio para probar los avisos sin esperar.
+          Los push salen en la próxima corrida del cron diario.
+        </p>
+        <DisparadoresSocio
+          socios={socios.map((s) => ({
+            id: s.id,
+            nombre: s.profile?.nombre ?? `DNI ${s.profile?.dni ?? "—"}`,
+          }))}
+        />
+      </div>
 
       <h2 className="mb-3 text-sm uppercase tracking-[0.14em] text-ink-soft">
         Últimos pagos

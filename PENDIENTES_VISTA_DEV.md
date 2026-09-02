@@ -7,17 +7,16 @@
 
 Lo que falta, por orden sugerido:
 
-## 1. Disparadores de estado por socio
-Botones en el detalle del gym (`/admin/gimnasios/[id]`) para forzar en un socio
-de prueba:
-- cuota **por vencer** (dispara aviso de morosidad)
-- cuota **vencida**
-- **trial por expirar** (faltando pocos días)
-- **trial expirado**
+## 1. Disparadores de estado por socio  ✅
 
-Hoy solo se puede el toggle `estado` del gym completo (`activo` /
-`solo_lectura`). Falta lo granular: setear `clientes.fecha_vencimiento` /
-`clientes.en_prueba` de una fila puntual vía `service_role`, auditado.
+`/admin/gimnasios/[id]` → card "Forzar estado de un socio (pruebas)":
+`<select>` de socio + preset (`cuota_por_vencer` / `cuota_vencida` /
+`trial_activo` / `trial_expirado`) → `forzarEstadoSocio` (service_role,
+auditado). Setea `clientes.{en_prueba, prueba_iniciada_en, fecha_vencimiento,
+estado_cuota, ultimo_aviso_morosidad_enviado_en}` y, para `trial_expirado`,
+inserta un `registros_entrada`. Los push salen en la próxima corrida del cron
+`cuotas`. `cuota_por_vencer` usa `dias_aviso_morosidad` del gym para que el
+aviso dispare.
 
 ## 2. Probar cada tipo de push / mensaje
 `/admin/push-prueba` hoy manda texto libre solo a los devices del superadmin.

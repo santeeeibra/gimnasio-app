@@ -182,6 +182,99 @@ export async function confirmarPagoPlataforma(
   return { ok: true, msg: `Pago confirmado. ${r.msg}` };
 }
 
+// Fuerza el estado de cuota / prueba de un socio puntual, para probar los
+// avisos (morosidad, prueba vencida) sin esperar fechas reales. Solo escribe
+// clientes.{en_prueba,fecha_vencimiento,estado_cuota,...} y registros_entrada
+// vía service_role. Superadmin, auditado. No es un flujo de negocio.
+const PRESETS_SOCIO = new Set([
+  "cuota_por_vencer",
+  "cuota_vencida",
+  "trial_activo",
+  "trial_expirado",
+]);
+
+export async function forzarEstadoSocio(
+  _prev: { ok: boolean; msg: string } | null,
+  formData: FormData,
+): Promise<{ ok: boolean; msg: string }> {
+  const admin = await requireSuperadmin();
+  const clienteId = String(formData.get("cliente_id") ?? "");
+  const preset = String(formData.get("preset") ?? "");
+  if (!clienteId) return { ok: false, msg: "Falta el socio." };
+  if (!PRESETS_SOCIO.has(preset)) return { ok: false, msg: "Preset inválido." };
+
+  const db = createAdminClient();
+  const { data: cli } = await db
+    .from("clientes")
+    .select("id, gimnasio_id")
+    .eq("id", clienteId)
+    .single();
+  if (!cli) return { ok: false, msg: "Socio inexistente." };
+
+  const hoy = new Date();
+  const iso = (d: Date) => d.toISOString().slice(0, 10);
+  const addDays = (n: number) => {
+    const d = new Date(hoy);
+    d.setDate(d.getDate() + n);
+    return iso(d);
+  };
+
+  if (preset === "cuota_por_vencer" || preset === "cuota_vencida") {
+    let venc: string;
+    if (preset === "cuota_por_vencer") {
+      const { data: gym } = await db
+        .from("gimnasios")
+        .select("dias_aviso_morosidad")
+        .eq("id", cli.gimnasio_id)
+        .single();
+      venc = addDays(gym?.dias_aviso_morosidad ?? 5);
+    } else {
+      venc = addDays(-1);
+    }
+    const { error } = await db
+      .from("clientes")
+      .update({
+        en_prueba: false,
+        prueba_iniciada_en: null,
+        fecha_vencimiento: venc,
+        estado_cuota: preset === "cuota_vencida" ? "vencido" : "por_vencer",
+        ultimo_aviso_morosidad_enviado_en: null,
+      })
+      .eq("id", clienteId);
+    if (error) return { ok: false, msg: error.message };
+  } else {
+    // trial_activo | trial_expirado
+    const { error } = await db
+      .from("clientes")
+      .update({
+        en_prueba: true,
+        prueba_iniciada_en: iso(hoy),
+        fecha_vencimiento: null,
+        estado_cuota: "vencido",
+        ultimo_aviso_morosidad_enviado_en: null,
+      })
+      .eq("id", clienteId);
+    if (error) return { ok: false, msg: error.message };
+
+    await db.from("registros_entrada").delete().eq("cliente_id", clienteId);
+    if (preset === "trial_expirado") {
+      await db
+        .from("registros_entrada")
+        .insert({ cliente_id: clienteId, gimnasio_id: cli.gimnasio_id });
+    }
+  }
+
+  await registrarAccionAdmin(admin.id, "forzar_estado_socio", cli.gimnasio_id, {
+    cliente_id: clienteId,
+    preset,
+  });
+  revalidatePath(`/admin/gimnasios/${cli.gimnasio_id}`);
+  return {
+    ok: true,
+    msg: "Estado forzado. Los avisos push salen en la próxima corrida del cron.",
+  };
+}
+
 // Manda un push de prueba SOLO a los dispositivos del superadmin. Nunca a
 // clientes ni dueños de un gimnasio.
 export async function enviarPushPrueba(
