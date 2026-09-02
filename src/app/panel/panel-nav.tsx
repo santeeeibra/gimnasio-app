@@ -47,10 +47,12 @@ export function PanelSidebar({
   nombre,
   dueno,
   logo,
+  esSuper = false,
 }: {
   nombre?: string | null;
   dueno: string;
   logo?: string | null;
+  esSuper?: boolean;
 }) {
   const pathname = usePathname();
 
@@ -89,6 +91,14 @@ export function PanelSidebar({
         >
           Modo check-in
         </Link>
+        {esSuper ? (
+          <Link
+            href="/admin"
+            className="text-xs text-ink-soft hover:text-ink underline underline-offset-2"
+          >
+            Soporte (dev)
+          </Link>
+        ) : null}
         <form action={logout}>
           <button className="text-xs text-ink-soft hover:text-ink underline underline-offset-2">
             Salir
@@ -103,9 +113,11 @@ export function PanelSidebar({
 export function PanelTopbar({
   nombre,
   logo,
+  esSuper = false,
 }: {
   nombre?: string | null;
   logo?: string | null;
+  esSuper?: boolean;
 }) {
   return (
     <header className="md:hidden flex items-center justify-between border-b border-rule px-5 py-3">
@@ -113,11 +125,21 @@ export function PanelTopbar({
         <LogoMark logo={logo} size="size-7" />
         <p className="font-display text-base leading-tight truncate">{nombre}</p>
       </div>
-      <form action={logout}>
-        <button className="text-xs text-ink-soft underline underline-offset-2 active:scale-95 transition-transform duration-150 [transition-timing-function:var(--ease-out)]">
-          Salir
-        </button>
-      </form>
+      <div className="flex shrink-0 items-center gap-3">
+        {esSuper ? (
+          <Link
+            href="/admin"
+            className="text-xs text-ink-soft underline underline-offset-2 active:scale-95 transition-transform duration-150 [transition-timing-function:var(--ease-out)]"
+          >
+            Soporte
+          </Link>
+        ) : null}
+        <form action={logout}>
+          <button className="text-xs text-ink-soft underline underline-offset-2 active:scale-95 transition-transform duration-150 [transition-timing-function:var(--ease-out)]">
+            Salir
+          </button>
+        </form>
+      </div>
     </header>
   );
 }

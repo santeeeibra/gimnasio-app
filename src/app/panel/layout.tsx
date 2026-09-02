@@ -20,6 +20,8 @@ export default async function PanelLayout({
 
   const tema = parseTema(gym?.tema);
   const temaVars = temaToVars(tema);
+  const esSuper =
+    !!process.env.SUPERADMIN_ID && profile.id === process.env.SUPERADMIN_ID;
 
   return (
     <div
@@ -35,10 +37,15 @@ export default async function PanelLayout({
         nombre={gym?.nombre}
         dueno={profile.nombre}
         logo={gym?.logo_url ?? null}
+        esSuper={esSuper}
       />
 
       <div className="flex min-h-screen flex-col">
-        <PanelTopbar nombre={gym?.nombre} logo={gym?.logo_url ?? null} />
+        <PanelTopbar
+          nombre={gym?.nombre}
+          logo={gym?.logo_url ?? null}
+          esSuper={esSuper}
+        />
         <main className="w-full max-w-5xl flex-1 p-6 pb-24 md:p-10 md:pb-10">
           {children}
         </main>
