@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireDueno } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { enviarPush } from "@/lib/push/enviar";
 
 export type EnvioState = { error?: string; ok?: string };
 
@@ -69,7 +70,18 @@ export async function enviarMensaje(
     return { error: "No se pudieron asignar los destinatarios." };
   }
 
-  // TODO (Entregable 2 — Push): notificar a destinatarios.
+  const { data: gym } = await supabase
+    .from("gimnasios")
+    .select("nombre")
+    .eq("id", dueno.gimnasio_id)
+    .single();
+
+  await enviarPush(destinatarios, {
+    title: (gym as { nombre?: string })?.nombre ?? "Tu gimnasio",
+    body: cuerpo.length > 120 ? cuerpo.slice(0, 117) + "…" : cuerpo,
+    url: "/mi/mensajes",
+    tag: `msg-${msg.id}`,
+  });
 
   revalidatePath("/panel/mensajes");
   return {
@@ -95,6 +107,20 @@ export async function responderDueno(
     cuerpo,
   });
   if (error) return { error: "No se pudo enviar la respuesta." };
+
+  const { data: dests } = await supabase
+    .from("mensaje_destinatarios")
+    .select("profile_id")
+    .eq("mensaje_id", mensajeId);
+  await enviarPush(
+    (dests ?? []).map((d: { profile_id: string }) => d.profile_id),
+    {
+      title: "Respuesta del gimnasio",
+      body: cuerpo.length > 120 ? cuerpo.slice(0, 117) + "…" : cuerpo,
+      url: `/mi/mensajes/${mensajeId}`,
+      tag: `resp-${mensajeId}`,
+    },
+  );
 
   revalidatePath(`/panel/mensajes/${mensajeId}`);
   return {};

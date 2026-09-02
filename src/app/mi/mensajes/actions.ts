@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { enviarPush } from "@/lib/push/enviar";
 
 export async function marcarLeido(mensajeId: string): Promise<void> {
   const profile = await requireProfile();
@@ -33,6 +35,22 @@ export async function responderCliente(
     cuerpo,
   });
   if (error) return { error: "No se pudo enviar la respuesta." };
+
+  const admin = createAdminClient();
+  const { data: duenos } = await admin
+    .from("profiles")
+    .select("id")
+    .eq("gimnasio_id", profile.gimnasio_id)
+    .eq("rol", "dueno");
+  await enviarPush(
+    (duenos ?? []).map((d: { id: string }) => d.id),
+    {
+      title: `Respuesta de ${profile.nombre}`,
+      body: cuerpo.length > 120 ? cuerpo.slice(0, 117) + "…" : cuerpo,
+      url: `/panel/mensajes/${mensajeId}`,
+      tag: `resp-cli-${mensajeId}`,
+    },
+  );
 
   revalidatePath(`/mi/mensajes/${mensajeId}`);
   return {};

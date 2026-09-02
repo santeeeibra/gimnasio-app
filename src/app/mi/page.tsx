@@ -3,6 +3,7 @@ import { requireProfile } from "@/lib/auth";
 import { logout } from "@/app/actions";
 import { Panel } from "@/components/ui";
 import { diasRestantes, estadoDesdeDias, ESTADO_LABEL } from "@/lib/cuota";
+import { ActivarNotificaciones } from "./activar-notificaciones";
 
 export default async function MiPage() {
   const profile = await requireProfile();
@@ -90,6 +91,8 @@ export default async function MiPage() {
         <span className="text-sm font-medium">Tu rutina</span>
         <span className="text-xs text-ink-soft">ver</span>
       </a>
+
+      <ActivarNotificaciones />
     </main>
   );
 }

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import {
   Bricolage_Grotesque,
   Inter,
@@ -76,6 +76,12 @@ const plusJakarta = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   title: "Gestión de gimnasio",
   description: "Cuotas, rutinas y avisos en un solo lugar.",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: { capable: true, title: "Mi gimnasio" },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#16181d",
 };
 
 export default function RootLayout({
