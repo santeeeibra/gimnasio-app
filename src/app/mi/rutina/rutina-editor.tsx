@@ -1,14 +1,17 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { ejerciciosSimilares } from "@/lib/rutina/motor";
+import { ejerciciosSimilares, estaBloqueado } from "@/lib/rutina/motor";
 import {
+  MOLESTIAS,
+  MOLESTIA_LABEL,
   REPS_OPCIONES,
   SERIES_OPCIONES,
   TECNICAS,
   TECNICA_DESC,
   TECNICA_LABEL,
   type Ejercicio,
+  type Molestia,
   type Tecnica,
 } from "@/lib/rutina/tipos";
 
@@ -252,6 +255,7 @@ function ItemFila({
   const [tecnica, setTecnica] = useState<Tecnica>(item.tecnica ?? "ninguna");
   const [ej, setEj] = useState(item.ejercicio);
   const [abrirCambio, setAbrirCambio] = useState(false);
+  const [molestias, setMolestias] = useState<Molestia[]>([]);
   const [msg, setMsg] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const msgTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -308,7 +312,12 @@ function ItemFila({
     });
   }
 
-  const alternativas = ej ? ejerciciosSimilares(ej, ejercicios, 6) : [];
+  const baseAlt = ej ? ejerciciosSimilares(ej, ejercicios, 12) : [];
+  const alternativas = (
+    molestias.length
+      ? baseAlt.filter((a) => !estaBloqueado(a, molestias))
+      : baseAlt
+  ).slice(0, 6);
 
   // Menús cerrados: si el valor guardado no está en la lista, lo agregamos
   // como primera opción para no perderlo.
@@ -337,7 +346,7 @@ function ItemFila({
               onClick={() => setAbrirCambio((v) => !v)}
               className="-mr-1.5 -mt-1 shrink-0 h-8 px-2.5 rounded-[5px] text-xs text-ink-soft transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 active:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20"
             >
-              {abrirCambio ? "Cerrar" : "No lo conozco"}
+              {abrirCambio ? "Cerrar" : "No lo conozco / me molesta"}
             </button>
           </div>
 
@@ -423,7 +432,32 @@ function ItemFila({
 
           {abrirCambio ? (
             <div className="mt-3 rounded-[5px] border border-rule bg-paper p-3 animate-fade-in">
-              <p className="text-xs text-ink-soft mb-2">Cambiar por uno equivalente:</p>
+              <div className="mb-2 flex flex-wrap gap-1.5">
+                {MOLESTIAS.map((m) => {
+                  const on = molestias.includes(m);
+                  return (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() =>
+                        setMolestias((p) =>
+                          on ? p.filter((x) => x !== m) : [...p, m],
+                        )
+                      }
+                      className={`h-7 rounded-[5px] border px-2 text-[11px] transition-colors ${
+                        on
+                          ? "border-ink bg-ink text-paper"
+                          : "border-rule text-ink-soft"
+                      }`}
+                    >
+                      {MOLESTIA_LABEL[m]}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-ink-soft mb-2">
+                Marcá una molestia para descartar variantes, o cambialo por uno equivalente:
+              </p>
               {alternativas.length === 0 ? (
                 <p className="text-xs text-ink-soft">Sin alternativas para este grupo.</p>
               ) : (

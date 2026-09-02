@@ -591,7 +591,7 @@ const MOLESTIA_BLOQUEA: Record<Molestia, (ej: Ejercicio) => boolean> = {
     (e.patron === "empuje_vertical" && e.equipo === "barra"),
 };
 
-function estaBloqueado(ej: Ejercicio, evitar: readonly Molestia[]): boolean {
+export function estaBloqueado(ej: Ejercicio, evitar: readonly Molestia[]): boolean {
   return evitar.some((m) => MOLESTIA_BLOQUEA[m](ej));
 }
 
