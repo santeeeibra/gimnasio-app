@@ -47,6 +47,7 @@ export async function generarYGuardar(
       equipo: entrada.preferencia,
       sexo: entrada.sexo,
       enfasis: entrada.enfasis,
+      avanzado: entrada.avanzado ?? null,
     },
     dias_titulos: plan.dias.map((d) => d.titulo),
     actualizado_at: new Date().toISOString(),
@@ -87,6 +88,7 @@ export async function generarYGuardar(
         series: it.series,
         repeticiones: it.repeticiones,
         nota: it.nota,
+        tecnica: it.tecnica && it.tecnica !== "ninguna" ? it.tecnica : null,
       });
     });
   });

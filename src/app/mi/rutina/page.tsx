@@ -88,6 +88,15 @@ export default async function MiRutinaPage() {
     </details>
   );
 
+  const linkAvanzado = (
+    <Link
+      href="/mi/rutina/avanzado"
+      className="block w-fit text-sm text-ink-soft underline underline-offset-2"
+    >
+      Modo avanzado — afinar el plan
+    </Link>
+  );
+
   return (
     <main className="stagger max-w-md mx-auto px-5 py-6 space-y-6">
       <div>
@@ -124,6 +133,7 @@ export default async function MiRutinaPage() {
             <GenerarRutinaForm action={generarMiRutina} />
           </div>
           {entradaManual}
+          {linkAvanzado}
         </>
       ) : (
         <>
@@ -171,6 +181,7 @@ export default async function MiRutinaPage() {
           </details>
 
           {entradaManual}
+          {linkAvanzado}
 
           <RutinaEditor
             dias={agruparPorDia(

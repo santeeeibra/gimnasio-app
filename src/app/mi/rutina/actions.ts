@@ -9,16 +9,24 @@ import {
   MAX_DIAS_MANUAL,
   MAX_EJERCICIOS_DIA,
   MAX_ENFASIS,
+  MOLESTIAS,
   NIVELES,
   OBJETIVOS,
+  ORDENES,
   PREFERENCIAS_EQUIPO,
+  RANGOS,
   REPS_OPCIONES,
+  RIR_OPCIONES,
   SERIES_OPCIONES,
   SEXOS,
+  SPLITS,
   TECNICAS,
+  VOLUMENES,
   type Enfasis,
+  type Molestia,
   type Nivel,
   type Objetivo,
+  type OpcionesAvanzadas,
   type PreferenciaEquipo,
   type Sexo,
   type Tecnica,
@@ -37,6 +45,36 @@ function parseEnfasis(fd: FormData): Enfasis[] {
     .slice(0, MAX_ENFASIS);
 }
 
+function pick<T extends string>(
+  fd: FormData,
+  key: string,
+  allowed: readonly T[],
+  def: T,
+): T {
+  const v = String(fd.get(key) ?? "");
+  return (allowed as readonly string[]).includes(v) ? (v as T) : def;
+}
+
+// Modo avanzado (SPEC_RUTINA_AVANZADA.md). Solo se arma si el nivel es avanzado;
+// para el resto se devuelve undefined y el motor se comporta como siempre.
+function parseAvanzado(fd: FormData): OpcionesAvanzadas {
+  const tecRaw = String(fd.get("tecnicaAislamientos") ?? "ninguna");
+  return {
+    split: pick(fd, "split", SPLITS, "auto"),
+    rango: pick(fd, "rango", RANGOS, "estandar"),
+    volumen: pick(fd, "volumen", VOLUMENES, "estandar"),
+    rir: pick(fd, "rir", RIR_OPCIONES, "2-3"),
+    orden: pick(fd, "orden", ORDENES, "compuestos_primero"),
+    tecnicaAislamientos: (TECNICAS as readonly string[]).includes(tecRaw)
+      ? (tecRaw as Tecnica)
+      : "ninguna",
+    evitar: fd
+      .getAll("evitar")
+      .map(String)
+      .filter((v): v is Molestia => (MOLESTIAS as readonly string[]).includes(v)),
+  };
+}
+
 export type RutinaState = { error?: string; ok?: string };
 
 async function clienteActual() {
@@ -50,9 +88,9 @@ async function clienteActual() {
   return { supabase, cliente: data as { id: string; gimnasio_id: string } | null };
 }
 
-export async function generarMiRutina(
-  _prev: RutinaState,
+async function generarComun(
   formData: FormData,
+  conAvanzado: boolean,
 ): Promise<RutinaState> {
   const { supabase, cliente } = await clienteActual();
   if (!cliente) return { error: "No encontramos tu ficha de cliente." };
@@ -71,17 +109,35 @@ export async function generarMiRutina(
     return { error: "Los días por semana van de 2 a 6." };
   }
 
+  // Los ajustes finos solo aplican a nivel avanzado (SPEC §1).
+  const avanzado =
+    conAvanzado && nivel === "avanzado" ? parseAvanzado(formData) : undefined;
+
   const seed = Math.floor(Math.random() * 1_000_000_000);
   const res = await generarYGuardar(supabase, {
     gimnasioId: cliente.gimnasio_id,
     clienteId: cliente.id,
-    entrada: { objetivo, nivel, preferencia, dias, sexo, enfasis, seed },
+    entrada: { objetivo, nivel, preferencia, dias, sexo, enfasis, seed, avanzado },
   });
   if (res.error) return { error: res.error };
 
   revalidatePath("/mi/rutina");
   revalidatePath("/mi");
   return { ok: "Rutina lista." };
+}
+
+export async function generarMiRutina(
+  _prev: RutinaState,
+  formData: FormData,
+): Promise<RutinaState> {
+  return generarComun(formData, false);
+}
+
+export async function generarMiRutinaAvanzada(
+  _prev: RutinaState,
+  formData: FormData,
+): Promise<RutinaState> {
+  return generarComun(formData, true);
 }
 
 export async function editarItem(
