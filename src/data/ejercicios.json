@@ -482,9 +482,9 @@
   {
     "slug": "sentadilla-bulgara",
     "nombre": "Sentadilla búlgara",
-    "grupo_muscular": "cuadriceps",
+    "grupo_muscular": "gluteos",
     "patron": "dominante_rodilla",
-    "equipo": "peso_corporal",
+    "equipo": "mancuernas",
     "nivel": "intermedio",
     "descripcion": "Pie de atrás elevado en un banco, baja recto con el torso firme.",
     "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Split_Squats/0.jpg"
@@ -528,5 +528,75 @@
     "nivel": "principiante",
     "descripcion": "Sobre un escalón, una pierna, rango completo con pausa arriba.",
     "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Dumbbell_Seated_One-Leg_Calf_Raise/0.jpg"
+  },
+  {
+    "slug": "patada-burro-polea",
+    "nombre": "Patada de burro en polea",
+    "grupo_muscular": "gluteos",
+    "patron": "aislamiento",
+    "equipo": "polea",
+    "nivel": "principiante",
+    "descripcion": "Tobillera en la polea baja, llevá el talón hacia atrás y arriba sin arquear la lumbar.",
+    "imagen_url": null
+  },
+  {
+    "slug": "hip-thrust-barra",
+    "nombre": "Hip thrust con barra",
+    "grupo_muscular": "gluteos",
+    "patron": "dominante_cadera",
+    "equipo": "barra",
+    "nivel": "intermedio",
+    "descripcion": "Espalda apoyada en el banco, empujá con los talones hasta alinear tronco y muslos, mentón metido.",
+    "imagen_url": null
+  },
+  {
+    "slug": "zancada-inversa-deficit",
+    "nombre": "Zancada inversa en déficit",
+    "grupo_muscular": "gluteos",
+    "patron": "dominante_rodilla",
+    "equipo": "mancuernas",
+    "nivel": "avanzado",
+    "descripcion": "Parado sobre un step, llevá una pierna atrás y abajo buscando rango extra en el glúteo.",
+    "imagen_url": null
+  },
+  {
+    "slug": "curl-femoral-acostado",
+    "nombre": "Curl femoral acostado",
+    "grupo_muscular": "isquios",
+    "patron": "aislamiento",
+    "equipo": "maquina",
+    "nivel": "principiante",
+    "descripcion": "Boca abajo, flexioná las rodillas llevando el rodillo hacia los glúteos y bajá controlando.",
+    "imagen_url": null
+  },
+  {
+    "slug": "rdl-unilateral-mancuerna",
+    "nombre": "Peso muerto rumano unilateral",
+    "grupo_muscular": "isquios",
+    "patron": "dominante_cadera",
+    "equipo": "mancuernas",
+    "nivel": "intermedio",
+    "descripcion": "Sobre una pierna, llevá la cadera atrás con la espalda recta hasta sentir tensión en el isquio.",
+    "imagen_url": null
+  },
+  {
+    "slug": "puente-gluteo-barra",
+    "nombre": "Puente de glúteo con barra",
+    "grupo_muscular": "gluteos",
+    "patron": "dominante_cadera",
+    "equipo": "barra",
+    "nivel": "intermedio",
+    "descripcion": "Acostado en el piso con la barra sobre la cadera, elevá la pelvis y apretá el glúteo arriba.",
+    "imagen_url": null
+  },
+  {
+    "slug": "abduccion-maquina-sentada",
+    "nombre": "Abducción en máquina sentada",
+    "grupo_muscular": "gluteos",
+    "patron": "aislamiento",
+    "equipo": "maquina",
+    "nivel": "principiante",
+    "descripcion": "Sentado, abrí las piernas contra la resistencia y volvé despacio sin golpear el tope.",
+    "imagen_url": null
   }
 ]
