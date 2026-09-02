@@ -10,6 +10,7 @@ import {
   type FuenteKey,
   type Tema,
 } from "@/lib/tema";
+import { chequearContraste } from "@/lib/contraste";
 
 export type AjustesState = { error?: string; ok?: string };
 
@@ -39,6 +40,15 @@ export async function actualizarTema(
   }
   tema.fuente = fuente as FuenteKey;
 
+  // Validar contraste
+  const { hayFallos } = chequearContraste(tema);
+  if (hayFallos && formData.get("confirmar_contraste") !== "1") {
+    return {
+      error:
+        "Hay combinaciones de bajo contraste. Revisá los avisos o confirmá que querés guardar igual.",
+    };
+  }
+
   const supabase = await createClient();
   const { error } = await supabase
     .from("gimnasios")
@@ -54,3 +64,4 @@ export async function actualizarTema(
   revalidatePath("/mi", "layout");
   return { ok: "Tema actualizado correctamente" };
 }
+

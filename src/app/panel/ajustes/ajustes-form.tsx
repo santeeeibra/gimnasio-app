@@ -10,6 +10,7 @@ import {
   type FuenteKey,
   type Tema,
 } from "@/lib/tema";
+import { chequearContraste } from "@/lib/contraste";
 import { TemaPreview } from "./tema-preview";
 
 export function AjustesForm({
@@ -25,8 +26,17 @@ export function AjustesForm({
   );
 
   const [draft, setDraft] = useState<Tema>(tema);
+  const [confirmarBajoContraste, setConfirmarBajoContraste] = useState(false);
+
   const set = <K extends keyof Tema>(key: K, value: Tema[K]) =>
     setDraft((d) => ({ ...d, [key]: value }));
+
+  const resultado = chequearContraste(draft);
+
+  // Reset del checkbox cuando cambia el draft
+  useEffect(() => {
+    setConfirmarBajoContraste(false);
+  }, [draft]);
 
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
@@ -64,22 +74,68 @@ export function AjustesForm({
           ))}
         </div>
 
+        {/* Avisos de contraste */}
+        {resultado.hayFallos ? (
+          <div className="rounded-lg border border-warn/30 bg-warn/5 p-4">
+            <p className="text-sm font-medium text-warn mb-2">
+              ⚠ Contraste bajo detectado
+            </p>
+            <ul className="space-y-1.5 text-xs text-ink-soft">
+              {resultado.pares
+                .filter((p) => !p.ok)
+                .map((par, i) => (
+                  <li key={i}>
+                    {par.label}: {par.ratio.toFixed(1)}:1 (mínimo {par.umbral}
+                    :1). Puede costar leerse.
+                  </li>
+                ))}
+            </ul>
+          </div>
+        ) : null}
+
         {state.error ? (
           <p className="text-sm text-danger">{state.error}</p>
         ) : null}
         {state.ok ? <p className="text-sm text-ok">{state.ok}</p> : null}
 
-        <div className="flex gap-3">
-          <Button type="submit" disabled={pending}>
-            {pending ? "Guardando…" : "Guardar cambios"}
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => setDraft(DEFAULT_TEMA)}
-          >
-            Restablecer
-          </Button>
+        <div className="space-y-4">
+          {/* Checkbox de confirmación */}
+          {resultado.hayFallos ? (
+            <label className="flex items-start gap-2.5 text-sm">
+              <input
+                type="checkbox"
+                checked={confirmarBajoContraste}
+                onChange={(e) => setConfirmarBajoContraste(e.target.checked)}
+                className="mt-0.5 size-4 rounded border-rule"
+              />
+              <span className="text-ink-soft">
+                Entiendo que algunas combinaciones pueden ser difíciles de leer
+                y quiero guardar igual
+              </span>
+            </label>
+          ) : null}
+
+          {confirmarBajoContraste && resultado.hayFallos ? (
+            <input type="hidden" name="confirmar_contraste" value="1" />
+          ) : null}
+
+          <div className="flex gap-3">
+            <Button
+              type="submit"
+              disabled={
+                pending || (resultado.hayFallos && !confirmarBajoContraste)
+              }
+            >
+              {pending ? "Guardando…" : "Guardar cambios"}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setDraft(DEFAULT_TEMA)}
+            >
+              Restablecer
+            </Button>
+          </div>
         </div>
       </form>
 
@@ -141,3 +197,4 @@ function ColorPicker({
     </label>
   );
 }
+
