@@ -14,21 +14,6 @@ export default async function MiBandejaPage() {
     )
     .eq("profile_id", profile.id);
 
-  // Cargar colores del gimnasio
-  const { data: gym } = await supabase
-    .from("gimnasios")
-    .select("color_primario, color_acento, color_fondo")
-    .eq("id", profile.gimnasio_id)
-    .single();
-
-  const customColors = gym
-    ? {
-        "--ink": gym.color_primario || "#16181d",
-        "--volt": gym.color_acento || "#cde94a",
-        "--paper": gym.color_fondo || "#faf9f6",
-      }
-    : {};
-
   const items = ((data ?? []) as unknown as {
     mensaje_id: string;
     leido: boolean;
@@ -47,10 +32,7 @@ export default async function MiBandejaPage() {
     );
 
   return (
-    <main
-      className="max-w-md mx-auto p-6 space-y-6"
-      style={customColors as React.CSSProperties}
-    >
+    <main className="max-w-md mx-auto p-6 space-y-6">
       <div className="flex items-baseline justify-between">
         <h1 className="text-2xl">Mensajes</h1>
         <Link

@@ -63,13 +63,16 @@ usarlo para altas masivas).
 - Llega a la bandeja dentro de la app + push.
 
 ### Branding por gimnasio
-- El dueño personaliza la paleta desde `/panel/ajustes` (3 colores → CSS custom
-  properties: `color_primario`→`--ink`, `color_acento`→`--volt`,
-  `color_fondo`→`--paper`). Defaults si son null.
+- El dueño personaliza el tema desde `/panel/ajustes`: 7 colores independientes
+  (fondo, fondo tarjetas, texto, texto suave, bordes, acento, texto sobre
+  acento) + tipografía (Moderno/Técnico/Neutro/Editorial). Sin tinte automático.
+- Se guarda en `gimnasios.tema` (jsonb). `null` → defaults.
+- `src/lib/tema.ts` centraliza tipo, defaults, validación y `temaToVars()`.
+  Inyectado en `panel/layout.tsx` y `mi/layout.tsx`. Preview en vivo en Ajustes.
 
 ## Modelo de datos
 
-`gimnasios` (+ `color_primario`, `color_acento`, `color_fondo`), `planes`,
+`gimnasios` (+ `tema` jsonb), `planes`,
 `clientes`, `ejercicios`, `rutinas` / `rutina_items`, `mensajes` /
 `mensaje_destinatarios`, `push_subscriptions`.
 
@@ -84,7 +87,7 @@ SECURITY DEFINER (`soy_destinatario`, `mensaje_gimnasio`, `mensaje_remitente`,
 |---|---|
 | 1 — Scaffold, auth, panel dueño, vista cliente, seed | ✅ HECHO |
 | 2 — Mensajería (compositor, bandeja, hilos) | ✅ HECHO, probado end-to-end |
-| Branding / colores personalizables | ✅ Código listo. **Falta aplicar migración `0003_tema_gimnasio.sql` en Supabase + prueba end-to-end** (ver `INSTRUCCIONES_TEMA.md`) |
+| Branding / tema personalizable (7 colores + tipografía + preview en vivo) | ✅ Código listo + `next build` OK. **Falta aplicar migración `0004_tema_jsonb.sql` en Supabase + prueba end-to-end** (ver `INSTRUCCIONES_TEMA.md`) |
 | Rediseño UI mobile-first (login, /panel, /panel/clientes, /panel/mensajes, /mi, /mi/mensajes) | 🔜 EN CURSO — usar skill `emil-design-eng` |
 | 3 — Push web nativo | Sin empezar. Tabla lista; faltan VAPID keys, service worker, endpoint, disparo en cuota por vencer. TODO marcado en `panel/mensajes/actions.ts` |
 | 4 — Rutinas (motor de reglas + editor + seed wger) | Sin empezar. Tablas listas |

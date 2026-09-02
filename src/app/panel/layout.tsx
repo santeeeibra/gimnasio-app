@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireDueno } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/app/actions";
+import { parseTema, temaToVars } from "@/lib/tema";
 
 const NAV = [
   { href: "/panel", label: "Resumen" },
@@ -20,23 +21,16 @@ export default async function PanelLayout({
   const supabase = await createClient();
   const { data: gym } = await supabase
     .from("gimnasios")
-    .select("nombre, color_primario, color_acento, color_fondo")
+    .select("nombre, tema")
     .eq("id", profile.gimnasio_id)
     .single();
 
-  // Inyectar colores personalizados como CSS custom properties
-  const customColors = gym
-    ? {
-        "--ink": gym.color_primario || "#16181d",
-        "--volt": gym.color_acento || "#cde94a",
-        "--paper": gym.color_fondo || "#faf9f6",
-      }
-    : {};
+  const temaVars = temaToVars(parseTema(gym?.tema));
 
   return (
     <div
-      className="min-h-screen md:grid md:grid-cols-[220px_1fr]"
-      style={customColors as React.CSSProperties}
+      className="min-h-screen bg-paper md:grid md:grid-cols-[220px_1fr]"
+      style={temaVars}
     >
       <aside className="border-b md:border-b-0 md:border-r border-rule p-5 flex md:flex-col gap-6 md:sticky md:top-0 md:h-screen">
         <div>

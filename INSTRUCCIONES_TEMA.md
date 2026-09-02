@@ -1,31 +1,25 @@
-# Aplicar migración 0003 y probar colores personalizables
+# Aplicar migración de tema y probar
 
-## 1. Aplicar la migración en Supabase
+## 1. Migración en Supabase (SQL Editor, proyecto `adrkdortznimrlungwoy`)
 
-Ve al SQL Editor de tu proyecto Supabase (`adrkdortznimrlungwoy`) y ejecutá:
+`0003` (3 colores) quedó reemplazada por `0004`: un solo campo `tema jsonb` con
+7 colores independientes + tipografía. Ejecutá:
 
 ```sql
--- Agregar columnas de tema personalizable a gimnasios
--- Cada gimnasio puede definir su paleta de colores (branding).
+alter table gimnasios drop column if exists color_primario;
+alter table gimnasios drop column if exists color_acento;
+alter table gimnasios drop column if exists color_fondo;
 
-alter table gimnasios add column color_primario text;
-alter table gimnasios add column color_acento text;
-alter table gimnasios add column color_fondo text;
+alter table gimnasios add column if not exists tema jsonb;
 
-comment on column gimnasios.color_primario is 'Color principal del gimnasio (hex), mapea a --ink';
-comment on column gimnasios.color_acento is 'Color de acento (hex), mapea a --volt';
-comment on column gimnasios.color_fondo is 'Color de fondo (hex), mapea a --paper';
-
--- RLS: la tabla gimnasios ya tiene policy gim_select (lectura para todo el gimnasio)
--- y gim_update solo para dueño. Verificamos que exista la de UPDATE.
+comment on column gimnasios.tema is
+  'Tema del gimnasio (branding): {paper,paper2,ink,inkSoft,rule,volt,voltInk,fuente}. null = defaults.';
 
 do $$
 begin
   if not exists (
-    select 1 from pg_policies 
-    where schemaname = 'public' 
-    and tablename = 'gimnasios' 
-    and policyname = 'gim_update'
+    select 1 from pg_policies
+    where schemaname='public' and tablename='gimnasios' and policyname='gim_update'
   ) then
     create policy gim_update on gimnasios for update
       using (id = current_gimnasio_id() and is_dueno())
@@ -34,32 +28,38 @@ begin
 end $$;
 ```
 
-## 2. Probar la funcionalidad
+> Hasta aplicarla, `/panel/ajustes` no muestra el formulario (falta la columna).
 
-1. Abrí http://localhost:3000 (o el puerto que esté corriendo)
-2. Logueate como dueño: gimnasio `migym`, DNI `30111222`, clave inicial
-3. Navegá a la nueva sección **"Ajustes"** en el menú lateral
-4. Vas a ver 3 color pickers:
-   - **Color principal**: mapea a `--ink` (texto y elementos principales)
-   - **Color de acento**: mapea a `--volt` (botones y destacados)
-   - **Color de fondo**: mapea a `--paper` (fondo de la app)
-5. Cambiá algún color y guardá
-6. Los cambios se aplican inmediatamente en todo el panel del dueño
-7. Logueate como cliente (DNI `40123456`) y verificá que también se vean los colores personalizados en `/mi`
+## 2. Probar
 
-## 3. Verificar que funciona
+1. `npm run dev`, login dueño (`migym` / `30111222`).
+2. Menú lateral → **Ajustes**.
+3. Hay:
+   - **Tipografía**: Moderno / Técnico / Neutro / Editorial.
+   - **7 colores** independientes: fondo app, fondo tarjetas, texto principal,
+     texto secundario, bordes, acento, texto sobre acento.
+4. La **Vista previa** de la derecha se actualiza en vivo con cada cambio
+   (colores y fuente), sin guardar.
+5. **Guardar cambios** → se aplica en `/panel` y en la app del cliente (`/mi`,
+   `/mi/mensajes`). Login cliente (`40123456`) para verificar.
+6. **Restablecer** vuelve a los valores por defecto (no guarda hasta confirmar).
 
-- El panel del dueño (`/panel`) debe reflejar los colores personalizados
-- La vista del cliente (`/mi`) debe reflejar los colores personalizados
-- Los mensajes (`/panel/mensajes` y `/mi/mensajes`) también deben usar los colores
-- Si no se configuran colores, usa los defaults (papel/tinta/volt originales)
+## 3. Cómo funciona (código)
 
-## 4. Siguiente paso: Rediseño con frontend-design
+- `src/lib/tema.ts`: tipo `Tema`, `DEFAULT_TEMA`, `FUENTES`, `CAMPOS_COLOR`,
+  `parseTema()` (valida hex + fuente), `temaToVars()` (→ CSS custom properties
+  `--paper`, `--paper-2`, `--ink`, `--ink-soft`, `--rule`, `--volt`,
+  `--volt-ink`, `--app-font-display`, `--app-font-sans`).
+- Fuentes cargadas en `src/app/layout.tsx` (next/font): Bricolage, Inter, Space
+  Grotesk, Geist, Fraunces. `globals.css` usa `--app-font-*` con indirección
+  para permitir override en runtime.
+- Inyección del tema: `src/app/panel/layout.tsx` y `src/app/mi/layout.tsx`
+  (nuevo) leen `gimnasios.tema` y aplican `temaToVars` al contenedor. Las
+  páginas de `/mi/*` ya no inyectan colores por su cuenta.
+- Ajustes: `panel/ajustes/page.tsx` (carga), `ajustes-form.tsx` (form + estado),
+  `tema-preview.tsx` (maqueta en vivo), `actions.ts` (`actualizarTema`).
 
-Ahora que la infraestructura de colores está lista, el próximo paso es usar la skill `frontend-design` para repasar y mejorar las pantallas clave:
-- `/login`
-- `/panel` (resumen)
-- `/panel/clientes`
-- `/panel/mensajes`
-- `/mi`
-- `/mi/mensajes`
+## 4. Siguiente paso: rediseño con `emil-design-eng`
+
+Pantallas a repasar: `/login`, `/panel`, `/panel/clientes`, `/panel/mensajes`,
+`/mi`, `/mi/mensajes`.

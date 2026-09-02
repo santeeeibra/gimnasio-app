@@ -11,6 +11,8 @@
   --danger: #c1362f;
   --warn: #b9791a;
   --ok: #2f7d4f;
+  --app-font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+  --app-font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
 }
@@ -25,8 +27,8 @@
   --color-danger: var(--danger);
   --color-warn: var(--warn);
   --color-ok: var(--ok);
-  --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--app-font-display);
+  --font-sans: var(--app-font-sans);
 }
 
 * {
@@ -42,7 +44,7 @@ body {
 body {
   background: var(--paper);
   color: var(--ink);
-  font-family: var(--font-sans);
+  font-family: var(--app-font-sans);
   -webkit-font-smoothing: antialiased;
   font-feature-settings: "cv11", "ss01";
 }
@@ -50,7 +52,7 @@ body {
 h1,
 h2,
 h3 {
-  font-family: var(--font-display);
+  font-family: var(--app-font-display);
   font-weight: 600;
   letter-spacing: -0.02em;
   margin: 0;
