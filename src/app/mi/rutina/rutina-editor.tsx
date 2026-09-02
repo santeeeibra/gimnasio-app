@@ -59,7 +59,7 @@ function useFrames(url: string | null, activo: boolean) {
   const alt = url ? frameAlterno(url) : null;
   useEffect(() => {
     if (!activo || !alt) return;
-    const id = setInterval(() => setI((v) => (v === 0 ? 1 : 0)), 900);
+const id = setInterval(() => setI((v) => (v === 0 ? 1 : 0)), 1800);
     return () => clearInterval(id);
   }, [activo, alt]);
   if (!url) return null;
