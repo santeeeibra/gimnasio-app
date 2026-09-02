@@ -49,3 +49,12 @@ export async function requireDueno(): Promise<Profile> {
   if (profile.rol !== "dueno") redirect("/mi");
   return profile;
 }
+
+// ADMIN de la plataforma (vos), no dueño de un gimnasio. Check aparte:
+// el id del perfil tiene que coincidir con SUPERADMIN_ID (env).
+export async function requireSuperadmin(): Promise<Profile> {
+  const profile = await requireProfile();
+  const superId = process.env.SUPERADMIN_ID;
+  if (!superId || profile.id !== superId) redirect("/panel");
+  return profile;
+}
