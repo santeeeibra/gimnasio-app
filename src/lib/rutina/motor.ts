@@ -7,13 +7,16 @@
 // ni la persistencia.
 
 import {
+  ENFASIS_GRUPOS,
   PREFERENCIAS_EQUIPO,
   type Ejercicio,
+  type Enfasis,
   type EntradaMotor,
   type Nivel,
   type Objetivo,
   type PlanGenerado,
   type ItemGenerado,
+  type Sexo,
 } from "./tipos";
 
 const NIVEL_ORDEN: Record<Nivel, number> = {
@@ -88,6 +91,54 @@ function ajustarPorNivel(esquema: Esquema, nivel: Nivel): Esquema {
     return { ...esquema, seriesCompuesto: esquema.seriesCompuesto + 1 };
   }
   return esquema;
+}
+
+// "La rutina me queda muy pesada" es la queja habitual de las clientas. Para
+// `mujer` bajamos un set en compuestos y aislamientos (más manejable, mismo
+// estímulo por rango de reps). No toca el rango de repeticiones.
+function ajustarPorSexo(esquema: Esquema, sexo: Sexo): Esquema {
+  if (sexo === "mujer") {
+    return {
+      ...esquema,
+      seriesCompuesto: Math.max(3, esquema.seriesCompuesto - 1),
+      seriesAislamiento: Math.max(2, esquema.seriesAislamiento - 1),
+    };
+  }
+  return esquema;
+}
+
+// Patrón preferido al agregar una ranura de énfasis, para que caiga un
+// movimiento real del grupo (hip thrust, peso muerto…) y no un accesorio flojo.
+const PATRON_ENFASIS: Record<string, string | undefined> = {
+  gluteos: "dominante_cadera",
+  isquios: "dominante_cadera",
+  cuadriceps: "dominante_rodilla",
+};
+
+// Suma ranuras extra para las zonas que el cliente pidió priorizar. Si no pidió
+// ninguna y es mujer, prioriza glúteos por defecto. Tope: +3 ranuras y 8 por
+// día para no inflar la sesión.
+function aplicarEnfasis(
+  ranuras: Ranura[],
+  enfasis: Enfasis[],
+  sexo: Sexo,
+): Ranura[] {
+  const zonas: Enfasis[] =
+    enfasis.length > 0 ? enfasis : sexo === "mujer" ? ["gluteos"] : [];
+  if (zonas.length === 0) return ranuras;
+
+  const grupos = zonas.flatMap((z) => ENFASIS_GRUPOS[z]);
+  const out = [...ranuras];
+  let sumadas = 0;
+
+  for (const grupo of grupos) {
+    const presentes = out.filter((r) => r.grupo === grupo).length;
+    for (let k = presentes; k < 2 && out.length < 8 && sumadas < 3; k++) {
+      out.push({ grupo, patron: PATRON_ENFASIS[grupo], rol: "aislamiento" });
+      sumadas++;
+    }
+  }
+  return out;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -279,16 +330,22 @@ export function generarPlan(
   ejercicios: Ejercicio[],
 ): PlanGenerado {
   const dias = Math.min(6, Math.max(2, Math.round(entrada.dias)));
+  const sexo = entrada.sexo ?? "sin_especificar";
+  const enfasis = entrada.enfasis ?? [];
   const equipoPrefs = PREFERENCIAS_EQUIPO[entrada.preferencia] ?? [];
-  const esquema = ajustarPorNivel(ESQUEMA[entrada.objetivo], entrada.nivel);
+  const esquema = ajustarPorSexo(
+    ajustarPorNivel(ESQUEMA[entrada.objetivo], entrada.nivel),
+    sexo,
+  );
   const bloques = splitPorDias(dias);
   const usadosSemana = new Set<string>();
 
   const diasPlan = bloques.map((bloque, i) => {
     const usadosDia = new Set<string>();
     const items: ItemGenerado[] = [];
+    const ranuras = aplicarEnfasis(bloque.ranuras, enfasis, sexo);
 
-    for (const ranura of bloque.ranuras) {
+    for (const ranura of ranuras) {
       const ej = elegir(
         ejercicios,
         ranura,
@@ -318,7 +375,7 @@ export function generarPlan(
     return { titulo: `${numero} · ${bloque.titulo}`, items };
   });
 
-  return { entrada: { ...entrada, dias }, dias: diasPlan };
+  return { entrada: { ...entrada, dias, sexo, enfasis }, dias: diasPlan };
 }
 
 /**

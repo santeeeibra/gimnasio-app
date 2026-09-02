@@ -6,12 +6,17 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generarYGuardar } from "@/lib/rutina/generar";
 import {
+  ENFASIS,
+  MAX_ENFASIS,
   NIVELES,
   OBJETIVOS,
   PREFERENCIAS_EQUIPO,
+  SEXOS,
+  type Enfasis,
   type Nivel,
   type Objetivo,
   type PreferenciaEquipo,
+  type Sexo,
 } from "@/lib/rutina/tipos";
 
 export type AltaState = { error?: string; ok?: string; clave?: string };
@@ -165,6 +170,15 @@ export async function generarRutinaCliente(
   const nivel = String(formData.get("nivel") ?? "") as Nivel;
   const preferencia = String(formData.get("preferencia") ?? "") as PreferenciaEquipo;
   const dias = Number(formData.get("dias") ?? 0);
+  const sexoRaw = String(formData.get("sexo") ?? "");
+  const sexo = ((SEXOS as readonly string[]).includes(sexoRaw)
+    ? sexoRaw
+    : "sin_especificar") as Sexo;
+  const enfasis = formData
+    .getAll("enfasis")
+    .map(String)
+    .filter((v): v is Enfasis => (ENFASIS as readonly string[]).includes(v))
+    .slice(0, MAX_ENFASIS);
 
   if (!clienteId) return { error: "Falta el cliente." };
   if (!OBJETIVOS.includes(objetivo)) return { error: "Elegí un objetivo." };
@@ -186,7 +200,7 @@ export async function generarRutinaCliente(
   const res = await generarYGuardar(supabase, {
     gimnasioId: dueno.gimnasio_id,
     clienteId,
-    entrada: { objetivo, nivel, preferencia, dias },
+    entrada: { objetivo, nivel, preferencia, dias, sexo, enfasis },
   });
   if (res.error) return { error: res.error };
 

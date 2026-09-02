@@ -1,7 +1,13 @@
 "use client";
 
 import { GenerarRutinaForm } from "@/app/mi/rutina/generar-form";
-import type { Nivel, Objetivo, PreferenciaEquipo } from "@/lib/rutina/tipos";
+import type {
+  Enfasis,
+  Nivel,
+  Objetivo,
+  PreferenciaEquipo,
+  Sexo,
+} from "@/lib/rutina/tipos";
 import { generarRutinaCliente } from "../actions";
 
 export function RutinaPanelDueno({
@@ -16,6 +22,8 @@ export function RutinaPanelDueno({
     nivel?: Nivel;
     dias?: number;
     preferencia?: PreferenciaEquipo;
+    sexo?: Sexo;
+    enfasis?: Enfasis[];
   };
 }) {
   return (

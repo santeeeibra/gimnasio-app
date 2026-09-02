@@ -5,13 +5,31 @@ import { requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { generarYGuardar } from "@/lib/rutina/generar";
 import {
+  ENFASIS,
+  MAX_ENFASIS,
   NIVELES,
   OBJETIVOS,
   PREFERENCIAS_EQUIPO,
+  SEXOS,
+  type Enfasis,
   type Nivel,
   type Objetivo,
   type PreferenciaEquipo,
+  type Sexo,
 } from "@/lib/rutina/tipos";
+
+function parseSexo(fd: FormData): Sexo {
+  const s = String(fd.get("sexo") ?? "");
+  return (SEXOS as readonly string[]).includes(s) ? (s as Sexo) : "sin_especificar";
+}
+
+function parseEnfasis(fd: FormData): Enfasis[] {
+  return fd
+    .getAll("enfasis")
+    .map(String)
+    .filter((v): v is Enfasis => (ENFASIS as readonly string[]).includes(v))
+    .slice(0, MAX_ENFASIS);
+}
 
 export type RutinaState = { error?: string; ok?: string };
 
@@ -37,6 +55,8 @@ export async function generarMiRutina(
   const nivel = String(formData.get("nivel") ?? "") as Nivel;
   const preferencia = String(formData.get("preferencia") ?? "") as PreferenciaEquipo;
   const dias = Number(formData.get("dias") ?? 0);
+  const sexo = parseSexo(formData);
+  const enfasis = parseEnfasis(formData);
 
   if (!OBJETIVOS.includes(objetivo)) return { error: "Elegí un objetivo." };
   if (!NIVELES.includes(nivel)) return { error: "Elegí tu nivel." };
@@ -48,7 +68,7 @@ export async function generarMiRutina(
   const res = await generarYGuardar(supabase, {
     gimnasioId: cliente.gimnasio_id,
     clienteId: cliente.id,
-    entrada: { objetivo, nivel, preferencia, dias },
+    entrada: { objetivo, nivel, preferencia, dias, sexo, enfasis },
   });
   if (res.error) return { error: res.error };
 

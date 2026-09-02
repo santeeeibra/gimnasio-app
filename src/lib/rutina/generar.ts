@@ -42,7 +42,11 @@ export async function generarYGuardar(
     dias_por_semana: plan.entrada.dias,
     nivel: entrada.nivel,
     generada_por: "reglas",
-    preferencias: { equipo: entrada.preferencia },
+    preferencias: {
+      equipo: entrada.preferencia,
+      sexo: entrada.sexo,
+      enfasis: entrada.enfasis,
+    },
     dias_titulos: plan.dias.map((d) => d.titulo),
     actualizado_at: new Date().toISOString(),
   };

@@ -50,20 +50,52 @@ usarlo para altas masivas).
   mano. El sistema calcula días restantes.
 - Alerta en rojo cuando quedan ≤5-6 días + push, para cliente y dueño.
 
-### Rutinas (motor + generación + editor hechos; falta pulido/seed real)
+### Rutinas (motor + generación + editor hechos; seed de imágenes OK)
 - V1: motor de **reglas fijas** (sin IA). Variables: objetivo, nivel, días de
-  entrenamiento, preferencia de equipo.
-- `src/lib/rutina/`: `tipos.ts` (tipos + labels OBJETIVO/NIVEL), `motor.ts`
-  (scoring de ejercicios con factores de equipo, `ejerciciosSimilares()` para
-  sustituciones), `generar.ts` (arma la rutina por día).
-- Cliente genera y edita su rutina en `/mi/rutina` (`generar-form.tsx`,
-  `rutina-editor.tsx`, `actions.ts`: `generarMiRutina`, `editarItem`,
-  `sustituirEjercicio`). Puede cambiar series/reps y sustituir ejercicios
-  ("No lo conozco" → alternativas del mismo grupo).
+  entrenamiento, preferencia de equipo, **sexo** y **zonas a enfocar** (énfasis).
+- **`src/lib/rutina/tipos.ts`**: tipos y constantes principales
+  - `SEXOS` / `SEXO_LABEL`: `mujer`, `hombre`, `sin_especificar`
+  - `ENFASIS` / `ENFASIS_LABEL`: 7 zonas (Glúteos, Piernas, Pecho, Espalda,
+    Hombros, Brazos, Abdomen). Cada una mapea a grupos musculares reales en
+    `ENFASIS_GRUPOS` (columna `grupo_muscular` de tabla `ejercicios`).
+  - `MAX_ENFASIS = 2`: el cliente puede elegir hasta 2 zonas a priorizar.
+  - `SERIES_OPCIONES` / `REPS_OPCIONES`: valores fijos para menús desplegables
+    del editor (series: 1-5; reps: 5, 6, 6-8, 8-10, 8-12, 10-12, 12-15, 15,
+    15-20, 20).
+  - `EntradaMotor` ahora incluye `sexo: Sexo` y `enfasis: Enfasis[]`.
+- **`src/lib/rutina/motor.ts`**: lógica de generación
+  - `ajustarPorSexo()`: si `sexo === "mujer"` baja 1 serie en compuestos
+    (mín. 3) y aislamientos (mín. 2), sin tocar rangos de reps. Genera planes
+    más livianos y manejables.
+  - `aplicarEnfasis()`: agrega hasta 3 ranuras extra por día para las zonas
+    elegidas (máx. 8 ejercicios/día total). Usa `PATRON_ENFASIS` (patrones
+    reales: hip thrust, sentadilla búlgara, press inclinado, dominadas, press
+    militar, curl con barra, crunch). Si el cliente es mujer y no eligió
+    ninguna zona → énfasis en glúteos por defecto.
+- **`src/lib/rutina/generar.ts`**: persiste `sexo` y `enfasis` en
+  `rutinas.preferencias` (jsonb), sin migración SQL (columna ya existía).
+- **Formulario de generación** (`generar-form.tsx`):
+  - Select "Sexo" (3 opciones).
+  - Fieldset "Zona a enfocar" con chips controlados (máx. 2 seleccionados a la
+    vez). Estado local con `toggleEnfasis()`.
+  - Defaults: se releen de `rutinas.preferencias` en `mi/rutina/page.tsx`,
+    `panel/clientes/[id]/page.tsx` y `rutina-panel.tsx`.
+- **Actions** (`mi/rutina/actions.ts`, `panel/clientes/actions.ts`):
+  - `parseSexo()` y `parseEnfasis()` validan y parsean los campos del form.
+  - `generarMiRutina` y la generación para clientes pasan `sexo` y `enfasis` a
+    `generarYGuardar()`.
+- **Editor de rutina** (`rutina-editor.tsx`):
+  - Series y reps ahora son `<select>` en lugar de `<input type="number">`.
+  - Valores de `SERIES_OPCIONES` / `REPS_OPCIONES`.
+  - Si el valor guardado no está en la lista, se agrega como primera opción
+    para no perderlo (compatibilidad hacia atrás).
+  - Sin escritura libre → menos errores, más rápido en móvil.
+- Cliente genera y edita su rutina en `/mi/rutina`. Puede cambiar series/reps
+  (menús) y sustituir ejercicios ("No lo conozco" → alternativas del mismo
+  grupo con `ejerciciosSimilares()`).
 - El dueño ve la rutina del cliente en `/panel/clientes/[id]/rutina-panel.tsx`.
-- Base de ejercicios con imagen/GIF de fuente abierta (wger) — **pendiente el
-  seed real**, hoy hay datos de ejemplo.
-- Fase 2 futura: capa de IA solo para ajustes finos.
+- Base de ejercicios con imágenes de free-exercise-db (seed corrido, columna
+  `imagen_url` poblada). Fase 2 futura: capa de IA solo para ajustes finos.
 
 ### Mensajería
 - El dueño manda mensajes individuales o masivos (todos / filtrado por plan).
@@ -119,7 +151,7 @@ SECURITY DEFINER (`soy_destinatario`, `mensaje_gimnasio`, `mensaje_remitente`,
 | Branding / tema personalizable | ✅ **COMPLETO y ampliado** — 7 colores (con base/derivados + "Calcular desde la base") + 9 presets tipográficos (10 fuentes) + tamaño base + redondeo + espaciado + estilo de navegación + densidad + validación contraste WCAG 2.1 (avisos salteables + **bloqueos duros no salteables**: `ink`/`paper`, `ink`/`paper-2` ≥ 4.5 y separación `paper`/`paper-2` ≥ 1.05, vía `chequearBloqueos()`) + preview en vivo. Ver `VALIDACION_CONTRASTE.md` y `FUENTES_PERSONALIZABLES.md`. Migración `0004_tema_jsonb.sql` ✅ aplicada (2026-09-01). **Rediseño guiado ✅ (2026-09-02)**: 6 paletas prearmadas validadas (`PRESETS_TEMA` en `src/lib/tema.ts`: Papel/Arena/Océano/Bosque/Noche/Carbón) — un tap y guardar; los controles finos quedan bajo "Personalizar a mano" (plegado); mini-preview sticky pegado a los controles en móvil + preview completo en columna en desktop. Umbral del par `rule`/`paper` bajado a 1.35 (hairline decorativo, no control WCAG 1.4.11). Prueba end-to-end ✅ y paleta del gimnasio de prueba re-guardada como **Océano** (reemplaza la vieja `#05fffb` cian que rompía la UI). |
 | Rediseño UI mobile-first con `emil-design-eng` | 🔄 EN CURSO — `/login` ✅. `/panel/ajustes` ✅ (rediseño guiado hecho 2026-09-02: paletas prearmadas + "Personalizar a mano" plegado + preview sticky). `/mi/rutina` editor ✅ (miniaturas + visor + táctil). Próximo `/panel` (dashboard). Reglas en `REGLAS_UI_EMIL.md` (ampliado 2026-09-02: §5 imágenes, §6 alineación, §7 overflow, §9 modales). Dirección de tema en `INSTRUCCIONES_TEMA.md` §4 |
 | 3 — Push web nativo | Sin empezar. Tabla lista; faltan VAPID keys, service worker, endpoint, disparo en cuota por vencer. TODO marcado en `panel/mensajes/actions.ts` |
-| 4 — Rutinas (motor de reglas + editor + seed imágenes) | 🔄 EN CURSO — motor (`src/lib/rutina/`), generación y editor cliente (`/mi/rutina`), panel dueño (`/panel/clientes/[id]/rutina-panel.tsx`) ✅. **Imágenes**: se cambió wger (línea, fondo transparente, feas) por **free-exercise-db** (dominio público, fotos fondo blanco centradas, 2 cuadros por ejercicio). `src/data/ejercicios.json` tiene `imagen_url` = frame `/0.jpg` en los 53, vía `scripts/ejercicios-img.mjs` (+ cache `scripts/fedb-cache.json`). El editor alterna `/0.jpg`↔`/1.jpg` cada 900 ms para simular GIF y abre un visor grande al tocar la miniatura. Fix mobile clave: `img,video{max-width:100%;height:auto}` en `globals.css` (faltaba el reset → las imágenes reventaban el layout en 375px) + miniatura en caja fija 72 px. Seed corrido (2026-09-02): `imagen_url` de los 53 ejercicios en la tabla `ejercicios` (verificado en vivo, cargan desde jsdelivr). **Pendiente entregable 4**: pulir el editor si hace falta; evaluar GIFs de ExerciseDB si las fotos no convencen. |
+| 4 — Rutinas (motor de reglas + editor + seed imágenes) | ✅ **COMPLETO (2026-09-02)** — Motor con **sexo y énfasis** (generación liviana + zona a enfocar): `tipos.ts` nuevos `SEXOS`/`SEXO_LABEL`, `ENFASIS`/`ENFASIS_LABEL`/`ENFASIS_GRUPOS` (7 zonas: Glúteos, Piernas, Pecho, Espalda, Hombros, Brazos, Abdomen), `MAX_ENFASIS = 2`, `SERIES_OPCIONES`/`REPS_OPCIONES` para menús. `EntradaMotor` ahora lleva `sexo` y `enfasis[]`. `motor.ts`: `ajustarPorSexo()` — mujer baja 1 serie en compuestos/aislamientos (mín. 3/2), sin tocar reps; `aplicarEnfasis()` — agrega hasta 3 ranuras extra/día para las zonas elegidas (máx. 8 ejercicios/día), con patrón real. Si es mujer y no eligió zona → glúteos por defecto. `generar.ts`: persiste sexo/énfasis en `preferencias` jsonb (sin migración SQL). Actions (`mi/rutina/actions.ts`, `panel/clientes/actions.ts`): `parseSexo()` y `parseEnfasis()` validan campos. Formulario (`generar-form.tsx`): select "Sexo" + fieldset "Zona a enfocar" (chips, máx. 2, controlado). Defaults se releen en `mi/rutina/page.tsx`, `panel/clientes/[id]/page.tsx`, `rutina-panel.tsx`. **Series/Reps sin escribir** (`rutina-editor.tsx`): los 2 `<input>` ahora `<select>` — Series 1–5, Reps 10 opciones fijas (5, 6, 6–8, 8–10, 8–12, 10–12, 12–15, 15, 15–20, 20). Si el valor guardado no está en la lista se agrega como primera opción (compat. hacia atrás). Typecheck limpio ✅. **Imágenes**: cambió wger por **free-exercise-db** (fotos fondo blanco). Editor alterna `/0.jpg`↔`/1.jpg` cada 900 ms + visor grande al tocar. Fix mobile: `img,video{max-width:100%;height:auto}` en `globals.css` + miniatura caja fija 72px. Seed corrido (2026-09-02): `imagen_url` de 53 ejercicios en tabla (verificado, cargan desde jsdelivr). |
 | 5 — Cron `recalcular_estado_cuota()` diario (pg_cron o Vercel cron) | Sin empezar |
 
 ### Datos de prueba

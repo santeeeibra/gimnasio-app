@@ -35,6 +35,68 @@ export const PREFERENCIA_EQUIPO_LABEL: Record<PreferenciaEquipo, string> = {
   peso_corporal: "Solo peso corporal",
 };
 
+// Sexo: ajusta el volumen del plan. "mujer" baja un set en compuestos y, si no
+// se elige zona, enfatiza glúteos por defecto (queja habitual: "muy pesado").
+export const SEXOS = ["mujer", "hombre", "sin_especificar"] as const;
+export type Sexo = (typeof SEXOS)[number];
+
+export const SEXO_LABEL: Record<Sexo, string> = {
+  mujer: "Mujer",
+  hombre: "Hombre",
+  sin_especificar: "Prefiero no decirlo",
+};
+
+// Zonas que el cliente puede pedir enfatizar. Cada una mapea a grupos reales
+// de la tabla `ejercicios` (columna grupo_muscular).
+export const ENFASIS = [
+  "gluteos",
+  "piernas",
+  "pecho",
+  "espalda",
+  "hombros",
+  "brazos",
+  "core",
+] as const;
+export type Enfasis = (typeof ENFASIS)[number];
+
+export const ENFASIS_LABEL: Record<Enfasis, string> = {
+  gluteos: "Glúteos",
+  piernas: "Piernas",
+  pecho: "Pecho",
+  espalda: "Espalda",
+  hombros: "Hombros",
+  brazos: "Brazos",
+  core: "Abdomen",
+};
+
+export const ENFASIS_GRUPOS: Record<Enfasis, string[]> = {
+  gluteos: ["gluteos"],
+  piernas: ["cuadriceps", "isquios", "gemelos"],
+  pecho: ["pecho"],
+  espalda: ["espalda"],
+  hombros: ["hombros"],
+  brazos: ["biceps", "triceps"],
+  core: ["core"],
+};
+
+export const MAX_ENFASIS = 2;
+
+// Opciones fijas para el editor de la rutina (menús desplegables, sin escritura
+// libre). Los valores de REPS_OPCIONES cubren todo lo que emite el motor.
+export const SERIES_OPCIONES = [1, 2, 3, 4, 5] as const;
+export const REPS_OPCIONES = [
+  "5",
+  "6",
+  "6–8",
+  "8–10",
+  "8–12",
+  "10–12",
+  "12–15",
+  "15",
+  "15–20",
+  "20",
+] as const;
+
 export type Ejercicio = {
   id: string;
   slug: string | null;
@@ -52,6 +114,8 @@ export type EntradaMotor = {
   dias: number; // 2..6
   nivel: Nivel;
   preferencia: PreferenciaEquipo;
+  sexo: Sexo;
+  enfasis: Enfasis[]; // 0..MAX_ENFASIS zonas a priorizar
 };
 
 export type ItemGenerado = {

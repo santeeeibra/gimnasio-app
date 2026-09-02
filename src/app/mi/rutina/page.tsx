@@ -5,10 +5,18 @@ import {
   NIVEL_LABEL,
   OBJETIVO_LABEL,
   type Ejercicio,
+  type Enfasis,
   type Nivel,
   type Objetivo,
   type PreferenciaEquipo,
+  type Sexo,
 } from "@/lib/rutina/tipos";
+
+type Prefs = {
+  equipo?: PreferenciaEquipo;
+  sexo?: Sexo;
+  enfasis?: Enfasis[];
+} | null;
 import { generarMiRutina } from "./actions";
 import { GenerarRutinaForm } from "./generar-form";
 import { RutinaEditor, type DiaEditable } from "./rutina-editor";
@@ -102,9 +110,9 @@ export default async function MiRutinaPage() {
                   objetivo: rutina.objetivo as Objetivo,
                   nivel: (rutina.nivel as Nivel) ?? undefined,
                   dias: rutina.dias_por_semana ?? undefined,
-                  preferencia:
-                    ((rutina.preferencias as { equipo?: PreferenciaEquipo } | null)
-                      ?.equipo) ?? undefined,
+                  preferencia: (rutina.preferencias as Prefs)?.equipo ?? undefined,
+                  sexo: (rutina.preferencias as Prefs)?.sexo ?? undefined,
+                  enfasis: (rutina.preferencias as Prefs)?.enfasis ?? undefined,
                 }}
               />
             </div>

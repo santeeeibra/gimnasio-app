@@ -2,7 +2,14 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { ejerciciosSimilares } from "@/lib/rutina/motor";
-import type { Ejercicio } from "@/lib/rutina/tipos";
+import {
+  REPS_OPCIONES,
+  SERIES_OPCIONES,
+  type Ejercicio,
+} from "@/lib/rutina/tipos";
+
+const campoCls =
+  "h-11 rounded-[5px] border border-rule bg-paper text-[16px] outline-none transition-[border-color] duration-150 [transition-timing-function:var(--ease-out)] focus:border-ink";
 import { editarItem, sustituirEjercicio } from "./actions";
 
 export type ItemEditable = {
@@ -277,6 +284,13 @@ function ItemFila({
 
   const alternativas = ej ? ejerciciosSimilares(ej, ejercicios, 6) : [];
 
+  // Menús cerrados: si el valor guardado no está en la lista, lo agregamos
+  // como primera opción para no perderlo.
+  const seriesOpts = (SERIES_OPCIONES as readonly number[]).map(String);
+  const repsOpts = (REPS_OPCIONES as readonly string[]).slice();
+  if (!seriesOpts.includes(series)) seriesOpts.unshift(series);
+  if (!repsOpts.includes(reps)) repsOpts.unshift(reps);
+
   return (
     <li className="p-4">
       <div className="flex gap-3">
@@ -308,21 +322,32 @@ function ItemFila({
           <div className="mt-3 flex flex-wrap items-end gap-3">
             <label className="block">
               <span className="block text-[11px] text-ink-soft mb-1">Series</span>
-              <input
-                inputMode="numeric"
+              <select
                 value={series}
-                onChange={(e) => setSeries(e.target.value.replace(/\D/g, "").slice(0, 2))}
-                className="h-11 w-16 px-2 text-center rounded-[5px] border border-rule bg-paper text-[16px] outline-none transition-[border-color] duration-150 [transition-timing-function:var(--ease-out)] focus:border-ink"
-              />
+                onChange={(e) => setSeries(e.target.value)}
+                className={`${campoCls} w-16 px-2 text-center`}
+              >
+                {seriesOpts.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
             </label>
             <span className="pb-3 text-ink-soft">×</span>
             <label className="block">
               <span className="block text-[11px] text-ink-soft mb-1">Reps</span>
-              <input
+              <select
                 value={reps}
-                onChange={(e) => setReps(e.target.value.slice(0, 12))}
-                className="h-11 w-24 px-3 rounded-[5px] border border-rule bg-paper text-[16px] outline-none transition-[border-color] duration-150 [transition-timing-function:var(--ease-out)] focus:border-ink"
-              />
+                onChange={(e) => setReps(e.target.value)}
+                className={`${campoCls} w-24 px-2`}
+              >
+                {repsOpts.map((r) => (
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
+                ))}
+              </select>
             </label>
             {dirty ? (
               <button

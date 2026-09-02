@@ -7,10 +7,18 @@ import { diasRestantes, estadoDesdeDias, ESTADO_LABEL } from "@/lib/cuota";
 import {
   NIVEL_LABEL,
   OBJETIVO_LABEL,
+  type Enfasis,
   type Nivel,
   type Objetivo,
   type PreferenciaEquipo,
+  type Sexo,
 } from "@/lib/rutina/tipos";
+
+type Prefs = {
+  equipo?: PreferenciaEquipo;
+  sexo?: Sexo;
+  enfasis?: Enfasis[];
+} | null;
 import { PagoForm } from "./pago-form";
 import { RutinaPanelDueno } from "./rutina-panel";
 
@@ -168,9 +176,9 @@ export default async function ClienteDetallePage({
                   objetivo: rutina.objetivo as Objetivo,
                   nivel: (rutina.nivel as Nivel) ?? undefined,
                   dias: rutina.dias_por_semana ?? undefined,
-                  preferencia:
-                    (rutina.preferencias as { equipo?: PreferenciaEquipo } | null)
-                      ?.equipo ?? undefined,
+                  preferencia: (rutina.preferencias as Prefs)?.equipo ?? undefined,
+                  sexo: (rutina.preferencias as Prefs)?.sexo ?? undefined,
+                  enfasis: (rutina.preferencias as Prefs)?.enfasis ?? undefined,
                 }
               : undefined
           }
