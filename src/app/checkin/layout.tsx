@@ -15,10 +15,13 @@ export default async function CheckinLayout({
     .eq("id", profile.gimnasio_id)
     .single();
 
+  const tema = parseTema(gym?.tema);
+
   return (
     <div
       className="flex min-h-screen flex-col bg-paper text-ink"
-      style={temaToVars(parseTema(gym?.tema))}
+      style={temaToVars(tema)}
+      data-estilo-visual={tema.estiloVisual}
     >
       <header className="flex items-center gap-2.5 border-b border-rule px-5 py-3">
         {gym?.logo_url ? (

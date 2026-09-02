@@ -27,6 +27,7 @@ export function TemaPreviewCompleto({ tema }: { tema: Tema }) {
       </span>
       <div
         style={vars}
+        data-estilo-visual={tema.estiloVisual}
         className="rounded-lg border-2 border-[color:var(--rule)] overflow-hidden bg-[color:var(--paper)] shadow-lg h-[calc(100vh-8rem)] max-h-[600px] flex flex-col"
       >
         {/* Header */}

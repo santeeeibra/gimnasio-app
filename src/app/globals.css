@@ -233,7 +233,7 @@ h3 {
     );
   }
 }
-.futurista-anillo-glow {
+[data-estilo-visual="futurista"] .futurista-anillo-glow {
   animation: futurista-glow 6s var(--ease-in-out) infinite;
 }
 
@@ -253,7 +253,7 @@ h3 {
   position: relative;
   z-index: 1;
 }
-.futurista-fondo::before {
+[data-estilo-visual="futurista"] .futurista-fondo::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -290,7 +290,83 @@ h3 {
     transform: translateY(0);
   }
 }
-.futurista-num-in {
+[data-estilo-visual="futurista"] .futurista-num-in {
+  animation: futurista-num-in 320ms var(--ease-out);
+}
+
+/* ============================================================
+   Estilos visuales ambientales (además de "Futurista")
+   Reusan los mismos hooks — .futurista-fondo / .futurista-num-in /
+   .futurista-anillo-glow — para no tocar los componentes. Cada estilo
+   restyliza el ::before de fondo y el glow del número con SUS tokens
+   (--volt, --rule), sin colores ni fuentes nuevas. Ver REGLAS_UI_EMIL.md §17.
+   ============================================================ */
+
+/* --- Estudio: cálido y calmo. Textura = wash diagonal apenas visible del
+   acento, SIN movimiento (boutique/yoga: nada que distraiga). --- */
+[data-estilo-visual="estudio"] .futurista-fondo::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background-image: radial-gradient(
+    120% 90% at 0% 0%,
+    color-mix(in srgb, var(--volt) 7%, transparent) 0%,
+    transparent 55%
+  );
+}
+[data-estilo-visual="estudio"] .futurista-anillo-glow {
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--volt) 22%, transparent));
+}
+[data-estilo-visual="estudio"] .futurista-num-in {
+  animation: futurista-num-in 320ms var(--ease-out);
+}
+
+/* --- Concreto: industrial. Textura = trama diagonal dura de --rule,
+   estática (nada de pulsos: es "hardcore", no juguetón). --- */
+[data-estilo-visual="concreto"] .futurista-fondo::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    45deg,
+    color-mix(in srgb, var(--rule) 60%, transparent) 0 1px,
+    transparent 1px 9px
+  );
+  opacity: 0.5;
+}
+[data-estilo-visual="concreto"] .futurista-anillo-glow {
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--volt) 45%, transparent));
+}
+[data-estilo-visual="concreto"] .futurista-num-in {
+  animation: futurista-num-in 240ms var(--ease-out);
+}
+
+/* --- Cancha: deportivo. Textura = cuña diagonal del acento en una esquina
+   (geométrico, de equipo). Glow con pulso lento como Futurista. --- */
+[data-estilo-visual="cancha"] .futurista-fondo::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background-image: linear-gradient(
+    115deg,
+    transparent 0 58%,
+    color-mix(in srgb, var(--volt) 16%, transparent) 58% 61%,
+    transparent 61% 100%
+  );
+}
+[data-estilo-visual="cancha"] .futurista-anillo-glow {
+  animation: futurista-glow 6s var(--ease-in-out) infinite;
+}
+[data-estilo-visual="cancha"] .futurista-num-in {
   animation: futurista-num-in 320ms var(--ease-out);
 }
 

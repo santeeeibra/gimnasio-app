@@ -17,12 +17,14 @@ export default async function PanelLayout({
     .eq("id", profile.gimnasio_id)
     .single();
 
-  const temaVars = temaToVars(parseTema(gym?.tema));
+  const tema = parseTema(gym?.tema);
+  const temaVars = temaToVars(tema);
 
   return (
     <div
       className="min-h-screen bg-paper text-ink md:grid md:grid-cols-[220px_1fr]"
       style={temaVars}
+      data-estilo-visual={tema.estiloVisual}
     >
       <PanelSidebar
         nombre={gym?.nombre}

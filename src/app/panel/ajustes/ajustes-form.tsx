@@ -6,10 +6,13 @@ import { Button } from "@/components/ui";
 import {
   CAMPOS_COLOR,
   DEFAULT_TEMA,
+  ESTILOS_VISUALES,
+  ESTILOS_VISUALES_KEYS,
   FUENTES,
   PRESETS_TEMA,
   temaToVars,
   type ColorKey,
+  type EstiloVisual,
   type FuenteKey,
   type PresetTema,
   type Tema,
@@ -59,6 +62,19 @@ export function AjustesForm({
 
   const aplicarPreset = (p: PresetTema) =>
     setDraft((d) => ({ ...d, ...p.colores }));
+
+  // Elegir estilo visual también aplica su paleta base y su tipografía
+  // sugerida (el dueño puede retocar todo después).
+  const aplicarEstiloVisual = (v: EstiloVisual) =>
+    setDraft((d) => {
+      const e = ESTILOS_VISUALES[v];
+      return {
+        ...d,
+        estiloVisual: v,
+        ...e.colores,
+        ...(e.fuente ? { fuente: e.fuente } : {}),
+      };
+    });
 
   const presetActivo = (p: PresetTema) =>
     CLAVES_COLOR.every(
@@ -114,6 +130,30 @@ export function AjustesForm({
               </div>
             </div>
           ) : null}
+        </div>
+
+        {/* Estilo visual: elección de cabecera, separada de los colores */}
+        <div className="space-y-3">
+          <div>
+            <span className="block text-[11px] uppercase tracking-[0.12em] text-ink-soft">
+              Estilo visual
+            </span>
+            <p className="mt-1 text-xs text-ink-soft">
+              Cambia el aire de la app: cada estilo trae su paleta, su
+              tipografía y su textura de fondo. Un tap y listo; después podés
+              retocar los colores.
+            </p>
+          </div>
+          <Radios
+            name="estiloVisual"
+            value={draft.estiloVisual}
+            options={ESTILOS_VISUALES_KEYS.map((k) => ({
+              value: k,
+              label: ESTILOS_VISUALES[k].label,
+              hint: ESTILOS_VISUALES[k].hint,
+            }))}
+            onChange={(v) => aplicarEstiloVisual(v as EstiloVisual)}
+          />
         </div>
 
         {/* Paletas prearmadas: el camino de un solo tap */}
@@ -570,6 +610,7 @@ function MiniPreview({ tema }: { tema: Tema }) {
   return (
     <div
       style={temaToVars(tema)}
+      data-estilo-visual={tema.estiloVisual}
       className="overflow-hidden rounded-[6px] border [&_*]:transition-[background-color,color,border-color] [&_*]:duration-150 [&_*]:ease-out"
     >
       <div

@@ -17,10 +17,13 @@ export default async function MiLayout({
     .eq("id", profile.gimnasio_id)
     .single();
 
+  const tema = parseTema(gym?.tema);
+
   return (
     <div
       className="min-h-screen bg-paper"
-      style={temaToVars(parseTema(gym?.tema))}
+      style={temaToVars(tema)}
+      data-estilo-visual={tema.estiloVisual}
     >
       {gym?.logo_url ? (
         <header className="flex items-center gap-2.5 border-b border-rule px-5 py-2.5">

@@ -5,8 +5,10 @@ import { requireDueno } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import {
   CAMPOS_COLOR,
+  ESTILOS_VISUALES_KEYS,
   FUENTES,
   isHex,
+  type EstiloVisual,
   type FuenteKey,
   type Tema,
 } from "@/lib/tema";
@@ -68,6 +70,12 @@ export async function actualizarTema(
     return { error: "Tipografía inválida" };
   }
   tema.fuente = fuente as FuenteKey;
+
+  const estiloVisual = String(formData.get("estiloVisual") ?? "clasico");
+  if (!ESTILOS_VISUALES_KEYS.includes(estiloVisual as EstiloVisual)) {
+    return { error: "Estilo visual inválido" };
+  }
+  tema.estiloVisual = estiloVisual as EstiloVisual;
 
   // Validar campos UI
   const escalaFuente = parseFloat(String(formData.get("escalaFuente") ?? "1"));

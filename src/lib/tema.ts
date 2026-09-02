@@ -14,6 +14,13 @@ export type FuenteKey =
   | "contemporaneo"
   | "amigable";
 
+export type EstiloVisual =
+  | "clasico"
+  | "futurista"
+  | "estudio"
+  | "concreto"
+  | "cancha";
+
 export type Tema = {
   paper: string; // fondo de la app        -> --paper
   paper2: string; // tarjetas / barras     -> --paper-2
@@ -23,7 +30,12 @@ export type Tema = {
   volt: string; // acento (botones/badges) -> --volt
   voltInk: string; // texto sobre acento   -> --volt-ink
   fuente: FuenteKey; // familia tipográfica
-  
+
+  // Estilo visual: cada valor distinto de "clasico" trae su propio
+  // tratamiento (paleta base, tipografía sugerida, textura/efecto ambiental,
+  // número héroe). Ver REGLAS_UI_EMIL.md §17 y ESTILOS_VISUALES abajo.
+  estiloVisual: EstiloVisual;
+
   // Personalización UI
   escalaFuente: number; // 0.875 | 1 | 1.125 | 1.25
   radiosBordes: "tight" | "normal" | "soft";
@@ -42,7 +54,8 @@ export const DEFAULT_TEMA: Tema = {
   volt: "#cde94a",
   voltInk: "#1c2205",
   fuente: "moderno",
-  
+  estiloVisual: "clasico",
+
   // Defaults UI
   escalaFuente: 1,
   radiosBordes: "normal",
@@ -239,6 +252,121 @@ export const PRESETS_TEMA: PresetTema[] = [
   },
 ];
 
+const STACK_SERIF = "Georgia, 'Times New Roman', serif";
+
+/**
+ * Metadata de cada estilo visual prearmado. Elegir un estilo en
+ * `/panel/ajustes` aplica su paleta base (y su tipografía sugerida, si define
+ * una); el dueño puede retocar todo después. Cada estilo además pisa
+ * `--font-hero` (números héroe de indicadores) para no romper su identidad.
+ *
+ * Paletas validadas contra `chequearBloqueos()` y `chequearContraste()`
+ * (ver `scripts`/tests de contraste): todas pasan sin excepción manual.
+ */
+export const ESTILOS_VISUALES: Record<
+  EstiloVisual,
+  {
+    label: string;
+    hint: string;
+    /** Paleta base que se aplica al elegir el estilo. */
+    colores: ColoresTema;
+    /** Tipografía sugerida (se aplica al elegir; el dueño puede cambiarla). */
+    fuente?: FuenteKey;
+    /** Familia para números héroe (`--font-hero`). */
+    fontHero: string;
+    /** Atributo `data-estilo-visual` => tratamiento ambiental propio en CSS. */
+    ambiental: boolean;
+  }
+> = {
+  clasico: {
+    label: "Clásico",
+    hint: "Limpio, sin efectos",
+    fontHero: `var(--font-orbitron), ${STACK}`,
+    ambiental: false,
+    colores: {
+      paper: "#faf9f6",
+      paper2: "#f2efe7",
+      ink: "#16181d",
+      inkSoft: "#5b5f68",
+      rule: "#d8d1bf",
+      volt: "#cde94a",
+      voltInk: "#1c2205",
+    },
+  },
+  futurista: {
+    label: "Futurista",
+    hint: "Oscuro, grilla y glow ambiental",
+    fontHero: `var(--font-orbitron), ${STACK}`,
+    ambiental: true,
+    colores: {
+      paper: "#14161a",
+      paper2: "#1e2128",
+      ink: "#f3f4f6",
+      inkSoft: "#9aa1ad",
+      rule: "#3a4048",
+      volt: "#cde94a",
+      voltInk: "#1c2205",
+    },
+  },
+  estudio: {
+    label: "Estudio",
+    hint: "Cálido, papel claro, serif editorial",
+    fuente: "editorial",
+    fontHero: `var(--font-fraunces), ${STACK_SERIF}`,
+    ambiental: true,
+    colores: {
+      paper: "#f6f3ec",
+      paper2: "#ede6da",
+      ink: "#23201b",
+      inkSoft: "#6a6155",
+      rule: "#d6cab3",
+      volt: "#9c5f36",
+      voltInk: "#fdfaf4",
+    },
+  },
+  concreto: {
+    label: "Concreto",
+    hint: "Industrial, gris oscuro, tipografía condensada",
+    fuente: "condensado",
+    fontHero: `var(--font-archivo), ${STACK}`,
+    ambiental: true,
+    colores: {
+      paper: "#17181a",
+      paper2: "#212327",
+      ink: "#eef0f2",
+      inkSoft: "#9aa0a8",
+      rule: "#3a3d42",
+      volt: "#ff5c39",
+      voltInk: "#1a1a1a",
+    },
+  },
+  cancha: {
+    label: "Cancha",
+    hint: "Enérgico, acento vivo, acentos diagonales",
+    fuente: "contemporaneo",
+    fontHero: `var(--font-sora), ${STACK}`,
+    ambiental: true,
+    colores: {
+      paper: "#f2f5f7",
+      paper2: "#e3e9ee",
+      ink: "#122031",
+      inkSoft: "#47586b",
+      rule: "#bcccd9",
+      volt: "#1466d6",
+      voltInk: "#ffffff",
+    },
+  },
+};
+
+export const ESTILOS_VISUALES_KEYS = Object.keys(
+  ESTILOS_VISUALES,
+) as EstiloVisual[];
+
+/** Paleta base por estilo (compat: derivado de `ESTILOS_VISUALES`). */
+export const COLORES_POR_ESTILO = Object.fromEntries(
+  ESTILOS_VISUALES_KEYS.map((k) => [k, ESTILOS_VISUALES[k].colores]),
+) as Record<EstiloVisual, ColoresTema>;
+
 const HEX = /^#[0-9A-Fa-f]{6}$/;
 
 export function isHex(v: unknown): v is string {
@@ -253,7 +381,13 @@ export function parseTema(raw: unknown): Tema {
       ? t.fuente
       : DEFAULT_TEMA.fuente
   ) as FuenteKey;
-  
+
+  const estiloVisual = ESTILOS_VISUALES_KEYS.includes(
+    t.estiloVisual as EstiloVisual,
+  )
+    ? (t.estiloVisual as EstiloVisual)
+    : DEFAULT_TEMA.estiloVisual;
+
   // Parsear campos UI con defaults
   const escalaFuente = typeof t.escalaFuente === "number" && [0.875, 1, 1.125, 1.25].includes(t.escalaFuente)
     ? t.escalaFuente
@@ -288,6 +422,7 @@ export function parseTema(raw: unknown): Tema {
     volt: hex(t.volt, DEFAULT_TEMA.volt),
     voltInk: hex(t.voltInk, DEFAULT_TEMA.voltInk),
     fuente,
+    estiloVisual,
     escalaFuente,
     radiosBordes,
     espaciado,
@@ -325,7 +460,7 @@ export function temaToVars(t: Tema): React.CSSProperties {
     "--volt-ink": t.voltInk,
     "--app-font-display": f.display,
     "--app-font-sans": f.sans,
-    "--font-hero": `var(--font-orbitron), ${STACK}`,
+    "--font-hero": ESTILOS_VISUALES[t.estiloVisual].fontHero,
     
     // Variables UI personalizadas
     "--font-scale": t.escalaFuente.toString(),
