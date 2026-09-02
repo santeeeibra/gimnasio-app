@@ -166,6 +166,7 @@ export async function registrarPago(
       fecha_vencimiento: cubreHasta,
       estado_cuota: "al_dia",
       en_prueba: false,
+      ultimo_aviso_morosidad_enviado_en: null,
     })
     .eq("id", clienteId);
 

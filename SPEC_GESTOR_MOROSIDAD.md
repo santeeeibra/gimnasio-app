@@ -1,5 +1,12 @@
 # SPEC — Gestor de Morosidad (aviso automático de vencimiento)
 
+> **Estado (2026-09-02): IMPLEMENTADO.** Migración real: `0012_gestor_morosidad.sql`
+> (no `0010` como decía abajo — ya iban hasta `0011`). Config en `/panel/ajustes`
+> con server action propia `actualizarDiasAvisoMorosidad` (separada de
+> `actualizarTema`). Cron: 3ª vía en `src/app/api/cron/cuotas/route.ts` (los
+> avisos fijos de 6/1 días siguen igual). Reset en `registrarPago`
+> (`src/app/panel/clientes/actions.ts`). Falta aplicar la migración en Supabase.
+
 ## Qué hace
 Manda un push automático al socio X días antes de que venza su cuota,
 con X configurable por gimnasio (por defecto, el mismo valor que ya usa

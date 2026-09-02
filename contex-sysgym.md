@@ -50,6 +50,25 @@ usarlo para altas masivas).
   mano. El sistema calcula días restantes.
 - Alerta en rojo cuando quedan ≤5-6 días + push, para cliente y dueño.
 
+### Gestor de morosidad (aviso automático de vencimiento) — SPEC `SPEC_GESTOR_MOROSIDAD.md`
+- Push automático al socio **N días antes** del vencimiento, con **N configurable
+  por gimnasio** (`gimnasios.dias_aviso_morosidad`, int default 5, rango 1-15).
+- Dedupe por ciclo: `clientes.ultimo_aviso_morosidad_enviado_en` (date nullable).
+  El cron no reenvía si ya avisó hoy; `registrarPago` lo resetea a `null` al
+  renovar la cuota, habilitando el aviso del próximo ciclo.
+- **Config**: `/panel/ajustes` → card "Aviso de vencimiento" (separada de la de
+  tema), input numérico 1-15. Server action propia
+  `actualizarDiasAvisoMorosidad` (`panel/ajustes/actions.ts`), componente
+  `panel/ajustes/aviso-morosidad-form.tsx`.
+- **Cron**: `src/app/api/cron/cuotas/route.ts` suma una 3ª vía a los avisos
+  fijos de 6/1 días (que quedan igual, para cliente + dueño). Por cada cliente
+  con `diasRestantes === dias_aviso_morosidad` de su gimnasio y sin aviso hoy →
+  `enviarPush` con texto fijo "Tu cuota vence en {X} días. Recordá renovarla
+  para seguir entrenando." + set de la fecha. Respuesta JSON incluye
+  `avisosMorosidad`.
+- Fuera de scope v1: WhatsApp, múltiples avisos por ciclo, texto personalizable.
+- Migración `0012_gestor_morosidad.sql` — **PENDIENTE de aplicar**.
+
 ### Rutinas (motor + generación + editor hechos; seed de imágenes OK)
 - V1: motor de **reglas fijas** (sin IA). Variables: objetivo, nivel, días de
   entrenamiento, preferencia de equipo, **sexo** y **zonas a enfocar** (énfasis).
@@ -213,13 +232,16 @@ usarlo para altas masivas).
 ## Modelo de datos
 
 `gimnasios` (+ `tema` jsonb, `logo_url` text nullable, `pin_ingresos` text
-nullable — migración `0008`, **pendiente**), `planes`,
+nullable — migración `0008`, **pendiente**; + `dias_aviso_morosidad` int default
+5 — migración `0012`, **pendiente**), `planes`,
 `clientes` (+ `sexo` text nullable: `mujer`/`hombre`/`sin_especificar`, migración
 `0007_cliente_sexo.sql`; + `en_prueba` bool + `prueba_iniciada_en` date —
-migración `0009`, **pendiente**), `ejercicios`,
+migración `0009`, **pendiente**; + `ultimo_aviso_morosidad_enviado_en` date
+nullable — migración `0012`, **pendiente**), `ejercicios`,
 `rutinas` / `rutina_items`, `mensajes` / `mensaje_destinatarios`,
 `push_subscriptions`, `registros_entrada` (presencia puntual — migración `0009`,
-**pendiente**).
+**pendiente**), `monitor_db_estado` (monitor de uso de la base — migración
+`0011_monitor_db.sql`).
 
 Helpers SQL: `current_gimnasio_id()`, `is_dueno()`, `current_cliente_id()`,
 `recalcular_estado_cuota()`. Chequeos cruzados de mensajería vía funciones
@@ -239,6 +261,8 @@ SECURITY DEFINER (`soy_destinatario`, `mensaje_gimnasio`, `mensaje_remitente`,
 | 5 — Cron `recalcular_estado_cuota()` diario (pg_cron o Vercel cron) | Sin empezar |
 | Check-in por DNI + día de prueba (SPEC `SPEC_CHECKIN_PRUEBA.md`) | ✅ código + typecheck (2026-09-02). **Falta aplicar `0009_checkin_prueba.sql`** y probar RLS end-to-end. Ver sección "Check-in por DNI…". |
 | Ingresos — pagos por mes protegidos por PIN (Cline) | ✅ código (2026-09-02). **Falta aplicar `0008_pin_ingresos.sql`** (bug "No se encontró el gimnasio" hasta entonces). |
+| Monitor de uso de Supabase (`SPEC_MONITOR_SUPABASE.md`) | ✅ código + migración `0011_monitor_db.sql` (panel `/admin` + cron, aviso al admin de la plataforma al acercarse al límite del plan free). |
+| Gestor de morosidad — aviso automático de vencimiento (`SPEC_GESTOR_MOROSIDAD.md`) | ✅ código + typecheck (`tsc --noEmit` limpio). Migración `0012_gestor_morosidad.sql`, server action `actualizarDiasAvisoMorosidad` + card en `/panel/ajustes`, 3ª vía en el cron de cuotas, reset en `registrarPago`. **Falta aplicar `0012` y probar end-to-end.** Ver "Gestor de morosidad" en Decisiones de producto. |
 
 ### Datos de prueba
 - Dueño: gimnasio `migym`, DNI `30111222`
@@ -312,6 +336,11 @@ SECURITY DEFINER (`soy_destinatario`, `mensaje_gimnasio`, `mensaje_remitente`,
 ## Cómo seguir (próxima sesión)
 
 Ya hecho (2026-09-02): 
+- **Gestor de morosidad**: migración `0012` (`gimnasios.dias_aviso_morosidad`,
+  `clientes.ultimo_aviso_morosidad_enviado_en`), card "Aviso de vencimiento" en
+  `/panel/ajustes` + `actualizarDiasAvisoMorosidad`, 3ª vía en el cron de cuotas
+  (push al socio N días antes, texto fijo, dedupe por ciclo), reset en
+  `registrarPago`. Typecheck limpio ✅. Falta aplicar `0012` + probar.
 - Fix `/mi/rutina` no respeta el tema (tokens + `chequearBloqueos`)
 - Seed de imágenes de ejercicios corrido (free-exercise-db, `imagen_url` en la tabla)
 - Rediseño guiado del editor de tema + prueba end-to-end + gimnasio de prueba re-guardado como Océano
@@ -348,7 +377,11 @@ Pendiente, prioridad sugerida:
 0. **Aplicar migraciones pendientes en el SQL Editor de Supabase** (bloquean
    funcionalidad ya mergeada): `0006_logo_gimnasio.sql`, `0007_cliente_sexo.sql`,
    `0008_pin_ingresos.sql` (⚠️ causa del bug "No se encontró el gimnasio" al
-   crear el PIN de Ingresos) y `0009_checkin_prueba.sql`. Correrlas en orden.
+   crear el PIN de Ingresos), `0009_checkin_prueba.sql` y
+   `0012_gestor_morosidad.sql` (`gimnasios.dias_aviso_morosidad` +
+   `clientes.ultimo_aviso_morosidad_enviado_en`; hasta aplicarla `/panel/ajustes`
+   y el cron de cuotas fallan al pedir esas columnas). Correrlas en orden.
+   (`0011_monitor_db.sql` ya está mergeada; confirmar si se aplicó.)
 1. **Aplicar `0006_logo_gimnasio.sql`** y probar el flujo de logo
    (`/panel/ajustes` → subir → chip sugerido → guardar; verificar `.webp`
    <300 KB en el bucket y que un gimnasio sin logo no cambia).

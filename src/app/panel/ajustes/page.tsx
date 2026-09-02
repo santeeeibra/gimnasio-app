@@ -2,6 +2,7 @@ import { requireDueno } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { parseTema } from "@/lib/tema";
 import { AjustesForm } from "./ajustes-form";
+import { AvisoMorosidadForm } from "./aviso-morosidad-form";
 import { VerTutorialDeNuevo } from "@/components/tutorial/tutorial";
 
 export default async function AjustesPage() {
@@ -10,7 +11,7 @@ export default async function AjustesPage() {
 
   const { data: gym } = await supabase
     .from("gimnasios")
-    .select("id, nombre, tema, logo_url")
+    .select("id, nombre, tema, logo_url, dias_aviso_morosidad")
     .eq("id", profile.gimnasio_id)
     .single();
 
@@ -35,6 +36,20 @@ export default async function AjustesPage() {
           />
         ) : null}
       </div>
+
+      {gym ? (
+        <div className="card-cut card-cut-lg mt-6 border border-rule bg-paper-2 p-6">
+          <h2 className="text-lg mb-1">Aviso de vencimiento</h2>
+          <p className="text-sm text-ink-soft mb-4">
+            Mandamos un push automático al socio unos días antes de que se le
+            venza la cuota, para que la renueve a tiempo.
+          </p>
+          <AvisoMorosidadForm
+            gimnasioId={gym.id}
+            diasAviso={gym.dias_aviso_morosidad ?? 5}
+          />
+        </div>
+      ) : null}
     </div>
   );
 }

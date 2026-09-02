@@ -21,7 +21,9 @@ export async function GET(req: NextRequest) {
 
   const { data: clientes, error } = await admin
     .from("clientes")
-    .select("profile_id, gimnasio_id, fecha_vencimiento")
+    .select(
+      "id, profile_id, gimnasio_id, fecha_vencimiento, ultimo_aviso_morosidad_enviado_en",
+    )
     .not("fecha_vencimiento", "is", null);
 
   if (error) {
@@ -29,17 +31,50 @@ export async function GET(req: NextRequest) {
   }
 
   type Row = {
+    id: string;
     profile_id: string;
     gimnasio_id: string;
     fecha_vencimiento: string;
+    ultimo_aviso_morosidad_enviado_en: string | null;
   };
+
+  const hoyISO = new Date().toISOString().slice(0, 10);
+
+  // ─── Aviso de morosidad: push al socio N días antes (N por gimnasio) ───
+  const { data: gyms } = await admin
+    .from("gimnasios")
+    .select("id, dias_aviso_morosidad");
+  const diasAvisoPorGym = new Map<string, number>();
+  for (const g of (gyms ?? []) as { id: string; dias_aviso_morosidad: number }[]) {
+    diasAvisoPorGym.set(g.id, g.dias_aviso_morosidad ?? 5);
+  }
+
+  let avisosMorosidad = 0;
+  for (const c of (clientes ?? []) as Row[]) {
+    const dias = diasRestantes(c.fecha_vencimiento);
+    const umbral = diasAvisoPorGym.get(c.gimnasio_id) ?? 5;
+    if (dias !== umbral) continue;
+    if (c.ultimo_aviso_morosidad_enviado_en === hoyISO) continue;
+
+    await enviarPush([c.profile_id], {
+      title: "Cuota por vencer",
+      body: `Tu cuota vence en ${dias} días. Recordá renovarla para seguir entrenando.`,
+      url: "/mi",
+      tag: `morosidad-${c.fecha_vencimiento}`,
+    });
+    await admin
+      .from("clientes")
+      .update({ ultimo_aviso_morosidad_enviado_en: hoyISO })
+      .eq("id", c.id);
+    avisosMorosidad++;
+  }
 
   const afectados = (clientes ?? []).filter((c: Row) =>
     DIAS_AVISO.has(diasRestantes(c.fecha_vencimiento) ?? -999),
   );
 
   if (afectados.length === 0) {
-    return NextResponse.json({ ok: true, avisos: 0 });
+    return NextResponse.json({ ok: true, avisos: 0, avisosMorosidad });
   }
 
   // Dueños por gimnasio (una sola consulta).
@@ -85,5 +120,5 @@ export async function GET(req: NextRequest) {
     avisos++;
   }
 
-  return NextResponse.json({ ok: true, avisos });
+  return NextResponse.json({ ok: true, avisos, avisosMorosidad });
 }

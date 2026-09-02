@@ -45,6 +45,38 @@ export async function guardarLogo(
   return { ok: true };
 }
 
+/** Días antes del vencimiento en que se avisa a los socios por push. */
+export async function actualizarDiasAvisoMorosidad(
+  _prev: AjustesState,
+  formData: FormData,
+): Promise<AjustesState> {
+  const dueno = await requireDueno();
+  const gimnasioId = String(formData.get("gimnasio_id") ?? "");
+
+  if (gimnasioId !== dueno.gimnasio_id) {
+    return { error: "No podés modificar este gimnasio" };
+  }
+
+  const dias = Number(formData.get("dias_aviso_morosidad"));
+  if (!Number.isInteger(dias) || dias < 1 || dias > 15) {
+    return { error: "Elegí un número de días entre 1 y 15." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("gimnasios")
+    .update({ dias_aviso_morosidad: dias })
+    .eq("id", gimnasioId);
+
+  if (error) {
+    console.error("[actualizarDiasAvisoMorosidad]", error);
+    return { error: "No se pudo guardar el cambio" };
+  }
+
+  revalidatePath("/panel/ajustes");
+  return { ok: "Aviso de vencimiento actualizado" };
+}
+
 export async function actualizarTema(
   _prev: AjustesState,
   formData: FormData,
