@@ -34,19 +34,32 @@ Env nueva (opcional, solo texto informativo): `PAGO_ALIAS`, `PAGO_TITULAR`.
 
 ---
 
-## FASE 2 — Adapter real (Ualá Bis / Mercado Pago) + webhook
+## FASE 2 — Adapter Mercado Pago (Checkout Pro) + webhook  ✅
 
-- `src/lib/pagos/ualabis.ts` (o `mercadopago.ts`): implementa `crearLink()`
-  contra la API del proveedor (POST de "preferencia"/"orden" → devuelve la
-  URL hosteada) y `leerWebhook()` (verifica firma, mapea a `EventoPago`).
-- `src/app/api/pagos/webhook/route.ts`: `pasarela().leerWebhook(req)` → si
-  `aprobado`, aprueba la fila y renueva el gym. Idempotente por
-  `proveedor_ref`.
-- `/panel/plan`: "Generar pago" redirige a la URL hosteada; al volver
-  (`?ref=`) muestra "pago recibido / en proceso".
-- `PASARELA_PAGO=ualabis` + keys del proveedor en env.
-- Sin cambios en `pagos_plataforma` ni en el flujo de aprobación: solo se
-  reemplaza quién dispara el "aprobado" (webhook en vez de soporte).
+- `src/lib/plataforma/aprobar-pago.ts`: `aprobarPagoPlataforma(db, pagoId,
+  proveedorRef?)` — aprobar la fila + renovar el gym. Idempotente por
+  `estado`. La usan la confirmación manual y el webhook.
+- `src/lib/pagos/mercadopago.ts`: `crearLink()` crea una *preference*
+  (`POST /checkout/preferences`) con `external_reference = pago.id` y
+  `notification_url = <origin>/api/pagos/webhook`; devuelve `init_point`.
+  `leerWebhook()` toma `type=payment` + `data.id`, trae el pago
+  (`GET /v1/payments/:id`) y lo mapea a `EventoPago`. Firma `x-signature`
+  como control extra (la autenticidad la da el fetch autenticado).
+- `src/app/api/pagos/webhook/route.ts`: si el evento es `aprobado`, llama a
+  `aprobarPagoPlataforma`. 400 => MP reintenta.
+- `index.ts`: `case "mercadopago"`. `/panel/plan` "Generar pago" ya redirige
+  a `redirect` (init_point) cuando el adapter es `automatica`.
+
+**Env para activar:**
+- `PASARELA_PAGO=mercadopago`
+- `MP_ACCESS_TOKEN` — Access Token de la app en el panel de MP (prod/test).
+- `MP_WEBHOOK_SECRET` — *Firma secreta* de Webhooks en el panel de MP
+  (opcional; si falta, el webhook igual valida contra la API de MP).
+
+**Configurar en el panel de Mercado Pago** (Tus integraciones → tu app →
+Webhooks): URL `https://TU-DOMINIO/api/pagos/webhook`, evento **Pagos**.
+`notification_url` también va en cada preference, así que alcanza con
+cualquiera de las dos, pero dejar la del panel para el modo test.
 
 ---
 

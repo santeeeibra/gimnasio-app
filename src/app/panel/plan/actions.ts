@@ -38,6 +38,13 @@ export async function generarPagoPlan(
   const dias = 30;
   const via = pasarela();
 
+  if (via.automatica && !(montoARS > 0)) {
+    return {
+      ok: false,
+      msg: "Tu plan no tiene un precio configurado. Avisale a soporte para que lo cargue.",
+    };
+  }
+
   const { data: pago, error } = await db
     .from("pagos_plataforma")
     .insert({
@@ -58,13 +65,27 @@ export async function generarPagoPlan(
   const origin =
     process.env.NEXT_PUBLIC_BASE_URL ?? `https://${h.get("host") ?? ""}`;
 
-  const link = await via.crearLink({
-    referencia: pago.id as string,
-    concepto: `Plan ${plan?.nombre ?? "plataforma"} · ${gym?.nombre ?? ""} · ${dias} días`,
-    montoARS,
-    emailPagador: null,
-    urlRetorno: `${origin}/panel/plan`,
-  });
+  let link;
+  try {
+    link = await via.crearLink({
+      referencia: pago.id as string,
+      concepto: `Plan ${plan?.nombre ?? "plataforma"} · ${gym?.nombre ?? ""} · ${dias} días`,
+      montoARS,
+      emailPagador: null,
+      urlRetorno: `${origin}/panel/plan`,
+    });
+  } catch (err) {
+    console.error("[pagos] crearLink:", err);
+    await db
+      .from("pagos_plataforma")
+      .update({ estado: "rechazado" })
+      .eq("id", pago.id)
+      .eq("estado", "pendiente");
+    return {
+      ok: false,
+      msg: "No se pudo generar el pago ahora. Probá en un rato o avisá a soporte.",
+    };
+  }
 
   if (via.automatica) {
     return { ok: true, redirect: link.url };
