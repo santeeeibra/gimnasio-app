@@ -2,6 +2,7 @@ import { requireDueno } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { parseTema, temaToVars } from "@/lib/tema";
 import { PanelSidebar, PanelTopbar, PanelBottomNav } from "./panel-nav";
+import { Tutorial } from "@/components/tutorial/tutorial";
 
 export default async function PanelLayout({
   children,
@@ -37,6 +38,7 @@ export default async function PanelLayout({
       </div>
 
       <PanelBottomNav />
+      <Tutorial rol="dueno" />
     </div>
   );
 }

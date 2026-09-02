@@ -20,6 +20,7 @@ type Prefs = {
 import { generarMiRutina } from "./actions";
 import { GenerarRutinaForm } from "./generar-form";
 import { RutinaEditor, type DiaEditable } from "./rutina-editor";
+import { BannerMotivacional } from "@/components/rutinas/banner-motivacional";
 
 export default async function MiRutinaPage() {
   const profile = await requireProfile();
@@ -82,13 +83,15 @@ export default async function MiRutinaPage() {
         ) : null}
       </div>
 
+      <BannerMotivacional />
+
       {!rutina ? (
         <>
           <p className="text-sm text-ink-soft">
             Respondé estas preguntas y armamos tu plan. Después podés ajustar
             series, repeticiones y cambiar ejercicios que no conozcas.
           </p>
-          <GenerarRutinaForm action={generarMiRutina} clienteSexo={clienteSexo} />
+          <GenerarRutinaForm action={generarMiRutina} />
         </>
       ) : (
         <>
@@ -120,7 +123,6 @@ export default async function MiRutinaPage() {
               <GenerarRutinaForm
                 action={generarMiRutina}
                 tieneRutina
-                clienteSexo={clienteSexo}
                 defaults={{
                   objetivo: rutina.objetivo as Objetivo,
                   nivel: (rutina.nivel as Nivel) ?? undefined,

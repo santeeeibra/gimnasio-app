@@ -4,6 +4,7 @@ import { logout } from "@/app/actions";
 import { Panel } from "@/components/ui";
 import { diasRestantes, estadoDesdeDias, ESTADO_LABEL } from "@/lib/cuota";
 import { ActivarNotificaciones } from "./activar-notificaciones";
+import { VerTutorialDeNuevo } from "@/components/tutorial/tutorial";
 
 export default async function MiPage() {
   const profile = await requireProfile();
@@ -28,11 +29,14 @@ export default async function MiPage() {
     <main className="max-w-md mx-auto p-6 space-y-6">
       <div className="flex items-baseline justify-between">
         <h1 className="text-2xl">Hola, {profile.nombre.split(" ")[0]}</h1>
-        <form action={logout}>
-          <button className="text-xs text-ink-soft underline underline-offset-2">
-            Salir
-          </button>
-        </form>
+        <div className="flex shrink-0 items-baseline gap-3">
+          <VerTutorialDeNuevo />
+          <form action={logout}>
+            <button className="text-xs text-ink-soft underline underline-offset-2">
+              Salir
+            </button>
+          </form>
+        </div>
       </div>
 
       <Panel

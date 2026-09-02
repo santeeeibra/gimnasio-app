@@ -2,6 +2,7 @@ import { requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { parseTema, temaToVars } from "@/lib/tema";
 import { MiBottomNav } from "./mi-nav";
+import { Tutorial } from "@/components/tutorial/tutorial";
 
 export default async function MiLayout({
   children,
@@ -39,6 +40,7 @@ export default async function MiLayout({
       ) : null}
       <div className="pb-20 md:pb-0">{children}</div>
       <MiBottomNav />
+      <Tutorial rol="cliente" />
     </div>
   );
 }
