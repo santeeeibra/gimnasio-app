@@ -53,17 +53,52 @@ function usePrefiereMenosMovimiento() {
   return reduce;
 }
 
-/** Alterna los dos cuadros para simular el movimiento del ejercicio. */
-function useFrames(url: string | null, activo: boolean) {
-  const [i, setI] = useState(0);
-  const alt = url ? frameAlterno(url) : null;
+/** Crossfade entre los dos cuadros (en vez de cortar el src en seco). */
+function ImagenAnimada({
+  url,
+  activo,
+  className,
+  onError,
+  alt: altText = "",
+}: {
+  url: string;
+  activo: boolean;
+  className: string;
+  onError: () => void;
+  alt?: string;
+}) {
+  const alt = frameAlterno(url);
+  const [mostrarAlt, setMostrarAlt] = useState(false);
+
   useEffect(() => {
     if (!activo || !alt) return;
-const id = setInterval(() => setI((v) => (v === 0 ? 1 : 0)), 1800);
+    const id = setInterval(() => setMostrarAlt((v) => !v), 1800);
     return () => clearInterval(id);
   }, [activo, alt]);
-  if (!url) return null;
-  return i === 1 && alt ? alt : url;
+
+  return (
+    <>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={url}
+        alt={altText}
+        loading="lazy"
+        decoding="async"
+        onError={onError}
+        className={`${className} absolute inset-0 transition-opacity duration-500 ${mostrarAlt ? "opacity-0" : "opacity-100"}`}
+      />
+      {alt && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={alt}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          className={`${className} absolute inset-0 transition-opacity duration-500 ${mostrarAlt ? "opacity-100" : "opacity-0"}`}
+        />
+      )}
+    </>
+  );
 }
 
 function Glifo({ className = "" }: { className?: string }) {
@@ -92,7 +127,6 @@ function ExThumb({
   const reduce = usePrefiereMenosMovimiento();
   const [err, setErr] = useState(false);
   const url = ej?.imagen_url ?? null;
-  const src = useFrames(url, !reduce && !err);
 
   if (!url || err) {
     return (
@@ -112,12 +146,9 @@ function ExThumb({
       aria-label={`Ver ${ej?.nombre ?? "ejercicio"} en grande`}
       className="group relative size-[72px] shrink-0 overflow-hidden rounded-[8px] border border-rule bg-paper-2 transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20"
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={src ?? url}
-        alt=""
-        loading="lazy"
-        decoding="async"
+      <ImagenAnimada
+        url={url}
+        activo={!reduce && !err}
         onError={() => setErr(true)}
         className="h-full w-full object-contain"
       />
@@ -135,7 +166,6 @@ function VisorEjercicio({
   const reduce = usePrefiereMenosMovimiento();
   const [err, setErr] = useState(false);
   const url = ej.imagen_url ?? null;
-  const src = useFrames(url, !reduce && !err);
 
   useEffect(() => {
     const on = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -180,14 +210,13 @@ function VisorEjercicio({
           </button>
         </div>
 
-        <div className="mt-3 grid aspect-square w-full place-items-center overflow-hidden rounded-[10px] border border-rule bg-paper-2">
+        <div className="relative mt-3 grid aspect-square w-full place-items-center overflow-hidden rounded-[10px] border border-rule bg-paper-2">
           {url && !err ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={src ?? url}
-              alt={ej.nombre}
-              decoding="async"
+            <ImagenAnimada
+              url={url}
+              activo={!reduce && !err}
               onError={() => setErr(true)}
+              alt={ej.nombre}
               className="h-full w-full object-contain"
             />
           ) : (
