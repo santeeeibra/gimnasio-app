@@ -113,9 +113,8 @@ export function TimerDescanso() {
   const pausado = estado === "pausado";
   const detenido = estado === "detenido";
 
-  // Mobile: MiBottomNav (~38px + safe-area, z-40) vive en bottom-0. El botón
-  // flotante y la card se apoyan JUSTO encima con el mismo offset
-  // (.timer-descanso-pos). Desktop: no hay bottom nav.
+  // Mobile: MiBottomNav (~38px + safe-area, z-40) vive en bottom-0. El timer
+  // queda sticky en bottom-20 con z-50, separado de las tarjetas de ejercicios.
 
   // Colapsado: botón flotante circular. Muestra la cuenta regresiva si corre.
   if (colapsado) {
@@ -124,7 +123,7 @@ export function TimerDescanso() {
         type="button"
         onClick={() => setColapsado(false)}
         aria-label="Abrir descanso entre series"
-        className="timer-descanso-pos fixed left-4 z-30 flex items-center gap-2 rounded-full border border-rule bg-paper/95 px-4 py-3 shadow-lg backdrop-blur-sm transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20"
+        className="fixed bottom-20 left-4 z-50 flex items-center gap-2 rounded-full border border-rule bg-paper/95 px-4 py-3 shadow-lg backdrop-blur-sm transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 md:bottom-4"
       >
         <svg
           viewBox="0 0 24 24"
@@ -150,7 +149,7 @@ export function TimerDescanso() {
   }
 
   return (
-    <div className="timer-descanso-pos fixed inset-x-0 z-30 border-y border-rule bg-paper/95 backdrop-blur-sm md:inset-x-auto md:left-4 md:right-auto md:w-80 md:rounded-[8px] md:border md:shadow-lg">
+    <div className="fixed bottom-20 inset-x-0 z-50 border-y border-rule bg-paper/95 backdrop-blur-sm md:bottom-4 md:inset-x-auto md:left-4 md:right-auto md:w-80 md:rounded-[8px] md:border md:shadow-lg">
       <div className="px-4 py-3">
         {/* Header con botón cerrar */}
         <div className="flex items-center justify-between mb-3">

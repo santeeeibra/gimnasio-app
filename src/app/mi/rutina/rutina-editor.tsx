@@ -284,7 +284,7 @@ export function RutinaEditor({
               </div>
             ) : null}
 
-            <div className="mt-3">
+            <div className="mt-3 pb-32 md:pb-4">
               {/* Orden tal cual lo arma el motor (prioridad de énfasis,
                   prefatiga y rol de ranura). No reagrupar por básicos/
                   accesorios: eso rompía la secuencia pensada del día. */}
