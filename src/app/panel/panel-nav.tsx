@@ -4,17 +4,24 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logout } from "@/app/actions";
 
-const NAV = [
+type NavItem = { href: string; label: string; soloDesktop?: boolean };
+
+const NAV: NavItem[] = [
   { href: "/panel", label: "Resumen" },
   { href: "/panel/clientes", label: "Clientes" },
-  { href: "/panel/planes", label: "Planes" },
+  { href: "/panel/planes", label: "Planes de socios" },
   { href: "/panel/mensajes", label: "Mensajes" },
   { href: "/panel/ingresos", label: "Ingresos" },
+  { href: "/panel/plan", label: "Mi plan", soloDesktop: true },
   { href: "/panel/ajustes", label: "Ajustes" },
 ];
 
+const NAV_MOBILE = NAV.filter((i) => !i.soloDesktop);
+
 function isActive(pathname: string, href: string) {
-  return href === "/panel" ? pathname === "/panel" : pathname.startsWith(href);
+  if (href === "/panel") return pathname === "/panel";
+  // Coincidencia por segmento: /panel/planes NO activa /panel/plan.
+  return pathname === href || pathname.startsWith(href + "/");
 }
 
 /** Miniatura del logo del gimnasio, con caja de tamaño fijo. */
@@ -150,7 +157,7 @@ export function PanelBottomNav() {
 
   return (
     <nav className="md:hidden fixed bottom-0 inset-x-0 z-20 flex border-t border-rule bg-paper/95 backdrop-blur-sm pb-[env(safe-area-inset-bottom)]">
-      {NAV.map((item) => {
+      {NAV_MOBILE.map((item) => {
         const active = isActive(pathname, item.href);
         return (
           <Link

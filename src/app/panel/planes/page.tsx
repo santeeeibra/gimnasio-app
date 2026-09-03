@@ -21,7 +21,20 @@ export default async function PlanesPage() {
 
   return (
     <div className="stagger space-y-8">
-      <h1 className="text-3xl">Planes</h1>
+      <div>
+        <h1 className="text-3xl">Planes de socios</h1>
+        <p className="mt-1 text-sm text-ink-soft">
+          Los planes de membresía que les cobrás a tus socios. Para tu propio
+          plan de la plataforma, andá a{" "}
+          <a
+            href="/panel/plan"
+            className="underline underline-offset-2 decoration-rule hover:decoration-ink"
+          >
+            Mi plan
+          </a>
+          .
+        </p>
+      </div>
 
       <div className="card-cut card-cut-lg border border-rule bg-paper-2 p-5">
         <h2 className="text-lg mb-4">Nuevo plan</h2>
