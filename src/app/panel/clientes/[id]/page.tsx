@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireDueno, claveInicial } from "@/lib/auth";
 import { Panel } from "@/components/ui";
 import { AccesoSocio } from "./acceso-socio";
+import { EditarDatos } from "./editar-datos";
 import { diasRestantes, estadoDesdeDias, ESTADO_LABEL } from "@/lib/cuota";
 import {
   NIVEL_LABEL,
@@ -197,6 +198,16 @@ export default async function ClienteDetallePage({
           yaCambio={c.profile?.debe_cambiar_clave === false}
           bloqueado={bloqueado}
         />
+
+        <div className="mt-5">
+          <EditarDatos
+            clienteId={c.id}
+            nombre={c.profile?.nombre ?? ""}
+            dni={c.profile?.dni ?? ""}
+            telefono={c.profile?.telefono ?? null}
+            sexo={(c.sexo as Sexo | null) ?? null}
+          />
+        </div>
       </Panel>
 
       <Panel className="p-5">

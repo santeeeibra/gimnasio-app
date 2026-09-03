@@ -276,6 +276,106 @@ export async function regenerarClave(
   return { ok: "Contraseña restablecida.", clave };
 }
 
+// El dueño corrige los datos de un socio ya creado. El DNI es delicado: de él
+// sale el email sintético de login (`dniAEmail`), así que si cambia hay que
+// actualizar también el usuario de auth. Contraseña opcional: si viene, se
+// setea y se fuerza el cambio en el próximo ingreso.
+export async function editarCliente(
+  _prev: { error?: string; ok?: string; clave?: string },
+  formData: FormData,
+): Promise<{ error?: string; ok?: string; clave?: string }> {
+  const dueno = await requireDueno();
+  const clienteId = String(formData.get("cliente_id") ?? "");
+  const nombre = String(formData.get("nombre") ?? "").trim();
+  const dni = String(formData.get("dni") ?? "").trim();
+  const telefono = String(formData.get("telefono") ?? "").trim() || null;
+  const sexoRaw = String(formData.get("sexo") ?? "");
+  const sexo: Sexo | null =
+    sexoRaw === "mujer" || sexoRaw === "hombre" ? sexoRaw : null;
+  const nuevaClave = String(formData.get("clave") ?? "").trim();
+
+  if (!clienteId) return { error: "Falta el cliente." };
+  if (!nombre || !dni) return { error: "Nombre y DNI son obligatorios." };
+  if (!/^\d{6,}$/.test(dni)) return { error: "El DNI debe ser numérico." };
+  if (nuevaClave && nuevaClave.length < 4) {
+    return { error: "La contraseña nueva necesita al menos 4 caracteres." };
+  }
+
+  const admin = createAdminClient();
+  const { data: cli } = await admin
+    .from("clientes")
+    .select("gimnasio_id, profile:profiles(id, dni)")
+    .eq("id", clienteId)
+    .maybeSingle();
+  const prof = (cli as any)?.profile as { id: string; dni: string } | null;
+  if (!cli || cli.gimnasio_id !== dueno.gimnasio_id || !prof) {
+    return { error: "Cliente no encontrado." };
+  }
+
+  const dniCambio = dni !== prof.dni;
+  let slug: string | null = null;
+  if (dniCambio) {
+    const { data: gym } = await admin
+      .from("gimnasios")
+      .select("slug")
+      .eq("id", dueno.gimnasio_id)
+      .single();
+    if (!gym) return { error: "No se encontró el gimnasio." };
+    slug = gym.slug;
+
+    const { data: choca } = await admin
+      .from("profiles")
+      .select("id")
+      .eq("gimnasio_id", dueno.gimnasio_id)
+      .eq("dni", dni)
+      .maybeSingle();
+    if (choca) {
+      return { error: "Ya hay otro socio con ese DNI en este gimnasio." };
+    }
+  }
+
+  // Perfil primero; si después falla el email de auth, revertimos el DNI.
+  const { error: profErr } = await admin
+    .from("profiles")
+    .update({ nombre, telefono, dni })
+    .eq("id", prof.id);
+  if (profErr) {
+    return { error: "No se pudieron guardar los datos del socio." };
+  }
+
+  if (dniCambio && slug) {
+    const { error: emailErr } = await admin.auth.admin.updateUserById(prof.id, {
+      email: dniAEmail(dni, slug),
+    });
+    if (emailErr) {
+      await admin
+        .from("profiles")
+        .update({ dni: prof.dni })
+        .eq("id", prof.id);
+      return { error: "No se pudo actualizar el DNI de acceso." };
+    }
+  }
+
+  await admin.from("clientes").update({ sexo }).eq("id", clienteId);
+
+  let claveMostrar: string | undefined;
+  if (nuevaClave) {
+    const { error: pwErr } = await admin.auth.admin.updateUserById(prof.id, {
+      password: nuevaClave,
+    });
+    if (pwErr) return { error: "No se pudo cambiar la contraseña." };
+    await admin
+      .from("profiles")
+      .update({ debe_cambiar_clave: true })
+      .eq("id", prof.id);
+    claveMostrar = nuevaClave;
+  }
+
+  revalidatePath(`/panel/clientes/${clienteId}`);
+  revalidatePath("/panel/clientes");
+  return { ok: "Datos actualizados.", clave: claveMostrar };
+}
+
 export async function generarRutinaCliente(
   _prev: { error?: string; ok?: string },
   formData: FormData,
