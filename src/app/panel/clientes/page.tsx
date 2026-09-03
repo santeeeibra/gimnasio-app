@@ -4,6 +4,8 @@ import { requireDueno } from "@/lib/auth";
 import { cupoSocios } from "@/lib/plataforma/cupo";
 import { AltaForm } from "./alta-form";
 import { ClienteRow, type ClienteVista } from "./cliente-row";
+import { CacheAlVuelo } from "@/components/offline/cache-al-vuelo";
+import { ConflictosOffline } from "@/components/offline/conflictos";
 
 export default async function ClientesPage() {
   const dueno = await requireDueno();
@@ -34,10 +36,22 @@ export default async function ClientesPage() {
 
   return (
     <div className="stagger space-y-10">
+      <CacheAlVuelo
+        clave="clientes:lista"
+        data={clientes.map((c) => ({
+          nombre: c.profile?.nombre ?? "Socio",
+          dni: c.profile?.dni ?? null,
+          estado_cuota: c.estado_cuota,
+          fecha_vencimiento: c.fecha_vencimiento,
+          plan: c.plan?.nombre ?? null,
+        }))}
+      />
       <div>
         <h1 className="text-3xl mb-1">Clientes</h1>
         <p className="text-sm text-ink-soft">{clientes.length} en total</p>
       </div>
+
+      <ConflictosOffline variante="card" />
 
       <div className="card-cut card-cut-lg border border-rule bg-paper-2 p-5">
         <div className="mb-4 flex items-baseline justify-between gap-3">

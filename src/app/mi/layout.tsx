@@ -4,6 +4,7 @@ import { parseTema, temaToVars } from "@/lib/tema";
 import { MiBottomNav } from "./mi-nav";
 import { Tutorial } from "@/components/tutorial/tutorial";
 import { ImpersonationBanner } from "@/components/impersonation/banner";
+import { OfflineProvider } from "@/components/offline/provider";
 
 export default async function MiLayout({
   children,
@@ -54,6 +55,7 @@ export default async function MiLayout({
       data-estilo-visual={tema.estiloVisual}
     >
       <ImpersonationBanner />
+      <OfflineProvider />
       {gym?.logo_url ? (
         <header className="flex items-center gap-2.5 border-b border-rule px-5 py-2.5">
           <span className="size-8 shrink-0 overflow-hidden rounded-[6px] border border-rule bg-paper-2">

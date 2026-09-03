@@ -1,10 +1,14 @@
 "use client";
 
-import { useActionState } from "react";
+import { useRef, useState, useTransition } from "react";
 import { altaCliente, type AltaState } from "./actions";
 import { Button, Field, Select } from "@/components/ui";
 import { SEXOS, SEXO_LABEL } from "@/lib/rutina/tipos";
 import { CredencialesCard } from "./credenciales-card";
+import { encolar } from "@/lib/offline/cola";
+import type { PayloadAlta } from "@/lib/offline/handlers";
+
+const TIMEOUT_MS = 8_000;
 
 export function AltaForm({
   planes,
@@ -13,13 +17,56 @@ export function AltaForm({
   planes: { id: string; nombre: string }[];
   full?: boolean;
 }) {
-  const [state, formAction, pending] = useActionState<AltaState, FormData>(
-    altaCliente,
-    {},
-  );
+  const [pending, startTransition] = useTransition();
+  const [state, setState] = useState<AltaState & { encolado?: boolean }>({});
+  const formRef = useRef<HTMLFormElement>(null);
+
+  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const submitter = (e.nativeEvent as SubmitEvent)
+      .submitter as HTMLButtonElement | null;
+    const modo: PayloadAlta["modo"] =
+      submitter?.value === "prueba" ? "prueba" : "completa";
+
+    const fd = new FormData(form);
+    fd.set("modo", modo);
+
+    const payload: PayloadAlta = {
+      nombre: String(fd.get("nombre") ?? "").trim(),
+      dni: String(fd.get("dni") ?? "").trim(),
+      telefono: String(fd.get("telefono") ?? "").trim() || null,
+      sexo: String(fd.get("sexo") ?? "") || null,
+      plan_id: String(fd.get("plan_id") ?? "") || null,
+      pago_recibido: fd.get("pago_recibido") === "on",
+      modo,
+    };
+
+    startTransition(async () => {
+      try {
+        const res = await Promise.race([
+          altaCliente({}, fd),
+          new Promise<never>((_, rej) =>
+            setTimeout(() => rej(new Error("timeout")), TIMEOUT_MS),
+          ),
+        ]);
+        setState(res);
+        if (res.alta) form.reset();
+      } catch {
+        // Supabase no respondió: guardamos el alta para crearla al reconectar.
+        encolar("alta_cliente", payload);
+        setState({ encolado: true });
+        form.reset();
+      }
+    });
+  };
 
   return (
-    <form action={formAction} className="stagger grid sm:grid-cols-2 gap-4">
+    <form
+      ref={formRef}
+      onSubmit={onSubmit}
+      className="stagger grid sm:grid-cols-2 gap-4"
+    >
       <Field label="Nombre y apellido" name="nombre" required />
       <Field label="DNI" name="dni" inputMode="numeric" required />
       <Field label="Teléfono" name="telefono" inputMode="tel" />
@@ -85,6 +132,12 @@ export function AltaForm({
         </Button>
         {state.error ? (
           <p className="w-full text-sm text-danger">{state.error}</p>
+        ) : null}
+        {state.encolado ? (
+          <p className="w-full text-sm text-warn">
+            Alta guardada sin conexión. Se crea sola cuando vuelva el servidor —
+            no repitas la carga.
+          </p>
         ) : null}
         {state.ok ? (
           <p className="w-full text-sm text-ok">{state.ok}</p>

@@ -4,6 +4,7 @@ import { parseTema, temaToVars } from "@/lib/tema";
 import { PanelSidebar, PanelTopbar, PanelBottomNav } from "./panel-nav";
 import { Tutorial } from "@/components/tutorial/tutorial";
 import { ImpersonationBanner } from "@/components/impersonation/banner";
+import { OfflineProvider } from "@/components/offline/provider";
 
 export default async function PanelLayout({
   children,
@@ -32,6 +33,7 @@ export default async function PanelLayout({
       <div className="md:col-span-2">
         <ImpersonationBanner />
       </div>
+      <OfflineProvider />
 
       <PanelSidebar
         nombre={gym?.nombre}

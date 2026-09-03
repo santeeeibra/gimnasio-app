@@ -1,18 +1,23 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useRef, useState, useTransition } from "react";
 import { marcarIngreso, type CheckinState } from "./actions";
 import { Button } from "@/components/ui";
 import { SalirModoCheckin } from "./salir-form";
+import { encolar } from "@/lib/offline/cola";
 
-const TONO: Record<
-  NonNullable<CheckinState["estado"]>,
-  { rail: string; kicker: string; texto: string }
-> = {
+type Tono = "ok" | "prueba_vencida" | "no_encontrado" | "encolado";
+
+const TONO: Record<Tono, { rail: string; kicker: string; texto: string }> = {
   ok: {
     rail: "border-l-ok",
     kicker: "text-ok",
     texto: "Ingreso registrado",
+  },
+  encolado: {
+    rail: "border-l-warn",
+    kicker: "text-warn",
+    texto: "Ingreso guardado — se sincroniza al volver la conexión",
   },
   prueba_vencida: {
     rail: "border-l-danger",
@@ -26,25 +31,59 @@ const TONO: Record<
   },
 };
 
+const TIMEOUT_MS = 8_000;
+
 export function CheckinForm() {
-  const [state, formAction, pending] = useActionState<CheckinState, FormData>(
-    marcarIngreso,
-    {},
-  );
+  const [pending, startTransition] = useTransition();
+  const [state, setState] = useState<CheckinState & { encolado?: boolean }>({});
   const formRef = useRef<HTMLFormElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Tras cada resultado: limpiar y volver el foco al input para el próximo.
-  useEffect(() => {
-    if (!state.estado && !state.error) return;
+  const limpiar = () => {
     formRef.current?.reset();
     inputRef.current?.focus();
-    if (!state.estado) return;
-    const t = setTimeout(() => window.location.reload(), 6000);
-    return () => clearTimeout(t);
-  }, [state]);
+  };
 
-  const tono = state.estado ? TONO[state.estado] : null;
+  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const dni = (inputRef.current?.value ?? "").replace(/\D/g, "").trim();
+    if (!dni) {
+      setState({ error: "Escribí un DNI." });
+      return;
+    }
+
+    startTransition(async () => {
+      const fd = new FormData();
+      fd.set("dni", dni);
+      try {
+        const res = await Promise.race([
+          marcarIngreso({}, fd),
+          new Promise<never>((_, rej) =>
+            setTimeout(() => rej(new Error("timeout")), TIMEOUT_MS),
+          ),
+        ]);
+        if (res.error) {
+          // Error de servidor real: encolamos para no perder el ingreso.
+          encolar("checkin", { dni });
+          setState({ encolado: true });
+        } else {
+          setState(res);
+        }
+      } catch {
+        // Sin respuesta (Supabase caído / sin red): a la cola.
+        encolar("checkin", { dni });
+        setState({ encolado: true });
+      } finally {
+        limpiar();
+        setTimeout(() => window.location.reload(), 6000);
+      }
+    });
+  };
+
+  const tonoKey: Tono | null = state.encolado
+    ? "encolado"
+    : state.estado ?? null;
+  const tono = tonoKey ? TONO[tonoKey] : null;
 
   return (
     <div className="w-full max-w-md">
@@ -53,7 +92,7 @@ export function CheckinForm() {
         Escribí tu DNI y tocá el botón.
       </p>
 
-      <form ref={formRef} action={formAction} className="mt-6">
+      <form ref={formRef} onSubmit={onSubmit} className="mt-6">
         <label className="block">
           <span className="sr-only">DNI</span>
           <input

@@ -28,6 +28,7 @@
 | Memoria de progreso (peso/reps por sesión) | tabla `registro_progreso` (no creada) | 🔲 sin spec armado — retención 6 meses obligatoria |
 | Push web nativo (VAPID) | — | ✅ código completo — **falta manual: VAPID keys, iconos, deploy** |
 | Cron `recalcular_estado_cuota()` | — | 🔲 sin empezar |
+| Fallback offline ante caída de Supabase | `src/lib/offline/*` (`conexion.tsx`, `cola.ts`, `cache.ts`, `handlers.ts`), `src/components/offline/*` (`provider.tsx`, `banner.tsx`, `conflictos.tsx`, `cache-al-vuelo.tsx`), `error.tsx` en `mi/` y `panel/clientes/`, wiring en los 3 layouts + `checkin-form.tsx` + `alta-form.tsx` | ✅ código + typecheck + smoke test (2026-09-03). Sin migración. Spec `SPEC_OFFLINE_FALLBACK.md` |
 | GIFs de ejercicios (wger.de / exercise-library) | `scripts/seed-ejercicios.mjs` | ❌ descartado — se mantiene `imagen_url` de free-exercise-db |
 
 ## Specs (`SPEC_*.md`) — quién los tiene que ejecutar

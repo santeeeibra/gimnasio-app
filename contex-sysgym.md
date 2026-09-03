@@ -258,6 +258,49 @@ usarlo para altas masivas).
   `node scripts/seed-superadmin.mjs` y poner el `SUPERADMIN_ID` que imprime en
   `.env.local` y en Vercel (redeploy).
 
+### Fallback offline ante caída de Supabase (SPEC `SPEC_OFFLINE_FALLBACK.md`, 2026-09-03)
+
+Supabase ya tuvo caídas confirmadas. El dueño necesita seguir operando lo
+crítico desde el celu aunque el server no responda. **Capa 100% cliente**: no
+toca RLS, `motor.ts`, `generar.ts` ni el esquema — **sin migración**. El log de
+conflictos vive en `localStorage`.
+
+- **Decisión de arquitectura**: los 3 flujos son Server Actions con
+  `service_role`, no se pueden mover al navegador. La cola offline **no habla con
+  Supabase directo**: guarda el `payload` en `localStorage` y **reinvoca la misma
+  Server Action** al reconectar. El conflicto de DNI se detecta con el error que
+  `altaCliente` ya devuelve. Prioridad: no perder ítems — sólo salen de la cola
+  ante `ok` confirmado.
+- **`src/lib/offline/conexion.tsx`**: `ConexionProvider` + `useConexionSupabase()`.
+  Ping a `${SUPABASE_URL}/auth/v1/health` cada 20 s (timeout 7 s); 2 fallos
+  seguidos → `desconectado`; escucha `online`/`offline`/`visibilitychange`.
+- **`src/lib/offline/cola.ts`**: cola genérica en `localStorage` key
+  `gym.cola.v1` (`ItemCola = {id, tipo, payload, timestamp, intentos, estado}`).
+  `encolar` / `leerCola` / `quitar` / `marcarConflicto` / `descartar` /
+  `suscribir` / `procesarCola`. Backoff exponencial `30 s · 2^intentos` (techo
+  5 min). `procesarCola` corta el barrido al primer `reintentar` (no bombardea).
+- **`src/lib/offline/handlers.ts`**: `HANDLERS` por `tipo` (`checkin`,
+  `alta_cliente`). Envuelven la Server Action en timeout de 8 s. `alta_cliente`
+  con error "Ya existe un cliente con ese DNI" → `conflicto` (no se pisa nada).
+- **`src/lib/offline/cache.ts`**: `guardarCache` / `leerCache` / `haceCuanto`
+  para la última copia de estado de cuota (key `gym.cache.v1.<clave>`).
+- **`src/components/offline/`**: `provider.tsx` (`OfflineProvider` = detector +
+  banner + `AutoFlush` que drena la cola al reconectar), `banner.tsx` (barra
+  fija arriba no bloqueante, chip "N pendientes" + "Sincronizar ahora",
+  "Conexión restablecida" se autodescarta a 4 s, respeta
+  `prefers-reduced-motion`), `conflictos.tsx` (card de altas en conflicto con
+  "Descartar", sin automerge), `cache-al-vuelo.tsx` (persiste la data ya servida
+  por el RSC).
+- **`error.tsx`** en `src/app/mi/` y `src/app/panel/clientes/`: si el RSC falla
+  por Supabase caído, muestran la copia cacheada + "actualizado hace X" +
+  Reintentar, en vez de la pantalla de error de Next.
+- **Wiring**: `<OfflineProvider />` en `checkin/layout.tsx`, `panel/layout.tsx`,
+  `mi/layout.tsx`. `checkin-form.tsx` y `alta-form.tsx` pasaron a submit manual
+  con timeout: si la action no responde → `encolar(...)` + estado optimista.
+  `mi/page.tsx` y `panel/clientes/page.tsx` montan `<CacheAlVuelo>`.
+- **Fuera de alcance**: realtime multi-dispositivo, automerge de conflictos,
+  mensajería/rutinas offline.
+
 ## Modelo de datos
 
 `gimnasios` (+ `tema` jsonb, `logo_url` text nullable, `pin_ingresos` text
@@ -292,6 +335,7 @@ SECURITY DEFINER (`soy_destinatario`, `mensaje_gimnasio`, `mensaje_remitente`,
 | Ingresos — pagos por mes protegidos por PIN (Cline) | ✅ código (2026-09-02). **Falta aplicar `0008_pin_ingresos.sql`** (bug "No se encontró el gimnasio" hasta entonces). |
 | Monitor de uso de Supabase (`SPEC_MONITOR_SUPABASE.md`) | ✅ código + migración `0011_monitor_db.sql` (panel `/admin` + cron, aviso al admin de la plataforma al acercarse al límite del plan free). |
 | Gestor de morosidad — aviso automático de vencimiento (`SPEC_GESTOR_MOROSIDAD.md`) | ✅ código + typecheck (`tsc --noEmit` limpio). Migración `0012_gestor_morosidad.sql`, server action `actualizarDiasAvisoMorosidad` + card en `/panel/ajustes`, 3ª vía en el cron de cuotas, reset en `registrarPago`. **Falta aplicar `0012` y probar end-to-end.** Ver "Gestor de morosidad" en Decisiones de producto. |
+| Fallback offline ante caída de Supabase (`SPEC_OFFLINE_FALLBACK.md`) | ✅ código + typecheck + smoke test (2026-09-03). **Sin migración, no toca RLS / `motor.ts` / `generar.ts`.** Capa 100% cliente. Ver "Fallback offline" en Decisiones de producto. |
 
 ### Datos de prueba
 - Dueño: gimnasio `migym`, DNI `30111222`
@@ -420,8 +464,15 @@ Pendiente, prioridad sugerida:
    prueba", 2º ingreso en `/checkin` → push + badge, convertir con pago → badge
    se apaga. RLS: un dueño no ve/inserta `registros_entrada` de otro gimnasio.
 1c. **Panel: editar cliente ya creado** (nombre / DNI / contraseña / sexo) —
-   chip de tarea creado. Ojo: DNI → email de login (`dniAEmail`), contraseña vía
-   `admin.auth.admin.updateUserById`.
+   ✅ código (2026-09-03). Acción `editarCliente` en `panel/clientes/actions.ts`
+   + componente `panel/clientes/[id]/editar-datos.tsx` (`<details>` "Editar datos
+   del socio" dentro del panel Acceso). DNI cambia → actualiza `profiles.dni` y
+   el email de auth (`dniAEmail`), con chequeo de choque en el gimnasio y
+   rollback si `updateUserById` falla; contraseña opcional → `updateUserById` +
+   `debe_cambiar_clave = true`; sexo → `clientes.sexo`. Typecheck limpio.
+   **Falta probar end-to-end**: bloqueado hasta aplicar las migraciones
+   `0006`–`0019` (`/panel/clientes/[id]` hoy da 404 porque su query pide
+   `sexo` / `en_prueba` / `acceso_habilitado`).
 2. **Cerrar Entregable 3 — manual**: generar VAPID keys + `CRON_SECRET` → `.env.local` y Vercel, agregar iconos PNG (`icon-192.png`, `icon-512.png`, `badge-72.png`) a `public/`, probar suscripción + envío real en navegador con permiso, deploy a Vercel.
 3. **Entregable 5 — Cron `recalcular_estado_cuota()`**: falta implementar (actualmente se calcula on-demand).
 4. Rediseño UI: seguir con `/panel` (dashboard).

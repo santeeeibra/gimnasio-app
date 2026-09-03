@@ -7,6 +7,7 @@ import { VerTutorialDeNuevo } from "@/components/tutorial/tutorial";
 import { AnilloProgreso } from "@/components/anillo-progreso";
 import { RachaConstancia } from "@/components/mi/racha-constancia";
 import { DatosTransferencia } from "@/components/mi/datos-transferencia";
+import { CacheAlVuelo } from "@/components/offline/cache-al-vuelo";
 
 export default async function MiPage() {
   const profile = await requireProfile();
@@ -72,6 +73,16 @@ export default async function MiPage() {
 
   return (
     <main className="stagger max-w-md mx-auto p-6 space-y-6">
+      <CacheAlVuelo
+        clave="cuota:mi"
+        data={{
+          nombre: profile.nombre,
+          estado,
+          dias,
+          plan: c?.plan?.nombre ?? null,
+          fechaVencimiento: c?.fecha_vencimiento ?? null,
+        }}
+      />
       {soloLectura && (
         <div className="rounded-lg border-2 border-danger bg-danger/10 p-4">
           <h2 className="mb-2 text-base font-semibold text-danger">
