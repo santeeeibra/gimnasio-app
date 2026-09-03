@@ -44,6 +44,44 @@ usarlo para altas masivas).
 - Flag `debe_cambiar_clave` fuerza cambio en el primer login.
 - Cada gimnasio = cuenta independiente (sin arrastre entre gimnasios).
 
+#### Alta de un gimnasio nuevo (onboarding de un dueño) — SIEMPRE así
+
+No hay pantalla de auto-registro. El alta la corre **el humano desde su máquina**,
+en la raíz del repo, contra la Supabase de producción. **No hace falta deployar
+nada** para dar de alta un gym.
+
+```bash
+node scripts/seed.mjs "Nombre del Gimnasio" slug 30111222 "Nombre del Dueño" email-recuperacion@mail.com
+```
+
+- 4 args obligatorios: nombre del gym, `slug`, DNI del dueño, nombre del dueño.
+  5º opcional: email de recuperación del dueño (`profiles.email_recuperacion`).
+- El `slug` es el identificador del gym en el login: único, minúsculas, sin
+  espacios.
+- Qué hace `scripts/seed.mjs`: inserta en `gimnasios` (nombre + slug); crea el
+  usuario de auth con email sintético `dni@<slug>.gym.local` y clave inicial
+  `gym` + últimos 4 dígitos del DNI (`email_confirm: true`); inserta `profiles`
+  con `rol = "dueno"` y `debe_cambiar_clave = true`. Imprime el login al final.
+- Requisitos: `.env.local` con `NEXT_PUBLIC_SUPABASE_URL` y
+  `SUPABASE_SERVICE_ROLE_KEY` (el script lo lee solo).
+- Después el dueño entra a **la misma URL de la app** con gimnasio `slug` + DNI +
+  clave inicial → lo obliga a cambiar la clave → desde `/panel` carga sus planes,
+  socios, tema, logo, etc.
+- Follow-up posible (no hecho): mover esto a una pantalla en `/admin` para no
+  depender de la máquina local. Hoy el script es la única vía.
+
+#### Cómo llegan las actualizaciones a los clientes
+
+App web (Next.js en Vercel), URL única y fija (el ícono de pantalla de inicio
+apunta a esa misma URL). Repo de GitHub conectado a Vercel ⇒ cada `git push` a
+`main` = build + deploy automático; el cliente ve la versión nueva en la
+siguiente carga, sin link nuevo ni acción de su parte. `public/sw.js` no cachea
+la app (solo push) + `skipWaiting()`/`clients.claim()` ⇒ sin "versión pegada".
+**Lo único NO automático: las migraciones SQL** — si una actualización necesita
+una columna nueva, correrla en Supabase (SQL Editor o
+`scripts/aplicar-migraciones.mjs`) antes/junto con el push, o el código nuevo
+rompe para todos.
+
 ### Recuperación de contraseña — flujo asistido (2026-09-03)
 
 Como el email de login es sintético (`dni@<slug>.gym.local`, no existe), no se
