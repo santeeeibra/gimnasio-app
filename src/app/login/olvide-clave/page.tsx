@@ -31,8 +31,9 @@ export default function OlvideClavePage() {
           className="max-w-md mx-auto space-y-5 animate-fade-in"
         >
           <p className="text-[13px] text-ink-soft leading-relaxed">
-            Poné el gimnasio, tu DNI y el email que dejaste como contacto. Si
-            coinciden, te mandamos un enlace para elegir una contraseña nueva.
+            Poné el gimnasio y tu DNI. Si sos socio, avisamos a tu gimnasio para
+            que te regenere la contraseña en el momento. Si sos el dueño,
+            avisamos a soporte.
           </p>
 
           <label className="block">
@@ -63,14 +64,14 @@ export default function OlvideClavePage() {
 
           <label className="block">
             <span className="block text-[13px] font-medium text-ink-soft mb-2">
-              Email de contacto
+              Email de contacto{" "}
+              <span className="text-ink-soft/50">(si dejaste uno)</span>
             </span>
             <input
               name="email"
               type="email"
               autoComplete="email"
               placeholder="vos@email.com"
-              required
               className="w-full h-12 px-4 rounded-lg border border-rule bg-paper-2 text-[16px] outline-none focus:border-ink focus:bg-paper"
             />
           </label>
@@ -95,7 +96,7 @@ export default function OlvideClavePage() {
             className="w-full h-12 text-base font-semibold"
             loading={pending}
           >
-            {pending ? "Enviando…" : "Enviarme el enlace"}
+            {pending ? "Enviando…" : "Recuperar mi acceso"}
           </Button>
 
           <p className="text-center text-[13px]">
