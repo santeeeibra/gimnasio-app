@@ -2,6 +2,7 @@ import "server-only";
 
 import webpush from "web-push";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { registrarError } from "@/lib/admin/errores";
 
 let configurado = false;
 
@@ -36,33 +37,47 @@ export async function enviarPush(
   if (ids.length === 0) return;
   if (!configurar()) return;
 
-  const supabase = createAdminClient();
-  const { data: subs, error } = await supabase
-    .from("push_subscriptions")
-    .select("endpoint, p256dh, auth")
-    .in("profile_id", ids);
+  try {
+    const supabase = createAdminClient();
+    const { data: subs, error } = await supabase
+      .from("push_subscriptions")
+      .select("endpoint, p256dh, auth")
+      .in("profile_id", ids);
 
-  if (error || !subs?.length) return;
+    if (error) {
+      await registrarError(null, "push", error);
+      return;
+    }
+    if (!subs?.length) return;
 
-  const body = JSON.stringify(payload);
-  const muertas: string[] = [];
+    const body = JSON.stringify(payload);
+    const muertas: string[] = [];
 
-  await Promise.allSettled(
-    subs.map(async (s: { endpoint: string; p256dh: string; auth: string }) => {
-      try {
-        await webpush.sendNotification(
-          { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
-          body,
-        );
-      } catch (err: unknown) {
-        const code = (err as { statusCode?: number })?.statusCode;
-        if (code === 404 || code === 410) muertas.push(s.endpoint);
-        else console.error("[push] sendNotification", code, err);
-      }
-    }),
-  );
+    await Promise.allSettled(
+      subs.map(
+        async (s: { endpoint: string; p256dh: string; auth: string }) => {
+          try {
+            await webpush.sendNotification(
+              { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
+              body,
+            );
+          } catch (err: unknown) {
+            const code = (err as { statusCode?: number })?.statusCode;
+            if (code === 404 || code === 410) muertas.push(s.endpoint);
+            else {
+              console.error("[push] sendNotification", code, err);
+              await registrarError(null, "push", err);
+            }
+          }
+        },
+      ),
+    );
 
-  if (muertas.length) {
-    await supabase.from("push_subscriptions").delete().in("endpoint", muertas);
+    if (muertas.length) {
+      await supabase.from("push_subscriptions").delete().in("endpoint", muertas);
+    }
+  } catch (err) {
+    // Contrato: enviarPush no lanza. Sólo registramos para el semáforo.
+    await registrarError(null, "push", err);
   }
 }

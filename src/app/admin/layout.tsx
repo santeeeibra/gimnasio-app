@@ -12,6 +12,7 @@ import { linkClasses } from "@/components/ui";
 const NAV = [
   { href: "/admin", label: "Monitor" },
   { href: "/admin/gimnasios", label: "Gimnasios" },
+  { href: "/admin/errores", label: "Errores" },
   { href: "/admin/planes", label: "Planes" },
   { href: "/admin/push-prueba", label: "Push de prueba" },
 ];

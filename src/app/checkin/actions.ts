@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { requireDueno, dniAEmail } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { enviarPush } from "@/lib/push/enviar";
+import { registrarError } from "@/lib/admin/errores";
 
 export type CheckinState = {
   estado?: "ok" | "prueba_vencida" | "no_encontrado";
@@ -25,6 +26,19 @@ export async function marcarIngreso(
 
   if (!dni) return { error: "Escribí un DNI." };
 
+  try {
+    return await marcarIngresoInterno(dueno, dni);
+  } catch (err) {
+    // Log para el semáforo de /admin; el flujo sigue igual (se propaga).
+    await registrarError(dueno.gimnasio_id, "checkin", err);
+    throw err;
+  }
+}
+
+async function marcarIngresoInterno(
+  dueno: Awaited<ReturnType<typeof requireDueno>>,
+  dni: string,
+): Promise<CheckinState> {
   const supabase = await createClient();
 
   const { data: perfil } = await supabase
