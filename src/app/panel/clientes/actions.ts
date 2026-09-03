@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generarYGuardar } from "@/lib/rutina/generar";
 import { cupoSocios } from "@/lib/plataforma/cupo";
+import { registrarError } from "@/lib/admin/errores";
 import {
   ENFASIS,
   MAX_ENFASIS,
@@ -46,6 +47,19 @@ export async function altaCliente(
   formData: FormData,
 ): Promise<AltaState> {
   const dueno = await requireDueno();
+  try {
+    return await altaClienteInterno(dueno, formData);
+  } catch (err) {
+    // Log para el semáforo de /admin; el error se sigue propagando igual.
+    await registrarError(dueno.gimnasio_id, "alta_cliente", err);
+    throw err;
+  }
+}
+
+async function altaClienteInterno(
+  dueno: Awaited<ReturnType<typeof requireDueno>>,
+  formData: FormData,
+): Promise<AltaState> {
   const nombre = String(formData.get("nombre") ?? "").trim();
   const dni = String(formData.get("dni") ?? "").trim();
   const telefono = String(formData.get("telefono") ?? "").trim() || null;
@@ -100,13 +114,14 @@ export async function altaCliente(
   });
   if (profErr) {
     await admin.auth.admin.deleteUser(created.user.id);
+    await registrarError(dueno.gimnasio_id, "alta_cliente", profErr);
     return { error: "No se pudo crear el cliente." };
   }
 
   // El alta no registra pago: el socio queda con el plan asignado (si se
   // eligió), cuota vencida y sin fechas hasta que el dueño registre el primer
   // pago desde la ficha del socio. El acceso a la app queda habilitado igual.
-  await admin.from("clientes").insert({
+  const { error: cliErr } = await admin.from("clientes").insert({
     gimnasio_id: dueno.gimnasio_id,
     profile_id: created.user.id,
     plan_id: planId,
@@ -120,6 +135,9 @@ export async function altaCliente(
       ? new Date().toISOString().slice(0, 10)
       : null,
   });
+  if (cliErr) {
+    await registrarError(dueno.gimnasio_id, "alta_cliente", cliErr);
+  }
 
   revalidatePath("/panel/clientes");
   revalidatePath("/panel");
@@ -146,6 +164,18 @@ export async function registrarPago(
   formData: FormData,
 ): Promise<{ error?: string; ok?: string }> {
   const dueno = await requireDueno();
+  try {
+    return await registrarPagoInterno(dueno, formData);
+  } catch (err) {
+    await registrarError(dueno.gimnasio_id, "pago", err);
+    throw err;
+  }
+}
+
+async function registrarPagoInterno(
+  dueno: Awaited<ReturnType<typeof requireDueno>>,
+  formData: FormData,
+): Promise<{ error?: string; ok?: string }> {
   const clienteId = String(formData.get("cliente_id") ?? "");
   const monto = Number(formData.get("monto") ?? 0);
   const planId = String(formData.get("plan_id") ?? "") || null;
@@ -172,7 +202,7 @@ export async function registrarPago(
       : new Date();
   const cubreHasta = sumarDias(base, plan.duracion_dias);
 
-  await admin.from("pagos").insert({
+  const { error: pagoErr } = await admin.from("pagos").insert({
     gimnasio_id: dueno.gimnasio_id,
     cliente_id: clienteId,
     plan_id: planId,
@@ -180,8 +210,11 @@ export async function registrarPago(
     cubre_hasta: cubreHasta,
     registrado_por: dueno.id,
   });
+  if (pagoErr) {
+    await registrarError(dueno.gimnasio_id, "pago", pagoErr);
+  }
 
-  await admin
+  const { error: updErr } = await admin
     .from("clientes")
     .update({
       plan_id: planId,
@@ -192,6 +225,9 @@ export async function registrarPago(
       ultimo_aviso_morosidad_enviado_en: null,
     })
     .eq("id", clienteId);
+  if (updErr) {
+    await registrarError(dueno.gimnasio_id, "pago", updErr);
+  }
 
   revalidatePath(`/panel/clientes/${clienteId}`);
   revalidatePath("/panel/clientes");

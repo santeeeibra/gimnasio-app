@@ -6,10 +6,24 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { generarPlan } from "./motor";
 import { explicarGeneral, explicarPlan } from "./explicar";
 import type { Ejercicio, EntradaMotor } from "./tipos";
+import { registrarError } from "@/lib/admin/errores";
 
 type Resultado = { error?: string; ok?: string; rutinaId?: string };
 
 export async function generarYGuardar(
+  supabase: SupabaseClient,
+  opts: { gimnasioId: string; clienteId: string; entrada: EntradaMotor },
+): Promise<Resultado> {
+  try {
+    return await generarYGuardarInterno(supabase, opts);
+  } catch (err) {
+    // Log para el semáforo de /admin; el error se sigue propagando.
+    await registrarError(opts.gimnasioId, "rutina", err);
+    throw err;
+  }
+}
+
+async function generarYGuardarInterno(
   supabase: SupabaseClient,
   opts: { gimnasioId: string; clienteId: string; entrada: EntradaMotor },
 ): Promise<Resultado> {
@@ -20,7 +34,10 @@ export async function generarYGuardar(
     .select(
       "id, slug, nombre, grupo_muscular, patron, equipo, nivel, imagen_url, descripcion",
     );
-  if (ejErr) return { error: "No se pudieron leer los ejercicios." };
+  if (ejErr) {
+    await registrarError(gimnasioId, "rutina", ejErr);
+    return { error: "No se pudieron leer los ejercicios." };
+  }
   const ejercicios = (ejData ?? []) as Ejercicio[];
   if (ejercicios.length === 0) {
     return { error: "La base de ejercicios está vacía. Corré el seed de ejercicios." };
@@ -62,14 +79,20 @@ export async function generarYGuardar(
   if (existente?.id) {
     rutinaId = existente.id as string;
     const { error } = await supabase.from("rutinas").update(payload).eq("id", rutinaId);
-    if (error) return { error: "No se pudo actualizar la rutina." };
+    if (error) {
+      await registrarError(gimnasioId, "rutina", error);
+      return { error: "No se pudo actualizar la rutina." };
+    }
   } else {
     const { data, error } = await supabase
       .from("rutinas")
       .insert(payload)
       .select("id")
       .single();
-    if (error || !data) return { error: "No se pudo crear la rutina." };
+    if (error || !data) {
+      await registrarError(gimnasioId, "rutina", error ?? "insert sin data");
+      return { error: "No se pudo crear la rutina." };
+    }
     rutinaId = data.id as string;
   }
 
@@ -78,7 +101,10 @@ export async function generarYGuardar(
     .from("rutina_items")
     .delete()
     .eq("rutina_id", rutinaId);
-  if (delErr) return { error: "No se pudieron limpiar los ejercicios anteriores." };
+  if (delErr) {
+    await registrarError(gimnasioId, "rutina", delErr);
+    return { error: "No se pudieron limpiar los ejercicios anteriores." };
+  }
 
   const filas: Record<string, unknown>[] = [];
   plan.dias.forEach((dia, di) => {
@@ -100,7 +126,10 @@ export async function generarYGuardar(
 
   if (filas.length > 0) {
     const { error: insErr } = await supabase.from("rutina_items").insert(filas);
-    if (insErr) return { error: "No se pudieron guardar los ejercicios." };
+    if (insErr) {
+      await registrarError(gimnasioId, "rutina", insErr);
+      return { error: "No se pudieron guardar los ejercicios." };
+    }
   }
 
   return { ok: "Rutina generada.", rutinaId };
