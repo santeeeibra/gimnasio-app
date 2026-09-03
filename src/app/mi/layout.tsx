@@ -33,7 +33,7 @@ export default async function MiLayout({
   if (cli && cli.acceso_habilitado === false) {
     return (
       <div
-        className="flex min-h-screen items-center justify-center bg-paper p-6"
+        className="flex min-h-screen items-center justify-center bg-paper text-ink p-6"
         style={temaToVars(tema)}
         data-estilo-visual={tema.estiloVisual}
       >
@@ -50,7 +50,7 @@ export default async function MiLayout({
 
   return (
     <div
-      className="min-h-screen bg-paper"
+      className="min-h-screen bg-paper text-ink"
       style={temaToVars(tema)}
       data-estilo-visual={tema.estiloVisual}
     >
