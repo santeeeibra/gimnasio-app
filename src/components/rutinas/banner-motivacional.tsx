@@ -41,7 +41,7 @@ export function BannerMotivacional() {
   }, [mazo.length]);
 
   return (
-    <div className="rounded-[6px] border border-rule bg-paper-2 px-4 py-3">
+    <div className="rounded-[6px] border border-rule border-l-2 border-l-volt bg-paper-2 px-4 py-3">
       <p
         className={`text-sm text-ink-soft italic text-center transition-opacity duration-300 ${visible ? "opacity-100" : "opacity-0"}`}
       >

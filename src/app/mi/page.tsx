@@ -5,6 +5,7 @@ import { diasRestantes, estadoDesdeDias, ESTADO_LABEL } from "@/lib/cuota";
 import { ActivarNotificaciones } from "./activar-notificaciones";
 import { VerTutorialDeNuevo } from "@/components/tutorial/tutorial";
 import { AnilloProgreso } from "@/components/anillo-progreso";
+import { RachaConstancia } from "@/components/mi/racha-constancia";
 
 export default async function MiPage() {
   const profile = await requireProfile();
@@ -21,7 +22,7 @@ export default async function MiPage() {
 
   const { data } = await supabase
     .from("clientes")
-    .select("fecha_vencimiento, plan:planes(nombre, duracion_dias)")
+    .select("id, fecha_vencimiento, plan:planes(nombre, duracion_dias)")
     .eq("profile_id", profile.id)
     .maybeSingle();
 
@@ -32,6 +33,37 @@ export default async function MiPage() {
     .eq("leido", false);
 
   const c = data as any;
+
+  // Racha de constancia: 15 barras × 2 días = últimos 30 días. Defensivo: si
+  // `registros_entrada` no existe todavía o no hay visitas, no se renderiza.
+  let racha: { dias: boolean[]; total: number } | null = null;
+  if (c?.id) {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const desde = new Date(hoy);
+    desde.setDate(desde.getDate() - 29);
+    const { data: entradas, error: errEntradas } = await supabase
+      .from("registros_entrada")
+      .select("creado_en")
+      .eq("cliente_id", c.id)
+      .gte("creado_en", desde.toISOString());
+    if (!errEntradas && entradas && entradas.length > 0) {
+      const marcas = (entradas as { creado_en: string }[]).map((e) => {
+        const d = new Date(e.creado_en);
+        d.setHours(0, 0, 0, 0);
+        return d.getTime();
+      });
+      const N = 15;
+      const dias = Array.from({ length: N }, (_, i) => {
+        const fin = new Date(hoy);
+        fin.setDate(fin.getDate() - (N - 1 - i) * 2);
+        const ini = new Date(fin);
+        ini.setDate(ini.getDate() - 1);
+        return marcas.some((t) => t >= ini.getTime() && t <= fin.getTime());
+      });
+      racha = { dias, total: entradas.length };
+    }
+  }
   const dias = diasRestantes(c?.fecha_vencimiento ?? null);
   const estado = estadoDesdeDias(dias);
   const duracionTotal = c?.plan?.duracion_dias ?? 30; // fallback a 30 si no hay plan
@@ -108,11 +140,15 @@ export default async function MiPage() {
         </div>
       </div>
 
+      {racha ? (
+        <RachaConstancia dias={racha.dias} total={racha.total} />
+      ) : null}
+
       <ul className="card-cut overflow-hidden border border-rule bg-paper-2 divide-y divide-rule">
         <li>
           <a
             href="/mi/mensajes"
-            className="flex items-center gap-3 px-4 py-4 transition-colors duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper active:bg-paper"
+            className="group flex items-center gap-3 px-4 py-4 transition-colors duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper active:bg-paper"
           >
             <svg
               viewBox="0 0 24 24"
@@ -132,18 +168,20 @@ export default async function MiPage() {
               Mensajes del gimnasio
             </span>
             {noLeidos ? (
-              <span className="shrink-0 text-xs bg-volt text-volt-ink rounded-full px-2 py-0.5 font-medium">
+              <span className="animate-pop-in shrink-0 text-xs bg-volt text-volt-ink rounded-full px-2 py-0.5 font-medium">
                 {noLeidos} sin leer
               </span>
             ) : (
-              <span className="shrink-0 text-xs text-ink-soft">ver</span>
+              <span className="shrink-0 text-xs text-ink-soft transition-transform duration-150 [transition-timing-function:var(--ease-out)] group-active:translate-x-[3px]">
+                ver
+              </span>
             )}
           </a>
         </li>
         <li>
           <a
             href="/mi/rutina"
-            className="flex items-center gap-3 px-4 py-4 transition-colors duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper active:bg-paper"
+            className="group flex items-center gap-3 px-4 py-4 transition-colors duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper active:bg-paper"
           >
             <svg
               viewBox="0 0 24 24"
@@ -161,7 +199,9 @@ export default async function MiPage() {
               <path d="M2 9v6M22 9v6M4.5 8v8M19.5 8v8" />
             </svg>
             <span className="min-w-0 flex-1 text-sm font-medium">Tu rutina</span>
-            <span className="shrink-0 text-xs text-ink-soft">ver</span>
+            <span className="shrink-0 text-xs text-ink-soft transition-transform duration-150 [transition-timing-function:var(--ease-out)] group-active:translate-x-[3px]">
+              ver
+            </span>
           </a>
         </li>
       </ul>

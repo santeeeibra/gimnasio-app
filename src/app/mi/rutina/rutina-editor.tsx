@@ -244,9 +244,16 @@ export function RutinaEditor({
   mostrarTecnica?: boolean;
 }) {
   const [visor, setVisor] = useState<Ejercicio | null>(null);
+  const [activo, setActivo] = useState(dias[0]?.numero ?? 1);
+  const multi = dias.length > 1;
+  const visibles = multi ? dias.filter((d) => d.numero === activo) : dias;
   return (
-    <div className="stagger space-y-8">
-      {dias.map((dia) => {
+    <div className="space-y-6">
+      {multi ? (
+        <DiaTabs dias={dias} activo={activo} onSelect={setActivo} />
+      ) : null}
+      <div key={activo} className="stagger space-y-8">
+      {visibles.map((dia) => {
         const tiempoMin = Math.round(
           dia.items.reduce((a, it) => a + it.series * 2.2, 0),
         );
@@ -309,9 +316,57 @@ export function RutinaEditor({
           </section>
         );
       })}
+      </div>
       {visor ? (
         <VisorEjercicio ej={visor} onClose={() => setVisor(null)} />
       ) : null}
+    </div>
+  );
+}
+
+/** Segmented control de días: la pill activa se desliza entre segmentos
+ *  (movimiento en pantalla ⇒ --ease-in-out, REGLAS §8). */
+function DiaTabs({
+  dias,
+  activo,
+  onSelect,
+}: {
+  dias: DiaEditable[];
+  activo: number;
+  onSelect: (n: number) => void;
+}) {
+  const idx = Math.max(
+    0,
+    dias.findIndex((d) => d.numero === activo),
+  );
+  return (
+    <div className="relative flex rounded-[5px] border border-rule bg-paper-2 p-[3px]">
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-y-[3px] left-[3px] rounded-[4px] border border-rule bg-paper transition-transform duration-300 [transition-timing-function:var(--ease-in-out)]"
+        style={{
+          width: `calc((100% - 6px) / ${dias.length})`,
+          transform: `translateX(${idx * 100}%)`,
+        }}
+      />
+      {dias.map((d) => {
+        const on = d.numero === activo;
+        return (
+          <button
+            key={d.numero}
+            type="button"
+            onClick={() => onSelect(d.numero)}
+            aria-pressed={on}
+            className={`relative z-[1] flex-1 rounded-[4px] px-1 py-2 text-xs transition-colors duration-150 [transition-timing-function:var(--ease-out)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${
+              on ? "font-medium text-ink" : "text-ink-soft"
+            }`}
+          >
+            {/^d[ií]a\b/i.test(d.titulo) || d.titulo.length <= 12
+              ? d.titulo
+              : `Día ${d.numero}`}
+          </button>
+        );
+      })}
     </div>
   );
 }

@@ -77,7 +77,7 @@ export function ActivarNotificaciones() {
           <button
             onClick={activar}
             disabled={pending}
-            className="shrink-0 inline-flex items-center gap-2 h-9 px-3 text-sm font-medium rounded-[5px] bg-volt text-volt-ink transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20"
+            className="animate-cta-halo shrink-0 inline-flex items-center gap-2 h-9 px-3 text-sm font-medium rounded-[5px] bg-volt text-volt-ink transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20"
           >
             {pending ? spinner : null}
             Activar

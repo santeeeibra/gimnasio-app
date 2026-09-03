@@ -205,10 +205,92 @@ h3 {
   animation: spin-fast 600ms linear infinite;
 }
 
+/* ============================================================
+   Pase de vida — vista del cliente (/mi, /mi/rutina, /mi/mensajes).
+   Micro-interacciones one-shot + un flote ambiental. Solo tokens
+   (--volt / --rule), propiedades concretas, --ease-out para
+   entradas y --ease-in-out para movimiento. Ver REGLAS_UI_EMIL.md §8/§17.
+   ============================================================ */
+
+/* Anillo de progreso: se dibuja de vacío al valor al montar. */
+@keyframes ring-draw {
+  from {
+    stroke-dashoffset: var(--ring-circ);
+  }
+  to {
+    stroke-dashoffset: var(--ring-dash);
+  }
+}
+.ring-draw {
+  animation: ring-draw 900ms var(--ease-out) both;
+}
+
+/* Aparición con rebote corto: badges, tags "nuevo". */
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.animate-pop-in {
+  animation: pop-in 350ms var(--ease-out) both;
+}
+
+/* Barras de la racha de constancia: crecen desde la base. */
+@keyframes bar-grow {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+.animate-bar-grow {
+  transform-origin: bottom;
+  animation: bar-grow 520ms var(--ease-out) both;
+}
+
+/* Halo de un CTA: un único anillo que se expande y se apaga (sin blink). */
+@keyframes cta-halo {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--volt) 60%, transparent);
+  }
+  60% {
+    box-shadow: 0 0 0 10px color-mix(in srgb, var(--volt) 0%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+.animate-cta-halo {
+  animation: cta-halo 1400ms var(--ease-out) 300ms both;
+}
+
+/* Glifo del estado vacío: flote lento ambiental. */
+@keyframes float-soft {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+.animate-float-soft {
+  animation: float-soft 6s var(--ease-in-out) infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
+  }
+  .animate-float-soft {
+    animation: none !important;
   }
 }
 

@@ -49,7 +49,30 @@ export default async function MiBandejaPage() {
       </div>
 
       {items.length === 0 ? (
-        <p className="text-sm text-ink-soft">No tenés mensajes.</p>
+        <div className="card-cut flex flex-col items-center gap-3 border border-rule bg-paper-2 px-6 py-14 text-center">
+          <span
+            aria-hidden
+            className="animate-float-soft grid size-16 place-items-center rounded-full border border-rule bg-paper text-ink-soft"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="26"
+              height="26"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.7"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+          </span>
+          <p className="text-sm text-ink-soft">
+            No tenés mensajes todavía.
+            <br />
+            Cuando el gimnasio te escriba, aparece acá.
+          </p>
+        </div>
       ) : (
         <ul className="card-cut overflow-hidden border border-rule bg-paper-2 divide-y divide-rule">
           {items.map((i) => (
@@ -75,7 +98,14 @@ export default async function MiBandejaPage() {
                     ) : null}
                     {i.mensaje!.remitente?.nombre ?? "Gimnasio"} ·{" "}
                     {new Date(i.mensaje!.creado_at).toLocaleDateString()}
-                    {!i.leido ? " · nuevo" : ""}
+                    {!i.leido ? (
+                      <>
+                        {" · "}
+                        <span className="animate-pop-in inline-block rounded-full bg-volt px-1.5 py-px font-medium text-volt-ink">
+                          nuevo
+                        </span>
+                      </>
+                    ) : null}
                     {i.mensaje!.respondible ? " · podés responder" : ""}
                 </p>
               </Link>
