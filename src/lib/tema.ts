@@ -21,6 +21,25 @@ export type EstiloVisual =
   | "concreto"
   | "cancha";
 
+export type ReposoIntensidad = "sutil" | "normal" | "estatico";
+
+/**
+ * Pantalla de reposo (screensaver) del modo check-in / kiosko. Se anida en
+ * `gimnasios.tema` (jsonb) para no sumar una columna; `parseTema` le pone
+ * defaults si falta. El dueño la configura en `/panel/ajustes`.
+ */
+export type ReposoCheckin = {
+  activo: boolean;
+  /** Segundos de inactividad antes de entrar en reposo (15–600). */
+  segundos: number;
+  /** Texto grande en la pantalla de reposo (1–60 caracteres). */
+  mensaje: string;
+  mostrarReloj: boolean;
+  mostrarLogo: boolean;
+  /** Movimiento del fondo ambiental. `estatico` = sin animación. */
+  intensidad: ReposoIntensidad;
+};
+
 export type Tema = {
   paper: string; // fondo de la app        -> --paper
   paper2: string; // tarjetas / barras     -> --paper-2
@@ -43,6 +62,18 @@ export type Tema = {
   navegacionMovil: "bottom" | "sidebar" | "top";
   navegacionDesktop: "sidebar" | "top";
   densidad: "compact" | "comfortable" | "spacious";
+
+  // Pantalla de reposo del modo check-in (vive en el mismo jsonb).
+  reposoCheckin: ReposoCheckin;
+};
+
+export const DEFAULT_REPOSO_CHECKIN: ReposoCheckin = {
+  activo: true,
+  segundos: 60,
+  mensaje: "Tocá para registrar tu ingreso",
+  mostrarReloj: true,
+  mostrarLogo: true,
+  intensidad: "normal",
 };
 
 export const DEFAULT_TEMA: Tema = {
@@ -63,6 +94,7 @@ export const DEFAULT_TEMA: Tema = {
   navegacionMovil: "bottom",
   navegacionDesktop: "sidebar",
   densidad: "comfortable",
+  reposoCheckin: DEFAULT_REPOSO_CHECKIN,
 };
 
 const STACK = "ui-sans-serif, system-ui, sans-serif";
@@ -412,7 +444,32 @@ export function parseTema(raw: unknown): Tema {
   const densidad = ["compact", "comfortable", "spacious"].includes(t.densidad as string)
     ? (t.densidad as Tema["densidad"])
     : DEFAULT_TEMA.densidad;
-  
+
+  const rc = (t.reposoCheckin ?? {}) as Record<string, unknown>;
+  const reposoCheckin: ReposoCheckin = {
+    activo:
+      typeof rc.activo === "boolean" ? rc.activo : DEFAULT_REPOSO_CHECKIN.activo,
+    segundos:
+      typeof rc.segundos === "number" && rc.segundos >= 15 && rc.segundos <= 600
+        ? Math.round(rc.segundos)
+        : DEFAULT_REPOSO_CHECKIN.segundos,
+    mensaje:
+      typeof rc.mensaje === "string" && rc.mensaje.trim()
+        ? rc.mensaje.trim().slice(0, 60)
+        : DEFAULT_REPOSO_CHECKIN.mensaje,
+    mostrarReloj:
+      typeof rc.mostrarReloj === "boolean"
+        ? rc.mostrarReloj
+        : DEFAULT_REPOSO_CHECKIN.mostrarReloj,
+    mostrarLogo:
+      typeof rc.mostrarLogo === "boolean"
+        ? rc.mostrarLogo
+        : DEFAULT_REPOSO_CHECKIN.mostrarLogo,
+    intensidad: ["sutil", "normal", "estatico"].includes(rc.intensidad as string)
+      ? (rc.intensidad as ReposoIntensidad)
+      : DEFAULT_REPOSO_CHECKIN.intensidad,
+  };
+
   return {
     paper: hex(t.paper, DEFAULT_TEMA.paper),
     paper2: hex(t.paper2, DEFAULT_TEMA.paper2),
@@ -429,6 +486,7 @@ export function parseTema(raw: unknown): Tema {
     navegacionMovil,
     navegacionDesktop,
     densidad,
+    reposoCheckin,
   };
 }
 

@@ -7,6 +7,7 @@ import { cupoSocios } from "@/lib/plataforma/cupo";
 import { diasRestantes } from "@/lib/cuota";
 import { AjustesForm } from "./ajustes-form";
 import { AvisoMorosidadForm } from "./aviso-morosidad-form";
+import { ReposoCheckinForm } from "./reposo-checkin-form";
 import { DatosPagoForm } from "./datos-pago-form";
 import { VerTutorialDeNuevo } from "@/components/tutorial/tutorial";
 
@@ -132,6 +133,20 @@ export default async function AjustesPage() {
           <AvisoMorosidadForm
             gimnasioId={gym.id}
             diasAviso={gym.dias_aviso_morosidad ?? 5}
+          />
+        </div>
+      ) : null}
+
+      {gym ? (
+        <div className="card-cut card-cut-lg mt-6 border border-rule bg-paper-2 p-6">
+          <h2 className="text-lg mb-1">Pantalla de reposo del check-in</h2>
+          <p className="text-sm text-ink-soft mb-4">
+            Cuando nadie toca la pantalla de check-in por un rato, aparece un
+            fondo ambiental oscuro con la hora. Cualquier toque vuelve al DNI.
+          </p>
+          <ReposoCheckinForm
+            gimnasioId={gym.id}
+            reposo={parseTema(gym.tema).reposoCheckin}
           />
         </div>
       ) : null}

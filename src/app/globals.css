@@ -466,3 +466,125 @@ h3 {
     animation: none !important;
   }
 }
+
+/* ============================================================
+   Pantalla de reposo del modo check-in (kiosko).
+   Fondo oscuro fijo + glow --volt (identidad "Futurista"). Solo
+   transform/opacity. Config del dueño en /panel/ajustes. Respeta
+   prefers-reduced-motion y el modo "Estático" (sin capas --vivo/--gira
+   ni scan). Ver contex-sysgym.md y componente pantalla-reposo.tsx.
+   ============================================================ */
+.reposo-overlay {
+  opacity: 1;
+  transition: opacity 320ms var(--ease-out);
+}
+@starting-style {
+  .reposo-overlay {
+    opacity: 0;
+  }
+}
+
+.reposo-haze {
+  position: absolute;
+  width: 90vmax;
+  height: 90vmax;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(28px);
+  opacity: 0.26;
+  background: radial-gradient(
+    circle at center,
+    color-mix(in srgb, var(--volt) 55%, transparent) 0%,
+    transparent 66%
+  );
+}
+.reposo-haze--full {
+  opacity: 0.34;
+}
+.reposo-haze-a {
+  top: -30vmax;
+  left: -25vmax;
+  animation: reposo-drift-a 26s var(--ease-in-out) infinite;
+}
+.reposo-haze-b {
+  right: -32vmax;
+  bottom: -30vmax;
+  opacity: 0.2;
+  animation: reposo-drift-b 34s var(--ease-in-out) infinite;
+}
+@keyframes reposo-drift-a {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(6vmax, 4vmax, 0);
+  }
+}
+@keyframes reposo-drift-b {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(-5vmax, -6vmax, 0);
+  }
+}
+
+.reposo-scan {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  mix-blend-mode: screen;
+  background-image: repeating-linear-gradient(
+    0deg,
+    color-mix(in srgb, var(--volt) 8%, transparent) 0 1px,
+    transparent 1px 3px
+  );
+  animation: reposo-scan-move 8s linear infinite;
+}
+@keyframes reposo-scan-move {
+  to {
+    background-position: 0 120px;
+  }
+}
+
+.reposo-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    120% 120% at 50% 45%,
+    transparent 40%,
+    rgba(0, 0, 0, 0.55) 100%
+  );
+}
+
+.reposo-anillo {
+  display: block;
+}
+.reposo-anillo--vivo {
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--volt) 45%, transparent));
+}
+.reposo-anillo--gira {
+  transform-origin: 50% 50%;
+  animation: reposo-spin 12s linear infinite;
+}
+@keyframes reposo-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reposo-overlay {
+    transition: none;
+  }
+  .reposo-haze-a,
+  .reposo-haze-b,
+  .reposo-scan,
+  .reposo-anillo--gira {
+    animation: none !important;
+  }
+}

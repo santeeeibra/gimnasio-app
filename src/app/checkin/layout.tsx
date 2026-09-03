@@ -2,6 +2,7 @@ import { requireDueno } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { parseTema, temaToVars } from "@/lib/tema";
 import { OfflineProvider } from "@/components/offline/provider";
+import { PantallaReposo } from "@/components/checkin/pantalla-reposo";
 
 export default async function CheckinLayout({
   children,
@@ -25,6 +26,11 @@ export default async function CheckinLayout({
       data-estilo-visual={tema.estiloVisual}
     >
       <OfflineProvider />
+      <PantallaReposo
+        config={tema.reposoCheckin}
+        nombre={gym?.nombre ?? ""}
+        logoUrl={gym?.logo_url ?? null}
+      />
       <header className="flex items-center gap-2.5 border-b border-rule px-5 py-3">
         {gym?.logo_url ? (
           <span className="size-8 shrink-0 overflow-hidden rounded-[6px] border border-rule bg-paper-2">

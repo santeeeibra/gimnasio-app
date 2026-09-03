@@ -8,8 +8,10 @@ import {
   ESTILOS_VISUALES_KEYS,
   FUENTES,
   isHex,
+  parseTema,
   type EstiloVisual,
   type FuenteKey,
+  type ReposoCheckin,
   type Tema,
 } from "@/lib/tema";
 import { chequearBloqueos, chequearContraste } from "@/lib/contraste";
@@ -116,6 +118,72 @@ export async function actualizarDatosPago(
   return { ok: "Datos de transferencia guardados" };
 }
 
+/**
+ * Pantalla de reposo (screensaver) del modo check-in. Se guarda anidada en
+ * `gimnasios.tema.reposoCheckin`; el resto del tema queda intacto.
+ */
+export async function actualizarReposoCheckin(
+  _prev: AjustesState,
+  formData: FormData,
+): Promise<AjustesState> {
+  const dueno = await requireDueno();
+  const gimnasioId = String(formData.get("gimnasio_id") ?? "");
+
+  if (gimnasioId !== dueno.gimnasio_id) {
+    return { error: "No podés modificar este gimnasio" };
+  }
+
+  const segundos = Number(formData.get("segundos"));
+  if (!Number.isFinite(segundos) || segundos < 15 || segundos > 600) {
+    return { error: "El tiempo de reposo va entre 15 y 600 segundos." };
+  }
+
+  const mensaje = String(formData.get("mensaje") ?? "")
+    .trim()
+    .slice(0, 60);
+  if (!mensaje) {
+    return { error: "Escribí un mensaje para la pantalla de reposo." };
+  }
+
+  const intensidad = String(formData.get("intensidad") ?? "normal");
+  if (!["sutil", "normal", "estatico"].includes(intensidad)) {
+    return { error: "Intensidad inválida" };
+  }
+
+  const reposoCheckin: ReposoCheckin = {
+    activo: formData.get("activo") === "on",
+    segundos: Math.round(segundos),
+    mensaje,
+    mostrarReloj: formData.get("mostrarReloj") === "on",
+    mostrarLogo: formData.get("mostrarLogo") === "on",
+    intensidad: intensidad as ReposoCheckin["intensidad"],
+  };
+
+  const supabase = await createClient();
+  const { data: prevRow } = await supabase
+    .from("gimnasios")
+    .select("tema")
+    .eq("id", gimnasioId)
+    .single();
+
+  const tema = parseTema(prevRow?.tema);
+  tema.reposoCheckin = reposoCheckin;
+
+  const { error } = await supabase
+    .from("gimnasios")
+    .update({ tema })
+    .eq("id", gimnasioId);
+
+  if (error) {
+    console.error("[actualizarReposoCheckin]", error);
+    return { error: "No se pudo guardar la pantalla de reposo" };
+  }
+
+  revalidatePath("/panel/ajustes");
+  revalidatePath("/checkin", "layout");
+  return { ok: "Pantalla de reposo actualizada" };
+}
+
 export async function actualizarTema(
   _prev: AjustesState,
   formData: FormData,
@@ -201,6 +269,16 @@ export async function actualizarTema(
   }
 
   const supabase = await createClient();
+
+  // La pantalla de reposo del check-in vive en el mismo jsonb pero no la edita
+  // este form: la preservamos para no pisarla al guardar colores/tipografía.
+  const { data: prevRow } = await supabase
+    .from("gimnasios")
+    .select("tema")
+    .eq("id", gimnasioId)
+    .single();
+  tema.reposoCheckin = parseTema(prevRow?.tema).reposoCheckin;
+
   const { error } = await supabase
     .from("gimnasios")
     .update({ tema })

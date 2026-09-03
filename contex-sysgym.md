@@ -217,6 +217,32 @@ usarlo para altas masivas).
   liviana a propósito (alimenta "racha de constancia" a futuro; NO confundir con
   `registro_progreso` = series/pesos).
 
+### Check-in — pantalla de reposo / screensaver (2026-09-03)
+
+Tras X segundos sin toques, `/checkin` se cubre con un fondo ambiental oscuro
+(identidad "Futurista": acento `--volt`, hora en `--font-hero` / Orbitron,
+anillo decorativo, haze + scanline que sólo animan `transform`/`opacity`).
+Cualquier `pointerdown` / `keydown` / `touchstart` / `wheel` /
+`visibilitychange` la cierra y vuelve a enfocar el input de DNI.
+
+- **Config del dueño** en `/panel/ajustes` → card "Pantalla de reposo del
+  check-in": activar/desactivar, segundos de inactividad (15–600), mensaje
+  (≤60), mostrar reloj, mostrar logo, intensidad (`sutil` / `normal` /
+  `estatico`). `estatico` y `prefers-reduced-motion` → sin capas en movimiento.
+- **Sin migración**: se anida en `gimnasios.tema.reposoCheckin` (jsonb).
+  `parseTema()` le pone defaults si falta; `actualizarTema` la preserva al
+  guardar colores/tipografía; `actualizarReposoCheckin`
+  (`panel/ajustes/actions.ts`) hace merge sobre el resto del tema.
+- **Archivos**: `src/lib/tema.ts` (`ReposoCheckin`, `DEFAULT_REPOSO_CHECKIN`,
+  parseo), `src/components/checkin/pantalla-reposo.tsx` (detector de
+  inactividad + overlay), `.reposo-*` en `src/app/globals.css`,
+  `src/app/panel/ajustes/reposo-checkin-form.tsx`, wiring en
+  `src/app/checkin/layout.tsx`.
+- La card en `/panel/ajustes` sólo aparece cuando el `select` de la página
+  trae `gym` (hoy bloqueado por migraciones `0012`/`0019`, igual que "Aviso de
+  vencimiento" y "Datos para transferir"). El screensaver en sí funciona con
+  defaults aunque el dueño no lo haya configurado.
+
 ### Ingresos — sección de pagos protegida por PIN (Cline, 2026-09-02)
 
 - `/panel/ingresos` (link en `NAV` de `panel-nav.tsx`): lista los pagos del
@@ -415,6 +441,17 @@ SECURITY DEFINER (`soy_destinatario`, `mensaje_gimnasio`, `mensaje_remitente`,
 ## Cómo seguir (próxima sesión)
 
 Ya hecho (2026-09-03):
+- **Check-in — pantalla de reposo / screensaver configurable**: overlay ambiental
+  oscuro (identidad "Futurista": `--volt`, hora en Orbitron, anillo + haze +
+  scanline, sólo `transform`/`opacity`) tras N segundos sin toques en `/checkin`;
+  cualquier toque/tecla/rueda/`visibilitychange` lo cierra y re-enfoca el DNI.
+  Config del dueño en `/panel/ajustes` (activar, segundos 15–600, mensaje,
+  mostrar reloj/logo, intensidad sutil/normal/estático). Sin migración: anidado
+  en `gimnasios.tema.reposoCheckin`. Archivos:
+  `src/components/checkin/pantalla-reposo.tsx`, `.reposo-*` en `globals.css`,
+  `panel/ajustes/reposo-checkin-form.tsx` + `actualizarReposoCheckin`, wiring en
+  `checkin/layout.tsx`. Typecheck + verificado en browser ✅. Ver "Check-in —
+  pantalla de reposo" en Decisiones de producto.
 - **Fallback offline ante caída de Supabase** (SPEC `SPEC_OFFLINE_FALLBACK.md`):
   detector de conexión (`src/lib/offline/conexion.tsx`), cola persistente en
   `localStorage` (`cola.ts`) que reinvoca las Server Actions al reconectar,
