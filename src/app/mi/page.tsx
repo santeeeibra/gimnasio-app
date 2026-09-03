@@ -171,11 +171,11 @@ export default async function MiPage() {
         />
       ) : null}
 
-      <ul className="card-cut overflow-hidden border border-rule bg-paper-2 divide-y divide-rule">
+      <ul className="stagger-in card-cut overflow-hidden border border-rule bg-paper-2 divide-y divide-rule">
         <li>
           <Link
             href="/mi/mensajes"
-            className="group flex items-center gap-3 px-4 py-4 transition-colors duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper active:bg-paper"
+            className="group flex items-center gap-3 px-4 py-4 transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper active:bg-paper active:scale-[0.985]"
           >
             <svg
               viewBox="0 0 24 24"
@@ -187,7 +187,7 @@ export default async function MiPage() {
               strokeLinecap="round"
               strokeLinejoin="round"
               aria-hidden
-              className="shrink-0 text-ink-soft"
+              className="shrink-0 text-ink-soft transition-colors duration-150 [transition-timing-function:var(--ease-out)] group-active:text-ink"
             >
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             </svg>
@@ -208,7 +208,7 @@ export default async function MiPage() {
         <li>
           <Link
             href="/mi/rutina"
-            className="group flex items-center gap-3 px-4 py-4 transition-colors duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper active:bg-paper"
+            className="group flex items-center gap-3 px-4 py-4 transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper active:bg-paper active:scale-[0.985]"
           >
             <svg
               viewBox="0 0 24 24"
@@ -220,7 +220,7 @@ export default async function MiPage() {
               strokeLinecap="round"
               strokeLinejoin="round"
               aria-hidden
-              className="shrink-0 text-ink-soft"
+              className="shrink-0 text-ink-soft transition-colors duration-150 [transition-timing-function:var(--ease-out)] group-active:text-ink"
             >
               <path d="M6.5 6.5h11v11h-11z" />
               <path d="M2 9v6M22 9v6M4.5 8v8M19.5 8v8" />
@@ -234,7 +234,7 @@ export default async function MiPage() {
         <li>
           <Link
             href="/mi/pagos"
-            className="group flex items-center gap-3 px-4 py-4 transition-colors duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper active:bg-paper"
+            className="group flex items-center gap-3 px-4 py-4 transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper active:bg-paper active:scale-[0.985]"
           >
             <svg
               viewBox="0 0 24 24"
@@ -246,7 +246,7 @@ export default async function MiPage() {
               strokeLinecap="round"
               strokeLinejoin="round"
               aria-hidden
-              className="shrink-0 text-ink-soft"
+              className="shrink-0 text-ink-soft transition-colors duration-150 [transition-timing-function:var(--ease-out)] group-active:text-ink"
             >
               <rect x="2" y="5" width="20" height="14" rx="2" />
               <path d="M2 10h20" />

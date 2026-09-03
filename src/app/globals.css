@@ -214,6 +214,56 @@ h3 {
   transition-delay: 225ms;
 }
 
+/* Cascada de entrada para listas ANIDADAS (filas de ejercicios, hilos de
+   mensajes). `.stagger` de arriba usa transition + @starting-style y NO encadena
+   de forma fiable cuando el contenedor ya es hijo de otro `.stagger`; este usa
+   un keyframe one-shot (`both` deja el estado final fijo). Movimiento corto
+   (6px) para no chocar con `overflow-hidden` del `<ul>`. */
+@keyframes list-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.stagger-in > * {
+  animation: list-in 320ms var(--ease-out) both;
+}
+.stagger-in > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+.stagger-in > *:nth-child(2) {
+  animation-delay: 40ms;
+}
+.stagger-in > *:nth-child(3) {
+  animation-delay: 80ms;
+}
+.stagger-in > *:nth-child(4) {
+  animation-delay: 120ms;
+}
+.stagger-in > *:nth-child(5) {
+  animation-delay: 160ms;
+}
+.stagger-in > *:nth-child(6) {
+  animation-delay: 200ms;
+}
+.stagger-in > *:nth-child(7) {
+  animation-delay: 240ms;
+}
+.stagger-in > *:nth-child(8) {
+  animation-delay: 280ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  .stagger-in > * {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
 /* Firma visual: card con corte asimétrico en la esquina superior derecha.
    Reemplaza el border-radius en superficies destacadas (ver
    design/sysgym-10-pantallas.html). El clip-path recorta el borde sobre el
