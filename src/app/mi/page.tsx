@@ -87,7 +87,7 @@ export default async function MiPage() {
       />
       {soloLectura && (
         <div className="rounded-lg border-2 border-danger bg-danger/10 p-4">
-          <h2 className="mb-2 text-base font-semibold text-danger">
+          <h2 className="mb-2 text-lg font-display text-danger">
             Período de prueba finalizado
           </h2>
           <p className="text-sm text-ink">

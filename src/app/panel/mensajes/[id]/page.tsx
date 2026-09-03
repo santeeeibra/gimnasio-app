@@ -63,7 +63,7 @@ export default async function MensajeHiloPage({
       </div>
 
       <section>
-        <h2 className="text-sm font-medium mb-2">
+        <h2 className="text-lg mb-2">
           Destinatarios ({destinatarios.length})
         </h2>
         <ul className="card-cut overflow-hidden border border-rule divide-y divide-rule text-sm">
@@ -80,7 +80,7 @@ export default async function MensajeHiloPage({
 
       {msg.respondible ? (
         <section className="space-y-3">
-          <h2 className="text-sm font-medium">Conversación</h2>
+          <h2 className="text-lg mb-2">Conversación</h2>
           {respuestas.length === 0 ? (
             <p className="text-sm text-ink-soft">Sin respuestas todavía.</p>
           ) : (
@@ -98,7 +98,7 @@ export default async function MensajeHiloPage({
                   >
                     <p className="whitespace-pre-wrap">{r.cuerpo}</p>
                     <p
-                      className={`text-[10px] mt-1 ${
+                      className={`text-xs mt-1 ${
                         mio ? "text-paper/60" : "text-ink-soft"
                       }`}
                     >

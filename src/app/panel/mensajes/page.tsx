@@ -46,7 +46,7 @@ export default async function MensajesPage() {
 
   return (
     <div className="stagger space-y-8">
-      <h1 className="text-3xl">Mensajes</h1>
+      <h1 className="text-2xl">Mensajes</h1>
 
       <div className="card-cut card-cut-lg border border-rule bg-paper-2 p-5">
         <h2 className="text-lg mb-4">Nuevo mensaje</h2>

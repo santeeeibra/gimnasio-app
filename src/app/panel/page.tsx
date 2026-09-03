@@ -75,7 +75,7 @@ export default async function ResumenPage() {
     <div className="stagger">
       {soloLectura && (
         <div className="mb-6 rounded-lg border-2 border-danger bg-danger/10 p-4">
-          <h2 className="mb-2 text-lg font-semibold text-danger">
+          <h2 className="mb-2 text-lg font-display text-danger">
             Período de prueba finalizado
           </h2>
           <p className="mb-3 text-sm text-ink">
@@ -109,7 +109,7 @@ export default async function ResumenPage() {
       )}
 
       <div className="mb-8 flex items-baseline justify-between">
-        <span className="text-xs uppercase tracking-[0.18em] text-ink-soft">
+        <span className="text-[11px] uppercase tracking-[0.08em] text-ink-soft">
           Resumen
         </span>
         <Link

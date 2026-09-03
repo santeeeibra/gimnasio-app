@@ -23,7 +23,7 @@ export default async function PlanesPage() {
   return (
     <div className="stagger space-y-8">
       <div>
-        <h1 className="text-3xl">Planes de socios</h1>
+        <h1 className="text-2xl">Planes de socios</h1>
         <p className="mt-1 text-sm text-ink-soft">
           Los planes de membresía que les cobrás a tus socios. Para tu propio
           plan de la plataforma, andá a{" "}

@@ -23,7 +23,7 @@
 
 **Bloque "Legibilidad"** (estilo diagnóstico físico):
 - Separado con `border-t border-rule`, no tarjeta flotante
-- Kicker: `text-[11px] uppercase tracking-[0.12em] text-ink-soft`
+- Kicker: `text-[11px] uppercase tracking-[0.08em] text-ink-soft`
 - Cada fila muestra:
   - **Swatches visuales**: 2 cuadrados de 16px con los colores del par
   - **Label**: `text-sm text-ink flex-1 min-w-0 truncate`

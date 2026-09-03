@@ -477,6 +477,24 @@ SECURITY DEFINER (`soy_destinatario`, `mensaje_gimnasio`, `mensaje_remitente`,
 ## Cómo seguir (próxima sesión)
 
 Ya hecho (2026-09-03):
+- **Auditoría de tipografía Emil (vista cliente + dueño)**: barrido de textos que
+  no seguían `REGLAS_UI_EMIL.md` §2 (escala, pesos, kickers). Cambios (solo
+  `className`, `tsc --noEmit` limpio): (A1) todos los `<h1>` de `/panel/*` de
+  `text-3xl` (fuera de escala) → `text-2xl`, unificados con la vista cliente —
+  `clientes`, `clientes/[id]`, `mensajes`, `planes`, `ajustes`, `ingresos`,
+  `ingresos/configurar-pin`. (A2) banner "solo lectura" en `mi/page.tsx` y
+  `panel/page.tsx`: `font-semibold` → `font-display`, tamaño unificado `text-lg`.
+  (A3) kickers uppercase estandarizados a `tracking-[0.08em]` (había 0.12/0.18):
+  `panel/page.tsx` (+ `text-xs`→`text-[11px]`), `cliente-row.tsx`,
+  `ajustes-form.tsx` (8×), `logo-uploader.tsx`; `VALIDACION_CONTRASTE.md` L26
+  actualizado a 0.08em. (B) timestamps de hilo `text-[10px]`→`text-xs`
+  (`mi/mensajes/[id]`, `panel/mensajes/[id]`); visor de rutina kicker +`uppercase`
+  y título de ítem sin `font-medium` sobre `font-display` (`rutina-editor.tsx`);
+  `/panel/ingresos` total `text-3xl`→`text-2xl` y `<h2>` de mes sin `font-medium`;
+  sub-encabezados del hilo del dueño `text-sm font-medium`→`text-lg`. Sin tocar
+  color/paleta. Pendiente para otro pase: `text-white` hardcodeado en
+  `panel/page.tsx:86`, `font-semibold`/`text-[10px]` en los previews simulados de
+  tema, `border-border`/`rounded-lg` en `mi/rutina/page.tsx`.
 - **Check-in — pantalla de reposo / screensaver configurable**: overlay ambiental
   oscuro (identidad "Futurista": `--volt`, hora en Orbitron, anillo + haze +
   scanline, sólo `transform`/`opacity`) tras N segundos sin toques en `/checkin`;

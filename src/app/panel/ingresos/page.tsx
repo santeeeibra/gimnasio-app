@@ -22,7 +22,7 @@ export default async function IngresosPage() {
 
   return (
     <div>
-      <h1 className="text-3xl mb-6">Ingresos</h1>
+      <h1 className="text-2xl mb-6">Ingresos</h1>
       
       {/* Modal de verificación de PIN - se muestra en el cliente */}
       <VerificarPinModal />

@@ -88,7 +88,7 @@ export function LogoUploader({
   return (
     <div className="space-y-3">
       <div>
-        <span className="block text-[11px] uppercase tracking-[0.12em] text-ink-soft">
+        <span className="block text-[11px] uppercase tracking-[0.08em] text-ink-soft">
           Logo
         </span>
         <p className="mt-1 text-xs text-ink-soft">

@@ -25,7 +25,7 @@ export default async function ConfigurarPinPage() {
       >
         ← Volver a Ingresos
       </Link>
-      <h1 className="text-3xl mt-2 mb-6">
+      <h1 className="text-2xl mt-2 mb-6">
         {tienePinActual ? "Cambiar PIN de Ingresos" : "Configurar PIN de Ingresos"}
       </h1>
 

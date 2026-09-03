@@ -58,7 +58,7 @@ export default async function AjustesPage() {
 
   return (
     <div className="stagger">
-      <h1 className="text-3xl mb-2">Ajustes</h1>
+      <h1 className="text-2xl mb-2">Ajustes</h1>
       <p className="text-sm text-ink-soft mb-6">
         Tu plan, el aviso de vencimiento y el tema del gimnasio.
       </p>

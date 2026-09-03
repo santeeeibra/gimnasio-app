@@ -195,7 +195,7 @@ function VisorEjercicio({
           <div className="min-w-0">
             <h3 className="font-display text-lg leading-tight">{ej.nombre}</h3>
             {ej.grupo_muscular ? (
-              <span className="mt-0.5 inline-block text-[11px] tracking-[0.08em] text-ink-soft">
+              <span className="mt-0.5 inline-block text-[11px] uppercase tracking-[0.08em] text-ink-soft">
                 {GRUPO_MUSCULAR_LABEL[ej.grupo_muscular] ?? ej.grupo_muscular}
               </span>
             ) : null}
@@ -456,7 +456,7 @@ function ItemFila({
                 >
                   {String(indice).padStart(2, "0")}
                 </span>
-                <p className="min-w-0 font-display text-[15px] font-medium leading-tight text-ink">
+                <p className="min-w-0 font-display text-[15px] leading-tight text-ink">
                   {ej?.nombre ?? "Ejercicio"}
                 </p>
               </div>

@@ -74,7 +74,7 @@ export function ClienteRow({
           </p>
         </div>
         <div className="shrink-0 text-right">
-          <p className="text-[11px] uppercase tracking-[0.12em] text-ink-soft">
+          <p className="text-[11px] uppercase tracking-[0.08em] text-ink-soft">
             {kicker}
           </p>
           <p

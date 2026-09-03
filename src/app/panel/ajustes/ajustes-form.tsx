@@ -113,7 +113,7 @@ export function AjustesForm({
           {paletasLogo.length > 0 ? (
             <div className="space-y-3 border-t border-rule pt-4">
               <div>
-                <span className="block text-[11px] uppercase tracking-[0.12em] text-ink-soft">
+                <span className="block text-[11px] uppercase tracking-[0.08em] text-ink-soft">
                   Sugeridas por tu logo
                 </span>
                 <p className="mt-1 text-xs text-ink-soft">
@@ -137,7 +137,7 @@ export function AjustesForm({
         {/* Estilo visual: elección de cabecera, separada de los colores */}
         <div className="space-y-3">
           <div>
-            <span className="block text-[11px] uppercase tracking-[0.12em] text-ink-soft">
+            <span className="block text-[11px] uppercase tracking-[0.08em] text-ink-soft">
               Estilo visual
             </span>
             <p className="mt-1 text-xs text-ink-soft">
@@ -161,7 +161,7 @@ export function AjustesForm({
         {/* Paletas prearmadas: el camino de un solo tap */}
         <div className="space-y-3">
           <div>
-            <span className="block text-[11px] uppercase tracking-[0.12em] text-ink-soft">
+            <span className="block text-[11px] uppercase tracking-[0.08em] text-ink-soft">
               Paletas
             </span>
             <p className="mt-1 text-xs text-ink-soft">
@@ -216,7 +216,7 @@ export function AjustesForm({
           <div className={personalizarAbierto ? "mt-5 space-y-6" : "hidden"}>
             {/* Sección: Colores */}
             <Seccion titulo="Colores">
-              <span className="block text-[11px] uppercase tracking-[0.12em] text-ink-soft mb-3">
+              <span className="block text-[11px] uppercase tracking-[0.08em] text-ink-soft mb-3">
                 Base — los elegís vos
               </span>
               <div className="grid sm:grid-cols-2 gap-4">
@@ -236,7 +236,7 @@ export function AjustesForm({
 
               <div className="mt-5 border-t border-rule pt-4">
                 <div className="flex items-center justify-between gap-3 mb-1.5">
-                  <span className="text-[11px] uppercase tracking-[0.12em] text-ink-soft">
+                  <span className="text-[11px] uppercase tracking-[0.08em] text-ink-soft">
                     Derivados
                   </span>
                   <button
@@ -419,7 +419,7 @@ export function AjustesForm({
         {/* Bloqueos: no se pueden guardar */}
         {bloqueos.bloqueado ? (
           <div className="border-t border-rule pt-5">
-            <span className="block text-[11px] uppercase tracking-[0.12em] text-danger mb-3">
+            <span className="block text-[11px] uppercase tracking-[0.08em] text-danger mb-3">
               No se puede guardar
             </span>
             <ul className="space-y-1.5 animate-error">
@@ -435,7 +435,7 @@ export function AjustesForm({
         {/* Legibilidad */}
         {resultado.hayFallos ? (
           <div className="border-t border-rule pt-5">
-            <span className="block text-[11px] uppercase tracking-[0.12em] text-ink-soft mb-3">
+            <span className="block text-[11px] uppercase tracking-[0.08em] text-ink-soft mb-3">
               Legibilidad
             </span>
 
@@ -668,7 +668,7 @@ function Seccion({
 }) {
   return (
     <div className="space-y-4">
-      <span className="block text-[11px] uppercase tracking-[0.12em] text-ink-soft">
+      <span className="block text-[11px] uppercase tracking-[0.08em] text-ink-soft">
         {titulo}
       </span>
       {children}

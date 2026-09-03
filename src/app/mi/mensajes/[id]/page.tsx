@@ -94,7 +94,7 @@ export default async function MiHiloPage({
                   >
                     <p className="whitespace-pre-wrap">{r.cuerpo}</p>
                     <p
-                      className={`text-[10px] mt-1 ${
+                      className={`text-xs mt-1 ${
                         mio ? "text-paper/60" : "text-ink-soft"
                       }`}
                     >

@@ -119,7 +119,7 @@ export default async function ClienteDetallePage({
         >
           ← Clientes
         </Link>
-        <h1 className="text-3xl mt-2">{c.profile?.nombre}</h1>
+        <h1 className="text-2xl mt-2">{c.profile?.nombre}</h1>
         <p className="text-sm text-ink-soft">
           DNI {c.profile?.dni}
           {c.profile?.telefono ? ` · ${c.profile.telefono}` : ""}

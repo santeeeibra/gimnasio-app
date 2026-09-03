@@ -47,7 +47,7 @@ export default async function ClientesPage() {
         }))}
       />
       <div>
-        <h1 className="text-3xl mb-1">Clientes</h1>
+        <h1 className="text-2xl mb-1">Clientes</h1>
         <p className="text-sm text-ink-soft">{clientes.length} en total</p>
       </div>
 

@@ -115,7 +115,7 @@ export function ListadoIngresos() {
           <p className="text-sm text-ink-soft">
             {filtro ? "Total filtrado" : "Total general"}
           </p>
-          <p className="text-3xl font-display">${totalGeneral.toLocaleString("es-AR")}</p>
+          <p className="text-2xl font-display">${totalGeneral.toLocaleString("es-AR")}</p>
         </div>
         <Link
           href="/panel/ingresos/configurar-pin"
@@ -146,7 +146,7 @@ export function ListadoIngresos() {
           <div key={mesAno} className="rounded-[6px] border border-rule bg-paper overflow-hidden">
             <div className="bg-paper-2 px-4 py-3 border-b border-rule">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-medium capitalize">
+                <h2 className="text-lg capitalize">
                   {formatearMes(mesAno)}
                 </h2>
                 <p className="text-lg font-display">${total.toLocaleString("es-AR")}</p>
