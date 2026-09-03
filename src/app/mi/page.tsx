@@ -73,7 +73,7 @@ export default async function MiPage() {
   const diasParaAnillo = dias !== null && dias >= 0 ? dias : 0;
 
   return (
-    <main className="stagger max-w-md mx-auto p-6 space-y-6">
+    <main className="stagger max-w-md mx-auto min-h-full p-6 pb-24 space-y-6">
       <CacheAlVuelo
         clave="cuota:mi"
         data={{
@@ -98,9 +98,9 @@ export default async function MiPage() {
       <div className="flex items-baseline justify-between">
         <h1 className="text-2xl">Hola, {profile.nombre.split(" ")[0]}</h1>
         <div className="flex shrink-0 items-baseline gap-3">
-          <VerTutorialDeNuevo />
+          <VerTutorialDeNuevo className={`text-xs px-2 py-2 -mr-2 ${linkClasses.accion}`} />
           <form action={logout}>
-            <button className={`text-xs ${linkClasses.accion}`}>Salir</button>
+            <button className={`text-xs px-2 py-2 -mr-2 ${linkClasses.accion}`}>Salir</button>
           </form>
         </div>
       </div>
@@ -198,8 +198,8 @@ export default async function MiPage() {
                 {noLeidos} sin leer
               </span>
             ) : (
-              <span className="shrink-0 text-xs text-ink-soft transition-transform duration-150 [transition-timing-function:var(--ease-out)] group-active:translate-x-[3px]">
-                ver
+              <span className="shrink-0 text-base text-ink-soft transition-transform duration-150 [transition-timing-function:var(--ease-out)] group-active:translate-x-[3px]" aria-hidden="true">
+                ›
               </span>
             )}
           </a>
@@ -225,8 +225,8 @@ export default async function MiPage() {
               <path d="M2 9v6M22 9v6M4.5 8v8M19.5 8v8" />
             </svg>
             <span className="min-w-0 flex-1 text-sm font-medium">Tu rutina</span>
-            <span className="shrink-0 text-xs text-ink-soft transition-transform duration-150 [transition-timing-function:var(--ease-out)] group-active:translate-x-[3px]">
-              ver
+            <span className="shrink-0 text-base text-ink-soft transition-transform duration-150 [transition-timing-function:var(--ease-out)] group-active:translate-x-[3px]" aria-hidden="true">
+              ›
             </span>
           </a>
         </li>
@@ -251,8 +251,8 @@ export default async function MiPage() {
               <path d="M2 10h20" />
             </svg>
             <span className="min-w-0 flex-1 text-sm font-medium">Mis pagos</span>
-            <span className="shrink-0 text-xs text-ink-soft transition-transform duration-150 [transition-timing-function:var(--ease-out)] group-active:translate-x-[3px]">
-              ver
+            <span className="shrink-0 text-base text-ink-soft transition-transform duration-150 [transition-timing-function:var(--ease-out)] group-active:translate-x-[3px]" aria-hidden="true">
+              ›
             </span>
           </a>
         </li>

@@ -63,6 +63,8 @@ async function altaClienteInterno(
   const nombre = String(formData.get("nombre") ?? "").trim();
   const dni = String(formData.get("dni") ?? "").trim();
   const telefono = String(formData.get("telefono") ?? "").trim() || null;
+  const email =
+    String(formData.get("email") ?? "").trim().toLowerCase() || null;
   const enPrueba = String(formData.get("modo") ?? "") === "prueba";
   const planId = enPrueba
     ? null
@@ -73,6 +75,9 @@ async function altaClienteInterno(
 
   if (!nombre || !dni) return { error: "Nombre y DNI son obligatorios." };
   if (!/^\d{6,}$/.test(dni)) return { error: "El DNI debe ser numérico." };
+  if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    return { error: "El email no parece válido." };
+  }
 
   const supabase = await createClient();
   const admin = createAdminClient();
@@ -126,6 +131,7 @@ async function altaClienteInterno(
     profile_id: created.user.id,
     plan_id: planId,
     sexo,
+    email,
     fecha_inicio: null,
     fecha_vencimiento: null,
     estado_cuota: "vencido",
@@ -285,6 +291,8 @@ export async function editarCliente(
   const nombre = String(formData.get("nombre") ?? "").trim();
   const dni = String(formData.get("dni") ?? "").trim();
   const telefono = String(formData.get("telefono") ?? "").trim() || null;
+  const email =
+    String(formData.get("email") ?? "").trim().toLowerCase() || null;
   const sexoRaw = String(formData.get("sexo") ?? "");
   const sexo: Sexo | null =
     sexoRaw === "mujer" || sexoRaw === "hombre" ? sexoRaw : null;
@@ -293,6 +301,9 @@ export async function editarCliente(
   if (!clienteId) return { error: "Falta el cliente." };
   if (!nombre || !dni) return { error: "Nombre y DNI son obligatorios." };
   if (!/^\d{6,}$/.test(dni)) return { error: "El DNI debe ser numérico." };
+  if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    return { error: "El email no parece válido." };
+  }
   if (nuevaClave && nuevaClave.length < 4) {
     return { error: "La contraseña nueva necesita al menos 4 caracteres." };
   }
@@ -352,7 +363,7 @@ export async function editarCliente(
     }
   }
 
-  await admin.from("clientes").update({ sexo }).eq("id", clienteId);
+  await admin.from("clientes").update({ sexo, email }).eq("id", clienteId);
 
   let claveMostrar: string | undefined;
   if (nuevaClave) {

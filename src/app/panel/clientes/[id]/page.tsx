@@ -46,7 +46,7 @@ export default async function ClienteDetallePage({
     supabase
       .from("clientes")
       .select(
-        "id, estado_cuota, fecha_inicio, fecha_vencimiento, plan_id, sexo, en_prueba, prueba_iniciada_en, acceso_habilitado, profile:profiles(id, nombre, dni, telefono, debe_cambiar_clave), plan:planes(nombre)",
+        "id, estado_cuota, fecha_inicio, fecha_vencimiento, plan_id, sexo, email, en_prueba, prueba_iniciada_en, acceso_habilitado, profile:profiles(id, nombre, dni, telefono, debe_cambiar_clave), plan:planes(nombre)",
       )
       .eq("id", id)
       .maybeSingle(),
@@ -205,6 +205,7 @@ export default async function ClienteDetallePage({
             nombre={c.profile?.nombre ?? ""}
             dni={c.profile?.dni ?? ""}
             telefono={c.profile?.telefono ?? null}
+            email={(c.email as string | null) ?? null}
             sexo={(c.sexo as Sexo | null) ?? null}
           />
         </div>

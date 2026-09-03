@@ -38,12 +38,12 @@ export default async function MiBandejaPage() {
     );
 
   return (
-    <main className="stagger max-w-md mx-auto p-6 space-y-6">
+    <main className="stagger max-w-md mx-auto min-h-full p-6 pb-24 space-y-6">
       <div className="flex items-baseline justify-between">
         <h1 className="text-2xl">Mensajes</h1>
         <Link
           href="/mi"
-          className={`text-xs ${linkClasses.accion}`}
+          className={`text-xs px-2 py-2 -mr-2 ${linkClasses.accion}`}
         >
           ← Inicio
         </Link>

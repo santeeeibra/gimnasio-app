@@ -1,6 +1,16 @@
 import "server-only";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { notificarSuperadmin } from "@/lib/admin/notificar";
+
+// Acciones de /admin que además del audit log disparan un aviso al superadmin.
+const AVISA_SUPERADMIN = new Set<AccionAdmin>([
+  "cambiar_estado_gym",
+  "asignar_plan_plataforma",
+  "renovar_plan_plataforma",
+  "confirmar_pago_plataforma",
+  "entrar_como",
+]);
 
 type AccionAdmin =
   | "ver_gym"
@@ -33,5 +43,13 @@ export async function registrarAccionAdmin(
     });
   } catch (err) {
     console.error("[admin/audit]", err);
+  }
+
+  if (AVISA_SUPERADMIN.has(action)) {
+    const meta_txt = Object.keys(meta).length ? `\n${JSON.stringify(meta)}` : "";
+    await notificarSuperadmin(
+      `Acción en /admin: ${action}`,
+      `${gimnasioId ? `Gimnasio: ${gimnasioId}` : "Sin gimnasio"}${meta_txt}`,
+    );
   }
 }

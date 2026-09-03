@@ -145,6 +145,18 @@ export default function LoginPage() {
           >
             Entrás con el DNI que cargó tu gimnasio
           </p>
+
+          <p
+            className="text-center text-[13px] animate-fade-in"
+            style={{ animationDelay: "320ms" }}
+          >
+            <a
+              href="/login/olvide-clave"
+              className="text-ink-soft underline underline-offset-2 hover:text-ink transition-colors"
+            >
+              Olvidé mi contraseña
+            </a>
+          </p>
         </form>
       </section>
     </main>

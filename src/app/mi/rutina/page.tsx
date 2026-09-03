@@ -73,8 +73,11 @@ export default async function MiRutinaPage() {
   const entradaManual = (
     <details className="group">
       <summary
-        className={`flex w-fit cursor-pointer select-none list-none items-center gap-1.5 text-sm text-ink-soft [&::-webkit-details-marker]:hidden ${linkClasses.inline}`}
+        className={`border border-border rounded-lg px-3 py-2 inline-flex items-center gap-1.5 w-fit cursor-pointer select-none list-none text-sm text-ink-soft [&::-webkit-details-marker]:hidden ${linkClasses.inline}`}
       >
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="shrink-0">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
         <span className="group-open:hidden">
           ¿Ya entrenás y querés armar tu rutina a mano?
         </span>
@@ -94,8 +97,11 @@ export default async function MiRutinaPage() {
   const linkAvanzado = (
     <Link
       href="/mi/rutina/avanzado"
-      className={`block w-fit text-sm text-ink-soft ${linkClasses.inline}`}
+      className={`border border-border rounded-lg px-3 py-2 inline-flex items-center gap-1.5 w-fit text-sm text-ink-soft ${linkClasses.inline}`}
     >
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="shrink-0">
+        <path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM12 14l3-3m-6 0l3 3"/>
+      </svg>
       Modo avanzado — afinar el plan
     </Link>
   );

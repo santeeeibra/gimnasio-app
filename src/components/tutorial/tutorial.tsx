@@ -54,12 +54,12 @@ export function Tutorial({ rol }: { rol: "dueno" | "cliente" }) {
 }
 
 /** Botón "Ver tutorial de nuevo" para relanzarlo desde el perfil / ajustes. */
-export function VerTutorialDeNuevo() {
+export function VerTutorialDeNuevo({ className }: { className?: string }) {
   return (
     <button
       type="button"
       onClick={() => window.dispatchEvent(new Event(EVENTO_ABRIR_TUTORIAL))}
-      className={`text-xs ${linkClasses.accion}`}
+      className={className ?? `text-xs ${linkClasses.accion}`}
     >
       Ver tutorial de nuevo
     </button>

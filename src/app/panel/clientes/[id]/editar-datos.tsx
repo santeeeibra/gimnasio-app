@@ -10,12 +10,14 @@ export function EditarDatos({
   nombre,
   dni,
   telefono,
+  email,
   sexo,
 }: {
   clienteId: string;
   nombre: string;
   dni: string;
   telefono: string | null;
+  email: string | null;
   sexo: Sexo | null;
 }) {
   const [state, action, pending] = useActionState(editarCliente, {});
@@ -49,6 +51,15 @@ export function EditarDatos({
           name="telefono"
           inputMode="tel"
           defaultValue={telefono ?? ""}
+        />
+        <Field
+          label="Email"
+          name="email"
+          type="email"
+          inputMode="email"
+          autoComplete="off"
+          defaultValue={email ?? ""}
+          hint="Para que el socio recupere la contraseña."
         />
         <Select label="Sexo" name="sexo" defaultValue={sexo ?? ""}>
           <option value="">Sin especificar</option>

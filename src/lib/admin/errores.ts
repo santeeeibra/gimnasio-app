@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { notificarSuperadmin } from "@/lib/admin/notificar";
 
 /** De dónde salió el error. Mismo criterio que la columna `origen`. */
 export type OrigenError =
@@ -75,14 +76,23 @@ export async function registrarError(
   origen: OrigenError,
   mensaje: unknown,
 ): Promise<void> {
+  const texto = aTexto(mensaje).slice(0, 2000);
   try {
     const admin = createAdminClient();
     await admin.from("errores_app").insert({
       gimnasio_id: gimnasioId ?? null,
       origen,
-      mensaje: aTexto(mensaje).slice(0, 2000),
+      mensaje: texto,
     });
   } catch (err) {
     console.error("[admin/errores]", err);
   }
+
+  // Aviso al superadmin. No bloquea ni cambia el flujo. Los errores de 'push'
+  // no avisan por push (fallaría igual) ni reintentan: evita bucles.
+  await notificarSuperadmin(
+    `Error en ${ORIGEN_LABEL[origen] ?? origen}`,
+    `${texto}${gimnasioId ? `\n\nGimnasio: ${gimnasioId}` : ""}`,
+    origen === "push" ? { push: false, email: true } : { push: true, email: true },
+  );
 }

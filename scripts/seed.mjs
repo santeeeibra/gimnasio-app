@@ -9,9 +9,11 @@ for (const line of readFileSync(".env.local", "utf8").split("\n")) {
   if (m) process.env[m[1]] ??= m[2].trim();
 }
 
-const [nombre, slug, dni, nombreDueno] = process.argv.slice(2);
+const [nombre, slug, dni, nombreDueno, emailRecuperacion] = process.argv.slice(2);
 if (!nombre || !slug || !dni || !nombreDueno) {
-  console.error('Uso: node scripts/seed.mjs "Nombre" slug DNI "Nombre Dueño"');
+  console.error(
+    'Uso: node scripts/seed.mjs "Nombre" slug DNI "Nombre Dueño" [email-recuperacion]',
+  );
   process.exit(1);
 }
 
@@ -44,6 +46,7 @@ const { error: profErr } = await db.from("profiles").insert({
   dni,
   nombre: nombreDueno,
   debe_cambiar_clave: true,
+  email_recuperacion: emailRecuperacion?.trim().toLowerCase() || null,
 });
 if (profErr) throw profErr;
 

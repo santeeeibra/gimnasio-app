@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireDueno } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { notificarSuperadmin } from "@/lib/admin/notificar";
 import {
   CAMPOS_COLOR,
   ESTILOS_VISUALES_KEYS,
@@ -77,6 +78,63 @@ export async function actualizarDiasAvisoMorosidad(
 
   revalidatePath("/panel/ajustes");
   return { ok: "Aviso de vencimiento actualizado" };
+}
+
+/** Email real del dueño, solo para recuperar la contraseña (no es el login). */
+export async function actualizarEmailRecuperacion(
+  _prev: AjustesState,
+  formData: FormData,
+): Promise<AjustesState> {
+  const dueno = await requireDueno();
+  const email = String(formData.get("email") ?? "").trim().toLowerCase() || null;
+
+  if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    return { error: "El email no parece válido." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("profiles")
+    .update({ email_recuperacion: email })
+    .eq("id", dueno.id);
+
+  if (error) {
+    console.error("[actualizarEmailRecuperacion]", error);
+    return { error: "No se pudo guardar el email" };
+  }
+
+  revalidatePath("/panel/ajustes");
+  return { ok: email ? "Email de recuperación guardado" : "Email quitado" };
+}
+
+/** Mensaje de soporte del dueño al superadmin de la plataforma. */
+export async function contactarSoporte(
+  _prev: AjustesState,
+  formData: FormData,
+): Promise<AjustesState> {
+  const dueno = await requireDueno();
+  const asunto = String(formData.get("asunto") ?? "").trim().slice(0, 120);
+  const mensaje = String(formData.get("mensaje") ?? "").trim().slice(0, 2000);
+
+  if (!asunto || !mensaje) {
+    return { error: "Completá el asunto y el mensaje." };
+  }
+
+  const supabase = await createClient();
+  const { data: gym } = await supabase
+    .from("gimnasios")
+    .select("nombre, slug")
+    .eq("id", dueno.gimnasio_id)
+    .single();
+
+  await notificarSuperadmin(
+    `Soporte: ${asunto}`,
+    `De: ${dueno.nombre} (DNI ${dueno.dni})\nGimnasio: ${
+      gym?.nombre ?? dueno.gimnasio_id
+    }${gym?.slug ? ` (${gym.slug})` : ""}\n\n${mensaje}`,
+  );
+
+  return { ok: "Mensaje enviado. Te respondemos por mail o teléfono." };
 }
 
 /** Alias / CBU / titular que ve el socio en la app para transferir la cuota. */

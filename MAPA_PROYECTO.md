@@ -30,6 +30,8 @@
 | Frases motivadoras | `src/lib/frases-motivadoras.ts` | 🔲 instrucción dada a Cline, no confirmado |
 | Memoria de progreso (peso/reps por sesión) | tabla `registro_progreso` (no creada) | 🔲 sin spec armado — retención 6 meses obligatoria |
 | Push web nativo (VAPID) | — | ✅ código completo — **falta manual: VAPID keys, iconos, deploy** |
+| Reset de clave por email real (dueño + cliente) | `src/lib/email/enviar.ts` (Resend), `src/app/login/olvide-clave/*`, `src/app/reset-clave/page.tsx`, campo email en `alta-form.tsx` / `editar-datos.tsx` / `panel/ajustes` (`email-recuperacion-form.tsx`), migración `0021_email_recuperacion.sql` | ✅ código + typecheck (2026-09-03). **Falta manual**: aplicar `0021`, cuenta Resend + envs `RESEND_API_KEY` / `RESEND_FROM`, agregar `<origin>/reset-clave` a Redirect URLs en Supabase Auth, probar end-to-end |
+| Avisos al superadmin (push + email) | `src/lib/admin/notificar.ts` → `notificarSuperadmin()`; enganchado en `registrarError`, `registrarAccionAdmin`, cron de cuotas, y form "Contactar soporte" en `panel/ajustes` (`contactar-soporte-form.tsx` + `contactarSoporte`) | ✅ código + typecheck (2026-09-03). **Falta manual**: env `SUPERADMIN_EMAIL` (+ `RESEND_API_KEY` / `RESEND_FROM` de arriba) |
 | Cron `recalcular_estado_cuota()` | — | 🔲 sin empezar |
 | Fallback offline ante caída de Supabase | `src/lib/offline/*` (`conexion.tsx`, `cola.ts`, `cache.ts`, `handlers.ts`), `src/components/offline/*` (`provider.tsx`, `banner.tsx`, `conflictos.tsx`, `cache-al-vuelo.tsx`), `error.tsx` en `mi/` y `panel/clientes/`, wiring en los 3 layouts + `checkin-form.tsx` + `alta-form.tsx` | ✅ código + typecheck + smoke test (2026-09-03). Sin migración. Spec `SPEC_OFFLINE_FALLBACK.md` |
 | GIFs de ejercicios (wger.de / exercise-library) | `scripts/seed-ejercicios.mjs` | ❌ descartado — se mantiene `imagen_url` de free-exercise-db |
@@ -47,6 +49,7 @@
 | `SPEC_MONITOR_SUPABASE.md` | — | ⚠️ ver "memoria de progreso" (monitoreo % uso Supabase) |
 | `SPEC_RUTINA_AVANZADA.md` | — | ⚠️ ver si es el mismo que panel avanzado o distinto |
 | `SPEC_TEMATICAS_PULIDO.md` / `SPEC_TEMATICAS_VISUALES.md` | — | ⚠️ no descritos en contex-sysgym.md |
+| `SPEC_RESET_CLAVE_Y_NOTIFICACIONES.md` | Claude Code | ✅ ejecutado 2026-09-03 (código + typecheck; falta manual: migración `0021`, Resend, envs, Redirect URL) |
 
 ## Cola sin spec armado
 

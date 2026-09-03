@@ -10,6 +10,8 @@ import { AjustesForm } from "./ajustes-form";
 import { AvisoMorosidadForm } from "./aviso-morosidad-form";
 import { ReposoCheckinForm } from "./reposo-checkin-form";
 import { DatosPagoForm } from "./datos-pago-form";
+import { EmailRecuperacionForm } from "./email-recuperacion-form";
+import { ContactarSoporteForm } from "./contactar-soporte-form";
 import { VerTutorialDeNuevo } from "@/components/tutorial/tutorial";
 
 const ESTADO_LABEL: Record<string, string> = {
@@ -23,21 +25,27 @@ export default async function AjustesPage() {
   const supabase = await createClient();
   const db = createAdminClient();
 
-  const [{ data: gym }, cupo, { data: planPlat }] = await Promise.all([
-    supabase
-      .from("gimnasios")
-      .select(
-        "id, nombre, tema, logo_url, dias_aviso_morosidad, estado, plan_plataforma_vence_el, pago_alias, pago_cbu, pago_titular",
-      )
-      .eq("id", profile.gimnasio_id)
-      .single(),
-    cupoSocios(db, profile.gimnasio_id),
-    db
-      .from("gimnasios")
-      .select("plan:planes_plataforma(nombre)")
-      .eq("id", profile.gimnasio_id)
-      .single(),
-  ]);
+  const [{ data: gym }, cupo, { data: planPlat }, { data: miPerfil }] =
+    await Promise.all([
+      supabase
+        .from("gimnasios")
+        .select(
+          "id, nombre, tema, logo_url, dias_aviso_morosidad, estado, plan_plataforma_vence_el, pago_alias, pago_cbu, pago_titular",
+        )
+        .eq("id", profile.gimnasio_id)
+        .single(),
+      cupoSocios(db, profile.gimnasio_id),
+      db
+        .from("gimnasios")
+        .select("plan:planes_plataforma(nombre)")
+        .eq("id", profile.gimnasio_id)
+        .single(),
+      supabase
+        .from("profiles")
+        .select("email_recuperacion")
+        .eq("id", profile.id)
+        .single(),
+    ]);
 
   const estado = gym?.estado ?? "prueba";
   const planNombre =
@@ -167,6 +175,25 @@ export default async function AjustesPage() {
           />
         </div>
       ) : null}
+
+      <div className="card-cut card-cut-lg mt-6 border border-rule bg-paper-2 p-6">
+        <h2 className="text-lg mb-1">Email para recuperar tu contraseña</h2>
+        <p className="text-sm text-ink-soft mb-4">
+          Si alguna vez te olvidás la clave, te mandamos el enlace a este mail.
+          Cargalo ahora así lo tenés listo.
+        </p>
+        <EmailRecuperacionForm
+          email={miPerfil?.email_recuperacion ?? null}
+        />
+      </div>
+
+      <div className="card-cut card-cut-lg mt-6 border border-rule bg-paper-2 p-6">
+        <h2 className="text-lg mb-1">Contactar soporte</h2>
+        <p className="text-sm text-ink-soft mb-4">
+          ¿Algo no anda o necesitás una mano? Escribinos y te respondemos.
+        </p>
+        <ContactarSoporteForm />
+      </div>
 
       <div className="card-cut card-cut-lg mt-6 border border-rule bg-paper-2 p-6">
         <h2 className="text-lg mb-4">Tema del gimnasio</h2>

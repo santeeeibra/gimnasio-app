@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { enviarPush } from "@/lib/push/enviar";
 import { diasRestantes } from "@/lib/cuota";
+import { notificarSuperadmin } from "@/lib/admin/notificar";
 
 // Cron diario (Vercel Cron -> vercel.json). Avisa a cliente y dueño cuando
 // faltan 6 o 1 días para el vencimiento de la cuota. Dos toques, sin spam.
@@ -17,6 +18,16 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "no autorizado" }, { status: 401 });
   }
 
+  try {
+    return await correrCron();
+  } catch (err) {
+    const msg = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+    await notificarSuperadmin("Falló el cron de cuotas", msg);
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
+}
+
+async function correrCron() {
   const admin = createAdminClient();
 
   const { data: clientes, error } = await admin

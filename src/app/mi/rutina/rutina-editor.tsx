@@ -285,9 +285,13 @@ export function RutinaEditor({
               {dia.items.length} ejercicios · ~{tiempoMin} min
             </p>
             {musculos ? (
-              <p className="mt-0.5 text-[11px] uppercase tracking-[0.08em] text-ink-soft line-clamp-1">
-                {musculos}
-              </p>
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                {[...new Set(dia.items.map(i => GRUPO_MUSCULAR_LABEL[i.ejercicio?.grupo_muscular ?? ""]))].filter(Boolean).map((g, i) => (
+                  <span key={i} className="inline-block rounded-full border border-rule bg-paper px-2 py-0.5 text-[11px] uppercase tracking-[0.08em] text-ink-soft">
+                    {g}
+                  </span>
+                ))}
+              </div>
             ) : null}
 
             <div className="mt-3 space-y-4">

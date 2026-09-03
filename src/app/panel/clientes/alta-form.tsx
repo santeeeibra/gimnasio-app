@@ -36,6 +36,7 @@ export function AltaForm({
       nombre: String(fd.get("nombre") ?? "").trim(),
       dni: String(fd.get("dni") ?? "").trim(),
       telefono: String(fd.get("telefono") ?? "").trim() || null,
+      email: String(fd.get("email") ?? "").trim() || null,
       sexo: String(fd.get("sexo") ?? "") || null,
       plan_id: String(fd.get("plan_id") ?? "") || null,
       modo,
@@ -69,6 +70,14 @@ export function AltaForm({
       <Field label="Nombre y apellido" name="nombre" required />
       <Field label="DNI" name="dni" inputMode="numeric" required />
       <Field label="Teléfono" name="telefono" inputMode="tel" />
+      <Field
+        label="Email (opcional)"
+        name="email"
+        type="email"
+        inputMode="email"
+        autoComplete="off"
+        hint="Sirve para que el socio recupere la contraseña."
+      />
 
       <Select label="Sexo" name="sexo" defaultValue="">
         <option value="">Sin especificar todavía</option>
