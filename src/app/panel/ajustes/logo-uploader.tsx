@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { procesarLogo } from "@/lib/logo/comprimir";
 import { colorDominante } from "@/lib/logo/paleta";
 import { guardarLogo } from "./actions";
-import { Spinner } from "@/components/ui";
+import { Spinner, linkClasses } from "@/components/ui";
 
 const BUCKET = "logos";
 
@@ -149,7 +149,7 @@ export function LogoUploader({
               type="button"
               disabled={pending}
               onClick={quitar}
-              className="text-xs text-ink-soft underline underline-offset-2 transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 hover:text-ink disabled:opacity-50"
+              className={`text-xs disabled:opacity-50 ${linkClasses.accion}`}
             >
               Quitar
             </button>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { linkClasses } from "@/components/ui";
 
 export type Paso = {
   titulo: string;
@@ -54,7 +55,7 @@ export function Overlay({
       aria-modal="true"
       aria-label="Tutorial"
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-end justify-center bg-ink/60 p-4 animate-fade-in sm:items-center"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-[color:var(--scrim)] p-4 animate-fade-in sm:items-center"
     >
       <div
         onClick={(e) => e.stopPropagation()}
@@ -67,7 +68,7 @@ export function Overlay({
           <button
             type="button"
             onClick={onClose}
-            className="-mr-1 -mt-1 shrink-0 rounded-[5px] px-2 py-1 text-xs text-ink-soft underline underline-offset-2 transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20"
+            className={`-mr-1 -mt-1 shrink-0 rounded-[5px] px-2 py-1 text-xs active:scale-95 ${linkClasses.plano}`}
           >
             Saltear
           </button>

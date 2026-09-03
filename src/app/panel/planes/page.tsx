@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireDueno } from "@/lib/auth";
+import { linkClasses } from "@/components/ui";
 import { PlanForm } from "./plan-form";
 import { alternarPlan } from "./actions";
 
@@ -28,7 +29,7 @@ export default async function PlanesPage() {
           plan de la plataforma, andá a{" "}
           <a
             href="/panel/plan"
-            className="underline underline-offset-2 decoration-rule hover:decoration-ink"
+            className={linkClasses.inline}
           >
             Mi plan
           </a>
@@ -64,7 +65,7 @@ export default async function PlanesPage() {
               <form action={alternarPlan}>
                 <input type="hidden" name="id" value={p.id} />
                 <input type="hidden" name="activo" value={String(p.activo)} />
-                <button className="text-xs underline underline-offset-2 text-ink-soft hover:text-ink">
+                <button className={`text-xs ${linkClasses.accion}`}>
                   {p.activo ? "Desactivar" : "Reactivar"}
                 </button>
               </form>

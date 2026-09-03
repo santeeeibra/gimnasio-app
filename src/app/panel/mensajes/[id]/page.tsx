@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { linkClasses } from "@/components/ui";
 import { requireDueno } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { ReplyForm } from "./reply-form";
@@ -49,7 +50,7 @@ export default async function MensajeHiloPage({
     <div className="stagger space-y-6 max-w-2xl">
       <Link
         href="/panel/mensajes"
-        className="text-xs text-ink-soft underline underline-offset-2"
+        className={`text-xs ${linkClasses.accion}`}
       >
         ← Mensajes
       </Link>

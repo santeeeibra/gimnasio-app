@@ -184,7 +184,7 @@ function VisorEjercicio({
       aria-modal="true"
       aria-label={ej.nombre}
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-ink/60 p-4 animate-fade-in"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-[color:var(--scrim)] p-4 animate-fade-in"
     >
       <div
         onClick={(e) => e.stopPropagation()}

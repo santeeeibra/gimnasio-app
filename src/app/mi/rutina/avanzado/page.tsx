@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireProfile } from "@/lib/auth";
+import { linkClasses } from "@/components/ui";
 import { createClient } from "@/lib/supabase/server";
 import type {
   Enfasis,
@@ -50,7 +51,7 @@ export default async function RutinaAvanzadaPage() {
       <div>
         <Link
           href="/mi/rutina"
-          className="text-sm text-ink-soft underline underline-offset-2"
+          className={`text-sm ${linkClasses.accion}`}
         >
           ← Volver a tu rutina
         </Link>

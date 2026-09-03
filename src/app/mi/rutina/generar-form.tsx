@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Select } from "@/components/ui";
+import { Button, Select, linkClasses } from "@/components/ui";
 import {
   ENFASIS,
   ENFASIS_LABEL,
@@ -47,7 +47,9 @@ function Porque({ clave }: { clave: ClaveTeoria }) {
   const t = TEORIA[clave];
   return (
     <details className="mt-1.5 text-xs text-ink-soft">
-      <summary className="w-fit cursor-pointer select-none underline underline-offset-2 [&::-webkit-details-marker]:hidden">
+      <summary
+        className={`w-fit cursor-pointer select-none [&::-webkit-details-marker]:hidden ${linkClasses.inline}`}
+      >
         ¿por qué?
       </summary>
       <p className="mt-1 leading-snug">{t.resumen}</p>

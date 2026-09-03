@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireDueno } from "@/lib/auth";
+import { linkClasses } from "@/components/ui";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { cupoSocios } from "@/lib/plataforma/cupo";
 import { DATOS_TRANSFERENCIA } from "@/lib/pagos/manual";
@@ -68,7 +69,7 @@ export default async function PanelPlanPage() {
       <div>
         <Link
           href="/panel"
-          className="text-sm text-ink-soft underline underline-offset-2"
+          className={`text-sm ${linkClasses.accion}`}
         >
           ← Resumen
         </Link>

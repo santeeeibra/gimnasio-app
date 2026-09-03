@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { linkClasses } from "@/components/ui";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireDueno } from "@/lib/auth";
 import { diasRestantes } from "@/lib/cuota";
@@ -99,7 +100,7 @@ export default async function ResumenPage() {
                 : "Estás en período de prueba."}{" "}
             <Link
               href="/panel/plan"
-              className="underline underline-offset-2 decoration-rule hover:decoration-ink"
+              className={linkClasses.inline}
             >
               Ver tu plan
             </Link>
@@ -113,7 +114,7 @@ export default async function ResumenPage() {
         </span>
         <Link
           href="/panel/clientes"
-          className="text-sm underline underline-offset-2 decoration-rule hover:decoration-ink"
+          className={`text-sm ${linkClasses.inline}`}
         >
           Ver todos
         </Link>

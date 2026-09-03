@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireDueno } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { Panel } from "@/components/ui";
+import { Panel, linkClasses } from "@/components/ui";
 import { ConfigurarPinForm } from "../configurar-pin-form";
 import { RecuperarPinForm } from "../recuperar-pin-form";
 
@@ -21,7 +21,7 @@ export default async function ConfigurarPinPage() {
     <div>
       <Link
         href="/panel/ingresos"
-        className="text-sm text-ink-soft underline underline-offset-2"
+        className={`text-sm ${linkClasses.accion}`}
       >
         ← Volver a Ingresos
       </Link>

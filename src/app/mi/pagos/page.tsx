@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireProfile } from "@/lib/auth";
+import { linkClasses } from "@/components/ui";
 import { createClient } from "@/lib/supabase/server";
 import { DatosTransferencia } from "@/components/mi/datos-transferencia";
 
@@ -49,7 +50,7 @@ export default async function MisPagosPage() {
         <h1 className="text-2xl">Mis pagos</h1>
         <Link
           href="/mi"
-          className="text-xs text-ink-soft underline underline-offset-2"
+          className={`text-xs ${linkClasses.accion}`}
         >
           Volver
         </Link>

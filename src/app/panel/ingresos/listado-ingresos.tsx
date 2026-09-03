@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Spinner } from "@/components/ui";
+import { Spinner, linkClasses } from "@/components/ui";
 
 type Pago = {
   id: string;
@@ -119,7 +119,7 @@ export function ListadoIngresos() {
         </div>
         <Link
           href="/panel/ingresos/configurar-pin"
-          className="text-sm text-ink-soft underline underline-offset-2"
+          className={`text-sm ${linkClasses.accion}`}
         >
           Cambiar PIN
         </Link>

@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useMemo, useState } from "react";
 import { actualizarTema, type AjustesState } from "./actions";
-import { Button } from "@/components/ui";
+import { Button, linkClasses } from "@/components/ui";
 import {
   CAMPOS_COLOR,
   DEFAULT_TEMA,
@@ -251,7 +251,7 @@ export function AjustesForm({
                         }),
                       }))
                     }
-                    className="text-xs underline underline-offset-2 text-ink-soft hover:text-ink active:scale-95 transition-transform duration-150 [transition-timing-function:var(--ease-out)]"
+                    className={`text-xs ${linkClasses.accion}`}
                   >
                     Calcular desde la base
                   </button>
@@ -478,7 +478,7 @@ export function AjustesForm({
                         set(par.a, sugerido);
                         setPersonalizarAbierto(true);
                       }}
-                      className="text-xs underline underline-offset-2 text-ink-soft hover:text-ink active:scale-95 transition-transform duration-150 [transition-timing-function:var(--ease-out)] shrink-0"
+                      className={`shrink-0 text-xs ${linkClasses.accion}`}
                     >
                       Sugerir
                     </button>
@@ -635,7 +635,7 @@ function MiniPreview({ tema }: { tema: Tema }) {
         </span>
         <span
           className="ml-auto inline-flex h-6 items-center rounded-[4px] px-2 text-[11px] font-medium"
-          style={{ background: "var(--volt)", color: "var(--volt-ink)" }}
+          style={{ background: "var(--accent)", color: "var(--accent-contrast)" }}
         >
           Botón
         </span>

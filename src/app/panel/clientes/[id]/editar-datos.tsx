@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { editarCliente } from "../actions";
-import { Button, Field, Select } from "@/components/ui";
+import { Button, Field, Select, linkClasses } from "@/components/ui";
 import { SEXOS, SEXO_LABEL, type Sexo } from "@/lib/rutina/tipos";
 
 export function EditarDatos({
@@ -22,7 +22,9 @@ export function EditarDatos({
 
   return (
     <details className="group border-t border-rule pt-4">
-      <summary className="w-fit cursor-pointer select-none text-sm text-ink-soft underline underline-offset-2">
+      <summary
+        className={`w-fit cursor-pointer select-none text-sm ${linkClasses.inline}`}
+      >
         Editar datos del socio
       </summary>
 

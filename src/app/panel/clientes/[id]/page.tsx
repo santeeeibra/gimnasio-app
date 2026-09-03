@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireDueno, claveInicial } from "@/lib/auth";
-import { Panel } from "@/components/ui";
+import { Panel, linkClasses } from "@/components/ui";
 import { AccesoSocio } from "./acceso-socio";
 import { EditarDatos } from "./editar-datos";
 import { diasRestantes, estadoDesdeDias, ESTADO_LABEL } from "@/lib/cuota";
@@ -115,7 +115,7 @@ export default async function ClienteDetallePage({
       <div>
         <Link
           href="/panel/clientes"
-          className="text-sm text-ink-soft underline underline-offset-2"
+          className={`text-sm ${linkClasses.accion}`}
         >
           ← Clientes
         </Link>
@@ -288,7 +288,9 @@ export default async function ClienteDetallePage({
 
         {rutina && !esManual && (rutina.preferencias as Prefs)?.explicacionGeneral ? (
           <details className="mb-4 text-xs text-ink-soft">
-            <summary className="w-fit cursor-pointer select-none underline underline-offset-2">
+            <summary
+              className={`w-fit cursor-pointer select-none ${linkClasses.inline}`}
+            >
               Por qué está armada así
             </summary>
             <p className="mt-1.5 leading-snug">

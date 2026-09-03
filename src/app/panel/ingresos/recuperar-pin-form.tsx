@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { resetearPinConContrasena } from "./configurar-pin/actions";
-import { Button, Field } from "@/components/ui";
+import { Button, Field, linkClasses } from "@/components/ui";
 import { useRouter } from "next/navigation";
 
 export function RecuperarPinForm() {
@@ -37,7 +37,7 @@ export function RecuperarPinForm() {
         </p>
         <button
           onClick={() => setMostrar(true)}
-          className="text-sm text-ink-soft underline underline-offset-2 hover:text-ink transition-colors"
+          className={`text-sm ${linkClasses.accion}`}
         >
           Resetear PIN con contraseña de cuenta
         </button>
@@ -53,7 +53,7 @@ export function RecuperarPinForm() {
           setContrasena("");
           setError("");
         }}
-        className="text-sm text-ink-soft underline underline-offset-2 mb-3"
+        className={`mb-3 text-sm ${linkClasses.accion}`}
       >
         ← Cancelar
       </button>

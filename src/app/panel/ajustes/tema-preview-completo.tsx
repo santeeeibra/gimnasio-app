@@ -79,7 +79,7 @@ export function TemaPreviewCompleto({ tema }: { tema: Tema }) {
 
           {/* Card de cliente */}
           <div
-            className={`${cardPadding} border border-[color:var(--rule)] border-l-2 border-l-[color:var(--volt)] bg-[color:var(--paper-2)]`}
+            className={`${cardPadding} border border-[color:var(--rule)] border-l-2 border-l-[color:var(--accent)] bg-[color:var(--paper-2)]`}
             style={{ borderRadius: "var(--radius-md)" }}
           >
             <p className="text-sm font-medium text-[color:var(--ink)]" style={{ fontSize: `calc(0.875rem * var(--font-scale))` }}>
@@ -118,7 +118,7 @@ export function TemaPreviewCompleto({ tema }: { tema: Tema }) {
 
           {/* Botón */}
           <button
-            className="w-full h-10 bg-[color:var(--volt)] text-[color:var(--volt-ink)] font-medium text-sm"
+            className="w-full h-10 bg-[color:var(--accent)] text-[color:var(--accent-contrast)] font-medium text-sm"
             style={{ 
               borderRadius: "var(--radius-md)",
               fontSize: `calc(0.875rem * var(--font-scale))`,
@@ -140,12 +140,12 @@ export function TemaPreviewCompleto({ tema }: { tema: Tema }) {
 
           {/* Badge */}
           <div
-            className={`${cardPadding} border border-[color:var(--rule)] border-l-2 border-l-[color:var(--volt)] bg-[color:var(--paper-2)]`}
+            className={`${cardPadding} border border-[color:var(--rule)] border-l-2 border-l-[color:var(--accent)] bg-[color:var(--paper-2)]`}
             style={{ borderRadius: "var(--radius-md)" }}
           >
             <div className="flex items-center gap-2">
               <span
-                className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-semibold bg-[color:var(--volt)] text-[color:var(--volt-ink)]"
+                className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-semibold bg-[color:var(--accent)] text-[color:var(--accent-contrast)]"
                 style={{ 
                   borderRadius: "var(--radius-sm)",
                   fontSize: `calc(0.625rem * var(--font-scale))`,
@@ -185,7 +185,7 @@ function NavItem({ label, active }: { label: string; active?: boolean }) {
     <div className="relative flex-1 flex flex-col items-center gap-1 py-2.5">
       <span
         className={`absolute top-0 h-0.5 w-8 rounded-full ${
-          active ? "bg-[color:var(--volt)]" : "bg-transparent"
+          active ? "bg-[color:var(--accent)]" : "bg-transparent"
         }`}
       />
       <span

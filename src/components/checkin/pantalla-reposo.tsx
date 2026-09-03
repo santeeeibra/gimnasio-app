@@ -113,7 +113,7 @@ function Overlay({
       role="button"
       tabIndex={0}
       aria-label="Tocá para volver al check-in"
-      className="reposo-overlay fixed inset-0 z-40 flex flex-col items-center justify-center overflow-hidden bg-[#0a0b0d] text-[#e8ede1] select-none"
+      className="reposo-overlay fixed inset-0 z-40 flex flex-col items-center justify-center overflow-hidden select-none"
     >
       {mov !== "estatico" ? (
         <span
@@ -144,7 +144,7 @@ function Overlay({
             cy="110"
             r="96"
             fill="none"
-            stroke="color-mix(in srgb, var(--volt) 20%, transparent)"
+            stroke="color-mix(in srgb, var(--accent) 20%, transparent)"
             strokeWidth="1.5"
           />
           <circle
@@ -152,7 +152,7 @@ function Overlay({
             cy="110"
             r="96"
             fill="none"
-            stroke="var(--volt)"
+            stroke="var(--accent)"
             strokeWidth="2.5"
             strokeLinecap="round"
             strokeDasharray="118 480"
@@ -169,7 +169,7 @@ function Overlay({
       </div>
 
       {config.mostrarLogo && logoUrl ? (
-        <span className="mt-8 size-12 overflow-hidden rounded-[8px] border border-white/10 bg-white/5">
+        <span className="reposo-logo-box mt-8 size-12 overflow-hidden rounded-[8px]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={logoUrl}
@@ -180,11 +180,11 @@ function Overlay({
         </span>
       ) : null}
 
-      <p className="mt-6 max-w-[22rem] px-8 text-center text-lg text-[#e8ede1]/85">
+      <p className="reposo-mensaje mt-6 max-w-[22rem] px-8 text-center text-lg">
         {config.mensaje}
       </p>
       {nombre ? (
-        <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-[#e8ede1]/40">
+        <p className="reposo-marca mt-1 text-[11px] uppercase tracking-[0.18em]">
           {nombre}
         </p>
       ) : null}

@@ -37,7 +37,7 @@ export function ReposoCheckinForm({
           name="activo"
           checked={activo}
           onChange={(e) => setActivo(e.target.checked)}
-          className="size-[18px] shrink-0 mt-0.5 accent-[var(--volt)]"
+          className="size-[18px] shrink-0 mt-0.5 accent-[var(--accent)]"
         />
         <span className="min-w-0">
           <span className="block text-sm font-medium text-ink">
@@ -97,7 +97,7 @@ export function ReposoCheckinForm({
               type="checkbox"
               name="mostrarReloj"
               defaultChecked={reposo.mostrarReloj}
-              className="size-[18px] shrink-0 accent-[var(--volt)]"
+              className="size-[18px] shrink-0 accent-[var(--accent)]"
             />
             <span className="text-sm text-ink">Mostrar la hora</span>
           </label>
@@ -106,7 +106,7 @@ export function ReposoCheckinForm({
               type="checkbox"
               name="mostrarLogo"
               defaultChecked={reposo.mostrarLogo}
-              className="size-[18px] shrink-0 accent-[var(--volt)]"
+              className="size-[18px] shrink-0 accent-[var(--accent)]"
             />
             <span className="text-sm text-ink">Mostrar el logo del gimnasio</span>
           </label>

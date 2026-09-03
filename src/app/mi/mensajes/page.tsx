@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireProfile } from "@/lib/auth";
+import { linkClasses } from "@/components/ui";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function MiBandejaPage() {
@@ -42,7 +43,7 @@ export default async function MiBandejaPage() {
         <h1 className="text-2xl">Mensajes</h1>
         <Link
           href="/mi"
-          className="text-xs text-ink-soft underline underline-offset-2"
+          className={`text-xs ${linkClasses.accion}`}
         >
           ← Inicio
         </Link>

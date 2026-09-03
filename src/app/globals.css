@@ -620,6 +620,12 @@ h3 {
    ni scan). Ver contex-sysgym.md y componente pantalla-reposo.tsx.
    ============================================================ */
 .reposo-overlay {
+  /* Identidad fija: el screensaver es un ambiente oscuro propio, NO sigue el
+     tema del gimnasio (por eso estos valores no salen de tokens de tema). */
+  --reposo-bg: #0a0b0d;
+  --reposo-fg: #e8ede1;
+  background: var(--reposo-bg);
+  color: var(--reposo-fg);
   opacity: 1;
   transition: opacity 320ms var(--ease-out);
 }
@@ -627,6 +633,16 @@ h3 {
   .reposo-overlay {
     opacity: 0;
   }
+}
+.reposo-mensaje {
+  color: color-mix(in srgb, var(--reposo-fg) 85%, transparent);
+}
+.reposo-marca {
+  color: color-mix(in srgb, var(--reposo-fg) 40%, transparent);
+}
+.reposo-logo-box {
+  border: 1px solid color-mix(in srgb, #fff 10%, transparent);
+  background: color-mix(in srgb, #fff 5%, transparent);
 }
 
 .reposo-haze {

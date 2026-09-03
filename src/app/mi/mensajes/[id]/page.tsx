@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { linkClasses } from "@/components/ui";
 import { requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { MarkRead } from "../mark-read";
@@ -53,7 +54,7 @@ export default async function MiHiloPage({
       <MarkRead mensajeId={m.id} />
       <Link
         href="/mi/mensajes"
-        className="text-xs text-ink-soft underline underline-offset-2"
+        className={`text-xs ${linkClasses.accion}`}
       >
         ← Mensajes
       </Link>

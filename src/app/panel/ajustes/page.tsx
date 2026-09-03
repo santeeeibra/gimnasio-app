@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireDueno } from "@/lib/auth";
+import { linkClasses } from "@/components/ui";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { parseTema } from "@/lib/tema";
@@ -58,7 +59,7 @@ export default async function AjustesPage() {
           <h2 className="text-lg">Tu plan</h2>
           <Link
             href="/panel/plan"
-            className="shrink-0 text-sm underline underline-offset-2 decoration-rule hover:decoration-ink"
+            className={`shrink-0 text-sm ${linkClasses.inline}`}
           >
             Ver y pagar →
           </Link>

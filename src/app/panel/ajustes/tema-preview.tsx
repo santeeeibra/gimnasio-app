@@ -63,9 +63,9 @@ export function TemaPreview({ tema }: { tema: Tema }) {
           </div>
 
           {/* mensaje sin leer */}
-          <div className="rounded-[5px] border border-[color:var(--rule)] border-l-2 border-l-[color:var(--volt)] bg-[color:var(--paper-2)] px-3 py-2.5">
+          <div className="rounded-[5px] border border-[color:var(--rule)] border-l-2 border-l-[color:var(--accent)] bg-[color:var(--paper-2)] px-3 py-2.5">
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold bg-[color:var(--volt)] text-[color:var(--volt-ink)]">
+              <span className="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold bg-[color:var(--accent)] text-[color:var(--accent-contrast)]">
                 nuevo
               </span>
               <p className="text-[13px] font-medium text-[color:var(--ink)]">

@@ -53,12 +53,16 @@ export function Button({
  * - `inline`: dentro de un párrafo. Subrayado sutil, hereda el tamaño.
  * - `accion`: control suelto. Sin subrayado en reposo, padding para el target
  *   táctil (§3/§11), feedback de press.
+ * - `plano`: solo color + subrayado + foco, sin display ni caja. Para cuando el
+ *   elemento ya trae su layout (`w-full`, padding propio, posición negativa).
  */
 export const linkClasses = {
   inline:
     "underline decoration-rule underline-offset-[3px] transition-[color,text-decoration-color] duration-150 [transition-timing-function:var(--ease-out)] hover:decoration-ink focus-visible:outline-none focus-visible:rounded-[3px] focus-visible:ring-2 focus-visible:ring-ink/20",
   accion:
     "inline-flex items-center gap-1 -mx-1 px-1 py-0.5 text-sm text-ink-soft underline decoration-transparent underline-offset-[3px] transition-[color,text-decoration-color,transform] duration-150 [transition-timing-function:var(--ease-out)] hover:text-ink hover:decoration-rule active:scale-95 focus-visible:outline-none focus-visible:rounded-[4px] focus-visible:ring-2 focus-visible:ring-ink/20",
+  plano:
+    "text-ink-soft underline decoration-transparent underline-offset-[3px] transition-[color,text-decoration-color] duration-150 [transition-timing-function:var(--ease-out)] hover:text-ink hover:decoration-rule focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20",
 } as const;
 
 export function LinkButton({

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireSuperadmin } from "@/lib/auth";
+import { linkClasses } from "@/components/ui";
 
 // Consola de soporte de la plataforma. Separada de /panel (por-gimnasio) y de
 // /mi (cliente). Nunca se enlaza desde el flujo normal de ningún gimnasio.
@@ -34,16 +35,13 @@ export default async function AdminLayout({
               <Link
                 key={n.href}
                 href={n.href}
-                className="text-sm underline decoration-rule underline-offset-2 hover:decoration-ink"
+                className={`text-sm ${linkClasses.inline}`}
               >
                 {n.label}
               </Link>
             ))}
           </nav>
-          <Link
-            href="/panel"
-            className="text-sm underline decoration-rule underline-offset-2 hover:decoration-ink"
-          >
+          <Link href="/panel" className={`text-sm ${linkClasses.inline}`}>
             Salir
           </Link>
         </div>

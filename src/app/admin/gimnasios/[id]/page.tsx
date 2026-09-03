@@ -4,7 +4,7 @@ import { requireSuperadmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { registrarAccionAdmin } from "@/lib/admin/audit";
 import { entrarComoAction } from "../../impersonar-actions";
-import { Button } from "@/components/ui";
+import { Button, linkClasses } from "@/components/ui";
 import { cupoExcedido, cupoTexto } from "@/lib/plataforma/planes";
 import { EstadoForm } from "./estado-form";
 import { PlanPlataformaForm } from "./plan-plataforma-form";
@@ -111,7 +111,7 @@ export default async function AdminGimnasioDetalle({
     <div className="stagger">
       <Link
         href="/admin/gimnasios"
-        className="text-sm underline decoration-rule underline-offset-2 hover:decoration-ink"
+        className={`text-sm ${linkClasses.inline}`}
       >
         ← Gimnasios
       </Link>
@@ -226,7 +226,7 @@ export default async function AdminGimnasioDetalle({
                 <button
                   type="submit"
                   disabled={!s.profile?.id}
-                  className="text-xs underline decoration-rule underline-offset-2 hover:decoration-ink disabled:opacity-40"
+                  className={`text-xs disabled:opacity-40 ${linkClasses.inline}`}
                 >
                   ver como
                 </button>

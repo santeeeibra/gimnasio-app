@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { verificarPinIngresos, resetearPinConContrasena } from "./configurar-pin/actions";
-import { Button } from "@/components/ui";
+import { Button, linkClasses } from "@/components/ui";
 import { useRouter } from "next/navigation";
 
 export function VerificarPinModal() {
@@ -63,7 +63,7 @@ export function VerificarPinModal() {
   if (!abierto) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[color:var(--scrim)] animate-fade-in">
       <div className="w-full max-w-sm mx-4 rounded-[8px] border border-rule bg-paper p-6 shadow-lg animate-slide-up">
         {!mostrarRecuperar ? (
           <>
@@ -99,7 +99,7 @@ export function VerificarPinModal() {
               <button
                 type="button"
                 onClick={() => setMostrarRecuperar(true)}
-                className="w-full text-sm text-ink-soft underline underline-offset-2 hover:text-ink transition-colors"
+                className={`w-full text-sm ${linkClasses.plano}`}
               >
                 Olvidé mi PIN
               </button>
@@ -107,7 +107,7 @@ export function VerificarPinModal() {
               <button
                 type="button"
                 onClick={() => router.push("/panel")}
-                className="w-full text-sm text-ink-soft underline underline-offset-2 hover:text-ink transition-colors"
+                className={`w-full text-sm ${linkClasses.plano}`}
               >
                 ← Volver al panel
               </button>
@@ -121,7 +121,7 @@ export function VerificarPinModal() {
                 setContrasena("");
                 setError("");
               }}
-              className="text-sm text-ink-soft underline underline-offset-2 mb-2"
+              className={`mb-2 text-sm ${linkClasses.accion}`}
             >
               ← Volver
             </button>
