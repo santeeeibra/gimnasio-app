@@ -3,6 +3,7 @@ import { requireSuperadmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { registrarAccionAdmin } from "@/lib/admin/audit";
 import { SEMAFORO_COLOR, SEMAFORO_TITULO, semaforo } from "@/lib/admin/errores";
+import { linkClasses } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
@@ -77,7 +78,7 @@ export default async function AdminGimnasiosPage() {
       <p className="mb-8 text-sm">
         <Link
           href="/admin/errores"
-          className="underline decoration-rule underline-offset-2 hover:decoration-ink"
+          className={linkClasses.inline}
         >
           Ver detalle de errores
         </Link>
