@@ -44,6 +44,47 @@ usarlo para altas masivas).
 - Flag `debe_cambiar_clave` fuerza cambio en el primer login.
 - Cada gimnasio = cuenta independiente (sin arrastre entre gimnasios).
 
+### Recuperación de contraseña — flujo asistido (2026-09-03)
+
+Como el email de login es sintético (`dni@<slug>.gym.local`, no existe), no se
+puede mandar un link de recuperación ahí. Solución: email real **opcional** como
+dato de contacto + un flujo asistido que funciona sin infraestructura de mail.
+
+- **Migración `0021_email_recuperacion.sql`** (aplicada): `clientes.email` (text
+  nullable) y `profiles.email_recuperacion` (text nullable). No son login: solo
+  contacto para recuperación. El dueño carga el email del socio en el alta
+  (`alta-form.tsx`) o al editar la ficha (`editar-datos.tsx`); el suyo propio en
+  `/panel/ajustes` → card "Email para recuperar tu contraseña"
+  (`email-recuperacion-form.tsx` + `actualizarEmailRecuperacion`). `seed.mjs`
+  acepta un 5º argumento opcional para el `email_recuperacion` del dueño.
+- **Link en `/login`** → página `/login/olvide-clave` (form: gimnasio + DNI +
+  email opcional). Server action `solicitarReset` en
+  `src/app/login/olvide-clave/actions.ts`, rate limit en memoria (1 pedido cada
+  2 min por gimnasio+DNI), mensajes de éxito genéricos (no revelan si el DNI
+  existe).
+- **Camino A — link por email**: sólo si `dominioEmailActivo()` (env
+  `RESEND_FROM` seteado y **no** termina en `@resend.dev`) **y** el email
+  ingresado coincide con el cargado. Usa
+  `supabase.auth.admin.generateLink({ type: "recovery", ... , redirectTo:
+  <origin>/reset-clave })` y manda el `action_link` con `enviarEmail`. La
+  pantalla `/reset-clave` (client) levanta la sesión del link y pide clave nueva
+  (`supabase.auth.updateUser`), apaga `debe_cambiar_clave`. `/reset-clave` está
+  en `PUBLIC_PATHS` del middleware. Pendiente manual para activarlo: dominio
+  verificado en Resend + `RESEND_FROM=no-reply@<dominio>` + agregar
+  `<origin>/reset-clave` a Redirect URLs de Supabase Auth.
+- **Camino B — asistido (default hoy, sin dominio)**:
+  - **Socio** → `enviarPush` a los dueños del gimnasio: "Fulano (DNI …) pidió
+    recuperar su contraseña. Entrá a su ficha → Acceso → Regenerar contraseña"
+    (ese botón, `regenerarClave`, ya existía). Mensaje al socio: `OK_SOCIO`
+    ("le avisamos a tu gimnasio…").
+  - **Dueño** → `notificarSuperadmin` (push + mail): restablecer con
+    `scripts/reset-clave.mjs` o desde `/admin`. Mensaje: `OK_DUENO`
+    ("avisamos a soporte…").
+  - Si el camino A intenta enviar pero `enviarEmail` devuelve `{ ok: false }`
+    (Resend rechazó por dominio no verificado), **no** se muestra el falso
+    "te llega un mail": cae igual al camino B.
+- Sin migración extra para el flujo. Commits `a24de7d` + `b8e9531`.
+
 ### Planes y cuotas
 - Planes los define cada dueño (nombre, precio, duración).
 - El pago se hace por fuera del sistema (transferencia); el dueño lo registra a
