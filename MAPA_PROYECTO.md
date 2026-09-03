@@ -10,8 +10,8 @@
 |---|---|---|
 | Auth / login (DNI + gimnasio) | `src/app/login/`, helpers `current_gimnasio_id()`, `current_cliente_id()` | ✅ HECHO |
 | Alta de clientes (manual, sin auto-registro) | `src/app/panel/clientes/alta-form.tsx`, `altaCliente` en `clientes/actions.ts` | ✅ HECHO — el alta NO registra pago (2026-09-03), se saca el checkbox "Pago recibido"; el dueño cobra desde la ficha del socio |
-| Editar datos del socio ya creado | `panel/clientes/[id]/editar-datos.tsx`, `editarCliente` en `clientes/actions.ts` | ✅ código (2026-09-03) — falta probar end-to-end (bloqueado por migraciones) |
-| Ingresos — pagos por mes + PIN + buscador por socio | `src/app/panel/ingresos/*`, `api/panel/ingresos/route.ts` | ✅ código — buscador por nombre 2026-09-03; falta aplicar `0008_pin_ingresos.sql` |
+| Editar datos del socio ya creado | `panel/clientes/[id]/editar-datos.tsx`, `editarCliente` en `clientes/actions.ts` | ✅ código (2026-09-03) — migraciones aplicadas, falta probar end-to-end |
+| Ingresos — pagos por mes + PIN + buscador por socio | `src/app/panel/ingresos/*`, `api/panel/ingresos/route.ts` | ✅ código + migración `0008` aplicada — buscador por nombre 2026-09-03; falta probar |
 | Planes y cuotas | tabla `planes`, `recalcular_estado_cuota()` | ✅ HECHO (cron pendiente) |
 | Rutinas — motor de reglas | `src/lib/rutina/motor.ts` | ✅ COMPLETO, bug de variedad corregido 2026-09-02 |
 | Rutinas — tipos/constantes | `src/lib/rutina/tipos.ts` (SEXOS, ENFASIS, SERIES/REPS) | ✅ HECHO |
@@ -21,10 +21,10 @@
 | Rutinas — panel avanzado (dropset, myo-reps, etc.) | `SPEC_PANEL_AVANZADO_RUTINA.md` | 🔲 spec armado, no pasado a nadie |
 | Mensajería | compositor + bandeja + hilos | ✅ HECHO |
 | Branding / tema por gimnasio | `src/lib/tema.ts`, `src/lib/contraste.ts`, `/panel/ajustes` | ✅ COMPLETO |
-| Logo + paleta desde logo | `src/lib/logo/comprimir.ts`, `src/lib/logo/paleta.ts`, migración `0006_logo_gimnasio.sql` | ✅ Implementado — **falta aplicar migración 0006 en Supabase** |
+| Logo + paleta desde logo | `src/lib/logo/comprimir.ts`, `src/lib/logo/paleta.ts`, migración `0006_logo_gimnasio.sql` | ✅ Implementado — migración `0006` aplicada |
 | Identidad "Futurista" (anillo + Orbitron) | `src/components/anillo-progreso.tsx`, `REGLAS_UI_EMIL.md` §2 y §17 | 🔄 Paso 1 hecho; faltan animaciones pasivas + propagar al resto de la app |
 | Check-in DNI + día de prueba | `src/app/checkin/`, `registros_entrada`, migración `0009_checkin_prueba.sql` | ✅ HECHO — falta ver conversión prueba→pago en uso real |
-| Check-in — pantalla de reposo (screensaver) configurable | `src/components/checkin/pantalla-reposo.tsx`, CSS `.reposo-*` en `globals.css`, `ReposoCheckin` en `src/lib/tema.ts`, form `panel/ajustes/reposo-checkin-form.tsx` + `actualizarReposoCheckin` en `panel/ajustes/actions.ts`, wiring en `checkin/layout.tsx` | ✅ código + typecheck + verificado en browser (2026-09-03). **Sin migración** — config anidada en `gimnasios.tema.reposoCheckin`. Opciones: activar/desactivar, segundos de inactividad (15–600), mensaje, mostrar reloj/logo, intensidad (sutil/normal/estático). Estilo "Futurista" (fondo oscuro, `--volt`, hora en `--font-hero`). La card en `/panel/ajustes` sólo aparece cuando `gym` carga (hoy bloqueado por migraciones `0012`/`0019`, igual que "Aviso de vencimiento") |
+| Check-in — pantalla de reposo (screensaver) configurable | `src/components/checkin/pantalla-reposo.tsx`, CSS `.reposo-*` en `globals.css`, `ReposoCheckin` en `src/lib/tema.ts`, form `panel/ajustes/reposo-checkin-form.tsx` + `actualizarReposoCheckin` en `panel/ajustes/actions.ts`, wiring en `checkin/layout.tsx` | ✅ código + typecheck + verificado en browser (2026-09-03). **Sin migración** — config anidada en `gimnasios.tema.reposoCheckin`. Opciones: activar/desactivar, segundos de inactividad (15–600), mensaje, mostrar reloj/logo, intensidad (sutil/normal/estático). Estilo "Futurista" (fondo oscuro, `--volt`, hora en `--font-hero`). Migraciones aplicadas → la card ya carga en `/panel/ajustes` |
 | UI home + form rutina (selects, --volt, bottom nav) | `SPEC_UI_HOME_RUTINA.md` | 🔄 spec pasado a Claude Code, no confirmado ejecutado |
 | Tutorial onboarding | `SPEC_TUTORIAL_ONBOARDING.md` | 🔄 parece implementado, falta confirmar recorrido completo |
 | Frases motivadoras | `src/lib/frases-motivadoras.ts` | 🔲 instrucción dada a Cline, no confirmado |
@@ -62,24 +62,11 @@
 
 ## Pendientes manuales (Supabase/Vercel)
 
-### Migraciones a aplicar en el SQL Editor (en orden)
+### Migraciones — ✅ TODAS APLICADAS (2026-09-03)
 
-Correrlas todas juntas cuando vuelva el servicio de Supabase (incidente JWT /
-401 del 2026-09-02):
-
-1. `0006_logo_gimnasio.sql`
-2. `0007_cliente_sexo.sql`
-3. `0008_pin_ingresos.sql` (causa del bug "No se encontró el gimnasio" al crear el PIN de Ingresos)
-4. `0009_checkin_prueba.sql`
-5. `0012_gestor_morosidad.sql`
-6. `0018_alta_pago_recibido.sql` — columna `clientes.acceso_habilitado`
-7. `0019_datos_pago_gimnasio.sql` — columnas `gimnasios.pago_alias` / `pago_cbu` / `pago_titular`
-
-(`0011_monitor_db.sql` está mergeada; confirmar si se aplicó.)
-
-**Hasta aplicar `0018` + `0019`, estas pantallas fallan** porque los queries
-piden columnas nuevas: `/mi`, `/mi/pagos`, `/panel/ajustes`, `/panel/clientes`
-(y `/panel/clientes/[id]`).
+`0001`–`0019` aplicadas en Supabase. Se aplicaron `0006`–`0019` con
+`node scripts/aplicar-migraciones.mjs` (runner con `pg` + `DATABASE_URL`).
+Ya no hay pantallas bloqueadas por columnas faltantes.
 
 ### Otros
 

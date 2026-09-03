@@ -73,7 +73,7 @@ usarlo para altas masivas).
   para seguir entrenando." + set de la fecha. Respuesta JSON incluye
   `avisosMorosidad`.
 - Fuera de scope v1: WhatsApp, múltiples avisos por ciclo, texto personalizable.
-- Migración `0012_gestor_morosidad.sql` — **PENDIENTE de aplicar**.
+- Migración `0012_gestor_morosidad.sql` — ✅ aplicada (2026-09-03).
 
 ### Rutinas (motor + generación + editor hechos; seed de imágenes OK)
 - V1: motor de **reglas fijas** (sin IA). Variables: objetivo, nivel, días de
@@ -210,7 +210,7 @@ usarlo para altas masivas).
   estado "Día de prueba" + nota para convertir.
 - **Entrada al modo**: link "Modo check-in" en el sidebar desktop
   (`panel-nav.tsx`) + tarjeta en `/panel` (resumen, `md:hidden`).
-- **Migración `0009_checkin_prueba.sql`** (PENDIENTE de aplicar): `clientes` +
+- **Migración `0009_checkin_prueba.sql`** (✅ aplicada 2026-09-03): `clientes` +
   `en_prueba boolean not null default false` + `prueba_iniciada_en date`; tabla
   nueva `registros_entrada` (`id`, `gimnasio_id` FK, `cliente_id` FK,
   `creado_en timestamptz`) con RLS `is_dueno()` + `current_gimnasio_id()`. Fila
@@ -250,7 +250,7 @@ Cualquier `pointerdown` / `keydown` / `touchstart` / `wheel` /
   `src/app/api/panel/ingresos/route.ts` (GET) y los consume
   `listado-ingresos.tsx` client-side.
 - **PIN de 4-6 dígitos** en `gimnasios.pin_ingresos` (text nullable, migración
-  `0008_pin_ingresos.sql` — **PENDIENTE de aplicar**, ver Bugs abiertos).
+  `0008_pin_ingresos.sql` — ✅ aplicada 2026-09-03).
   `src/lib/pin.ts`: hash SHA-256 + salt (`PIN_SALT` env, default fijo).
 - `configurar-pin/` (page + actions + `configurar-pin-form.tsx`): crear/cambiar
   PIN. `verificar-pin-modal.tsx`: modal que pide el PIN y guarda
@@ -335,17 +335,17 @@ conflictos vive en `localStorage`.
 
 ## Modelo de datos
 
-`gimnasios` (+ `tema` jsonb, `logo_url` text nullable, `pin_ingresos` text
-nullable — migración `0008`, **pendiente**; + `dias_aviso_morosidad` int default
-5 — migración `0012`, **pendiente**), `planes`,
-`clientes` (+ `sexo` text nullable: `mujer`/`hombre`/`sin_especificar`, migración
-`0007_cliente_sexo.sql`; + `en_prueba` bool + `prueba_iniciada_en` date —
-migración `0009`, **pendiente**; + `ultimo_aviso_morosidad_enviado_en` date
-nullable — migración `0012`, **pendiente**), `ejercicios`,
-`rutinas` / `rutina_items`, `mensajes` / `mensaje_destinatarios`,
-`push_subscriptions`, `registros_entrada` (presencia puntual — migración `0009`,
-**pendiente**), `monitor_db_estado` (monitor de uso de la base — migración
-`0011_monitor_db.sql`).
+Migraciones `0001`–`0019` ✅ aplicadas (2026-09-03). `tema` jsonb también
+guarda `reposoCheckin` (pantalla de reposo del check-in; sin migración).
+
+`gimnasios` (+ `tema` jsonb, `logo_url`, `pin_ingresos`, `dias_aviso_morosidad`,
+`pago_alias` / `pago_cbu` / `pago_titular`), `planes`,
+`clientes` (+ `sexo` text nullable: `mujer`/`hombre`/`sin_especificar`;
++ `en_prueba` bool + `prueba_iniciada_en` date;
++ `ultimo_aviso_morosidad_enviado_en` date nullable; + `acceso_habilitado` bool),
+`ejercicios`, `rutinas` / `rutina_items`, `mensajes` / `mensaje_destinatarios`,
+`push_subscriptions`, `registros_entrada` (presencia puntual),
+`monitor_db_estado` (monitor de uso de la base).
 
 Helpers SQL: `current_gimnasio_id()`, `is_dueno()`, `current_cliente_id()`,
 `recalcular_estado_cuota()`. Chequeos cruzados de mensajería vía funciones
@@ -363,10 +363,10 @@ SECURITY DEFINER (`soy_destinatario`, `mensaje_gimnasio`, `mensaje_remitente`,
 | 3 — Push web nativo | ✅ **COMPLETO (2026-09-02)** — Código completo y verificado (typecheck limpio, `/sw.js` y `/manifest` sirven 200, cron sin auth → 401, card "Notificaciones" renderiza en `/mi`). **Archivos nuevos**: `public/sw.js` (service worker con listeners `push` + `notificationclick`), `public/manifest.webmanifest` (PWA mínima, link + themeColor + appleWebApp en `layout.tsx`), `src/lib/push/cliente.ts` (registrar SW, pedir permiso, `pushManager.subscribe`), `src/lib/push/enviar.ts` (`enviarPush(profileIds, {title,body,url,tag})`, borra subs muertas 404/410), `src/app/mi/push-actions.ts` (`guardarSuscripcion` / `borrarSuscripcion`), `src/app/mi/activar-notificaciones.tsx` (botón en `/mi`), `src/app/api/cron/cuotas/route.ts` + `vercel.json` (cron diario 12:00, avisa a 6 y 1 días). **Modificados**: `middleware.ts` (whitelist `/sw.js`, `/manifest.webmanifest`, `/icon-`, `/badge-`, `/api/cron`), `panel/mensajes/actions.ts` (enviar + responder dueño), `mi/mensajes/actions.ts` (responder cliente → avisa dueño), `mi/page.tsx`. **Pendiente manual**: (1) Generar claves VAPID: `npx web-push generate-vapid-keys` → `.env.local` (`NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT=mailto:…`) + `CRON_SECRET`; las mismas 4 en Vercel → Project Settings → Environment Variables. (2) Iconos en `public/`: `icon-192.png`, `icon-512.png`, `badge-72.png` (referenciados por SW y manifest). (3) Reiniciar dev server (toma nuevo `.env.local`) y probar en navegador real con permiso: `/mi` → "Activar" → mensaje desde panel → debe llegar notificación. (4) Deploy a Vercel (cron se registra solo desde `vercel.json`). Disparar manualmente: `curl -H "authorization: Bearer $CRON_SECRET" https://<dominio>/api/cron/cuotas`. **Nota iOS**: solo funciona en 16.4+ y con app agregada a pantalla de inicio. |
 | 4 — Rutinas (motor de reglas + editor + seed imágenes) | ✅ **COMPLETO (2026-09-02)** — Motor con **sexo y énfasis** (generación liviana + zona a enfocar): `tipos.ts` nuevos `SEXOS`/`SEXO_LABEL`, `ENFASIS`/`ENFASIS_LABEL`/`ENFASIS_GRUPOS` (7 zonas: Glúteos, Piernas, Pecho, Espalda, Hombros, Brazos, Abdomen), `MAX_ENFASIS = 2`, `SERIES_OPCIONES`/`REPS_OPCIONES` para menús. `EntradaMotor` ahora lleva `sexo` y `enfasis[]`. `motor.ts`: `ajustarPorSexo()` — mujer baja 1 serie en compuestos/aislamientos (mín. 3/2), sin tocar reps; `aplicarEnfasis()` — agrega hasta 3 ranuras extra/día para las zonas elegidas (máx. 8 ejercicios/día), con patrón real. Si es mujer y no eligió zona → glúteos por defecto. `generar.ts`: persiste sexo/énfasis en `preferencias` jsonb (sin migración SQL). Actions (`mi/rutina/actions.ts`, `panel/clientes/actions.ts`): `parseSexo()` y `parseEnfasis()` validan campos. Formulario (`generar-form.tsx`): select "Sexo" **condicional** (solo se muestra si `clienteSexo` prop existe; sino pasa `"sin_especificar"` por defecto) + fieldset "Zona a enfocar" (chips, máx. 2, controlado). Defaults se releen en `mi/rutina/page.tsx`, `panel/clientes/[id]/page.tsx`, `rutina-panel.tsx`. **Series/Reps sin escribir** (`rutina-editor.tsx`): los 2 `<input>` ahora `<select>` — Series 1–5, Reps 10 opciones fijas (5, 6, 6–8, 8–10, 8–12, 10–12, 12–15, 15, 15–20, 20). Si el valor guardado no está en la lista se agrega como primera opción (compat. hacia atrás). Typecheck limpio ✅. **Imágenes**: cambió wger por **free-exercise-db** (fotos fondo blanco). Editor alterna `/0.jpg`↔`/1.jpg` cada 900 ms + visor grande al tocar. Fix mobile: `img,video{max-width:100%;height:auto}` en `globals.css` + miniatura caja fija 72px. Seed corrido (2026-09-02): `imagen_url` de 53 ejercicios en tabla (verificado, cargan desde jsdelivr). |
 | 5 — Cron `recalcular_estado_cuota()` diario (pg_cron o Vercel cron) | Sin empezar |
-| Check-in por DNI + día de prueba (SPEC `SPEC_CHECKIN_PRUEBA.md`) | ✅ código + typecheck (2026-09-02). **Falta aplicar `0009_checkin_prueba.sql`** y probar RLS end-to-end. Ver sección "Check-in por DNI…". |
-| Ingresos — pagos por mes protegidos por PIN (Cline) | ✅ código (2026-09-02). **Falta aplicar `0008_pin_ingresos.sql`** (bug "No se encontró el gimnasio" hasta entonces). Buscador por nombre de socio en `listado-ingresos.tsx` (filtra la lista + total, client-side) — 2026-09-03. |
+| Check-in por DNI + día de prueba (SPEC `SPEC_CHECKIN_PRUEBA.md`) | ✅ código + typecheck (2026-09-02). Migración `0009` aplicada; falta probar RLS end-to-end. Ver sección "Check-in por DNI…". |
+| Ingresos — pagos por mes protegidos por PIN (Cline) | ✅ código (2026-09-02). Migración `0008_pin_ingresos.sql` ✅ aplicada. Buscador por nombre de socio en `listado-ingresos.tsx` (filtra la lista + total, client-side) — 2026-09-03. |
 | Monitor de uso de Supabase (`SPEC_MONITOR_SUPABASE.md`) | ✅ código + migración `0011_monitor_db.sql` (panel `/admin` + cron, aviso al admin de la plataforma al acercarse al límite del plan free). |
-| Gestor de morosidad — aviso automático de vencimiento (`SPEC_GESTOR_MOROSIDAD.md`) | ✅ código + typecheck (`tsc --noEmit` limpio). Migración `0012_gestor_morosidad.sql`, server action `actualizarDiasAvisoMorosidad` + card en `/panel/ajustes`, 3ª vía en el cron de cuotas, reset en `registrarPago`. **Falta aplicar `0012` y probar end-to-end.** Ver "Gestor de morosidad" en Decisiones de producto. |
+| Gestor de morosidad — aviso automático de vencimiento (`SPEC_GESTOR_MOROSIDAD.md`) | ✅ código + typecheck (`tsc --noEmit` limpio). Migración `0012_gestor_morosidad.sql`, server action `actualizarDiasAvisoMorosidad` + card en `/panel/ajustes`, 3ª vía en el cron de cuotas, reset en `registrarPago`. Migración `0012` ✅ aplicada; falta probar end-to-end. Ver "Gestor de morosidad" en Decisiones de producto. |
 | Fallback offline ante caída de Supabase (`SPEC_OFFLINE_FALLBACK.md`) | ✅ código + typecheck + smoke test (2026-09-03). **Sin migración, no toca RLS / `motor.ts` / `generar.ts`.** Capa 100% cliente. Ver "Fallback offline" en Decisiones de producto. |
 
 ### Datos de prueba
@@ -379,15 +379,10 @@ SECURITY DEFINER (`soy_destinatario`, `mensaje_gimnasio`, `mensaje_remitente`,
   `prof_select` no deja al cliente leer el perfil del dueño). Sin resolver.
 
 ### Bugs abiertos
-- **"No se encontró el gimnasio" al crear el PIN de Ingresos por primera vez**
-  (2026-09-02). Causa: la migración `0008_pin_ingresos.sql` (columna
-  `gimnasios.pin_ingresos`) **no está aplicada**; el `select("pin_ingresos")`
-  devuelve error 400 (columna inexistente), el código lo ignoraba y caía en
-  `if (!gym)` con un mensaje engañoso. Mismo motivo por el que `/checkin`,
-  `/panel/clientes` y `/panel/clientes/[id]` van a fallar hasta aplicar `0009`.
-  - Mitigado en código: `configurar-pin/actions.ts` ahora devuelve el mensaje
-    real de Postgres. **Fix definitivo: aplicar `0008` y `0009` en el SQL
-    Editor de Supabase.**
+- ✅ **RESUELTO (2026-09-03)** — "No se encontró el gimnasio" al crear el PIN de
+  Ingresos. Causa: `0008_pin_ingresos.sql` sin aplicar → `select("pin_ingresos")`
+  daba error 400. Se aplicaron `0006`–`0019`; `configurar-pin/actions.ts` además
+  quedó devolviendo el mensaje real de Postgres.
 - **`/mi/rutina` no respeta el tema** (visto en captura, 2026-09-01).
   - Causa 1: `bg-white` hardcodeado — ✅ RESUELTO y barrido global hecho.
     Editor de rutina + barrido de todo `src/`: inputs → `bg-paper`, `Panel`
@@ -476,13 +471,13 @@ Ya hecho (2026-09-02):
   `clientes.ultimo_aviso_morosidad_enviado_en`), card "Aviso de vencimiento" en
   `/panel/ajustes` + `actualizarDiasAvisoMorosidad`, 3ª vía en el cron de cuotas
   (push al socio N días antes, texto fijo, dedupe por ciclo), reset en
-  `registrarPago`. Typecheck limpio ✅. Falta aplicar `0012` + probar.
+  `registrarPago`. Typecheck limpio ✅. Migración `0012` aplicada; falta probar.
 - Fix `/mi/rutina` no respeta el tema (tokens + `chequearBloqueos`)
 - Seed de imágenes de ejercicios corrido (free-exercise-db, `imagen_url` en la tabla)
 - Rediseño guiado del editor de tema + prueba end-to-end + gimnasio de prueba re-guardado como Océano
 - **Entregable 4 — Rutinas**: motor con sexo y énfasis (generación liviana + zona a enfocar), series/reps como selectores (sin escritura libre), typecheck limpio ✅
 - **Entregable 3 — Push web nativo**: código completo y verificado (SW, manifest, suscripción, emisor, wiring en mensajería, cron de cuota + `vercel.json`). Typecheck limpio ✅, `/sw.js` y `/manifest` sirven 200 ✅, cron sin auth → 401 ✅, card "Notificaciones" renderiza en `/mi` ✅
-- **Pase de UI sobre `/mi` home + form de rutina** (SPEC `SPEC_UI_HOME_RUTINA.md`, 2026-09-02): componente `Select` reusable + variante `volt` de `Button` + `--color-volt-ink` utility; filas de `/mi` agrupadas en `<ul>` con divisor + íconos; bottom nav de cliente (`mi/mi-nav.tsx`). Typecheck limpio ✅. **Pendiente manual**: aplicar `supabase/migrations/0007_cliente_sexo.sql` (columna `clientes.sexo`) — hasta entonces `/mi/rutina` y `/panel/clientes/[id]` fallan porque los queries piden `sexo`.
+- **Pase de UI sobre `/mi` home + form de rutina** (SPEC `SPEC_UI_HOME_RUTINA.md`, 2026-09-02): componente `Select` reusable + variante `volt` de `Button` + `--color-volt-ink` utility; filas de `/mi` agrupadas en `<ul>` con divisor + íconos; bottom nav de cliente (`mi/mi-nav.tsx`). Typecheck limpio ✅. Migración `0007_cliente_sexo.sql` (columna `clientes.sexo`) ✅ aplicada (2026-09-03).
 - **Sexo del cliente ahora es dato real**: columna `clientes.sexo` (nullable), la carga el dueño en el alta (`alta-form.tsx` → `altaCliente`). El select "Sexo" de `generar-form.tsx` solo aparece si está cargado. Falta: que el dueño pueda **editar** sexo (+ nombre / DNI / contraseña) de un cliente ya creado — chip de tarea creado, toca `auth.admin` y el email derivado del DNI.
 - **Select "Sexo" condicional en `generar-form.tsx`** (actualización): ahora acepta prop `clienteSexo?: Sexo | null`. Si es `null`/`undefined`, NO muestra el select y pasa `"sin_especificar"` por defecto al motor mediante `<input type="hidden">`. Como `profiles` NO tiene campo `sexo`, actualmente el select se oculta hasta implementar captura en alta.
 - **Banner motivacional en `/mi/rutina`**: 20 frases estáticas en `src/lib/frases-motivadoras.ts`, frase del día determinística (día del año % 20). Componente `BannerMotivacional` (`src/components/rutinas/banner-motivacional.tsx`) renderizado arriba del contenido principal. Sin IA, sin BD, todo estático.
@@ -503,29 +498,23 @@ Ya hecho (2026-09-02):
 
 - **Logo del gimnasio + paletas desde el logo** (SPEC `SPEC_LOGO_COLORES.md`):
   compresión client-side, extracción de color, chips de paleta sugerida, logo en
-  panel/mi/mensajes. Código y typecheck ✅. **Pendiente manual**: aplicar
-  `supabase/migrations/0006_logo_gimnasio.sql` (columna `logo_url` + bucket
-  `logos` + RLS) — hasta entonces `/panel`, `/mi` y `/panel/ajustes` fallan
-  porque los queries piden `logo_url`.
+  panel/mi/mensajes. Código y typecheck ✅. Migración `0006_logo_gimnasio.sql`
+  (columna `logo_url` + bucket `logos` + RLS) ✅ aplicada (2026-09-03).
+
+**Migraciones `0001`–`0019`: ✅ TODAS APLICADAS en Supabase (2026-09-03)** con
+`node scripts/aplicar-migraciones.mjs` (runner con `pg` + `DATABASE_URL`).
+Ninguna pantalla queda bloqueada por columnas faltantes. Lo que queda de las
+features abajo es **probar end-to-end**, ya no aplicar SQL.
 
 Pendiente, prioridad sugerida:
 
-0. **Aplicar migraciones pendientes en el SQL Editor de Supabase** (bloquean
-   funcionalidad ya mergeada): `0006_logo_gimnasio.sql`, `0007_cliente_sexo.sql`,
-   `0008_pin_ingresos.sql` (⚠️ causa del bug "No se encontró el gimnasio" al
-   crear el PIN de Ingresos), `0009_checkin_prueba.sql` y
-   `0012_gestor_morosidad.sql` (`gimnasios.dias_aviso_morosidad` +
-   `clientes.ultimo_aviso_morosidad_enviado_en`; hasta aplicarla `/panel/ajustes`
-   y el cron de cuotas fallan al pedir esas columnas). Correrlas en orden.
-   (`0011_monitor_db.sql` ya está mergeada; confirmar si se aplicó.)
-1. **Aplicar `0006_logo_gimnasio.sql`** y probar el flujo de logo
-   (`/panel/ajustes` → subir → chip sugerido → guardar; verificar `.webp`
-   <300 KB en el bucket y que un gimnasio sin logo no cambia).
-1b. **Aplicar `0007_cliente_sexo.sql`** (columna `clientes.sexo`) y probar el
-   alta con sexo → `/mi/rutina` muestra el select de Sexo solo si está cargado.
-1d. **Aplicar `0008` + `0009`** y probar: crear PIN de Ingresos, alta "1 día de
-   prueba", 2º ingreso en `/checkin` → push + badge, convertir con pago → badge
-   se apaga. RLS: un dueño no ve/inserta `registros_entrada` de otro gimnasio.
+1. **Probar flujo de logo** (`/panel/ajustes` → subir → chip sugerido → guardar;
+   verificar `.webp` <300 KB en el bucket y que un gimnasio sin logo no cambia).
+1b. **Probar alta con sexo** → `/mi/rutina` muestra el select de Sexo solo si
+   está cargado.
+1d. **Probar Ingresos + prueba**: crear PIN de Ingresos, alta "1 día de prueba",
+   2º ingreso en `/checkin` → push + badge, convertir con pago → badge se apaga.
+   RLS: un dueño no ve/inserta `registros_entrada` de otro gimnasio.
 1c. **Panel: editar cliente ya creado** (nombre / DNI / contraseña / sexo) —
    ✅ código (2026-09-03). Acción `editarCliente` en `panel/clientes/actions.ts`
    + componente `panel/clientes/[id]/editar-datos.tsx` (`<details>` "Editar datos
@@ -533,9 +522,8 @@ Pendiente, prioridad sugerida:
    el email de auth (`dniAEmail`), con chequeo de choque en el gimnasio y
    rollback si `updateUserById` falla; contraseña opcional → `updateUserById` +
    `debe_cambiar_clave = true`; sexo → `clientes.sexo`. Typecheck limpio.
-   **Falta probar end-to-end**: bloqueado hasta aplicar las migraciones
-   `0006`–`0019` (`/panel/clientes/[id]` hoy da 404 porque su query pide
-   `sexo` / `en_prueba` / `acceso_habilitado`).
+   **Falta probar end-to-end** (migraciones ya aplicadas; `/panel/clientes/[id]`
+   ya no da 404 por columnas faltantes).
 2. **Cerrar Entregable 3 — manual**: generar VAPID keys + `CRON_SECRET` → `.env.local` y Vercel, agregar iconos PNG (`icon-192.png`, `icon-512.png`, `badge-72.png`) a `public/`, probar suscripción + envío real en navegador con permiso, deploy a Vercel.
 3. **Entregable 5 — Cron `recalcular_estado_cuota()`**: falta implementar (actualmente se calcula on-demand).
 4. Rediseño UI: seguir con `/panel` (dashboard).
