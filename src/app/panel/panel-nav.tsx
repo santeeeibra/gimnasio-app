@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logout } from "@/app/actions";
+import { linkClasses } from "@/components/ui";
 
 type NavItem = { href: string; label: string; soloDesktop?: boolean };
 
@@ -22,6 +23,15 @@ function isActive(pathname: string, href: string) {
   if (href === "/panel") return pathname === "/panel";
   // Coincidencia por segmento: /panel/planes NO activa /panel/plan.
   return pathname === href || pathname.startsWith(href + "/");
+}
+
+const NUMERO_SOPORTE_WHATSAPP = "5492920605208";
+
+/** Link de WhatsApp con mensaje precargado para reportar un problema. */
+function whatsappReporteUrl(nombreGimnasio?: string | null) {
+  const gimnasio = nombreGimnasio || "mi gimnasio";
+  const mensaje = `Hola, soy ${gimnasio}. Tengo un problema: `;
+  return `https://wa.me/${NUMERO_SOPORTE_WHATSAPP}?text=${encodeURIComponent(mensaje)}`;
 }
 
 /** Miniatura del logo del gimnasio, con caja de tamaño fijo. */
@@ -98,18 +108,21 @@ export function PanelSidebar({
         >
           Modo check-in
         </Link>
+        <a
+          href={whatsappReporteUrl(nombre)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex h-9 items-center justify-center rounded-[5px] border border-rule px-3 text-sm text-ink transition-colors duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper-2 active:scale-[0.98]"
+        >
+          Reportar un problema
+        </a>
         {esSuper ? (
-          <Link
-            href="/admin"
-            className="text-xs text-ink-soft hover:text-ink underline underline-offset-2"
-          >
+          <Link href="/admin" className={`text-xs ${linkClasses.accion}`}>
             Soporte (dev)
           </Link>
         ) : null}
         <form action={logout}>
-          <button className="text-xs text-ink-soft hover:text-ink underline underline-offset-2">
-            Salir
-          </button>
+          <button className={`text-xs ${linkClasses.accion}`}>Salir</button>
         </form>
       </div>
     </aside>
@@ -133,18 +146,21 @@ export function PanelTopbar({
         <p className="font-display text-base leading-tight truncate">{nombre}</p>
       </div>
       <div className="flex shrink-0 items-center gap-3">
+        <a
+          href={whatsappReporteUrl(nombre)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`text-xs ${linkClasses.accion}`}
+        >
+          Reportar
+        </a>
         {esSuper ? (
-          <Link
-            href="/admin"
-            className="text-xs text-ink-soft underline underline-offset-2 active:scale-95 transition-transform duration-150 [transition-timing-function:var(--ease-out)]"
-          >
+          <Link href="/admin" className={`text-xs ${linkClasses.accion}`}>
             Soporte
           </Link>
         ) : null}
         <form action={logout}>
-          <button className="text-xs text-ink-soft underline underline-offset-2 active:scale-95 transition-transform duration-150 [transition-timing-function:var(--ease-out)]">
-            Salir
-          </button>
+          <button className={`text-xs ${linkClasses.accion}`}>Salir</button>
         </form>
       </div>
     </header>

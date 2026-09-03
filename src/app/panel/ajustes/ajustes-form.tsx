@@ -10,6 +10,8 @@ import {
   ESTILOS_VISUALES_KEYS,
   FUENTES,
   PRESETS_TEMA,
+  polaridadTema,
+  resolverMotion,
   temaToVars,
   type ColorKey,
   type EstiloVisual,
@@ -611,6 +613,8 @@ function MiniPreview({ tema }: { tema: Tema }) {
     <div
       style={temaToVars(tema)}
       data-estilo-visual={tema.estiloVisual}
+      data-theme-polarity={polaridadTema(tema)}
+      data-motion={resolverMotion(tema)}
       className="overflow-hidden rounded-[6px] border [&_*]:transition-[background-color,color,border-color] [&_*]:duration-150 [&_*]:ease-out"
     >
       <div

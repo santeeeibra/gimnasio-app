@@ -17,6 +17,7 @@ type Prefs = {
   sexo?: Sexo;
   enfasis?: Enfasis[];
 } | null;
+import { linkClasses } from "@/components/ui";
 import { generarMiRutina } from "./actions";
 import { GenerarRutinaForm } from "./generar-form";
 import { RutinaEditor, type DiaEditable } from "./rutina-editor";
@@ -71,7 +72,9 @@ export default async function MiRutinaPage() {
   // <details> cerrado, debajo del generador automático.
   const entradaManual = (
     <details className="group">
-      <summary className="flex w-fit cursor-pointer select-none list-none items-center gap-1.5 text-sm text-ink-soft underline underline-offset-2 [&::-webkit-details-marker]:hidden">
+      <summary
+        className={`flex w-fit cursor-pointer select-none list-none items-center gap-1.5 text-sm text-ink-soft [&::-webkit-details-marker]:hidden ${linkClasses.inline}`}
+      >
         <span className="group-open:hidden">
           ¿Ya entrenás y querés armar tu rutina a mano?
         </span>
@@ -91,34 +94,87 @@ export default async function MiRutinaPage() {
   const linkAvanzado = (
     <Link
       href="/mi/rutina/avanzado"
-      className="block w-fit text-sm text-ink-soft underline underline-offset-2"
+      className={`block w-fit text-sm text-ink-soft ${linkClasses.inline}`}
     >
       Modo avanzado — afinar el plan
     </Link>
   );
 
+  const regenerarDetails = rutina ? (
+    <details className="group">
+      <summary className="flex w-fit cursor-pointer select-none list-none items-center gap-1.5 rounded-[5px] border border-rule px-3 py-2 text-sm text-ink-soft transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 active:bg-paper-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 [&::-webkit-details-marker]:hidden">
+        <svg
+          viewBox="0 0 24 24"
+          width="15"
+          height="15"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden
+          className="transition-transform duration-150 [transition-timing-function:var(--ease-out)] group-open:rotate-180"
+        >
+          <path d="M23 4v6h-6M1 20v-6h6" />
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+        </svg>
+        <span className="group-open:hidden">Regenerar rutina</span>
+        <span className="hidden group-open:inline">Cerrar</span>
+      </summary>
+      <div
+        id="generar-rutina-auto"
+        className="mt-3 w-[min(22rem,calc(100vw-2.5rem))] scroll-mt-4 rounded-[6px] border border-rule bg-paper-2 p-4 animate-fade-in"
+      >
+        <p className="mb-3 text-xs text-ink-soft">
+          Cambiá lo que haga falta y armamos un plan nuevo. Reemplaza los
+          ejercicios actuales.
+        </p>
+        <GenerarRutinaForm
+          action={generarMiRutina}
+          tieneRutina
+          defaults={{
+            objetivo: rutina.objetivo as Objetivo,
+            nivel: (rutina.nivel as Nivel) ?? undefined,
+            dias: rutina.dias_por_semana ?? undefined,
+            preferencia: (rutina.preferencias as Prefs)?.equipo ?? undefined,
+            sexo: (rutina.preferencias as Prefs)?.sexo ?? undefined,
+            enfasis: (rutina.preferencias as Prefs)?.enfasis ?? undefined,
+          }}
+        />
+      </div>
+    </details>
+  ) : null;
+
   return (
     <main className="stagger max-w-md mx-auto px-5 py-6 space-y-6">
       <div>
-        <Link
-          href="/mi"
-          className="text-sm text-ink-soft underline underline-offset-2"
-        >
+        <Link href="/mi" className={`text-sm ${linkClasses.accion}`}>
           ← Volver
         </Link>
-        <h1 className="text-2xl mt-2">Tu rutina</h1>
-        {rutina ? (
-          <p className="text-sm text-ink-soft">
-            {rutina.origen === "manual"
-              ? "Armada a mano"
-              : (OBJETIVO_LABEL[rutina.objetivo as Objetivo] ??
-                rutina.objetivo)}
-            {rutina.nivel
-              ? ` · ${NIVEL_LABEL[rutina.nivel as Nivel] ?? rutina.nivel}`
-              : ""}
-            {rutina.dias_por_semana ? ` · ${rutina.dias_por_semana} días` : ""}
-          </p>
-        ) : null}
+        {/* §6: acción secundaria de la sección va en la fila del encabezado
+            (justify-between), nunca como hijo suelto del stack con ml-auto. */}
+        <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-2xl">Tu rutina</h1>
+            {rutina ? (
+              <p className="text-sm text-ink-soft">
+                {rutina.origen === "manual"
+                  ? "Armada a mano"
+                  : (OBJETIVO_LABEL[rutina.objetivo as Objetivo] ??
+                    rutina.objetivo)}
+                {rutina.nivel
+                  ? ` · ${NIVEL_LABEL[rutina.nivel as Nivel] ?? rutina.nivel}`
+                  : ""}
+                {rutina.dias_por_semana
+                  ? ` · ${rutina.dias_por_semana} días`
+                  : ""}
+              </p>
+            ) : null}
+          </div>
+          {regenerarDetails ? (
+            <div className="shrink-0">{regenerarDetails}</div>
+          ) : null}
+        </div>
       </div>
 
       <BannerMotivacional />
@@ -137,49 +193,6 @@ export default async function MiRutinaPage() {
         </>
       ) : (
         <>
-          <details className="group">
-            <summary className="ml-auto flex w-fit cursor-pointer select-none list-none items-center gap-1.5 rounded-[5px] border border-rule px-3 py-2 text-sm text-ink-soft transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 active:bg-paper-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 [&::-webkit-details-marker]:hidden">
-              <svg
-                viewBox="0 0 24 24"
-                width="15"
-                height="15"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden
-                className="transition-transform duration-150 [transition-timing-function:var(--ease-out)] group-open:rotate-180"
-              >
-                <path d="M23 4v6h-6M1 20v-6h6" />
-                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-              </svg>
-              <span className="group-open:hidden">Regenerar rutina</span>
-              <span className="hidden group-open:inline">Cerrar</span>
-            </summary>
-            <div
-              id="generar-rutina-auto"
-              className="mt-3 scroll-mt-4 rounded-[6px] border border-rule bg-paper-2 p-4 animate-fade-in"
-            >
-              <p className="mb-3 text-xs text-ink-soft">
-                Cambiá lo que haga falta y armamos un plan nuevo. Reemplaza los
-                ejercicios actuales.
-              </p>
-              <GenerarRutinaForm
-                action={generarMiRutina}
-                tieneRutina
-                defaults={{
-                  objetivo: rutina.objetivo as Objetivo,
-                  nivel: (rutina.nivel as Nivel) ?? undefined,
-                  dias: rutina.dias_por_semana ?? undefined,
-                  preferencia: (rutina.preferencias as Prefs)?.equipo ?? undefined,
-                  sexo: (rutina.preferencias as Prefs)?.sexo ?? undefined,
-                  enfasis: (rutina.preferencias as Prefs)?.enfasis ?? undefined,
-                }}
-              />
-            </div>
-          </details>
-
           {entradaManual}
           {linkAvanzado}
 
@@ -191,7 +204,9 @@ export default async function MiRutinaPage() {
             if (rutina.origen === "manual" || pasos.length === 0) return null;
             return (
               <details className="group rounded-[6px] border border-rule bg-paper-2 p-4">
-                <summary className="w-fit cursor-pointer select-none text-sm text-ink-soft underline underline-offset-2 [&::-webkit-details-marker]:hidden">
+                <summary
+                  className={`w-fit cursor-pointer select-none text-sm text-ink-soft [&::-webkit-details-marker]:hidden ${linkClasses.inline}`}
+                >
                   <span className="group-open:hidden">Explicame esta rutina</span>
                   <span className="hidden group-open:inline">Cerrar explicación</span>
                 </summary>

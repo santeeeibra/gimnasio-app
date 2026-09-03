@@ -32,8 +32,8 @@ export function TemaPreview({ tema }: { tema: Tema }) {
                 Clientes activos
               </p>
             </div>
-            <div className="flex-1 rounded-[5px] border border-[color:var(--rule)] border-l-2 border-l-[#c1362f] bg-[color:var(--paper-2)] p-3">
-              <p className="font-display text-xl font-semibold text-[#c1362f]">
+            <div className="flex-1 rounded-[5px] border border-[color:var(--rule)] border-l-2 border-l-[color:var(--danger)] bg-[color:var(--paper-2)] p-3">
+              <p className="font-display text-xl font-semibold text-[color:var(--danger)]">
                 3
               </p>
               <p className="text-[11px] text-[color:var(--ink-soft)]">
@@ -43,7 +43,7 @@ export function TemaPreview({ tema }: { tema: Tema }) {
           </div>
 
           {/* fila cliente */}
-          <div className="rounded-[5px] border border-[color:var(--rule)] border-l-2 border-l-[#2f7d4f] bg-[color:var(--paper-2)] px-3 py-2.5">
+          <div className="rounded-[5px] border border-[color:var(--rule)] border-l-2 border-l-[color:var(--ok)] bg-[color:var(--paper-2)] px-3 py-2.5">
             <p className="text-[13px] font-medium text-[color:var(--ink)]">
               Lucía Fernández
             </p>

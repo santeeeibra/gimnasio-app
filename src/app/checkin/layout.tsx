@@ -1,6 +1,6 @@
 import { requireDueno } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { parseTema, temaToVars } from "@/lib/tema";
+import { parseTema, temaToVars, polaridadTema, resolverMotion } from "@/lib/tema";
 import { OfflineProvider } from "@/components/offline/provider";
 import { PantallaReposo } from "@/components/checkin/pantalla-reposo";
 
@@ -21,9 +21,11 @@ export default async function CheckinLayout({
 
   return (
     <div
-      className="flex min-h-screen flex-col bg-paper text-ink"
+      className="capa-ambiental flex min-h-screen flex-col bg-paper text-ink"
       style={temaToVars(tema)}
       data-estilo-visual={tema.estiloVisual}
+      data-theme-polarity={polaridadTema(tema)}
+      data-motion={resolverMotion(tema)}
     >
       <OfflineProvider />
       <PantallaReposo

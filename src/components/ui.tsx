@@ -26,7 +26,7 @@ export function Button({
   const base =
     "inline-flex items-center justify-center gap-2 h-11 px-4 text-sm font-medium rounded-[5px] select-none touch-manipulation transition-[transform,background-color,border-color,color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] disabled:opacity-50 disabled:pointer-events-none";
   const styles = {
-    primary: "bg-ink text-paper hover:bg-black",
+    primary: "bg-ink text-paper hover:brightness-125",
     ghost: "border border-rule text-ink hover:bg-paper-2",
     danger: "border border-danger text-danger hover:bg-danger hover:text-paper",
     volt: "bg-volt text-volt-ink hover:brightness-95",
@@ -43,6 +43,23 @@ export function Button({
     </button>
   );
 }
+
+/**
+ * Estilo ÚNICO para links de texto (navegación inline y acciones terciarias:
+ * "Salir", "← Volver", "Ver de nuevo", "Modo avanzado", `<summary>` que hacen
+ * de link). Ningún `<a>`/`<Link>`/`<button>` textual arma su className a mano.
+ * Ver REGLAS_UI_EMIL.md §11/§12/§20.
+ *
+ * - `inline`: dentro de un párrafo. Subrayado sutil, hereda el tamaño.
+ * - `accion`: control suelto. Sin subrayado en reposo, padding para el target
+ *   táctil (§3/§11), feedback de press.
+ */
+export const linkClasses = {
+  inline:
+    "underline decoration-rule underline-offset-[3px] transition-[color,text-decoration-color] duration-150 [transition-timing-function:var(--ease-out)] hover:decoration-ink focus-visible:outline-none focus-visible:rounded-[3px] focus-visible:ring-2 focus-visible:ring-ink/20",
+  accion:
+    "inline-flex items-center gap-1 -mx-1 px-1 py-0.5 text-sm text-ink-soft underline decoration-transparent underline-offset-[3px] transition-[color,text-decoration-color,transform] duration-150 [transition-timing-function:var(--ease-out)] hover:text-ink hover:decoration-rule active:scale-95 focus-visible:outline-none focus-visible:rounded-[4px] focus-visible:ring-2 focus-visible:ring-ink/20",
+} as const;
 
 export function LinkButton({
   className = "",

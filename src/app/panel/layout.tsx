@@ -1,6 +1,6 @@
 import { requireDueno } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { parseTema, temaToVars } from "@/lib/tema";
+import { parseTema, temaToVars, polaridadTema, resolverMotion } from "@/lib/tema";
 import { PanelSidebar, PanelTopbar, PanelBottomNav } from "./panel-nav";
 import { Tutorial } from "@/components/tutorial/tutorial";
 import { ImpersonationBanner } from "@/components/impersonation/banner";
@@ -26,9 +26,11 @@ export default async function PanelLayout({
 
   return (
     <div
-      className="min-h-screen bg-paper text-ink md:grid md:grid-cols-[220px_1fr]"
+      className="capa-ambiental min-h-screen bg-paper text-ink md:grid md:grid-cols-[220px_1fr]"
       style={temaVars}
       data-estilo-visual={tema.estiloVisual}
+      data-theme-polarity={polaridadTema(tema)}
+      data-motion={resolverMotion(tema)}
     >
       <div className="md:col-span-2">
         <ImpersonationBanner />

@@ -1,6 +1,6 @@
 import { requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { parseTema, temaToVars } from "@/lib/tema";
+import { parseTema, temaToVars, polaridadTema, resolverMotion } from "@/lib/tema";
 import { MiBottomNav } from "./mi-nav";
 import { Tutorial } from "@/components/tutorial/tutorial";
 import { ImpersonationBanner } from "@/components/impersonation/banner";
@@ -33,9 +33,11 @@ export default async function MiLayout({
   if (cli && cli.acceso_habilitado === false) {
     return (
       <div
-        className="flex min-h-screen items-center justify-center bg-paper p-6"
+        className="capa-ambiental flex min-h-screen items-center justify-center bg-paper p-6"
         style={temaToVars(tema)}
         data-estilo-visual={tema.estiloVisual}
+        data-theme-polarity={polaridadTema(tema)}
+        data-motion={resolverMotion(tema)}
       >
         <div className="w-full max-w-sm text-center">
           <h1 className="font-display text-xl">Tu cuenta está pendiente</h1>
@@ -50,9 +52,11 @@ export default async function MiLayout({
 
   return (
     <div
-      className="min-h-screen bg-paper"
+      className="capa-ambiental min-h-screen bg-paper"
       style={temaToVars(tema)}
       data-estilo-visual={tema.estiloVisual}
+      data-theme-polarity={polaridadTema(tema)}
+      data-motion={resolverMotion(tema)}
     >
       <ImpersonationBanner />
       <OfflineProvider />

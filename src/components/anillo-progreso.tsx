@@ -17,10 +17,23 @@
 
 import { useEffect, useRef, useState } from "react";
 
+/** Tono del anillo. Cuando representa un estado semántico (cuota vencida / por
+ *  vencer / al día) el anillo ENTERO lo adopta — arco, número y glow —; no
+ *  alcanza con teñir el número o un borde lateral. Ver REGLAS_UI_EMIL.md §17. */
+export type AnilloTono = "acento" | "peligro" | "aviso" | "ok";
+
+const TONO_VAR: Record<AnilloTono, string> = {
+  acento: "--volt",
+  peligro: "--danger",
+  aviso: "--warn",
+  ok: "--ok",
+};
+
 type AnilloProgresoProps = {
   valor: number;
   max: number;
   label: string;
+  tono?: AnilloTono;
   className?: string;
 };
 
@@ -28,8 +41,10 @@ export function AnilloProgreso({
   valor,
   max,
   label,
+  tono = "acento",
   className = "",
 }: AnilloProgresoProps) {
+  const colorVar = `var(${TONO_VAR[tono]})`;
   const porcentaje = max > 0 ? Math.min((valor / max) * 100, 100) : 0;
   const radio = 54; // radio del círculo
   const stroke = 8; // grosor del anillo
@@ -91,7 +106,7 @@ export function AnilloProgreso({
           cx={radio}
           cy={radio}
           r={normalizedRadius}
-          stroke="var(--volt)"
+          stroke={colorVar}
           strokeWidth={stroke}
           fill="transparent"
           strokeDasharray={circunferencia}
@@ -103,14 +118,27 @@ export function AnilloProgreso({
               "--ring-dash": offset,
             } as React.CSSProperties
           }
-          className="ring-draw futurista-anillo-glow transition-[stroke-dashoffset] duration-500 [transition-timing-function:var(--ease-out)]"
+          className={`ring-draw anillo-glow anillo-glow--pulso transition-[stroke-dashoffset] duration-500 [transition-timing-function:var(--ease-out)] ${
+            tono === "peligro"
+              ? "anillo-tono-peligro"
+              : tono === "aviso"
+                ? "anillo-tono-aviso"
+                : tono === "ok"
+                  ? "anillo-tono-ok"
+                  : ""
+          }`}
         />
       </svg>
       {/* Número central */}
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <p
-          className="font-[700] leading-none tracking-tight text-ink"
-          style={{ fontFamily: "var(--font-hero)" }}
+          className={`font-[700] leading-none tracking-tight ${
+            tono === "acento" ? "text-ink" : ""
+          }`}
+          style={{
+            fontFamily: "var(--font-hero)",
+            ...(tono !== "acento" ? { color: colorVar } : {}),
+          }}
           aria-label={`${valor} ${label}`}
         >
           <span key={valor} className="futurista-num-in inline-block text-4xl">

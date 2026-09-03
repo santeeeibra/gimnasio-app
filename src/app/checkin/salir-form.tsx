@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { salirModoCheckin } from "./actions";
-import { Button, Field } from "@/components/ui";
+import { Button, Field, linkClasses } from "@/components/ui";
 
 export function SalirModoCheckin() {
   const [abierto, setAbierto] = useState(false);
@@ -26,7 +26,7 @@ export function SalirModoCheckin() {
       <button
         type="button"
         onClick={() => setAbierto(true)}
-        className="h-8 px-2.5 text-xs text-ink-soft underline underline-offset-2 active:scale-95 transition-transform duration-150 [transition-timing-function:var(--ease-out)]"
+        className={`text-xs ${linkClasses.accion}`}
       >
         Salir del modo check-in
       </button>
@@ -37,7 +37,7 @@ export function SalirModoCheckin() {
           aria-modal="true"
           aria-label="Salir del modo check-in"
           onClick={() => setAbierto(false)}
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-ink/60 p-4 animate-fade-in"
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-[color:var(--scrim)] p-4 animate-fade-in"
         >
           <div
             onClick={(e) => e.stopPropagation()}

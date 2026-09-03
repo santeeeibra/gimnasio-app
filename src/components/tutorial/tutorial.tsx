@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { linkClasses } from "@/components/ui";
 import { Overlay } from "./overlay";
 import { pasosDueno } from "./pasos-dueno";
 import { pasosCliente } from "./pasos-cliente";
@@ -58,7 +59,7 @@ export function VerTutorialDeNuevo() {
     <button
       type="button"
       onClick={() => window.dispatchEvent(new Event(EVENTO_ABRIR_TUTORIAL))}
-      className="text-xs text-ink-soft underline underline-offset-2 transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20"
+      className={`text-xs ${linkClasses.accion}`}
     >
       Ver tutorial de nuevo
     </button>

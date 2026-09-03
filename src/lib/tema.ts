@@ -3,6 +3,8 @@
  * Se guarda en `gimnasios.tema` (jsonb). `null` => valores por defecto.
  */
 
+import { hexToRgb, luminanciaRelativa, ratio, sugerirAjuste } from "./contraste";
+
 export type FuenteKey =
   | "moderno"
   | "tecnico"
@@ -490,6 +492,94 @@ export function parseTema(raw: unknown): Tema {
   };
 }
 
+/* ============================================================
+   Capa ambiental (Opción A del análisis). Tokens DERIVADOS que todo tema
+   garantiza, tenga o no `estiloVisual`. Se consumen sólo vía var(--…) desde
+   globals.css / pantallas; nunca se recalculan por pantalla.
+   Ver REGLAS_UI_EMIL.md §17 + §20 (checklist).
+   ============================================================ */
+
+export type MotionNivel = "full" | "reduced" | "still";
+
+/**
+ * Nivel de motion que PIDE el tema. El navegador sólo puede bajarlo más
+ * (prefers-reduced-motion, gestionado en CSS). `clasico` conserva la capa
+ * universal (textura sutil + elevación + entradas) pero sin loops ambientales.
+ */
+export function resolverMotion(t: Tema): MotionNivel {
+  if (t.estiloVisual === "clasico") return "reduced";
+  return "full";
+}
+
+/** Polaridad del tema según la luminancia del fondo. Decide superficies,
+ *  sombras y scrim en `globals.css` (`[data-theme-polarity="dark"]`). */
+export function polaridadTema(t: Tema): "light" | "dark" {
+  const rgb = hexToRgb(t.paper) ?? [255, 255, 255];
+  return luminanciaRelativa(...rgb) > 0.4 ? "light" : "dark";
+}
+
+/** Umbral de contraste mínimo de los colores semánticos contra el fondo.
+ *  4.0: no toca casi nada en temas claros, sube el rojo/ámbar/verde fijo en
+ *  temas oscuros (donde hoy quedan ilegibles). */
+const UMBRAL_SEMANTICO = 4.0;
+const SEMANTICOS_BASE = {
+  danger: "#c1362f",
+  warn: "#b9791a",
+  ok: "#2f7d4f",
+} as const;
+
+function forzarContraste(color: string, fondo: string): string {
+  return ratio(color, fondo) < UMBRAL_SEMANTICO
+    ? sugerirAjuste(fondo, color, UMBRAL_SEMANTICO)
+    : color;
+}
+
+/**
+ * Tokens ambientales derivados. Sólo lo que CSS `color-mix()` NO puede hacer
+ * solo: decidir polaridad, re-derivar semánticos con piso de contraste, y
+ * elegir el color del glow (acento sólo si "emite luz" sobre el fondo).
+ * El resto (`--paper-3`, `--scrim`, escalera de acento, sombras, *-weak/-strong`)
+ * se deriva con `color-mix()` en `globals.css`.
+ */
+export function derivarAmbiente(t: Tema): Record<string, string> {
+  const pol = polaridadTema(t);
+  const motion = resolverMotion(t);
+
+  const danger = forzarContraste(SEMANTICOS_BASE.danger, t.paper);
+  const warn = forzarContraste(SEMANTICOS_BASE.warn, t.paper);
+  const ok = forzarContraste(SEMANTICOS_BASE.ok, t.paper);
+
+  // Glow: el acento sólo lee como "luz emitida" si es más claro que el fondo
+  // o el tema es oscuro. Si no, un halo de --ink hace de elevación (nunca un
+  // amarillo/verde apagado invisible sobre papel claro).
+  const voltRgb = hexToRgb(t.volt) ?? [0, 0, 0];
+  const inkRgb = hexToRgb(t.ink) ?? [0, 0, 0];
+  const paperRgb = hexToRgb(t.paper) ?? [255, 255, 255];
+  const [gr, gg, gb] =
+    pol === "dark" ||
+    luminanciaRelativa(...voltRgb) > luminanciaRelativa(...paperRgb)
+      ? voltRgb
+      : inkRgb;
+
+  const aStrong = motion === "still" ? 0 : motion === "reduced" ? 0.26 : 0.5;
+  const aSoft = motion === "still" ? 0 : motion === "reduced" ? 0.1 : 0.2;
+  const strength = motion === "still" ? "0" : motion === "reduced" ? "0.55" : "1";
+
+  return {
+    "--accent": t.volt,
+    "--accent-contrast": t.voltInk,
+
+    "--danger": danger,
+    "--warn": warn,
+    "--ok": ok,
+
+    "--glow-strong": `rgba(${gr}, ${gg}, ${gb}, ${aStrong})`,
+    "--glow-soft": `rgba(${gr}, ${gg}, ${gb}, ${aSoft})`,
+    "--glow-strength": strength,
+    "--texture-alpha": motion === "still" ? "0" : "1",
+  };
+}
+
 /** CSS custom properties para inyectar en el `style` de un contenedor. */
 export function temaToVars(t: Tema): React.CSSProperties {
   const f = FUENTES[t.fuente];
@@ -529,5 +619,8 @@ export function temaToVars(t: Tema): React.CSSProperties {
     "--nav-mobile": t.navegacionMovil,
     "--nav-desktop": t.navegacionDesktop,
     "--density": t.densidad,
+
+    // Capa ambiental derivada (ver derivarAmbiente / REGLAS_UI_EMIL.md §17).
+    ...derivarAmbiente(t),
   } as React.CSSProperties;
 }

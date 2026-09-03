@@ -1,6 +1,11 @@
 "use client";
 
-import { temaToVars, type Tema } from "@/lib/tema";
+import {
+  temaToVars,
+  polaridadTema,
+  resolverMotion,
+  type Tema,
+} from "@/lib/tema";
 
 /** Preview expandido con maqueta completa de la app */
 export function TemaPreviewCompleto({ tema }: { tema: Tema }) {
@@ -28,6 +33,8 @@ export function TemaPreviewCompleto({ tema }: { tema: Tema }) {
       <div
         style={vars}
         data-estilo-visual={tema.estiloVisual}
+        data-theme-polarity={polaridadTema(tema)}
+        data-motion={resolverMotion(tema)}
         className="rounded-lg border-2 border-[color:var(--rule)] overflow-hidden bg-[color:var(--paper)] shadow-lg h-[calc(100vh-8rem)] max-h-[600px] flex flex-col"
       >
         {/* Header */}
@@ -38,7 +45,7 @@ export function TemaPreviewCompleto({ tema }: { tema: Tema }) {
           >
             Mi Gimnasio
           </span>
-          <button className="text-xs text-[color:var(--ink-soft)] underline underline-offset-2">
+          <button className="text-xs text-[color:var(--ink-soft)] underline decoration-transparent underline-offset-[3px] hover:decoration-[color:var(--rule)]">
             Salir
           </button>
         </div>
@@ -57,7 +64,7 @@ export function TemaPreviewCompleto({ tema }: { tema: Tema }) {
           {/* Número héroe */}
           <div>
             <p
-              className={`font-display tracking-tight ${heroSize} text-[#2f7d4f] leading-none`}
+              className={`font-display tracking-tight ${heroSize} text-[color:var(--ok)] leading-none`}
               style={{ 
                 fontFamily: "var(--app-font-display)",
                 fontSize: `calc(${heroSize === "text-5xl" ? "3rem" : heroSize === "text-6xl" ? "3.75rem" : "4.5rem"} * var(--font-scale))`,
@@ -97,10 +104,10 @@ export function TemaPreviewCompleto({ tema }: { tema: Tema }) {
               </p>
             </div>
             <div
-              className={`${cardPadding} border border-[color:var(--rule)] border-l-2 border-l-[#c1362f] bg-[color:var(--paper-2)]`}
+              className={`${cardPadding} border border-[color:var(--rule)] border-l-2 border-l-[color:var(--danger)] bg-[color:var(--paper-2)]`}
               style={{ borderRadius: "var(--radius-md)" }}
             >
-              <p className="font-display text-xl font-semibold text-[#c1362f]" style={{ fontFamily: "var(--app-font-display)" }}>
+              <p className="font-display text-xl font-semibold text-[color:var(--danger)]" style={{ fontFamily: "var(--app-font-display)" }}>
                 3
               </p>
               <p className="text-xs text-[color:var(--ink-soft)] mt-1" style={{ fontSize: `calc(0.75rem * var(--font-scale))` }}>

@@ -15,6 +15,49 @@
   --app-font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
+  /* Duraciones en token (equivalen a los duration-150/200/350 de §8, para
+     usar en CSS crudo). */
+  --dur-fast: 150ms;
+  --dur-base: 220ms;
+  --dur-slow: 350ms;
+  --motion-ambient: 6s;
+
+  /* ── Capa ambiental (defaults; temaToVars() los pisa por tema). ──
+     Lo derivable con color-mix() vive acá; lo que necesita lógica
+     (--accent, --danger/--warn/--ok, --glow-*) lo emite derivarAmbiente(). */
+  --accent: var(--volt);
+  --accent-contrast: var(--volt-ink);
+  --accent-weak: color-mix(in srgb, var(--accent) 12%, transparent);
+  --accent-strong: color-mix(in srgb, var(--accent), var(--ink) 18%);
+  --ring: color-mix(in srgb, var(--ink) 22%, transparent);
+
+  --paper-3: color-mix(in srgb, var(--paper-2), var(--ink) 6%);
+  --scrim: color-mix(in srgb, #000 55%, transparent);
+  --elev-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06), 0 1px 1px rgba(0, 0, 0, 0.04);
+  --elev-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+
+  --danger-weak: color-mix(in srgb, var(--danger) 14%, transparent);
+  --danger-strong: color-mix(in srgb, var(--danger), #000 14%);
+
+  --glow-strong: color-mix(in srgb, var(--ink) 14%, transparent);
+  --glow-soft: color-mix(in srgb, var(--ink) 7%, transparent);
+  --glow-strength: 1;
+  --texture-alpha: 1;
+  --texture-color: var(--rule);
+}
+
+/* Superficies / sombras / scrim dependen de la polaridad del tema
+   (temaToVars no puede ramificar sobre un string en CSS: usamos el atributo). */
+[data-theme-polarity="dark"] {
+  --paper-3: color-mix(in srgb, var(--paper-2), #fff 8%);
+  --scrim: color-mix(in srgb, #000 62%, transparent);
+  --elev-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --elev-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --danger-strong: color-mix(in srgb, var(--danger), #fff 10%);
 }
 
 @theme inline {
@@ -26,8 +69,12 @@
   --color-volt: var(--volt);
   --color-volt-ink: var(--volt-ink);
   --color-danger: var(--danger);
+  --color-danger-weak: var(--danger-weak);
   --color-warn: var(--warn);
   --color-ok: var(--ok);
+  --color-accent: var(--accent);
+  --color-accent-contrast: var(--accent-contrast);
+  --color-accent-weak: var(--accent-weak);
   --font-display: var(--app-font-display);
   --font-sans: var(--app-font-sans);
 }
@@ -295,6 +342,101 @@ h3 {
 }
 
 /* ============================================================
+   Capa ambiental UNIVERSAL (preset-agnóstica). Cuelga del root tematizado
+   vía `.capa-ambiental` en los layouts — NO de `estiloVisual`. Textura de
+   grid apenas visible derivada de --texture-color + gancho de elevación por
+   token. `estiloVisual` re-estiliza el ::before encima (bloques más abajo);
+   `data-motion` (del tema) y prefers-reduced-motion apagan los loops.
+   Ver REGLAS_UI_EMIL.md §17 + §20.
+   ============================================================ */
+.capa-ambiental {
+  position: relative;
+  /* Crea contexto de apilamiento para acotar el ::before a z-index:-1 sin que
+     se pierda detrás del fondo de la página. No usamos `> * { z-index }` para
+     no pisar `position:fixed`/z-index de navs y overlays hijos. */
+  isolation: isolate;
+}
+.capa-ambiental::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: calc(0.35 * var(--texture-alpha));
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      color-mix(in srgb, var(--texture-color) 45%, transparent) 0 1px,
+      transparent 1px 44px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--texture-color) 45%, transparent) 0 1px,
+      transparent 1px 44px
+    );
+  background-size: 44px 44px;
+  -webkit-mask-image: radial-gradient(
+    120% 90% at 50% 0%,
+    #000 0%,
+    transparent 78%
+  );
+  mask-image: radial-gradient(120% 90% at 50% 0%, #000 0%, transparent 78%);
+}
+
+/* Elevación por token (superficie que "flota" sobre el fondo). */
+.elev-sm {
+  box-shadow: var(--elev-shadow-sm);
+}
+.elev-md {
+  box-shadow: var(--elev-shadow-md);
+}
+
+/* Glow de anillo/indicador semántico. Reemplaza al viejo
+   `.futurista-anillo-glow` (que quemaba --volt). El color sale de --glow-*,
+   ya polaridad-consciente; el tono semántico lo pisa localmente. */
+.anillo-glow {
+  filter: drop-shadow(0 0 3px var(--glow-soft));
+}
+@keyframes anillo-pulso {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 2px var(--glow-soft));
+  }
+  50% {
+    filter: drop-shadow(0 0 7px var(--glow-strong));
+  }
+}
+[data-motion="full"] .anillo-glow--pulso {
+  animation: anillo-pulso var(--motion-ambient) var(--ease-in-out) infinite;
+}
+.anillo-tono-peligro {
+  --glow-soft: color-mix(in srgb, var(--danger) 34%, transparent);
+  --glow-strong: color-mix(in srgb, var(--danger) 62%, transparent);
+}
+.anillo-tono-aviso {
+  --glow-soft: color-mix(in srgb, var(--warn) 30%, transparent);
+  --glow-strong: color-mix(in srgb, var(--warn) 55%, transparent);
+}
+.anillo-tono-ok {
+  --glow-soft: color-mix(in srgb, var(--ok) 26%, transparent);
+  --glow-strong: color-mix(in srgb, var(--ok) 48%, transparent);
+}
+
+/* El tema pide menos motion (`clasico` => reduced): sin loops ambientales,
+   se conservan entradas y micro-interacciones. prefers-reduced-motion (arriba)
+   puede bajarlo más. */
+[data-motion="reduced"] .anillo-glow--pulso,
+[data-motion="still"] .anillo-glow--pulso,
+[data-motion="reduced"] .futurista-fondo::before,
+[data-motion="still"] .futurista-fondo::before,
+[data-motion="reduced"] .futurista-anillo-glow,
+[data-motion="still"] .futurista-anillo-glow,
+[data-motion="reduced"] .animate-float-soft,
+[data-motion="still"] .animate-float-soft {
+  animation: none !important;
+}
+
+/* ============================================================
    Patrón "Futurista" (ver REGLAS_UI_EMIL.md §17)
    Fondo oscuro · --volt como acento · números en --font-hero (Orbitron).
    Animaciones AMBIENTALES: pasivas, CSS puro, sin JS, sin blink,
@@ -455,8 +597,11 @@ h3 {
 /* Respeta prefers-reduced-motion: sin animaciones ambientales.
    (Va después del bloque global para ganar por orden.) */
 @media (prefers-reduced-motion: reduce) {
-  .futurista-anillo-glow {
+  .futurista-anillo-glow,
+  .anillo-glow--pulso {
     animation: none !important;
+  }
+  .futurista-anillo-glow {
     filter: none !important;
   }
   .futurista-fondo::before {

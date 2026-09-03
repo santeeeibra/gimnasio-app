@@ -5,6 +5,7 @@ import { diasRestantes, estadoDesdeDias, ESTADO_LABEL } from "@/lib/cuota";
 import { ActivarNotificaciones } from "./activar-notificaciones";
 import { VerTutorialDeNuevo } from "@/components/tutorial/tutorial";
 import { AnilloProgreso } from "@/components/anillo-progreso";
+import { linkClasses } from "@/components/ui";
 import { RachaConstancia } from "@/components/mi/racha-constancia";
 import { DatosTransferencia } from "@/components/mi/datos-transferencia";
 import { CacheAlVuelo } from "@/components/offline/cache-al-vuelo";
@@ -99,9 +100,7 @@ export default async function MiPage() {
         <div className="flex shrink-0 items-baseline gap-3">
           <VerTutorialDeNuevo />
           <form action={logout}>
-            <button className="text-xs text-ink-soft underline underline-offset-2">
-              Salir
-            </button>
+            <button className={`text-xs ${linkClasses.accion}`}>Salir</button>
           </form>
         </div>
       </div>
@@ -122,6 +121,13 @@ export default async function MiPage() {
             valor={diasParaAnillo}
             max={duracionTotal}
             label="días"
+            tono={
+              estado === "vencido"
+                ? "peligro"
+                : estado === "por_vencer"
+                  ? "aviso"
+                  : "ok"
+            }
           />
           
           <div className="min-w-0 flex-1">

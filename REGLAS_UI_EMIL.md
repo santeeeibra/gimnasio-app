@@ -19,12 +19,33 @@
 --volt-ink   → texto sobre acento
 ```
 
-### Colores fijos (semánticos)
+### Colores semánticos (re-derivados por tema)
 ```
---danger: #c1362f   → errores, vencido
---warn: #b9791a     → advertencias
---ok: #2f7d4f       → éxito
+--danger      → errores, vencido        (base #c1362f)
+--warn        → advertencias            (base #b9791a)
+--ok          → éxito                   (base #2f7d4f)
+--danger-weak / --danger-strong  → fills y estados hover del rojo
 ```
+`temaToVars()` re-deriva `--danger/--warn/--ok` contra el `--paper` real con
+piso de contraste 4.0 (en tema oscuro el hex fijo queda ilegible). **Nunca**
+uses los hex `#c1362f` / `#b9791a` / `#2f7d4f` en JSX: van por token.
+
+### Capa ambiental (siempre disponible, ver §20)
+```
+--accent / --accent-contrast / --accent-weak / --accent-strong
+--ring            → color del focus ring
+--paper-3         → superficie elevada (popover, glow sobre card)
+--scrim           → backdrop de modal (reemplaza bg-ink/60)
+--elev-shadow-sm / --elev-shadow-md   (o utilities .elev-sm / .elev-md)
+--glow-soft / --glow-strong / --glow-strength   → glow polaridad-consciente
+--texture-color / --texture-alpha
+--dur-fast (150ms) / --dur-base (220ms) / --dur-slow (350ms)
+--ease-drawer     → curva iOS para sheets/drawers
+```
+Estos los emite `src/lib/tema.ts` (`temaToVars` + `derivarAmbiente`) y
+`globals.css`. **Regla:** ningún `color-mix(... var(--volt) ...)` ni
+`var(--volt)` literal fuera de `src/lib/tema.ts` y `src/app/globals.css`; en
+pantallas se usa `--accent` y sus derivados.
 
 ### ❌ PROHIBIDO
 - `bg-white` / `bg-black` → usar tokens (`bg-paper`, `bg-paper-2`)
@@ -87,6 +108,12 @@ min-w-[3.5rem]  → botón toggle (56px mínimo)
 ```
 Nada interactivo por debajo de 32px de alto. Un link de texto suelto NO es un
 target: envolverlo en un `<button>`/`<Link>` con padding.
+
+**Links de texto**: el estilo lo define `linkClasses` en `src/components/ui.tsx`
+(`linkClasses.inline` para prosa, `linkClasses.accion` para acciones sueltas
+tipo "Salir" / "← Volver" / "Ver de nuevo" / `<summary>` que hace de link).
+Ningún `<a>` / `<Link>` / `<button>` textual arma su `className` a mano
+(sin `underline underline-offset-2` sueltos, sin `text-ink-soft` repetido).
 
 ### Padding y gap
 ```
@@ -218,6 +245,10 @@ url && !err ? (
 - Valores numéricos en inputs cortos (series, reps): `text-center`.
 - Título + acción en la misma fila: `flex items-start justify-between gap-2`,
   el título en `min-w-0` y la acción en `shrink-0`.
+- **Acción secundaria de una sección** (regenerar, editar, ver todo) va en la
+  fila del encabezado con `justify-between` (usar `flex-wrap` si la acción
+  despliega un panel), **nunca** como hijo suelto del stack con `ml-auto`
+  (rompe la alineación con el resto de la columna).
 - Truncado explícito: `truncate` (1 línea) o `line-clamp-2` (2 líneas). Nunca
   dejar una cadena larga (nombre, email) sin límite.
 - Contenido centrado en pantalla: `mx-auto` sobre el `max-w-*`, no `margin` a mano.
@@ -277,7 +308,7 @@ active:bg-paper        → filas de lista
 <div
   role="dialog" aria-modal="true" aria-label={titulo}
   onClick={onClose}
-  className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-ink/60 p-4 animate-fade-in"
+  className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-[color:var(--scrim)] p-4 animate-fade-in"
 >
   <div
     onClick={(e) => e.stopPropagation()}
@@ -541,6 +572,87 @@ El elemento `<html>` en `src/app/layout.tsx` incluye `suppressHydrationWarning` 
 - [ ] Modales: Escape + backdrop + X, scroll de body bloqueado, `z-50`
 - [ ] Sin `<div onClick>`; iconos con `aria-label`
 - [ ] **Probado a 375px: cero scroll horizontal**
+- [ ] **Pasa el checklist §21** (30 s) y `scripts/revisar-ui.ps1` sin hallazgos
+
+---
+
+## 20. Capa ambiental (comportamiento por defecto de toda pantalla)
+
+La app tiene UNA capa de efectos ambientales **preset-agnóstica**: funciona con
+cualquier `PRESETS_TEMA` y con cualquier `estiloVisual`. Cuelga del root
+tematizado (`className="capa-ambiental"` + `data-theme-polarity` + `data-motion`
+en los 3 layouts, `mi/layout.tsx` tiene 2 roots) — **no** de `estiloVisual`.
+Una pantalla nueva la hereda sola por usar los tokens; no reinventa lo suyo.
+
+### Qué provee, sin que la pantalla haga nada
+- **Textura** de grid tenue derivada de `--texture-color` (fija, `mask` que se
+  desvanece, `opacity` = `0.35 * --texture-alpha`).
+- **Semánticos legibles** en cualquier polaridad (`--danger/--warn/--ok`
+  re-derivados).
+- **Escalera de acento**, **superficies elevadas**, **scrim**, **sombras** y
+  **glow** como tokens polaridad-conscientes (ver §1).
+
+### Contrato: qué garantiza `temaToVars()` para TODO tema
+`--accent`, `--accent-contrast`, `--accent-weak`, `--accent-strong`, `--ring`,
+`--paper-3`, `--scrim`, `--elev-shadow-sm/-md`, `--danger(+-weak/-strong)`,
+`--warn`, `--ok`, `--glow-soft`, `--glow-strong`, `--glow-strength`,
+`--texture-color`, `--texture-alpha`, `--dur-fast/-base/-slow`, `--ease-drawer`.
+Pantalla y `globals.css` consumen sólo estos — nunca un hex, nunca `bg-white`,
+nunca `bg-ink/60`, nunca un `color-mix` ad-hoc contra `--volt`.
+
+### Preset-agnóstico vs. no (dónde va cada efecto)
+- **Va en la capa por defecto** si anima sólo `transform`/`opacity`/`filter:blur`
+  **y** su color sale de un token con piso de legibilidad (`--texture-color`,
+  `--glow-*`, `--elev-shadow-*`). Ej.: press feedback, entradas
+  (`.animate-*`, `.stagger`), textura de grid, slide del número, `card-cut`.
+- **Va detrás de `[data-estilo-visual]` / `[data-theme-polarity="dark"]`** si
+  depende de un tono/contraste concreto: glow neón en acento, scanline /
+  vignette / `mix-blend-mode: screen`, texturas de identidad (wash Estudio,
+  hatch Concreto, cuña Cancha).
+
+### `data-motion` (lo pide el tema) + `prefers-reduced-motion` (lo pide el SO)
+`resolverMotion(tema)` → `full` | `reduced` | `still`. `clasico` ⇒ `reduced`
+(conserva textura sutil + elevación + entradas, pierde los loops ambientales).
+`prefers-reduced-motion: reduce` sólo puede bajarlo más (bloque `@media` al
+final de `globals.css`). Loop ambiental nuevo ⇒ sumarlo a los selectores
+`[data-motion="reduced"], [data-motion="still"]` **y** al `@media` de reduced.
+
+### Anillo semántico
+`AnilloProgreso` con `tono="peligro|aviso|ok"`: el anillo **entero** (arco +
+número + glow) adopta el tono. No alcanza con teñir el número o un borde
+lateral. `tono="acento"` (default) = número en `--ink`, arco en `--accent`.
+
+---
+
+## 21. Checklist de 30 segundos (repasar mirando una pantalla nueva)
+
+Objetivo: no interpretable. Todo "sí" ⇒ la pantalla está lista. Referenciar en
+cualquier sesión como: **"pasá el checklist §21 de REGLAS_UI_EMIL.md"**.
+Chequeo automático de los patrones más comunes: `scripts/revisar-ui.ps1`.
+
+- [ ] **Color por token**: cero hex en JSX, cero `var(--volt)` literal (va
+      `--accent`), cero `bg-white`/`text-gray-*`. (`tema.ts` y `globals.css`
+      son los únicos que tocan `--volt` / hex crudos.)
+- [ ] **Links**: todo `<a>`/`<Link>`/`<button>`/`<summary>` textual usa
+      `linkClasses` (`inline` o `accion`). Ningún `underline underline-offset-2`
+      suelto.
+- [ ] **Encabezado de sección**: título + acción secundaria en fila
+      `justify-between`. Ningún `ml-auto` suelto en el stack vertical.
+- [ ] **Modal**: backdrop `bg-[color:var(--scrim)]` (no `bg-ink/60`); Escape +
+      backdrop + X; scroll del body bloqueado; `z-50`.
+- [ ] **Semánticos**: estado "vencido/urgente" se distingue al instante
+      (color + tamaño/peso, no sólo un borde de 2px). Anillo semántico usa
+      `tono`.
+- [ ] **Probado en preset oscuro Y claro** (p. ej. Noche y Papel): texto
+      legible, inputs y cards se distinguen del fondo, glow/scrim no rompen
+      contraste, textura apenas visible.
+- [ ] **Motion**: transiciones con propiedad concreta + `var(--ease-out)` (nunca
+      `transition-all`); loops ambientales nuevos apagados en `data-motion` y en
+      `prefers-reduced-motion`.
+- [ ] **375px**: cero scroll horizontal; `min-w-0` en hijos flex con texto;
+      `<img>` en caja de tamaño fijo con fallback.
+- [ ] **Táctil**: botones/links/chips con `active:scale-*`; nada tappable
+      < 32px; inputs con `text-[16px]` y `bg-paper`.
 
 ---
 
@@ -548,10 +660,12 @@ El elemento `<html>` en `src/app/layout.tsx` incluye `suppressHydrationWarning` 
 
 ```
 src/app/layout.tsx              → Orbitron font, suppressHydrationWarning
-src/app/globals.css              → tokens, reset img, animaciones
-src/lib/tema.ts                  → DEFAULT_TEMA, --font-hero
-src/components/ui.tsx            → Button, Field
-src/components/anillo-progreso.tsx → AnilloProgreso (indicador circular)
+src/app/globals.css              → tokens, capa ambiental, reset img, animaciones
+src/lib/tema.ts                  → DEFAULT_TEMA, temaToVars, derivarAmbiente,
+                                   polaridadTema, resolverMotion, --font-hero
+src/components/ui.tsx            → Button, Field, linkClasses
+src/components/anillo-progreso.tsx → AnilloProgreso (+ prop tono semántico)
+scripts/revisar-ui.ps1           → chequeo automático de patrones prohibidos
 src/app/login/page.tsx          → mobile-first completo
 src/app/panel/page.tsx          → número héroe + patrón Futurista (§17)
 src/app/panel/ajustes/*         → validación contraste
@@ -574,7 +688,16 @@ src/app/panel/ajustes/logo-uploader.tsx → subida + caja fija + fallback
 
 ---
 
-**Última actualización**: 2026-09-02 (secciones 4-10 nuevas: bordes, imágenes,
+**Última actualización**: 2026-09-03 (§20 Capa ambiental preset-agnóstica:
+contrato de tokens que `temaToVars()`/`derivarAmbiente()` garantizan para todo
+tema — acento derivado, superficies elevadas, scrim, glow polaridad-consciente,
+semánticos re-derivados, `data-theme-polarity` + `data-motion` en los layouts,
+clase `.capa-ambiental` con textura universal; §21 Checklist de 30 s objetivo +
+`scripts/revisar-ui.ps1`; §1 tokens ambientales y regla "cero `var(--volt)`
+literal fuera de tema.ts/globals.css"; §6 acción de sección en fila
+`justify-between`; §9 backdrop `var(--scrim)`; §11 `linkClasses`; §17
+`AnilloProgreso` prop `tono` semántico).
+Anterior: 2026-09-02 (secciones 4-10 nuevas: bordes, imágenes,
 alineación, overflow, overlays, z-index — tras el bug de imágenes que rompían
 el layout en `/mi/rutina`; §5 subsección "Logo del gimnasio" tras el SPEC de
 logo + paletas; §17 componente `AnilloProgreso` + token `--font-hero` (Orbitron)
