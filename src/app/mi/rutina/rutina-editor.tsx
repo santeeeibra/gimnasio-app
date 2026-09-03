@@ -16,6 +16,7 @@ import {
   type Molestia,
   type Tecnica,
 } from "@/lib/rutina/tipos";
+import { TimerDescanso } from "@/components/rutinas/timer-descanso";
 
 const campoCls =
   "h-11 rounded-[5px] border border-rule bg-paper text-[16px] outline-none transition-[border-color] duration-150 [transition-timing-function:var(--ease-out)] focus:border-ink";
@@ -151,7 +152,7 @@ function ExThumb({
         url={url}
         activo={!reduce && !err}
         onError={() => setErr(true)}
-        className="h-full w-full object-cover object-center"
+        className="h-full w-full object-cover object-top"
       />
     </button>
   );
@@ -326,6 +327,7 @@ export function RutinaEditor({
       {visor ? (
         <VisorEjercicio ej={visor} onClose={() => setVisor(null)} />
       ) : null}
+      <TimerDescanso />
     </div>
   );
 }
