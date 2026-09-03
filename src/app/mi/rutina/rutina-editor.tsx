@@ -304,7 +304,7 @@ export function RutinaEditor({
                         {titulo}
                       </p>
                     ) : null}
-                    <ul className="card-cut border border-rule divide-y divide-rule bg-paper-2 overflow-hidden">
+                    <ul className="stagger-in card-cut border border-rule divide-y divide-rule bg-paper-2 overflow-hidden">
                       {grupo.map((item) => (
                         <ItemFila
                           key={item.id}
@@ -353,7 +353,7 @@ function DiaTabs({
             type="button"
             onClick={() => onSelect(d.numero)}
             aria-pressed={on}
-            className={`flex-1 rounded-lg border px-3 py-2 text-xs transition-colors duration-150 [transition-timing-function:var(--ease-out)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${
+            className={`flex-1 rounded-lg border px-3 py-2 text-xs transition-[transform,color,background-color,border-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${
               on
                 ? "border-rule bg-paper font-medium text-ink"
                 : "border-rule bg-transparent text-ink-soft"

@@ -155,8 +155,11 @@ export default async function MiRutinaPage() {
     </details>
   ) : null;
 
+  // pb generoso: en mobile, abajo del scroll conviven la bottom nav (~38px) y
+  // el timer de descanso — colapsado ~62px, expandido ~214px — ambos fijos.
+  // pb-64 (256px) deja el último ejercicio visible incluso con el timer abierto.
   return (
-    <main className="stagger max-w-md mx-auto px-5 py-6 space-y-6">
+    <main className="stagger max-w-md mx-auto px-5 pt-6 pb-64 space-y-6">
       <div>
         <Link href="/mi" className={`text-sm ${linkClasses.accion}`}>
           ← Volver

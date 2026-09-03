@@ -803,3 +803,18 @@ h3 {
     animation: none !important;
   }
 }
+
+/* ============================================================
+   Timer de descanso (rutina) — posición en mobile.
+   Se apoya JUSTO encima de MiBottomNav (fixed bottom-0, ~38px de alto,
+   z-40). Sin esto quedaba tapado por la nav (el timer es z-30). En >=md
+   no hay bottom nav: vuelve a card flotante (Tailwind `md:` en el JSX).
+   ============================================================ */
+.timer-descanso-pos {
+  bottom: calc(2.375rem + env(safe-area-inset-bottom, 0px));
+}
+@media (min-width: 768px) {
+  .timer-descanso-pos {
+    bottom: 1rem;
+  }
+}

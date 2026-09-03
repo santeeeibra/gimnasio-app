@@ -80,7 +80,7 @@ export default async function MiHiloPage({
       {m.respondible ? (
         <section className="space-y-3">
           {respuestas.length > 0 ? (
-            <ul className="space-y-2">
+            <ul className="stagger-in space-y-2">
               {respuestas.map((r) => {
                 const mio = r.autor_id === profile.id;
                 return (

@@ -14,7 +14,7 @@ type Estado = "detenido" | "corriendo" | "pausado";
 export function TimerDescanso() {
   const [segundosRestantes, setSegundosRestantes] = useState(60);
   const [estado, setEstado] = useState<Estado>("detenido");
-  const [colapsado, setColapsado] = useState(true);
+  const [colapsado, setColapsado] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
 
@@ -114,16 +114,26 @@ export function TimerDescanso() {
   const pausado = estado === "pausado";
   const detenido = estado === "detenido";
 
+  // Mobile: MiBottomNav (~38px + safe-area, z-40) vive en bottom-0. El timer se
+  // apoya JUSTO encima con el mismo offset para no quedar tapado ni tapar la
+  // nav. Desktop: card flotante, ahí no hay bottom nav.
   return (
-    <div className="fixed bottom-0 inset-x-0 z-30 border-t border-rule bg-paper/95 backdrop-blur-sm pb-[env(safe-area-inset-bottom)] md:bottom-4 md:left-4 md:right-auto md:w-80 md:rounded-[8px] md:border md:shadow-lg md:pb-0">
+    <div className="timer-descanso-pos fixed inset-x-0 z-30 border-y border-rule bg-paper/95 backdrop-blur-sm md:inset-x-auto md:left-4 md:right-auto md:w-80 md:rounded-[8px] md:border md:shadow-lg">
       <div className="px-4 py-3">
         {/* Header con toggle collapse */}
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-medium text-ink">Descanso entre series</h3>
+          <div className="flex items-center gap-2 min-w-0">
+            <h3 className="text-sm font-medium text-ink">Descanso entre series</h3>
+            {colapsado && (
+              <span className="text-xs text-ink-soft whitespace-nowrap">
+                Tocá para expandir
+              </span>
+            )}
+          </div>
           <button
             type="button"
             onClick={() => setColapsado(!colapsado)}
-            className="size-6 grid place-items-center text-ink-soft transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-90"
+            className="size-6 shrink-0 grid place-items-center text-ink-soft transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-90"
             aria-label={colapsado ? "Expandir timer" : "Colapsar timer"}
           >
             <svg

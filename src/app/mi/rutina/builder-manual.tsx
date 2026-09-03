@@ -212,7 +212,7 @@ export function BuilderManual({ ejercicios }: { ejercicios: Ejercicio[] }) {
             ) : null}
           </div>
 
-          <ul className="mt-3 space-y-3">
+          <ul className="stagger-in mt-3 space-y-3">
             {dia.filas.map((fila) => (
               <li
                 key={fila.key}

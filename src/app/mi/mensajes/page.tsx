@@ -75,7 +75,7 @@ export default async function MiBandejaPage() {
           </p>
         </div>
       ) : (
-        <ul className="card-cut overflow-hidden border border-rule bg-paper-2 divide-y divide-rule">
+        <ul className="stagger-in card-cut overflow-hidden border border-rule bg-paper-2 divide-y divide-rule">
           {items.map((i) => (
             <li
               key={i.mensaje_id}
@@ -83,7 +83,7 @@ export default async function MiBandejaPage() {
             >
               <Link
                 href={`/mi/mensajes/${i.mensaje_id}`}
-                className="block px-4 py-4 transition-colors duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper active:bg-paper"
+                className="block px-4 py-4 transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper active:bg-paper active:scale-[0.985]"
               >
                 <p className="text-sm line-clamp-2">{i.mensaje!.cuerpo}</p>
                 <p className="text-xs text-ink-soft mt-1">
