@@ -81,7 +81,7 @@ export function PlanForm({ plan }: { plan?: PlanRow }) {
           />
           Activo
         </label>
-        <Button type="submit" disabled={pending}>
+        <Button type="submit" loading={pending}>
           {pending ? "…" : plan ? "Guardar" : "Crear"}
         </Button>
       </div>

@@ -32,7 +32,7 @@ export function SolicitarForm() {
         <p className="text-sm text-danger">{state.msg}</p>
       ) : null}
 
-      <Button type="submit" disabled={pending}>
+      <Button type="submit" loading={pending}>
         {pending ? "Enviando…" : "Solicitar activación"}
       </Button>
     </form>

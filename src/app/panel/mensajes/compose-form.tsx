@@ -91,7 +91,7 @@ export function ComposeForm({
       </label>
 
       <div className="flex items-center gap-4">
-        <Button type="submit" disabled={pending}>
+        <Button type="submit" loading={pending}>
           {pending ? "Enviando…" : "Enviar"}
         </Button>
         {state.error ? (

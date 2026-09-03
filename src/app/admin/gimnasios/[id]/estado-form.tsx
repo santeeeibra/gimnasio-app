@@ -36,7 +36,7 @@ export function EstadoForm({
           </option>
         ))}
       </select>
-      <Button type="submit" disabled={pending}>
+      <Button type="submit" loading={pending}>
         {pending ? "Guardando…" : "Cambiar estado"}
       </Button>
       {state?.msg ? (

@@ -15,7 +15,7 @@ export function PlanForm() {
       <Field label="Nombre" name="nombre" placeholder="Mensual, Trimestral…" required />
       <Field label="Precio" name="precio" inputMode="numeric" />
       <Field label="Días" name="duracion_dias" inputMode="numeric" placeholder="30" required />
-      <Button type="submit" disabled={pending}>
+      <Button type="submit" loading={pending}>
         {pending ? "Guardando…" : "Agregar"}
       </Button>
       {state.error ? (

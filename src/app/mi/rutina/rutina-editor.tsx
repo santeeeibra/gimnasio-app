@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { ejerciciosSimilares, estaBloqueado } from "@/lib/rutina/motor";
+import { Spinner } from "@/components/ui";
 import {
   GRUPO_MUSCULAR_LABEL,
   MOLESTIAS,
@@ -150,7 +151,7 @@ function ExThumb({
         url={url}
         activo={!reduce && !err}
         onError={() => setErr(true)}
-        className="h-full w-full object-cover"
+        className="h-full w-full object-cover object-center"
       />
     </button>
   );
@@ -611,9 +612,16 @@ function ItemFila({
                 type="button"
                 onClick={guardar}
                 disabled={pending}
-                className="h-11 px-4 rounded-[5px] bg-ink text-paper text-sm font-medium transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 disabled:opacity-50"
+                className="inline-flex items-center gap-2 h-11 px-4 rounded-[5px] bg-ink text-paper text-sm font-medium transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 disabled:opacity-50"
               >
-                {pending ? "…" : "Guardar"}
+                {pending ? (
+                  <>
+                    <Spinner />
+                    Guardando…
+                  </>
+                ) : (
+                  "Guardar"
+                )}
               </button>
             ) : null}
             {msg ? (

@@ -19,7 +19,7 @@ function ConfirmarBtn({ pagoId }: { pagoId: string }) {
   return (
     <form action={action} className="flex items-center gap-2">
       <input type="hidden" name="pago_id" value={pagoId} />
-      <Button type="submit" variant="ghost" disabled={pending}>
+      <Button type="submit" variant="ghost" loading={pending}>
         {pending ? "…" : "Confirmar"}
       </Button>
       {state?.msg ? (

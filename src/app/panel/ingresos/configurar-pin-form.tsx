@@ -45,7 +45,7 @@ export function ConfigurarPinForm({ tienePinActual }: { tienePinActual: boolean 
       />
 
       <div className="flex items-center gap-3">
-        <Button type="submit" disabled={pending}>
+        <Button type="submit" loading={pending}>
           {pending ? "Guardando…" : tienePinActual ? "Cambiar PIN" : "Configurar PIN"}
         </Button>
         {state.error && <p className="text-sm text-danger">{state.error}</p>}

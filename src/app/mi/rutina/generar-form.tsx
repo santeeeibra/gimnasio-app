@@ -429,7 +429,7 @@ export function GenerarRutinaForm({
       <div className="sm:col-span-2 flex flex-wrap items-center gap-3">
         <Button
           type="submit"
-          disabled={pending}
+          loading={pending}
           variant={tieneRutina ? "volt" : "primary"}
         >
           {pending

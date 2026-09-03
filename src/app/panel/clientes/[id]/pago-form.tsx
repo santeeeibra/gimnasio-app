@@ -36,7 +36,7 @@ export function PagoForm({
         </select>
       </label>
       <Field label="Monto recibido" name="monto" inputMode="numeric" placeholder="deja vacío = precio del plan" />
-      <Button type="submit" disabled={pending}>
+      <Button type="submit" loading={pending}>
         {pending ? "Guardando…" : "Registrar pago"}
       </Button>
 

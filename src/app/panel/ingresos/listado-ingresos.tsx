@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { Spinner } from "@/components/ui";
 
 type Pago = {
   id: string;
@@ -51,7 +52,12 @@ export function ListadoIngresos() {
   }
 
   if (cargando) {
-    return <p className="text-sm text-ink-soft">Cargando ingresos...</p>;
+    return (
+      <p className="flex items-center gap-2 text-sm text-ink-soft">
+        <Spinner />
+        Cargando ingresos…
+      </p>
+    );
   }
 
   if (pagos.length === 0) {

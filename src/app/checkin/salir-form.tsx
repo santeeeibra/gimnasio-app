@@ -76,7 +76,7 @@ export function SalirModoCheckin() {
                   {state.error}
                 </p>
               ) : null}
-              <Button type="submit" disabled={pending} className="w-full">
+              <Button type="submit" loading={pending} className="w-full">
                 {pending ? "Verificando…" : "Salir al panel"}
               </Button>
             </form>

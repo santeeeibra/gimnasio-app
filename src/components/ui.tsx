@@ -1,12 +1,27 @@
 import Link from "next/link";
 import type { ComponentProps } from "react";
 
+/** Círculo de carga. Hereda el color del texto (`currentColor`), así sirve
+ *  sobre cualquier variante de botón o superficie. */
+export function Spinner({ className = "" }: { className?: string }) {
+  return (
+    <span
+      aria-hidden
+      className={`inline-block size-4 shrink-0 rounded-full border-2 border-current/30 border-t-current spin-fast ${className}`}
+    />
+  );
+}
+
 export function Button({
   className = "",
   variant = "primary",
+  loading = false,
+  disabled,
+  children,
   ...props
 }: ComponentProps<"button"> & {
   variant?: "primary" | "ghost" | "danger" | "volt";
+  loading?: boolean;
 }) {
   const base =
     "inline-flex items-center justify-center gap-2 h-11 px-4 text-sm font-medium rounded-[5px] select-none touch-manipulation transition-[transform,background-color,border-color,color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] disabled:opacity-50 disabled:pointer-events-none";
@@ -16,7 +31,17 @@ export function Button({
     danger: "border border-danger text-danger hover:bg-danger hover:text-paper",
     volt: "bg-volt text-volt-ink hover:brightness-95",
   }[variant];
-  return <button className={`${base} ${styles} ${className}`} {...props} />;
+  return (
+    <button
+      className={`${base} ${styles} ${className}`}
+      disabled={disabled || loading}
+      aria-busy={loading || undefined}
+      {...props}
+    >
+      {loading ? <Spinner /> : null}
+      {children}
+    </button>
+  );
 }
 
 export function LinkButton({

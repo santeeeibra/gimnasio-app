@@ -132,19 +132,9 @@ export default function LoginPage() {
             <Button
               type="submit"
               className="w-full h-12 text-base font-semibold"
-              disabled={pending}
+              loading={pending}
             >
-              {pending ? (
-                <>
-                  <span
-                    aria-hidden
-                    className="size-4 rounded-full border-2 border-paper/30 border-t-paper animate-spin"
-                  />
-                  Entrando…
-                </>
-              ) : (
-                "Entrar"
-              )}
+              {pending ? "Entrando…" : "Entrar"}
             </Button>
           </div>
 

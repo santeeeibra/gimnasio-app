@@ -22,7 +22,7 @@ export function ReplyForm({ mensajeId }: { mensajeId: string }) {
         placeholder="Responder…"
         className="flex-1 px-3 py-2 rounded-[5px] border border-rule bg-paper text-sm outline-none focus:border-ink resize-y"
       />
-      <Button type="submit" disabled={pending}>
+      <Button type="submit" loading={pending}>
         {pending ? "…" : "Enviar"}
       </Button>
       {state.error ? (

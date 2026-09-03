@@ -27,7 +27,7 @@ export default function CambiarClavePage() {
           <p className="mt-4 text-sm text-danger">{state.error}</p>
         ) : null}
 
-        <Button type="submit" className="w-full mt-6" disabled={pending}>
+        <Button type="submit" className="w-full mt-6" loading={pending}>
           {pending ? "Guardando…" : "Guardar y entrar"}
         </Button>
       </form>

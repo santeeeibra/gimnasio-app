@@ -49,7 +49,7 @@ export function DisparadoresSocio({
           ))}
         </select>
       </label>
-      <Button type="submit" variant="ghost" disabled={pending}>
+      <Button type="submit" variant="ghost" loading={pending}>
         {pending ? "…" : "Aplicar"}
       </Button>
       {state?.msg ? (

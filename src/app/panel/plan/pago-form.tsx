@@ -58,7 +58,7 @@ export function PagoForm({
         <p className="text-sm text-danger">{state.msg}</p>
       ) : null}
 
-      <Button type="submit" disabled={pending}>
+      <Button type="submit" loading={pending}>
         {pending ? "Generando…" : "Generar pago"}
       </Button>
     </form>

@@ -18,6 +18,16 @@ const PUBLIC_PATHS = [
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
 
+  // Los prefetch de <Link> disparan muchas requests en paralelo; si cada una
+  // refresca el token de Supabase a la vez, la detección de reuso revoca la
+  // sesión. En un prefetch no hace falta refrescar: dejamos pasar.
+  if (
+    request.headers.get("next-router-prefetch") ||
+    request.headers.get("purpose") === "prefetch"
+  ) {
+    return response;
+  }
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

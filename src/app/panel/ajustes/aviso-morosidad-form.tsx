@@ -48,7 +48,7 @@ export function AvisoMorosidadForm({
       ) : null}
       {state.ok ? <p className="text-sm text-ok">{state.ok}</p> : null}
 
-      <Button type="submit" disabled={pending}>
+      <Button type="submit" loading={pending}>
         {pending ? "Guardando…" : "Guardar"}
       </Button>
     </form>

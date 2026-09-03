@@ -531,8 +531,8 @@ export function AjustesForm({
           <div className="flex gap-3">
             <Button
               type="submit"
+              loading={pending}
               disabled={
-                pending ||
                 bloqueos.bloqueado ||
                 (resultado.hayFallos && !confirmarBajoContraste)
               }

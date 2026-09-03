@@ -52,7 +52,8 @@ export function AltaForm({
           type="submit"
           name="modo"
           value="completa"
-          disabled={pending || full}
+          loading={pending}
+          disabled={full}
         >
           {pending ? "Creando…" : "Dar de alta"}
         </Button>

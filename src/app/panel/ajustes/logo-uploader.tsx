@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { procesarLogo } from "@/lib/logo/comprimir";
 import { colorDominante } from "@/lib/logo/paleta";
 import { guardarLogo } from "./actions";
+import { Spinner } from "@/components/ui";
 
 const BUCKET = "logos";
 
@@ -130,9 +131,18 @@ export function LogoUploader({
             type="button"
             disabled={pending}
             onClick={() => inputRef.current?.click()}
-            className="inline-flex h-9 items-center justify-center rounded-[5px] border border-rule bg-paper px-3 text-sm font-medium text-ink transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 hover:bg-paper-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 disabled:opacity-50"
+            className="inline-flex h-9 items-center justify-center gap-2 rounded-[5px] border border-rule bg-paper px-3 text-sm font-medium text-ink transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 hover:bg-paper-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 disabled:opacity-50"
           >
-            {pending ? "Subiendo…" : src ? "Cambiar logo" : "Subir logo"}
+            {pending ? (
+              <>
+                <Spinner />
+                Subiendo…
+              </>
+            ) : src ? (
+              "Cambiar logo"
+            ) : (
+              "Subir logo"
+            )}
           </button>
           {src ? (
             <button

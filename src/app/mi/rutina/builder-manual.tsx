@@ -340,7 +340,7 @@ export function BuilderManual({ ejercicios }: { ejercicios: Ejercicio[] }) {
       </button>
 
       <div className="flex flex-wrap items-center gap-3">
-        <Button type="submit" variant="volt" disabled={incompleto || pending}>
+        <Button type="submit" variant="volt" loading={pending} disabled={incompleto}>
           {pending ? "Guardando…" : "Guardar rutina"}
         </Button>
         {incompleto ? (

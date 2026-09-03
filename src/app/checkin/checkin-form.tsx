@@ -69,17 +69,10 @@ export function CheckinForm() {
 
         <Button
           type="submit"
-          disabled={pending}
+          loading={pending}
           className="mt-4 h-14 w-full text-base"
         >
-          {pending ? (
-            <>
-              <span className="size-4 rounded-full border-2 border-paper/30 border-t-paper spin-fast" />
-              Marcando…
-            </>
-          ) : (
-            "Marcar ingreso"
-          )}
+          {pending ? "Marcando…" : "Marcar ingreso"}
         </Button>
       </form>
 

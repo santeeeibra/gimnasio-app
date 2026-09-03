@@ -57,7 +57,7 @@ export function PlanPlataformaForm({
         />
       </label>
 
-      <Button type="submit" disabled={pending}>
+      <Button type="submit" loading={pending}>
         {pending ? "Guardando…" : "Guardar plan"}
       </Button>
 

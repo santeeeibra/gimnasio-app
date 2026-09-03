@@ -37,7 +37,7 @@ export function PushPruebaForm() {
         </p>
       ) : null}
 
-      <Button type="submit" disabled={pending}>
+      <Button type="submit" loading={pending}>
         {pending ? "Enviando…" : "Enviar a mis dispositivos"}
       </Button>
     </form>
