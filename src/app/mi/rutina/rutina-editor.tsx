@@ -330,8 +330,8 @@ export function RutinaEditor({
   );
 }
 
-/** Segmented control de días: la pill activa se desliza entre segmentos
- *  (movimiento en pantalla ⇒ --ease-in-out, REGLAS §8). */
+/** Selector de días: las 3 pestañas comparten contenedor (borde); la activa
+ *  además va con fondo relleno. */
 function DiaTabs({
   dias,
   activo,
@@ -341,20 +341,8 @@ function DiaTabs({
   activo: number;
   onSelect: (n: number) => void;
 }) {
-  const idx = Math.max(
-    0,
-    dias.findIndex((d) => d.numero === activo),
-  );
   return (
-    <div className="relative flex rounded-[5px] border border-rule bg-paper-2 p-[3px]">
-      <span
-        aria-hidden
-        className="pointer-events-none absolute inset-y-[3px] left-[3px] rounded-[4px] border border-rule bg-paper transition-transform duration-300 [transition-timing-function:var(--ease-in-out)]"
-        style={{
-          width: `calc((100% - 6px) / ${dias.length})`,
-          transform: `translateX(${idx * 100}%)`,
-        }}
-      />
+    <div className="flex gap-2">
       {dias.map((d) => {
         const on = d.numero === activo;
         return (
@@ -363,8 +351,10 @@ function DiaTabs({
             type="button"
             onClick={() => onSelect(d.numero)}
             aria-pressed={on}
-            className={`relative z-[1] flex-1 rounded-[4px] px-1 py-2 text-xs transition-colors duration-150 [transition-timing-function:var(--ease-out)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${
-              on ? "font-medium text-ink" : "text-ink-soft"
+            className={`flex-1 rounded-lg border px-3 py-2 text-xs transition-colors duration-150 [transition-timing-function:var(--ease-out)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${
+              on
+                ? "border-rule bg-paper font-medium text-ink"
+                : "border-rule bg-transparent text-ink-soft"
             }`}
           >
             {(() => {

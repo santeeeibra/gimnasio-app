@@ -339,14 +339,14 @@ export function BuilderManual({ ejercicios }: { ejercicios: Ejercicio[] }) {
         + Día
       </button>
 
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="space-y-2">
         <Button type="submit" variant="volt" loading={pending} disabled={incompleto}>
           {pending ? "Guardando…" : "Guardar rutina"}
         </Button>
         {incompleto ? (
-          <span className="text-xs text-ink-soft">
+          <p className="text-xs text-ink-soft">
             Elegí un ejercicio en cada fila.
-          </span>
+          </p>
         ) : null}
         {state?.error ? (
           <p className="text-sm text-danger animate-error">{state.error}</p>
