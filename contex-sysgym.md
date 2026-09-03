@@ -414,6 +414,26 @@ SECURITY DEFINER (`soy_destinatario`, `mensaje_gimnasio`, `mensaje_remitente`,
 
 ## Cómo seguir (próxima sesión)
 
+Ya hecho (2026-09-03):
+- **Fallback offline ante caída de Supabase** (SPEC `SPEC_OFFLINE_FALLBACK.md`):
+  detector de conexión (`src/lib/offline/conexion.tsx`), cola persistente en
+  `localStorage` (`cola.ts`) que reinvoca las Server Actions al reconectar,
+  handlers de `checkin` / `alta_cliente` (`handlers.ts`), cache de lectura para
+  el estado de cuota (`cache.ts`), `OfflineProvider` + banner + `AutoFlush`
+  (`src/components/offline/*`), `error.tsx` en `/mi` y `/panel/clientes` con la
+  copia cacheada, wiring en los 3 layouts + `checkin-form.tsx` + `alta-form.tsx`.
+  Sin migración, no toca RLS. Typecheck + smoke test ✅. Ver "Fallback offline"
+  en Decisiones de producto.
+- **Panel: editar datos del socio ya creado** — `editarCliente` +
+  `panel/clientes/[id]/editar-datos.tsx` (nombre / DNI / teléfono / sexo / clave;
+  DNI cambia el email de auth con rollback). Falta probar end-to-end (bloqueado
+  por migraciones).
+- **Alta sin checkbox "Pago recibido"** — el alta ya no registra pago; el socio
+  queda con cuota vencida y acceso habilitado, el dueño registra el primer pago
+  desde la ficha. Ver "Planes y cuotas".
+- **Buscador por nombre de socio en `/panel/ingresos`** (`listado-ingresos.tsx`,
+  filtro client-side + "Total filtrado").
+
 Ya hecho (2026-09-02): 
 - **Gestor de morosidad**: migración `0012` (`gimnasios.dias_aviso_morosidad`,
   `clientes.ultimo_aviso_morosidad_enviado_en`), card "Aviso de vencimiento" en

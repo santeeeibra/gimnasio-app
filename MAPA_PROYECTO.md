@@ -9,7 +9,9 @@
 | Feature | Archivo(s) clave | Estado |
 |---|---|---|
 | Auth / login (DNI + gimnasio) | `src/app/login/`, helpers `current_gimnasio_id()`, `current_cliente_id()` | ✅ HECHO |
-| Alta de clientes (manual, sin auto-registro) | `src/app/panel/clientes/alta-form.tsx` | ✅ HECHO |
+| Alta de clientes (manual, sin auto-registro) | `src/app/panel/clientes/alta-form.tsx`, `altaCliente` en `clientes/actions.ts` | ✅ HECHO — el alta NO registra pago (2026-09-03), se saca el checkbox "Pago recibido"; el dueño cobra desde la ficha del socio |
+| Editar datos del socio ya creado | `panel/clientes/[id]/editar-datos.tsx`, `editarCliente` en `clientes/actions.ts` | ✅ código (2026-09-03) — falta probar end-to-end (bloqueado por migraciones) |
+| Ingresos — pagos por mes + PIN + buscador por socio | `src/app/panel/ingresos/*`, `api/panel/ingresos/route.ts` | ✅ código — buscador por nombre 2026-09-03; falta aplicar `0008_pin_ingresos.sql` |
 | Planes y cuotas | tabla `planes`, `recalcular_estado_cuota()` | ✅ HECHO (cron pendiente) |
 | Rutinas — motor de reglas | `src/lib/rutina/motor.ts` | ✅ COMPLETO, bug de variedad corregido 2026-09-02 |
 | Rutinas — tipos/constantes | `src/lib/rutina/tipos.ts` (SEXOS, ENFASIS, SERIES/REPS) | ✅ HECHO |
