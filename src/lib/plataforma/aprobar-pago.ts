@@ -132,7 +132,7 @@ async function avisarRenovacion(
       });
     }
 
-    const to = process.env.ADMIN_EMAIL;
+    const to = process.env.PAGOS_EMAIL ?? process.env.ADMIN_EMAIL;
     if (to) {
       await enviarEmail({
         to,

@@ -93,7 +93,7 @@ export async function generarPagoPlan(
   }
 
   // Flujo manual: avisar a soporte por email (best-effort).
-  const to = process.env.ADMIN_EMAIL;
+  const to = process.env.PAGOS_EMAIL ?? process.env.ADMIN_EMAIL;
   if (to) {
     await enviarEmail({
       to,
@@ -118,8 +118,8 @@ export async function generarPagoPlan(
   };
 }
 
-// El dueño pide activar o ampliar su plan. Manda un email al ADMIN de la
-// plataforma (ADMIN_EMAIL). No hay checkout real todavía.
+// El dueño pide activar o ampliar su plan. Manda un email al contacto de
+// pagos (PAGOS_EMAIL, o ADMIN_EMAIL como fallback).
 export async function solicitarActivacionPlan(
   _prev: SolicitudState | null,
   formData: FormData,
@@ -127,7 +127,7 @@ export async function solicitarActivacionPlan(
   const dueno = await requireDueno();
   const nota = String(formData.get("nota") ?? "").trim().slice(0, 1000);
 
-  const to = process.env.ADMIN_EMAIL;
+  const to = process.env.PAGOS_EMAIL ?? process.env.ADMIN_EMAIL;
   if (!to) {
     return {
       ok: false,
