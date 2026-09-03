@@ -296,12 +296,13 @@ export function GenerarRutinaForm({
                   ))}
                 </Select>
                 {!splitDiasOk ? (
-                  <p className="mt-1.5 text-xs leading-snug text-danger">
-                    Esa estructura pide{" "}
+                  <p className="mt-1.5 text-xs leading-snug text-ink-soft">
+                    Esa estructura rinde mejor con{" "}
                     {(
                       SPLIT_DIAS_OK[split as keyof typeof SPLIT_DIAS_OK] ?? []
                     ).join(" o ")}{" "}
-                    días. Ajustá los días o se usará la estructura automática.
+                    días. Con {dias} la armamos igual, repartiendo los días para
+                    completar la semana.
                   </p>
                 ) : null}
                 <Porque clave="frecuencia" />

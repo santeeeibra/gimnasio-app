@@ -5,6 +5,7 @@
 
 import { TEORIA } from "./teoria";
 import {
+  ENFASIS_GRUPOS,
   ENFASIS_LABEL,
   GRUPO_MUSCULAR_LABEL,
   OBJETIVO_LABEL,
@@ -80,14 +81,9 @@ export function explicarPlan(
 ): string[] {
   const porSlug = new Map(ejercicios.filter((e) => e.slug).map((e) => [e.slug!, e]));
   const enfasisGrupos = new Set(
-    entrada.enfasis.flatMap((z) =>
-      z === "piernas"
-        ? ["cuadriceps", "isquios", "gemelos"]
-        : z === "brazos"
-          ? ["biceps", "triceps"]
-          : [z],
-    ),
+    entrada.enfasis.flatMap((z) => ENFASIS_GRUPOS[z]),
   );
+  const prefatiga = entrada.avanzado?.orden === "prefatiga_zona";
 
   return plan.dias.map((dia) => {
     const ejs = dia.items
@@ -103,27 +99,43 @@ export function explicarPlan(
     const primero = ejs[0]?.nombre;
     const primeroSeries = dia.items[0]?.series;
     const primeroReps = dia.items[0]?.repeticiones;
+    // El primer ejercicio real del día manda el texto: con prefatiga de zona
+    // (o cuando lo que abre es un aislamiento) NO es el movimiento más pesado.
+    const primeroEsAislamiento = ejs[0]?.patron === "aislamiento";
 
     const frases: string[] = [];
     frases.push(
       `Trabajás ${grupos || "todo el cuerpo"} (${dia.items.length} ejercicios).`,
     );
     if (primero && primeroSeries && primeroReps) {
+      const rx = `${primeroSeries} series de ${primeroReps.replace("–", " a ")}`;
       frases.push(
-        `Arrancás con ${primero.toLowerCase()} (${primeroSeries} series de ${primeroReps.replace("–", " a ")}): es el movimiento más pesado y conviene hacerlo con energía fresca.`,
+        primeroEsAislamiento
+          ? `Arrancás aislando ${primero.toLowerCase()} (${rx}) para pre-fatigar la zona antes del básico.`
+          : `Arrancás con ${primero.toLowerCase()} (${rx}): es el movimiento más pesado y conviene hacerlo con energía fresca.`,
       );
     }
     const grupoEnfasisEnDia = ejs.some((e) =>
       enfasisGrupos.has(e.grupo_muscular ?? ""),
     );
     if (grupoEnfasisEnDia && entrada.enfasis.length > 0) {
+      const zonas = listar(
+        entrada.enfasis.map((z) => ENFASIS_LABEL[z].toLowerCase()),
+      );
       frases.push(
-        `Como pediste enfocar ${listar(entrada.enfasis.map((z) => ENFASIS_LABEL[z].toLowerCase()))}, esos ejercicios van primero y con series extra.`,
+        prefatiga
+          ? `Como pediste enfocar ${zonas}, esos músculos se aíslan primero y con trabajo extra.`
+          : `Como pediste enfocar ${zonas}, esos ejercicios van primero y con trabajo extra.`,
       );
     }
-    frases.push(
-      "El resto son accesorios: más repeticiones y menos peso para sumar volumen sin tanta fatiga.",
-    );
+    // Solo hablamos de accesorios si el día realmente tiene aislamientos; en
+    // días muy compuestos (p. ej. fuerza) puede no haber.
+    const hayAccesorios = ejs.some((e) => e.patron === "aislamiento");
+    if (hayAccesorios) {
+      frases.push(
+        "El resto son accesorios: más repeticiones y menos peso para sumar volumen sin tanta fatiga.",
+      );
+    }
     return frases.join(" ");
   });
 }

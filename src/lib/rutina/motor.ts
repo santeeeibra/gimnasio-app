@@ -279,10 +279,18 @@ const PATRON_ENFASIS: Record<string, string | undefined> = {
 // ninguna y es mujer, prioriza glúteos por defecto. Tope: +3 ranuras y 8 por
 // día para no inflar la sesión. Si la zona tiene un patrón compuesto asociado,
 // la ranura extra entra como "secundario" (más carga real para esa zona).
+//
+// En splits DIVIDIDOS (upper/lower, PPL, torso/pierna) cada zona ya tiene su
+// propio día, así que el refuerzo solo cae en los días que efectivamente
+// entrenan esa zona: sin esto, un día de tren superior terminaba con ejercicios
+// de pierna que no correspondían. En FULL BODY no hay día dedicado a cada zona,
+// así que el énfasis puede caer en cualquiera de los días (comportamiento de
+// siempre).
 function aplicarEnfasis(
   ranuras: Ranura[],
   enfasis: Enfasis[],
   sexo: Sexo,
+  esFullBody: boolean,
   extras = 3,
   maxDia = 8,
 ): Ranura[] {
@@ -291,6 +299,7 @@ function aplicarEnfasis(
   if (zonas.length === 0) return ranuras;
 
   const out = [...ranuras];
+  const gruposBase = new Set(ranuras.map((r) => r.grupo));
 
   // El presupuesto de ranuras extra (3) se reparte en partes iguales entre las
   // zonas elegidas: cada zona recibe la misma cuota, sin importar el orden de
@@ -300,7 +309,12 @@ function aplicarEnfasis(
   const cuota = Math.floor(extras / zonas.length);
 
   for (const zona of zonas) {
-    const grupos = ENFASIS_GRUPOS[zona];
+    // Split dividido: solo reforzamos la zona si el día ya la entrena; si no,
+    // esa zona recibe su volumen en su propio día del split.
+    const grupos = esFullBody
+      ? ENFASIS_GRUPOS[zona]
+      : ENFASIS_GRUPOS[zona].filter((g) => gruposBase.has(g));
+    if (grupos.length === 0) continue;
     const porGrupo = new Map<string, number>();
     for (let i = 0; i < cuota && out.length < maxDia; i++) {
       const grupo = grupos[i % grupos.length];
@@ -724,12 +738,14 @@ export function generarPlan(
     const items: ItemGenerado[] = [];
     const rolItems: Rol[] = [];
     const esquema = resolverEsquema(objetivo, avanzado, di);
+    const esFullBody = bloque.titulo.startsWith("Cuerpo completo");
 
     let ranuras = priorizarEnfasis(
       aplicarEnfasis(
         moldearPorObjetivo(bloque.ranuras, objetivo),
         enfasis,
         sexo,
+        esFullBody,
         vol.extras,
         vol.maxDia,
       ),

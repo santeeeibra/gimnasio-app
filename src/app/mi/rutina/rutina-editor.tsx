@@ -268,17 +268,6 @@ export function RutinaEditor({
         ]
           .filter(Boolean)
           .join(" · ");
-        const basicos = dia.items.filter(
-          (it) => it.ejercicio?.patron !== "aislamiento",
-        );
-        const accesorios = dia.items.filter(
-          (it) => it.ejercicio?.patron === "aislamiento",
-        );
-        const conSubtitulo = basicos.length > 0 && accesorios.length > 0;
-        const secciones: Array<[string, ItemEditable[]]> = [
-          ["Básicos", basicos],
-          ["Accesorios", accesorios],
-        ];
         return (
           <section key={dia.numero}>
             <h2 className="font-display text-lg">{dia.titulo}</h2>
@@ -295,30 +284,22 @@ export function RutinaEditor({
               </div>
             ) : null}
 
-            <div className="mt-3 space-y-4">
-              {secciones.map(([titulo, grupo]) =>
-                grupo.length === 0 ? null : (
-                  <div key={titulo}>
-                    {conSubtitulo ? (
-                      <p className="mb-1.5 text-[11px] uppercase tracking-[0.08em] text-ink-soft">
-                        {titulo}
-                      </p>
-                    ) : null}
-                    <ul className="stagger-in card-cut border border-rule divide-y divide-rule bg-paper-2 overflow-hidden">
-                      {grupo.map((item) => (
-                        <ItemFila
-                          key={item.id}
-                          indice={dia.items.indexOf(item) + 1}
-                          item={item}
-                          ejercicios={ejercicios}
-                          mostrarTecnica={mostrarTecnica}
-                          onVer={setVisor}
-                        />
-                      ))}
-                    </ul>
-                  </div>
-                ),
-              )}
+            <div className="mt-3">
+              {/* Orden tal cual lo arma el motor (prioridad de énfasis,
+                  prefatiga y rol de ranura). No reagrupar por básicos/
+                  accesorios: eso rompía la secuencia pensada del día. */}
+              <ul className="stagger-in card-cut border border-rule divide-y divide-rule bg-paper-2 overflow-hidden">
+                {dia.items.map((item, i) => (
+                  <ItemFila
+                    key={item.id}
+                    indice={i + 1}
+                    item={item}
+                    ejercicios={ejercicios}
+                    mostrarTecnica={mostrarTecnica}
+                    onVer={setVisor}
+                  />
+                ))}
+              </ul>
             </div>
           </section>
         );
