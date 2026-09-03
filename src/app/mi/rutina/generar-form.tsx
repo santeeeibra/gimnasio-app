@@ -43,6 +43,14 @@ type S = { error?: string; ok?: string };
 
 const PREFS: PreferenciaEquipo[] = ["gimnasio", "mancuernas", "peso_corporal"];
 
+// Etiqueta corta para el <select> de esfuerzo. La explicación larga
+// ("dejá 2–3 repeticiones en reserva") vive en el "¿por qué?" de abajo.
+const RIR_CORTO: Record<string, string> = {
+  "2-3": "Suave",
+  "1-2": "Exigente",
+  "0-1": "Al límite",
+};
+
 function Porque({ clave }: { clave: ClaveTeoria }) {
   const t = TEORIA[clave];
   return (
@@ -346,7 +354,7 @@ export function GenerarRutinaForm({
                 >
                   {RIR_OPCIONES.map((r) => (
                     <option key={r} value={r}>
-                      {RIR_LABEL[r]}
+                      {RIR_CORTO[r] ?? RIR_LABEL[r]}
                     </option>
                   ))}
                 </Select>
