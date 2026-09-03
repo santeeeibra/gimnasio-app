@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { dniAEmail } from "@/lib/auth";
 
-export type LoginState = { error?: string };
+export type LoginState = { error?: string; slug?: string; nombre?: string };
 
 export async function login(
   _prev: LoginState,
@@ -23,7 +23,7 @@ export async function login(
   const admin = createAdminClient();
   const { data: gym } = await admin
     .from("gimnasios")
-    .select("slug")
+    .select("slug, nombre")
     .or(`slug.eq.${gimnasio},nombre.ilike.${gimnasio}`)
     .limit(1)
     .maybeSingle();

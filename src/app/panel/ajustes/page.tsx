@@ -13,6 +13,7 @@ import { DatosPagoForm } from "./datos-pago-form";
 import { EmailRecuperacionForm } from "./email-recuperacion-form";
 import { ContactarSoporteForm } from "./contactar-soporte-form";
 import { VerTutorialDeNuevo } from "@/components/tutorial/tutorial";
+import { LinkAccesoCard } from "./link-acceso-card";
 
 const ESTADO_LABEL: Record<string, string> = {
   prueba: "En prueba",
@@ -30,7 +31,7 @@ export default async function AjustesPage() {
       supabase
         .from("gimnasios")
         .select(
-          "id, nombre, tema, logo_url, dias_aviso_morosidad, estado, plan_plataforma_vence_el, pago_alias, pago_cbu, pago_titular",
+          "id, slug, nombre, tema, logo_url, dias_aviso_morosidad, estado, plan_plataforma_vence_el, pago_alias, pago_cbu, pago_titular",
         )
         .eq("id", profile.gimnasio_id)
         .single(),
@@ -131,6 +132,8 @@ export default async function AjustesPage() {
       <div className="mt-6">
         <VerTutorialDeNuevo />
       </div>
+
+      {gym?.slug ? <LinkAccesoCard slug={gym.slug} /> : null}
 
       {gym ? (
         <div className="card-cut card-cut-lg mt-6 border border-rule bg-paper-2 p-6">
