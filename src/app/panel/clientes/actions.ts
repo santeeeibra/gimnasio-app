@@ -53,10 +53,6 @@ export async function altaCliente(
   const planId = enPrueba
     ? null
     : String(formData.get("plan_id") ?? "") || null;
-  // Checkbox "Pago recibido": marcado por defecto en el form. Sin marcar → el
-  // socio queda bloqueado hasta que el dueño registre el pago.
-  const pagoRecibido =
-    !enPrueba && String(formData.get("pago_recibido") ?? "") === "on";
   const sexoRaw = String(formData.get("sexo") ?? "");
   const sexo: Sexo | null =
     sexoRaw === "mujer" || sexoRaw === "hombre" ? sexoRaw : null;
@@ -107,68 +103,32 @@ export async function altaCliente(
     return { error: "No se pudo crear el cliente." };
   }
 
-  // Solo se cargan fechas si el dueño confirmó que ya pagó. Alta sin pago →
-  // sin fechas, cuota vencida y acceso bloqueado hasta registrar el pago.
-  let fechaInicio: string | null = null;
-  let fechaVenc: string | null = null;
-  let precioPlan = 0;
-  if (pagoRecibido && planId) {
-    const { data: plan } = await admin
-      .from("planes")
-      .select("duracion_dias, precio")
-      .eq("id", planId)
-      .single();
-    if (plan) {
-      const hoy = new Date();
-      fechaInicio = hoy.toISOString().slice(0, 10);
-      fechaVenc = sumarDias(hoy, plan.duracion_dias);
-      precioPlan = Number(plan.precio) || 0;
-    }
-  }
-
-  const accesoHabilitado = enPrueba || pagoRecibido;
-
-  const { data: clienteRow } = await admin
-    .from("clientes")
-    .insert({
-      gimnasio_id: dueno.gimnasio_id,
-      profile_id: created.user.id,
-      plan_id: planId,
-      sexo,
-      fecha_inicio: fechaInicio,
-      fecha_vencimiento: fechaVenc,
-      estado_cuota: fechaVenc ? "al_dia" : "vencido",
-      acceso_habilitado: accesoHabilitado,
-      en_prueba: enPrueba,
-      prueba_iniciada_en: enPrueba
-        ? new Date().toISOString().slice(0, 10)
-        : null,
-    })
-    .select("id")
-    .single();
-
-  // Si ya pagó, dejamos la primera cuota registrada para que aparezca en el
-  // historial y en "Mis pagos" del socio.
-  if (pagoRecibido && planId && fechaVenc && clienteRow) {
-    await admin.from("pagos").insert({
-      gimnasio_id: dueno.gimnasio_id,
-      cliente_id: clienteRow.id,
-      plan_id: planId,
-      monto: precioPlan,
-      cubre_hasta: fechaVenc,
-      registrado_por: dueno.id,
-    });
-  }
+  // El alta no registra pago: el socio queda con el plan asignado (si se
+  // eligió), cuota vencida y sin fechas hasta que el dueño registre el primer
+  // pago desde la ficha del socio. El acceso a la app queda habilitado igual.
+  await admin.from("clientes").insert({
+    gimnasio_id: dueno.gimnasio_id,
+    profile_id: created.user.id,
+    plan_id: planId,
+    sexo,
+    fecha_inicio: null,
+    fecha_vencimiento: null,
+    estado_cuota: "vencido",
+    acceso_habilitado: true,
+    en_prueba: enPrueba,
+    prueba_iniciada_en: enPrueba
+      ? new Date().toISOString().slice(0, 10)
+      : null,
+  });
 
   revalidatePath("/panel/clientes");
   revalidatePath("/panel");
 
-  const bloqueado = !accesoHabilitado;
   return {
     ok: enPrueba
       ? `${nombre} quedó en 1 día de prueba.`
-      : bloqueado
-        ? `${nombre} quedó dado de alta, pendiente de pago.`
+      : planId
+        ? `${nombre} quedó dado de alta. Registrá el primer pago desde su ficha.`
         : `${nombre} quedó dado de alta.`,
     alta: {
       nombre,
@@ -176,7 +136,7 @@ export async function altaCliente(
       clave,
       gimnasio: gym.nombre,
       slug: gym.slug,
-      bloqueado,
+      bloqueado: false,
     },
   };
 }

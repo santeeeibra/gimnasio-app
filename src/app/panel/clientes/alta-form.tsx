@@ -38,7 +38,6 @@ export function AltaForm({
       telefono: String(fd.get("telefono") ?? "").trim() || null,
       sexo: String(fd.get("sexo") ?? "") || null,
       plan_id: String(fd.get("plan_id") ?? "") || null,
-      pago_recibido: fd.get("pago_recibido") === "on",
       modo,
     };
 
@@ -89,21 +88,10 @@ export function AltaForm({
         ))}
       </Select>
 
-      <label className="sm:col-span-2 flex items-start gap-2.5 rounded-[6px] border border-rule bg-paper p-3">
-        <input
-          type="checkbox"
-          name="pago_recibido"
-          defaultChecked
-          className="mt-0.5 size-4 accent-[var(--ink)]"
-        />
-        <span className="text-sm">
-          Pago recibido
-          <span className="mt-0.5 block text-xs text-ink-soft">
-            Si lo destildás, el socio queda dado de alta pero no puede entrar
-            hasta que registres el pago.
-          </span>
-        </span>
-      </label>
+      <p className="sm:col-span-2 text-xs text-ink-soft">
+        El alta no registra el pago. Después de crear el socio, registrá el
+        primer pago desde su ficha.
+      </p>
 
       <div className="sm:col-span-2 flex flex-wrap items-center gap-3">
         {full ? (
