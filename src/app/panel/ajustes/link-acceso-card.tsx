@@ -76,7 +76,7 @@ export function LinkAccesoCard({ slug }: { slug: string }) {
             <Button
               type="button"
               onClick={copiarLink}
-              variant="secondary"
+              variant="ghost"
               className="shrink-0"
             >
               {copiado ? "✓ Copiado" : "Copiar"}
@@ -101,7 +101,7 @@ export function LinkAccesoCard({ slug }: { slug: string }) {
               <Button
                 type="button"
                 onClick={descargarQR}
-                variant="secondary"
+                variant="ghost"
                 disabled={!qrGenerado}
                 className="w-full sm:w-auto"
               >
