@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/auth";
 import { logout } from "@/app/actions";
@@ -172,7 +173,7 @@ export default async function MiPage() {
 
       <ul className="card-cut overflow-hidden border border-rule bg-paper-2 divide-y divide-rule">
         <li>
-          <a
+          <Link
             href="/mi/mensajes"
             className="group flex items-center gap-3 px-4 py-4 transition-colors duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper active:bg-paper"
           >
@@ -202,10 +203,10 @@ export default async function MiPage() {
                 ›
               </span>
             )}
-          </a>
+          </Link>
         </li>
         <li>
-          <a
+          <Link
             href="/mi/rutina"
             className="group flex items-center gap-3 px-4 py-4 transition-colors duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper active:bg-paper"
           >
@@ -228,10 +229,10 @@ export default async function MiPage() {
             <span className="shrink-0 text-base text-ink-soft transition-transform duration-150 [transition-timing-function:var(--ease-out)] group-active:translate-x-[3px]" aria-hidden="true">
               ›
             </span>
-          </a>
+          </Link>
         </li>
         <li>
-          <a
+          <Link
             href="/mi/pagos"
             className="group flex items-center gap-3 px-4 py-4 transition-colors duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper active:bg-paper"
           >
@@ -254,7 +255,7 @@ export default async function MiPage() {
             <span className="shrink-0 text-base text-ink-soft transition-transform duration-150 [transition-timing-function:var(--ease-out)] group-active:translate-x-[3px]" aria-hidden="true">
               ›
             </span>
-          </a>
+          </Link>
         </li>
       </ul>
 

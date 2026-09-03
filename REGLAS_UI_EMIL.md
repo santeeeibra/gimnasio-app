@@ -656,6 +656,28 @@ Chequeo automático de los patrones más comunes: `scripts/revisar-ui.ps1`.
 
 ---
 
+## §10 — Checklist de afordancia (obligatorio antes de cerrar cualquier tarea de UI)
+
+Antes de marcar una pantalla como terminada, verificar:
+- [ ] Todo elemento que dispare una acción (link, tab, botón secundario)
+      tiene contenedor visual (borde y/o fondo) — nunca texto suelto sin caja.
+- [ ] Elementos "hermanos" del mismo tipo (pestañas, chips, tabs) comparten
+      el mismo tratamiento base — solo cambia el peso visual entre
+      seleccionado/no seleccionado. Nunca uno con caja y el resto sin caja.
+- [ ] Los íconos coinciden semánticamente con la acción (ej: "+" es agregar,
+      no cerrar; "×" o flecha es cerrar/colapsar).
+- [ ] Texto de ayuda o de error nunca comparte línea con un botón primario —
+      va en su propia línea, debajo.
+- [ ] Nada se corta a mitad de palabra (sin `truncate`/`line-clamp` en
+      contenido variable como listas de tags) — usar `flex flex-wrap` en
+      su lugar.
+- [ ] Ningún contenedor de página fuerza `min-h-screen` + `justify-between`
+      si el contenido puede ser corto — dejar que fluya con `pb-24` para
+      la bottom nav.
+- [ ] Todo elemento tocable tiene mínimo 44×44px de área táctil.
+
+---
+
 ## 15. Archivos de referencia
 
 ```
@@ -688,7 +710,11 @@ src/app/panel/ajustes/logo-uploader.tsx → subida + caja fija + fallback
 
 ---
 
-**Última actualización**: 2026-09-03 (§20 Capa ambiental preset-agnóstica:
+**Última actualización**: 2026-09-03 (§10 "Checklist de afordancia" nuevo —
+obligatorio antes de cerrar tarea de UI: contenedor visual en todo lo
+accionable, hermanos con mismo tratamiento base, íconos semánticos, ayuda/error
+en línea propia, sin corte a mitad de palabra, área táctil 44×44).
+Anterior: 2026-09-03 (§20 Capa ambiental preset-agnóstica:
 contrato de tokens que `temaToVars()`/`derivarAmbiente()` garantizan para todo
 tema — acento derivado, superficies elevadas, scrim, glow polaridad-consciente,
 semánticos re-derivados, `data-theme-polarity` + `data-motion` en los layouts,

@@ -30,6 +30,14 @@ export default async function MiRutinaPage() {
   const profile = await requireProfile();
   const supabase = await createClient();
 
+  // `ejercicios` no depende de nada: se dispara ya, en paralelo con los
+  // round-trips de `clientes` y `rutinas`.
+  const ejerciciosPromise = supabase
+    .from("ejercicios")
+    .select(
+      "id, slug, nombre, grupo_muscular, patron, equipo, nivel, imagen_url, descripcion",
+    );
+
   const { data: cliente } = await supabase
     .from("clientes")
     .select("id, sexo")
@@ -59,11 +67,7 @@ export default async function MiRutinaPage() {
           .order("dia")
           .order("orden")
       : Promise.resolve({ data: [] as any[] }),
-    supabase
-      .from("ejercicios")
-      .select(
-        "id, slug, nombre, grupo_muscular, patron, equipo, nivel, imagen_url, descripcion",
-      ),
+    ejerciciosPromise,
   ]);
 
   const ejercicios = (ejerciciosData ?? []) as Ejercicio[];
