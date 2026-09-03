@@ -103,6 +103,14 @@ export function VerificarPinModal() {
               >
                 Olvidé mi PIN
               </button>
+
+              <button
+                type="button"
+                onClick={() => router.push("/panel")}
+                className="w-full text-sm text-ink-soft underline underline-offset-2 hover:text-ink transition-colors"
+              >
+                ← Volver al panel
+              </button>
             </form>
           </>
         ) : (
