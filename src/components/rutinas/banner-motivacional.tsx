@@ -14,9 +14,15 @@ function mazoMezclado(): string[] {
 }
 
 export function BannerMotivacional() {
-  const [mazo, setMazo] = useState<string[]>(() => mazoMezclado());
+  // Orden fijo en SSR + primer render (evita mismatch de hidratación); se
+  // mezcla recién montado en el cliente.
+  const [mazo, setMazo] = useState<string[]>(() => [...FRASES_MOTIVADORAS]);
   const [i, setI] = useState(0);
   const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    setMazo(mazoMezclado());
+  }, []);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");

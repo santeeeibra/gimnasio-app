@@ -131,7 +131,7 @@ function ExThumb({
   if (!url || err) {
     return (
       <div
-        className="grid w-24 min-h-[72px] shrink-0 self-stretch place-items-center rounded-[8px] border border-rule bg-paper-2 text-ink-soft"
+        className="grid size-[72px] shrink-0 place-items-center rounded-[8px] border border-rule bg-paper-2 text-ink-soft"
         aria-hidden
       >
         <Glifo className="size-6" />
@@ -144,7 +144,7 @@ function ExThumb({
       type="button"
       onClick={onOpen}
       aria-label={`Ver ${ej?.nombre ?? "ejercicio"} en grande`}
-      className="group relative w-24 min-h-[72px] shrink-0 self-stretch overflow-hidden rounded-[8px] border border-rule bg-paper-2 transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20"
+      className="group relative size-[72px] shrink-0 overflow-hidden rounded-[8px] border border-rule bg-paper-2 transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20"
     >
       <ImagenAnimada
         url={url}
@@ -284,7 +284,7 @@ export function RutinaEditor({
               {dia.items.length} ejercicios · ~{tiempoMin} min
             </p>
             {musculos ? (
-              <p className="mt-0.5 text-[11px] tracking-[0.08em] text-ink-soft">
+              <p className="mt-0.5 text-[11px] uppercase tracking-[0.08em] text-ink-soft line-clamp-1">
                 {musculos}
               </p>
             ) : null}
@@ -302,6 +302,7 @@ export function RutinaEditor({
                       {grupo.map((item) => (
                         <ItemFila
                           key={item.id}
+                          indice={dia.items.indexOf(item) + 1}
                           item={item}
                           ejercicios={ejercicios}
                           mostrarTecnica={mostrarTecnica}
@@ -361,9 +362,10 @@ function DiaTabs({
               on ? "font-medium text-ink" : "text-ink-soft"
             }`}
           >
-            {/^d[ií]a\b/i.test(d.titulo) || d.titulo.length <= 12
-              ? d.titulo
-              : `Día ${d.numero}`}
+            {(() => {
+              const m = d.titulo.match(/d[ií]a\s*(\d+)/i);
+              return m ? `Día ${m[1]}` : `Día ${d.numero}`;
+            })()}
           </button>
         );
       })}
@@ -373,11 +375,13 @@ function DiaTabs({
 
 function ItemFila({
   item,
+  indice,
   ejercicios,
   mostrarTecnica,
   onVer,
 }: {
   item: ItemEditable;
+  indice: number;
   ejercicios: Ejercicio[];
   mostrarTecnica: boolean;
   onVer: (ej: Ejercicio) => void;
@@ -460,15 +464,26 @@ function ItemFila({
 
   return (
     <li className="p-4">
-      <div className="flex gap-3">
+      <div className="flex items-start gap-3">
         <ExThumb ej={ej} onOpen={() => ej && onVer(ej)} />
 
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <p className="font-medium leading-tight">{ej?.nombre ?? "Ejercicio"}</p>
+              <div className="flex items-baseline gap-1.5">
+                <span
+                  className="shrink-0 text-[11px] font-[700] leading-none text-ink-soft"
+                  style={{ fontFamily: "var(--font-hero)" }}
+                  aria-hidden
+                >
+                  {String(indice).padStart(2, "0")}
+                </span>
+                <p className="min-w-0 font-display text-[15px] font-medium leading-tight text-ink">
+                  {ej?.nombre ?? "Ejercicio"}
+                </p>
+              </div>
               {ej?.grupo_muscular ? (
-                <span className="mt-1 inline-block text-[11px] tracking-[0.08em] text-ink-soft">
+                <span className="mt-1 inline-block text-[11px] uppercase tracking-[0.08em] text-ink-soft">
                   {GRUPO_MUSCULAR_LABEL[ej.grupo_muscular] ?? ej.grupo_muscular}
                 </span>
               ) : null}
@@ -476,23 +491,88 @@ function ItemFila({
             <button
               type="button"
               onClick={() => setAbrirCambio((v) => !v)}
-              className="-mr-1.5 -mt-1 shrink-0 h-8 px-2.5 rounded-[5px] text-xs text-ink-soft transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 active:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20"
+              aria-expanded={abrirCambio}
+              aria-label={
+                abrirCambio
+                  ? "Cerrar alternativas"
+                  : "No conozco este ejercicio o me molesta"
+              }
+              className="-mr-1 -mt-1 grid size-8 shrink-0 place-items-center rounded-[6px] text-ink-soft transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-90 active:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20"
             >
-              {abrirCambio ? "Cerrar" : "No lo conozco / me molesta"}
+              <svg
+                viewBox="0 0 24 24"
+                width="16"
+                height="16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                {abrirCambio ? (
+                  <path d="M6 6l12 12M18 6L6 18" />
+                ) : (
+                  <>
+                    <path d="M8 3 4 7l4 4" />
+                    <path d="M4 7h16" />
+                    <path d="m16 21 4-4-4-4" />
+                    <path d="M20 17H4" />
+                  </>
+                )}
+              </svg>
             </button>
           </div>
 
+          {/* Prescripción: el dato dominante de la card. */}
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+            <span className="inline-flex items-baseline gap-1 rounded-full border border-rule bg-paper px-2 py-0.5 text-[11px] text-ink-soft">
+              <b
+                className="font-[700] text-ink"
+                style={{ fontFamily: "var(--font-hero)" }}
+              >
+                {series}
+              </b>
+              series
+            </span>
+            <span className="inline-flex items-baseline gap-1 rounded-full border border-rule bg-paper px-2 py-0.5 text-[11px] text-ink-soft">
+              <b
+                className="font-[700] text-ink"
+                style={{ fontFamily: "var(--font-hero)" }}
+              >
+                {reps.replace("–", "-")}
+              </b>
+              reps
+            </span>
+            {item.tecnica ? (
+              <span className="inline-flex items-center rounded-full border border-rule bg-paper px-2 py-0.5 text-[11px] text-ink-soft">
+                {TECNICA_LABEL[item.tecnica]}
+              </span>
+            ) : null}
+          </div>
+
           {ej?.descripcion ? (
-            <p className="mt-1.5 text-xs leading-snug text-ink-soft">{ej.descripcion}</p>
+            <p className="mt-2 text-xs leading-snug text-ink-soft line-clamp-2">
+              {ej.descripcion}
+            </p>
           ) : null}
 
-          <p className="mt-3 text-sm">
-            {series} series · {reps.replace("–", " a ")} repeticiones
-            {item.tecnica ? ` · técnica: ${TECNICA_LABEL[item.tecnica]}` : ""}
-          </p>
-
-          <details className="group mt-1.5">
-            <summary className="w-fit cursor-pointer select-none list-none text-xs text-ink-soft underline underline-offset-2 [&::-webkit-details-marker]:hidden">
+          <details className="group mt-2">
+            <summary className="inline-flex w-fit cursor-pointer select-none list-none items-center gap-1 rounded-[5px] border border-rule px-2.5 py-1 text-[11px] text-ink-soft transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 active:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 [&::-webkit-details-marker]:hidden">
+              <svg
+                viewBox="0 0 24 24"
+                width="12"
+                height="12"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+                className="transition-transform duration-150 [transition-timing-function:var(--ease-out)] group-open:rotate-180"
+              >
+                <path d="m6 9 6 6 6-6" />
+              </svg>
               <span className="group-open:hidden">Ajustar</span>
               <span className="hidden group-open:inline">Listo</span>
             </summary>
