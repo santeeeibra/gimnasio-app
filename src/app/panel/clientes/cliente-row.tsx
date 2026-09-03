@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { diasRestantes, estadoDesdeDias } from "@/lib/cuota";
+import { RenovarBtn } from "./renovar-btn";
 
 export type ClienteVista = {
   id: string;
@@ -42,12 +43,16 @@ export function ClienteRow({
   const estado = estadoDesdeDias(dias);
   const { kicker, valor } = contador(dias);
   const enPrueba = !!cliente.en_prueba;
+  // Atajo de renovación: solo cuando ya está por vencer/vencido y tiene un plan
+  // asignado (para no ensuciar la lista de los que están al día).
+  const puedeRenovar =
+    !enPrueba && !!cliente.plan_id && estado !== "al_dia";
 
   return (
-    <li className={`border-l-[3px] ${RAIL[estado]}`}>
+    <li className={`flex items-stretch border-l-[3px] ${RAIL[estado]}`}>
       <Link
         href={`/panel/clientes/${cliente.id}`}
-        className="flex items-center justify-between gap-4 px-4 py-4 transition-colors duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper active:bg-paper"
+        className="flex flex-1 items-center justify-between gap-4 px-4 py-4 transition-colors duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper active:bg-paper"
       >
         <div className="min-w-0">
           <div className="flex items-center gap-2">
@@ -79,6 +84,9 @@ export function ClienteRow({
           </p>
         </div>
       </Link>
+      {puedeRenovar && cliente.plan_id ? (
+        <RenovarBtn clienteId={cliente.id} planId={cliente.plan_id} />
+      ) : null}
     </li>
   );
 }

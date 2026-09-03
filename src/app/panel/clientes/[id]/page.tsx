@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { requireDueno } from "@/lib/auth";
+import { requireDueno, claveInicial } from "@/lib/auth";
 import { Panel } from "@/components/ui";
+import { AccesoSocio } from "./acceso-socio";
 import { diasRestantes, estadoDesdeDias, ESTADO_LABEL } from "@/lib/cuota";
 import {
   NIVEL_LABEL,
@@ -37,16 +38,23 @@ export default async function ClienteDetallePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  await requireDueno();
+  const dueno = await requireDueno();
   const supabase = await createClient();
 
-  const { data: cliente } = await supabase
-    .from("clientes")
-    .select(
-      "id, estado_cuota, fecha_inicio, fecha_vencimiento, plan_id, sexo, en_prueba, prueba_iniciada_en, profile:profiles(nombre, dni, telefono), plan:planes(nombre)",
-    )
-    .eq("id", id)
-    .maybeSingle();
+  const [{ data: cliente }, { data: gym }] = await Promise.all([
+    supabase
+      .from("clientes")
+      .select(
+        "id, estado_cuota, fecha_inicio, fecha_vencimiento, plan_id, sexo, en_prueba, prueba_iniciada_en, acceso_habilitado, profile:profiles(id, nombre, dni, telefono, debe_cambiar_clave), plan:planes(nombre)",
+      )
+      .eq("id", id)
+      .maybeSingle(),
+    supabase
+      .from("gimnasios")
+      .select("slug, nombre")
+      .eq("id", dueno.gimnasio_id)
+      .single(),
+  ]);
 
   if (!cliente) notFound();
 
@@ -80,6 +88,7 @@ export default async function ClienteDetallePage({
   const c = cliente as any;
   const dias = diasRestantes(c.fecha_vencimiento);
   const estado = estadoDesdeDias(dias);
+  const bloqueado = c.acceso_habilitado === false;
   const planes = (planesData ?? []) as {
     id: string;
     nombre: string;
@@ -148,6 +157,14 @@ export default async function ClienteDetallePage({
               ) : null}
             </p>
           </div>
+          {bloqueado ? (
+            <div>
+              <p className="text-xs text-ink-soft">Acceso</p>
+              <p className="text-lg font-display text-danger">
+                Pendiente de pago
+              </p>
+            </div>
+          ) : null}
           {c.en_prueba ? (
             <div>
               <p className="text-xs text-ink-soft">Día de prueba</p>
@@ -167,6 +184,19 @@ export default async function ClienteDetallePage({
             plan y se apaga el día de prueba.
           </p>
         ) : null}
+      </Panel>
+
+      <Panel className="p-5">
+        <h2 className="text-lg mb-4">Acceso</h2>
+        <AccesoSocio
+          clienteId={c.id}
+          gimnasio={gym?.nombre ?? ""}
+          slug={gym?.slug ?? ""}
+          dni={c.profile?.dni ?? ""}
+          claveInicial={claveInicial(c.profile?.dni ?? "")}
+          yaCambio={c.profile?.debe_cambiar_clave === false}
+          bloqueado={bloqueado}
+        />
       </Panel>
 
       <Panel className="p-5">

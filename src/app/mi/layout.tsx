@@ -12,13 +12,40 @@ export default async function MiLayout({
 }) {
   const profile = await requireProfile();
   const supabase = await createClient();
-  const { data: gym } = await supabase
-    .from("gimnasios")
-    .select("nombre, tema, logo_url")
-    .eq("id", profile.gimnasio_id)
-    .single();
+  const [{ data: gym }, { data: cli }] = await Promise.all([
+    supabase
+      .from("gimnasios")
+      .select("nombre, tema, logo_url")
+      .eq("id", profile.gimnasio_id)
+      .single(),
+    supabase
+      .from("clientes")
+      .select("acceso_habilitado")
+      .eq("profile_id", profile.id)
+      .maybeSingle(),
+  ]);
 
   const tema = parseTema(gym?.tema);
+
+  // Alta sin pago: el socio existe pero no puede usar la app hasta que el dueño
+  // registre el primer pago.
+  if (cli && cli.acceso_habilitado === false) {
+    return (
+      <div
+        className="flex min-h-screen items-center justify-center bg-paper p-6"
+        style={temaToVars(tema)}
+        data-estilo-visual={tema.estiloVisual}
+      >
+        <div className="w-full max-w-sm text-center">
+          <h1 className="font-display text-xl">Tu cuenta está pendiente</h1>
+          <p className="mt-2 text-sm text-ink-soft">
+            {gym?.nombre ?? "El gimnasio"} todavía no registró tu primer pago.
+            Apenas lo haga, vas a poder entrar con estos mismos datos.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

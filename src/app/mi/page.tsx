@@ -6,6 +6,7 @@ import { ActivarNotificaciones } from "./activar-notificaciones";
 import { VerTutorialDeNuevo } from "@/components/tutorial/tutorial";
 import { AnilloProgreso } from "@/components/anillo-progreso";
 import { RachaConstancia } from "@/components/mi/racha-constancia";
+import { DatosTransferencia } from "@/components/mi/datos-transferencia";
 
 export default async function MiPage() {
   const profile = await requireProfile();
@@ -13,7 +14,7 @@ export default async function MiPage() {
 
   const { data: gym } = await supabase
     .from("gimnasios")
-    .select("estado")
+    .select("estado, pago_alias, pago_cbu, pago_titular")
     .eq("id", profile.gimnasio_id)
     .single();
 
@@ -144,6 +145,14 @@ export default async function MiPage() {
         <RachaConstancia dias={racha.dias} total={racha.total} />
       ) : null}
 
+      {estado !== "al_dia" ? (
+        <DatosTransferencia
+          alias={gym?.pago_alias ?? null}
+          cbu={gym?.pago_cbu ?? null}
+          titular={gym?.pago_titular ?? null}
+        />
+      ) : null}
+
       <ul className="card-cut overflow-hidden border border-rule bg-paper-2 divide-y divide-rule">
         <li>
           <a
@@ -199,6 +208,32 @@ export default async function MiPage() {
               <path d="M2 9v6M22 9v6M4.5 8v8M19.5 8v8" />
             </svg>
             <span className="min-w-0 flex-1 text-sm font-medium">Tu rutina</span>
+            <span className="shrink-0 text-xs text-ink-soft transition-transform duration-150 [transition-timing-function:var(--ease-out)] group-active:translate-x-[3px]">
+              ver
+            </span>
+          </a>
+        </li>
+        <li>
+          <a
+            href="/mi/pagos"
+            className="group flex items-center gap-3 px-4 py-4 transition-colors duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper active:bg-paper"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden
+              className="shrink-0 text-ink-soft"
+            >
+              <rect x="2" y="5" width="20" height="14" rx="2" />
+              <path d="M2 10h20" />
+            </svg>
+            <span className="min-w-0 flex-1 text-sm font-medium">Mis pagos</span>
             <span className="shrink-0 text-xs text-ink-soft transition-transform duration-150 [transition-timing-function:var(--ease-out)] group-active:translate-x-[3px]">
               ver
             </span>

@@ -20,7 +20,20 @@ import {
   type Sexo,
 } from "@/lib/rutina/tipos";
 
-export type AltaState = { error?: string; ok?: string; clave?: string };
+export type AltaState = {
+  error?: string;
+  ok?: string;
+  /** Datos para que el dueño le pase el acceso al socio nuevo. */
+  alta?: {
+    nombre: string;
+    dni: string;
+    clave: string;
+    gimnasio: string;
+    slug: string;
+    /** true = quedó pendiente de pago, no puede entrar todavía. */
+    bloqueado: boolean;
+  };
+};
 
 function sumarDias(fecha: Date, dias: number): string {
   const d = new Date(fecha);
@@ -40,6 +53,10 @@ export async function altaCliente(
   const planId = enPrueba
     ? null
     : String(formData.get("plan_id") ?? "") || null;
+  // Checkbox "Pago recibido": marcado por defecto en el form. Sin marcar → el
+  // socio queda bloqueado hasta que el dueño registre el pago.
+  const pagoRecibido =
+    !enPrueba && String(formData.get("pago_recibido") ?? "") === "on";
   const sexoRaw = String(formData.get("sexo") ?? "");
   const sexo: Sexo | null =
     sexoRaw === "mujer" || sexoRaw === "hombre" ? sexoRaw : null;
@@ -52,7 +69,7 @@ export async function altaCliente(
 
   const { data: gym } = await supabase
     .from("gimnasios")
-    .select("slug")
+    .select("slug, nombre")
     .eq("id", dueno.gimnasio_id)
     .single();
   if (!gym) return { error: "No se encontró el gimnasio." };
@@ -90,42 +107,77 @@ export async function altaCliente(
     return { error: "No se pudo crear el cliente." };
   }
 
+  // Solo se cargan fechas si el dueño confirmó que ya pagó. Alta sin pago →
+  // sin fechas, cuota vencida y acceso bloqueado hasta registrar el pago.
   let fechaInicio: string | null = null;
   let fechaVenc: string | null = null;
-  if (planId) {
+  let precioPlan = 0;
+  if (pagoRecibido && planId) {
     const { data: plan } = await admin
       .from("planes")
-      .select("duracion_dias")
+      .select("duracion_dias, precio")
       .eq("id", planId)
       .single();
     if (plan) {
       const hoy = new Date();
       fechaInicio = hoy.toISOString().slice(0, 10);
       fechaVenc = sumarDias(hoy, plan.duracion_dias);
+      precioPlan = Number(plan.precio) || 0;
     }
   }
 
-  await admin.from("clientes").insert({
-    gimnasio_id: dueno.gimnasio_id,
-    profile_id: created.user.id,
-    plan_id: planId,
-    sexo,
-    fecha_inicio: fechaInicio,
-    fecha_vencimiento: fechaVenc,
-    estado_cuota: fechaVenc ? "al_dia" : "vencido",
-    en_prueba: enPrueba,
-    prueba_iniciada_en: enPrueba
-      ? new Date().toISOString().slice(0, 10)
-      : null,
-  });
+  const accesoHabilitado = enPrueba || pagoRecibido;
+
+  const { data: clienteRow } = await admin
+    .from("clientes")
+    .insert({
+      gimnasio_id: dueno.gimnasio_id,
+      profile_id: created.user.id,
+      plan_id: planId,
+      sexo,
+      fecha_inicio: fechaInicio,
+      fecha_vencimiento: fechaVenc,
+      estado_cuota: fechaVenc ? "al_dia" : "vencido",
+      acceso_habilitado: accesoHabilitado,
+      en_prueba: enPrueba,
+      prueba_iniciada_en: enPrueba
+        ? new Date().toISOString().slice(0, 10)
+        : null,
+    })
+    .select("id")
+    .single();
+
+  // Si ya pagó, dejamos la primera cuota registrada para que aparezca en el
+  // historial y en "Mis pagos" del socio.
+  if (pagoRecibido && planId && fechaVenc && clienteRow) {
+    await admin.from("pagos").insert({
+      gimnasio_id: dueno.gimnasio_id,
+      cliente_id: clienteRow.id,
+      plan_id: planId,
+      monto: precioPlan,
+      cubre_hasta: fechaVenc,
+      registrado_por: dueno.id,
+    });
+  }
 
   revalidatePath("/panel/clientes");
   revalidatePath("/panel");
+
+  const bloqueado = !accesoHabilitado;
   return {
     ok: enPrueba
       ? `${nombre} quedó en 1 día de prueba.`
-      : `${nombre} quedó dado de alta.`,
-    clave: `DNI ${dni} · contraseña inicial: ${clave}`,
+      : bloqueado
+        ? `${nombre} quedó dado de alta, pendiente de pago.`
+        : `${nombre} quedó dado de alta.`,
+    alta: {
+      nombre,
+      dni,
+      clave,
+      gimnasio: gym.nombre,
+      slug: gym.slug,
+      bloqueado,
+    },
   };
 }
 
@@ -175,14 +227,53 @@ export async function registrarPago(
       plan_id: planId,
       fecha_vencimiento: cubreHasta,
       estado_cuota: "al_dia",
+      acceso_habilitado: true,
       en_prueba: false,
       ultimo_aviso_morosidad_enviado_en: null,
     })
     .eq("id", clienteId);
 
   revalidatePath(`/panel/clientes/${clienteId}`);
+  revalidatePath("/panel/clientes");
   revalidatePath("/panel");
   return { ok: `Pago registrado. Cuota al día hasta ${cubreHasta}.` };
+}
+
+// El dueño vuelve la contraseña del socio a la inicial (gym + últimos 4 del
+// DNI) y lo obliga a cambiarla en el próximo ingreso. Sirve para reenviar el
+// acceso a un socio que la perdió.
+export async function regenerarClave(
+  _prev: { error?: string; ok?: string; clave?: string },
+  formData: FormData,
+): Promise<{ error?: string; ok?: string; clave?: string }> {
+  const dueno = await requireDueno();
+  const clienteId = String(formData.get("cliente_id") ?? "");
+  if (!clienteId) return { error: "Falta el cliente." };
+
+  const admin = createAdminClient();
+  const { data: cli } = await admin
+    .from("clientes")
+    .select("gimnasio_id, profile:profiles(id, dni)")
+    .eq("id", clienteId)
+    .maybeSingle();
+  const prof = (cli as any)?.profile as { id: string; dni: string } | null;
+  if (!cli || cli.gimnasio_id !== dueno.gimnasio_id || !prof) {
+    return { error: "Cliente no encontrado." };
+  }
+
+  const clave = claveInicial(prof.dni);
+  const { error: authErr } = await admin.auth.admin.updateUserById(prof.id, {
+    password: clave,
+  });
+  if (authErr) return { error: "No se pudo regenerar la contraseña." };
+
+  await admin
+    .from("profiles")
+    .update({ debe_cambiar_clave: true })
+    .eq("id", prof.id);
+
+  revalidatePath(`/panel/clientes/${clienteId}`);
+  return { ok: "Contraseña restablecida.", clave };
 }
 
 export async function generarRutinaCliente(

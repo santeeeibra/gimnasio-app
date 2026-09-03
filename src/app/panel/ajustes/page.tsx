@@ -7,6 +7,7 @@ import { cupoSocios } from "@/lib/plataforma/cupo";
 import { diasRestantes } from "@/lib/cuota";
 import { AjustesForm } from "./ajustes-form";
 import { AvisoMorosidadForm } from "./aviso-morosidad-form";
+import { DatosPagoForm } from "./datos-pago-form";
 import { VerTutorialDeNuevo } from "@/components/tutorial/tutorial";
 
 const ESTADO_LABEL: Record<string, string> = {
@@ -24,7 +25,7 @@ export default async function AjustesPage() {
     supabase
       .from("gimnasios")
       .select(
-        "id, nombre, tema, logo_url, dias_aviso_morosidad, estado, plan_plataforma_vence_el",
+        "id, nombre, tema, logo_url, dias_aviso_morosidad, estado, plan_plataforma_vence_el, pago_alias, pago_cbu, pago_titular",
       )
       .eq("id", profile.gimnasio_id)
       .single(),
@@ -131,6 +132,22 @@ export default async function AjustesPage() {
           <AvisoMorosidadForm
             gimnasioId={gym.id}
             diasAviso={gym.dias_aviso_morosidad ?? 5}
+          />
+        </div>
+      ) : null}
+
+      {gym ? (
+        <div className="card-cut card-cut-lg mt-6 border border-rule bg-paper-2 p-6">
+          <h2 className="text-lg mb-1">Datos para transferir</h2>
+          <p className="text-sm text-ink-soft mb-4">
+            El socio los ve en la app, con un botón para copiar. Si dejás todo
+            vacío, no se muestra nada.
+          </p>
+          <DatosPagoForm
+            gimnasioId={gym.id}
+            alias={gym.pago_alias ?? null}
+            cbu={gym.pago_cbu ?? null}
+            titular={gym.pago_titular ?? null}
           />
         </div>
       ) : null}

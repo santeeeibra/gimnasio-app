@@ -77,6 +77,45 @@ export async function actualizarDiasAvisoMorosidad(
   return { ok: "Aviso de vencimiento actualizado" };
 }
 
+/** Alias / CBU / titular que ve el socio en la app para transferir la cuota. */
+export async function actualizarDatosPago(
+  _prev: AjustesState,
+  formData: FormData,
+): Promise<AjustesState> {
+  const dueno = await requireDueno();
+  const gimnasioId = String(formData.get("gimnasio_id") ?? "");
+
+  if (gimnasioId !== dueno.gimnasio_id) {
+    return { error: "No podés modificar este gimnasio" };
+  }
+
+  const limpiar = (v: FormDataEntryValue | null, max: number) =>
+    String(v ?? "").trim().slice(0, max) || null;
+
+  const alias = limpiar(formData.get("pago_alias"), 60);
+  const cbu = limpiar(formData.get("pago_cbu"), 40);
+  const titular = limpiar(formData.get("pago_titular"), 120);
+
+  if (cbu && !/^\d{18,22}$/.test(cbu)) {
+    return { error: "El CBU/CVU son 22 dígitos (o 18 para CVU). Sin espacios." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("gimnasios")
+    .update({ pago_alias: alias, pago_cbu: cbu, pago_titular: titular })
+    .eq("id", gimnasioId);
+
+  if (error) {
+    console.error("[actualizarDatosPago]", error);
+    return { error: "No se pudo guardar los datos de transferencia" };
+  }
+
+  revalidatePath("/panel/ajustes");
+  revalidatePath("/mi", "layout");
+  return { ok: "Datos de transferencia guardados" };
+}
+
 export async function actualizarTema(
   _prev: AjustesState,
   formData: FormData,

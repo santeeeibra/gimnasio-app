@@ -58,12 +58,32 @@
 
 ## Pendientes manuales (Supabase/Vercel)
 
-1. Aplicar `0006_logo_gimnasio.sql`
-2. VAPID keys + `CRON_SECRET`
-3. Subir `icon-192.png`, `icon-512.png`, `badge-72.png`
-4. Probar push real
-5. Deploy a Vercel
-6. Implementar cron `recalcular_estado_cuota()`
+### Migraciones a aplicar en el SQL Editor (en orden)
+
+Correrlas todas juntas cuando vuelva el servicio de Supabase (incidente JWT /
+401 del 2026-09-02):
+
+1. `0006_logo_gimnasio.sql`
+2. `0007_cliente_sexo.sql`
+3. `0008_pin_ingresos.sql` (causa del bug "No se encontró el gimnasio" al crear el PIN de Ingresos)
+4. `0009_checkin_prueba.sql`
+5. `0012_gestor_morosidad.sql`
+6. `0018_alta_pago_recibido.sql` — columna `clientes.acceso_habilitado`
+7. `0019_datos_pago_gimnasio.sql` — columnas `gimnasios.pago_alias` / `pago_cbu` / `pago_titular`
+
+(`0011_monitor_db.sql` está mergeada; confirmar si se aplicó.)
+
+**Hasta aplicar `0018` + `0019`, estas pantallas fallan** porque los queries
+piden columnas nuevas: `/mi`, `/mi/pagos`, `/panel/ajustes`, `/panel/clientes`
+(y `/panel/clientes/[id]`).
+
+### Otros
+
+- VAPID keys + `CRON_SECRET`
+- Subir `icon-192.png`, `icon-512.png`, `badge-72.png`
+- Probar push real
+- Deploy a Vercel
+- Implementar cron `recalcular_estado_cuota()`
 
 ---
 

@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { altaCliente, type AltaState } from "./actions";
 import { Button, Field, Select } from "@/components/ui";
 import { SEXOS, SEXO_LABEL } from "@/lib/rutina/tipos";
+import { CredencialesCard } from "./credenciales-card";
 
 export function AltaForm({
   planes,
@@ -41,6 +42,22 @@ export function AltaForm({
         ))}
       </Select>
 
+      <label className="sm:col-span-2 flex items-start gap-2.5 rounded-[6px] border border-rule bg-paper p-3">
+        <input
+          type="checkbox"
+          name="pago_recibido"
+          defaultChecked
+          className="mt-0.5 size-4 accent-[var(--ink)]"
+        />
+        <span className="text-sm">
+          Pago recibido
+          <span className="mt-0.5 block text-xs text-ink-soft">
+            Si lo destildás, el socio queda dado de alta pero no puede entrar
+            hasta que registres el pago.
+          </span>
+        </span>
+      </label>
+
       <div className="sm:col-span-2 flex flex-wrap items-center gap-3">
         {full ? (
           <p className="w-full text-sm text-danger">
@@ -70,9 +87,18 @@ export function AltaForm({
           <p className="w-full text-sm text-danger">{state.error}</p>
         ) : null}
         {state.ok ? (
-          <p className="text-sm text-ok">
-            {state.ok} <span className="text-ink-soft">{state.clave}</span>
-          </p>
+          <p className="w-full text-sm text-ok">{state.ok}</p>
+        ) : null}
+        {state.alta ? (
+          <div className="w-full">
+            <CredencialesCard
+              gimnasio={state.alta.gimnasio}
+              slug={state.alta.slug}
+              dni={state.alta.dni}
+              clave={state.alta.clave}
+              bloqueado={state.alta.bloqueado}
+            />
+          </div>
         ) : null}
       </div>
     </form>
