@@ -19,10 +19,17 @@ type PagosPorMes = {
   };
 };
 
+const norm = (s: string) =>
+  s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "");
+
 export function ListadoIngresos() {
   const [verificado, setVerificado] = useState(false);
   const [pagos, setPagos] = useState<Pago[]>([]);
   const [cargando, setCargando] = useState(true);
+  const [q, setQ] = useState("");
 
   // Verificar si el PIN fue ingresado
   useEffect(() => {
@@ -70,11 +77,16 @@ export function ListadoIngresos() {
     );
   }
 
+  const filtro = norm(q.trim());
+  const pagosFiltrados = filtro
+    ? pagos.filter((p) => norm(p.cliente_nombre).includes(filtro))
+    : pagos;
+
   // Agrupar por mes/año
   const pagosPorMes: PagosPorMes = {};
   let totalGeneral = 0;
 
-  pagos.forEach((pago) => {
+  pagosFiltrados.forEach((pago) => {
     const fecha = new Date(pago.fecha_pago);
     const mesAno = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, "0")}`;
     
@@ -100,7 +112,9 @@ export function ListadoIngresos() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-ink-soft">Total general</p>
+          <p className="text-sm text-ink-soft">
+            {filtro ? "Total filtrado" : "Total general"}
+          </p>
           <p className="text-3xl font-display">${totalGeneral.toLocaleString("es-AR")}</p>
         </div>
         <Link
@@ -110,6 +124,20 @@ export function ListadoIngresos() {
           Cambiar PIN
         </Link>
       </div>
+
+      <input
+        type="search"
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        placeholder="Buscar por nombre de socio…"
+        className="w-full h-11 px-3 rounded-[5px] border border-rule bg-paper text-[16px] outline-none transition-[border-color,box-shadow] duration-150 [transition-timing-function:var(--ease-out)] focus:border-ink focus:shadow-[0_0_0_3px_rgb(22_24_29_/_0.08)]"
+      />
+
+      {pagosFiltrados.length === 0 ? (
+        <p className="text-sm text-ink-soft">
+          Ningún pago de un socio con ese nombre.
+        </p>
+      ) : null}
 
       {mesesOrdenados.map((mesAno) => {
         const { pagos: pagosMes, total } = pagosPorMes[mesAno];
