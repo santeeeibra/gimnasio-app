@@ -14,7 +14,7 @@ type Estado = "detenido" | "corriendo" | "pausado";
 export function TimerDescanso() {
   const [segundosRestantes, setSegundosRestantes] = useState(60);
   const [estado, setEstado] = useState<Estado>("detenido");
-  const [colapsado, setColapsado] = useState(false);
+  const [colapsado, setColapsado] = useState(true);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
 
@@ -80,7 +80,6 @@ export function TimerDescanso() {
 
   function iniciar() {
     setEstado("corriendo");
-    setColapsado(false);
   }
 
   function pausar() {
@@ -114,27 +113,53 @@ export function TimerDescanso() {
   const pausado = estado === "pausado";
   const detenido = estado === "detenido";
 
-  // Mobile: MiBottomNav (~38px + safe-area, z-40) vive en bottom-0. El timer se
-  // apoya JUSTO encima con el mismo offset para no quedar tapado ni tapar la
-  // nav. Desktop: card flotante, ahí no hay bottom nav.
+  // Mobile: MiBottomNav (~38px + safe-area, z-40) vive en bottom-0. El botón
+  // flotante y la card se apoyan JUSTO encima con el mismo offset
+  // (.timer-descanso-pos). Desktop: no hay bottom nav.
+
+  // Colapsado: botón flotante circular. Muestra la cuenta regresiva si corre.
+  if (colapsado) {
+    return (
+      <button
+        type="button"
+        onClick={() => setColapsado(false)}
+        aria-label="Abrir descanso entre series"
+        className="timer-descanso-pos fixed left-4 z-30 flex items-center gap-2 rounded-full border border-rule bg-paper/95 px-4 py-3 shadow-lg backdrop-blur-sm transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          className="size-5 text-ink"
+          aria-hidden
+        >
+          <path d="M9 2h6M12 8v5l3 2" />
+          <circle cx="12" cy="13" r="8" />
+        </svg>
+        {corriendo || pausado ? (
+          <span className="font-display text-sm tabular-nums text-ink">
+            {display}
+          </span>
+        ) : (
+          <span className="text-sm font-medium text-ink">Descanso</span>
+        )}
+      </button>
+    );
+  }
+
   return (
     <div className="timer-descanso-pos fixed inset-x-0 z-30 border-y border-rule bg-paper/95 backdrop-blur-sm md:inset-x-auto md:left-4 md:right-auto md:w-80 md:rounded-[8px] md:border md:shadow-lg">
       <div className="px-4 py-3">
-        {/* Header con toggle collapse */}
+        {/* Header con botón cerrar */}
         <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2 min-w-0">
-            <h3 className="text-sm font-medium text-ink">Descanso entre series</h3>
-            {colapsado && (
-              <span className="text-xs text-ink-soft whitespace-nowrap">
-                Tocá para expandir
-              </span>
-            )}
-          </div>
+          <h3 className="text-sm font-medium text-ink">Descanso entre series</h3>
           <button
             type="button"
-            onClick={() => setColapsado(!colapsado)}
+            onClick={() => setColapsado(true)}
             className="size-6 shrink-0 grid place-items-center text-ink-soft transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-90"
-            aria-label={colapsado ? "Expandir timer" : "Colapsar timer"}
+            aria-label="Cerrar timer"
           >
             <svg
               viewBox="0 0 24 24"
@@ -142,14 +167,14 @@ export function TimerDescanso() {
               stroke="currentColor"
               strokeWidth="2"
               strokeLinecap="round"
-              className={`size-4 transition-transform duration-200 ${colapsado ? "rotate-180" : ""}`}
+              className="size-4"
             >
-              <path d="M18 15l-6-6-6 6" />
+              <path d="M6 6l12 12M18 6L6 18" />
             </svg>
           </button>
         </div>
 
-        {!colapsado && (
+        {(
           <div className="space-y-3 animate-fade-in">
             {/* Display del tiempo */}
             <div className="flex items-center justify-center">
