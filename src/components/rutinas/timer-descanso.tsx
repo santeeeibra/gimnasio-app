@@ -11,12 +11,90 @@ const PRESETS = [
 
 type Estado = "detenido" | "corriendo" | "pausado";
 
+const LS_KEY = "gym.timer-descanso.v1";
+
+type Persistido = {
+  estado: Estado;
+  /** Duración elegida (preset activo). */
+  presetSeg: number;
+  /** Remanente congelado, sólo válido en "detenido" / "pausado". */
+  segundosRestantes: number;
+  /** Epoch ms del fin, sólo válido en "corriendo". */
+  finEn: number | null;
+};
+
+function leer(): Persistido | null {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return null;
+    const p = JSON.parse(raw) as Persistido;
+    if (!p || typeof p !== "object") return null;
+    return p;
+  } catch {
+    return null;
+  }
+}
+
+function guardar(p: Persistido) {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(p));
+  } catch {
+    /* storage bloqueado/lleno: el timer sigue en memoria igual */
+  }
+}
+
 export function TimerDescanso() {
+  const [presetSeg, setPresetSeg] = useState(60);
   const [segundosRestantes, setSegundosRestantes] = useState(60);
   const [estado, setEstado] = useState<Estado>("detenido");
   const [colapsado, setColapsado] = useState(true);
+  const [hidratado, setHidratado] = useState(false);
+  const finEnRef = useRef<number | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
+
+  // Hidratar desde localStorage al montar. Si el descanso corría, recalcula el
+  // remanente contra el reloj real (sobrevive navegación entre apartados y
+  // reload / reapertura de la PWA).
+  useEffect(() => {
+    const p = leer();
+    if (p) {
+      const preset = p.presetSeg > 0 ? p.presetSeg : 60;
+      setPresetSeg(preset);
+      if (p.estado === "corriendo" && p.finEn) {
+        const rem = Math.round((p.finEn - Date.now()) / 1000);
+        if (rem > 0) {
+          finEnRef.current = p.finEn;
+          setSegundosRestantes(rem);
+          setEstado("corriendo");
+        } else {
+          // Terminó mientras no estábamos en pantalla: no suena (el audio
+          // necesita gesto del usuario), sólo vuelve al preset.
+          setSegundosRestantes(preset);
+          setEstado("detenido");
+        }
+      } else if (p.estado === "pausado") {
+        setSegundosRestantes(p.segundosRestantes > 0 ? p.segundosRestantes : preset);
+        setEstado("pausado");
+      } else {
+        setSegundosRestantes(preset);
+        setEstado("detenido");
+      }
+    }
+    setHidratado(true);
+  }, []);
+
+  // Persistir cambios relevantes (después de hidratar, para no pisar con los
+  // valores por defecto del primer render).
+  useEffect(() => {
+    if (!hidratado) return;
+    guardar({
+      estado,
+      presetSeg,
+      segundosRestantes,
+      finEn: estado === "corriendo" ? finEnRef.current : null,
+    });
+  }, [hidratado, estado, presetSeg, segundosRestantes]);
 
   // Limpiar intervalo al desmontar
   useEffect(() => {
@@ -25,28 +103,34 @@ export function TimerDescanso() {
     };
   }, []);
 
-  // Countdown
+  // Countdown: el valor sale siempre de `finEnRef` (reloj real), así no hay
+  // drift aunque el tab estuviera en segundo plano.
   useEffect(() => {
     if (estado !== "corriendo") return;
 
-    intervalRef.current = setInterval(() => {
-      setSegundosRestantes((prev) => {
-        if (prev <= 1) {
-          // Llegó a 0
-          setEstado("detenido");
-          if (intervalRef.current) clearInterval(intervalRef.current);
-          reproducirBeep();
-          vibrar();
-          return 60; // reset
-        }
-        return prev - 1;
-      });
-    }, 1000);
+    const tick = () => {
+      const fin = finEnRef.current;
+      if (fin == null) return;
+      const rem = Math.round((fin - Date.now()) / 1000);
+      if (rem <= 0) {
+        setEstado("detenido");
+        finEnRef.current = null;
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        reproducirBeep();
+        vibrar();
+        setSegundosRestantes(presetSeg);
+        return;
+      }
+      setSegundosRestantes(rem);
+    };
+
+    tick(); // inmediato: al volver a la pantalla no espera 1s
+    intervalRef.current = setInterval(tick, 1000);
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [estado]);
+  }, [estado, presetSeg]);
 
   function reproducirBeep() {
     try {
@@ -79,27 +163,37 @@ export function TimerDescanso() {
   }
 
   function iniciar() {
+    finEnRef.current = Date.now() + segundosRestantes * 1000;
     setEstado("corriendo");
   }
 
   function pausar() {
+    const fin = finEnRef.current;
+    if (fin != null) {
+      setSegundosRestantes(Math.max(0, Math.round((fin - Date.now()) / 1000)));
+    }
+    finEnRef.current = null;
     setEstado("pausado");
     if (intervalRef.current) clearInterval(intervalRef.current);
   }
 
   function reanudar() {
+    finEnRef.current = Date.now() + segundosRestantes * 1000;
     setEstado("corriendo");
   }
 
   function resetear() {
+    finEnRef.current = null;
     setEstado("detenido");
     if (intervalRef.current) clearInterval(intervalRef.current);
-    setSegundosRestantes(60);
+    setSegundosRestantes(presetSeg);
   }
 
   function seleccionarPreset(seg: number) {
+    setPresetSeg(seg);
     setSegundosRestantes(seg);
-    if (estado === "corriendo" || estado === "pausado") {
+    finEnRef.current = null;
+    if (estado !== "detenido") {
       setEstado("detenido");
       if (intervalRef.current) clearInterval(intervalRef.current);
     }
@@ -191,7 +285,7 @@ export function TimerDescanso() {
                   onClick={() => seleccionarPreset(p.segundos)}
                   disabled={corriendo}
                   className={`flex-1 h-9 rounded-[5px] border text-sm font-medium transition-[transform,background-color,border-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${
-                    segundosRestantes === p.segundos && detenido
+                    presetSeg === p.segundos && detenido
                       ? "border-volt bg-volt text-volt-ink"
                       : "border-rule bg-paper text-ink hover:bg-paper-2"
                   }`}
@@ -257,4 +351,3 @@ export function TimerDescanso() {
     </div>
   );
 }
-

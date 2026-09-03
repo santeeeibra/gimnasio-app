@@ -16,7 +16,6 @@ import {
   type Molestia,
   type Tecnica,
 } from "@/lib/rutina/tipos";
-import { TimerDescanso } from "@/components/rutinas/timer-descanso";
 
 const campoCls =
   "h-11 rounded-[5px] border border-rule bg-paper text-[16px] outline-none transition-[border-color] duration-150 [transition-timing-function:var(--ease-out)] focus:border-ink";
@@ -308,7 +307,6 @@ export function RutinaEditor({
       {visor ? (
         <VisorEjercicio ej={visor} onClose={() => setVisor(null)} />
       ) : null}
-      <TimerDescanso />
     </div>
   );
 }

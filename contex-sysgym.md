@@ -515,6 +515,21 @@ SECURITY DEFINER (`soy_destinatario`, `mensaje_gimnasio`, `mensaje_remitente`,
 ## Cómo seguir (próxima sesión)
 
 Ya hecho (2026-09-03):
+- **Timer de descanso — persistencia entre pantallas**
+  (`src/components/rutinas/timer-descanso.tsx`). Antes vivía dentro de
+  `RutinaEditor` (solo `/mi/rutina`): al cambiar de apartado se desmontaba y el
+  countdown se reiniciaba. Ahora: (1) `<TimerDescanso />` se monta en
+  `src/app/mi/layout.tsx` (junto a `MiBottomNav`) → el layout de Next no se
+  desmonta al navegar entre `/mi/*`, así que sigue corriendo mientras el socio
+  mira un mensaje entre series. **Tradeoff aceptado**: el botón flotante
+  "Descanso" ahora aparece en todas las pantallas de `/mi`, no solo en la
+  rutina. (2) Estado persistido en `localStorage` (`gym.timer-descanso.v1`) con
+  **hora de fin absoluta** (`Date.now() + seg*1000`): al montar recalcula el
+  remanente contra el reloj real, así sobrevive reload / reapertura de la PWA
+  sin drift. Si terminó mientras estaba fuera de pantalla, vuelve al preset sin
+  sonar (el beep necesita gesto del usuario). Sin migración. Verificado en
+  browser (navegación entre Inicio/Rutina/Mensajes + reload). Import de
+  `TimerDescanso` removido de `rutina-editor.tsx`.
 - **Auditoría de tipografía Emil (vista cliente + dueño)**: barrido de textos que
   no seguían `REGLAS_UI_EMIL.md` §2 (escala, pesos, kickers). Cambios (solo
   `className`, `tsc --noEmit` limpio): (A1) todos los `<h1>` de `/panel/*` de

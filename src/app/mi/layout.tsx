@@ -5,6 +5,7 @@ import { MiBottomNav } from "./mi-nav";
 import { Tutorial } from "@/components/tutorial/tutorial";
 import { ImpersonationBanner } from "@/components/impersonation/banner";
 import { OfflineProvider } from "@/components/offline/provider";
+import { TimerDescanso } from "@/components/rutinas/timer-descanso";
 
 export default async function MiLayout({
   children,
@@ -78,6 +79,7 @@ export default async function MiLayout({
       ) : null}
       <div className="pb-20 md:pb-0">{children}</div>
       <MiBottomNav />
+      <TimerDescanso />
       <Tutorial rol="cliente" />
     </div>
   );
