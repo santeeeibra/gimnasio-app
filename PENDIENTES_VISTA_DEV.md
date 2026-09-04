@@ -27,12 +27,13 @@ le llega al cliente:
 - rutina nueva asignada
 - mensaje del dueño
 
-## 3. Apartado de pago / plan de máximo de usuarios  (el más grande)
-No existe ningún flujo de planes-de-plataforma todavía.
-- tabla de planes de plataforma (límite de socios, precio)
-- límite de socios por gym aplicado al dar de alta clientes
-- pantalla de upgrade / "activar plan"
-- estado de pago del gym
+## 3. Apartado de pago / plan de máximo de usuarios  ✅
+Implementado y en producción (migraciones 0015, 0016, 0017, 0023, commits recientes):
+- Catálogo de planes de plataforma con cupos y precios (Básico $25k/30 socios, Pro $38k/45 socios, Elite $55k/300 socios).
+- Pantalla `/panel/plan` con comparativa visual de planes, cálculo de early-bird (-15%), validación de cupo y selección interactiva.
+- Flujo de pago de suscripción mensual y cargos únicos (Setup $35k y Premium $15k) con bloqueo de duplicados e instrucciones paso a paso.
+- Aprobación/renovación en `/admin/gimnasios/[id]` con actualización automática de `plan_plataforma_id` y extensión de período activo.
+- Cupo de socios verificado contra `clientes` del gimnasio.
 
 ## 4. "Ver como" desde el panel del dueño impersonado  (chico)
 Saltar a la vista de un cliente sin volver primero a `/admin`. Un "ver como" en

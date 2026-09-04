@@ -55,14 +55,57 @@ export async function generarPagoPlan(
     .eq("id", dueno.gimnasio_id)
     .single();
 
-  const plan = (gym?.plan ?? null) as {
+  const planIdRaw = String(formData.get("plan_id") ?? "").trim();
+  let plan: {
     id: string;
     nombre: string;
     precio_mensual: number | string;
-  } | null;
+    max_socios?: number | null;
+  } | null = null;
+
+  if (tipo === "plan_mensual") {
+    if (planIdRaw) {
+      const { data: planElegido } = await db
+        .from("planes_plataforma")
+        .select("id, nombre, max_socios, precio_mensual, activo")
+        .eq("id", planIdRaw)
+        .eq("activo", true)
+        .maybeSingle();
+
+      if (!planElegido) {
+        return {
+          ok: false,
+          msg: "El plan seleccionado no es válido o ya no está disponible.",
+        };
+      }
+
+      // Validar que la cantidad de socios actual no supere el cupo del plan
+      if (planElegido.max_socios != null) {
+        const { count } = await db
+          .from("clientes")
+          .select("id", { count: "exact", head: true })
+          .eq("gimnasio_id", dueno.gimnasio_id);
+        const sociosActuales = count ?? 0;
+        if (sociosActuales > planElegido.max_socios) {
+          return {
+            ok: false,
+            msg: `Tenés ${sociosActuales} socios activos. El plan ${planElegido.nombre} permite hasta ${planElegido.max_socios} socios.`,
+          };
+        }
+      }
+
+      plan = planElegido;
+    } else {
+      plan = (gym?.plan ?? null) as {
+        id: string;
+        nombre: string;
+        precio_mensual: number | string;
+      } | null;
+    }
+  }
 
   // Monto base y período según el tipo de cargo.
-  //  · plan_mensual: precio del plan asignado, 30 días.
+  //  · plan_mensual: precio del plan asignado o seleccionado, 30 días.
   //  · setup / premium: cargo único, no extiende el período (dias = 0).
   const montoBase =
     tipo === "plan_mensual"

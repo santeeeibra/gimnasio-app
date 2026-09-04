@@ -26,7 +26,7 @@ export async function aprobarPagoPlataforma(
 ): Promise<ResultadoAprobacion> {
   const { data: pago } = await db
     .from("pagos_plataforma")
-    .select("id, gimnasio_id, dias, estado, monto_ars, tipo")
+    .select("id, gimnasio_id, dias, estado, monto_ars, tipo, plan_plataforma_id")
     .eq("id", pagoId)
     .single();
   if (!pago) return { ok: false, msg: "Pago inexistente." };
@@ -115,9 +115,21 @@ export async function aprobarPagoPlataforma(
     };
   }
 
+  const gymUpdate: {
+    plan_plataforma_vence_el: string;
+    estado: string;
+    plan_plataforma_id?: string;
+  } = {
+    plan_plataforma_vence_el: venceEl,
+    estado: "activo",
+  };
+  if (pago.plan_plataforma_id) {
+    gymUpdate.plan_plataforma_id = pago.plan_plataforma_id;
+  }
+
   const { error: e2 } = await db
     .from("gimnasios")
-    .update({ plan_plataforma_vence_el: venceEl, estado: "activo" })
+    .update(gymUpdate)
     .eq("id", pago.gimnasio_id);
   if (e2) return { ok: false, msg: e2.message, gimnasioId: pago.gimnasio_id };
 
@@ -129,6 +141,7 @@ export async function aprobarPagoPlataforma(
     venceEl,
     Number(pago.monto_ars ?? 0),
     pago.dias ?? 30,
+    pago.plan_plataforma_id,
   );
 
   return {
@@ -197,9 +210,10 @@ async function avisarRenovacion(
   venceEl: string,
   montoARS: number,
   dias: number,
+  planPlataformaId?: string | null,
 ): Promise<void> {
   try {
-    const [{ data: dueno }, { data: gym }] = await Promise.all([
+    const [{ data: dueno }, { data: gym }, { data: planData }] = await Promise.all([
       db
         .from("profiles")
         .select("id")
@@ -208,8 +222,16 @@ async function avisarRenovacion(
         .limit(1)
         .maybeSingle(),
       db.from("gimnasios").select("nombre").eq("id", gimnasioId).single(),
+      planPlataformaId
+        ? db
+            .from("planes_plataforma")
+            .select("nombre")
+            .eq("id", planPlataformaId)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
     ]);
 
+    const planNombre = planData?.nombre ?? null;
     const venceFmt = new Date(venceEl).toLocaleDateString("es-AR");
     const montoFmt = montoARS.toLocaleString("es-AR", {
       style: "currency",
@@ -219,7 +241,9 @@ async function avisarRenovacion(
     if (dueno?.id) {
       await enviarPush([dueno.id], {
         title: "Plan renovado",
-        body: `Tu plan quedó activo hasta el ${venceFmt}.`,
+        body: planNombre
+          ? `Tu plan ${planNombre} quedó activo hasta el ${venceFmt}.`
+          : `Tu plan quedó activo hasta el ${venceFmt}.`,
         url: "/panel/plan",
         tag: `plan-renovado-${venceEl}`,
       });
@@ -229,11 +253,12 @@ async function avisarRenovacion(
     if (to) {
       await enviarEmail({
         to,
-        subject: `[Pago] ${gym?.nombre ?? gimnasioId} — plan renovado hasta ${venceEl}`,
+        subject: `[Pago] ${gym?.nombre ?? gimnasioId} — ${planNombre ? `plan ${planNombre}` : "plan"} renovado hasta ${venceEl}`,
         text: [
           `Renovación de plan de plataforma confirmada.`,
           ``,
           `Gimnasio: ${gym?.nombre ?? gimnasioId}`,
+          `Plan: ${planNombre ?? "—"}`,
           `Monto: ${montoFmt}`,
           `Período: ${dias} días`,
           `Nuevo vencimiento: ${venceEl}`,

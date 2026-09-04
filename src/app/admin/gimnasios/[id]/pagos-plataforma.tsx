@@ -16,6 +16,7 @@ export type PagoPlataformaRow = {
   proveedor: string;
   nota: string | null;
   creado_at: string;
+  plan_nombre?: string | null;
 };
 
 function ConfirmarBtn({
@@ -81,7 +82,9 @@ export function PagosPlataforma({ pagos }: { pagos: PagoPlataformaRow[] }) {
                 currency: "ARS",
               })}{" "}
               · {TIPO_PAGO_LABEL[p.tipo]}
-              {p.tipo === "plan_mensual" ? ` · ${p.dias} días` : " · cargo único"}{" "}
+              {p.tipo === "plan_mensual"
+                ? ` (${p.plan_nombre ? `Plan ${p.plan_nombre}` : "plan"} · ${p.dias} días)`
+                : " · cargo único"}{" "}
               · {p.proveedor}
             </span>
             <span className="block text-xs text-ink-soft">

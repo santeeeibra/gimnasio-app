@@ -33,26 +33,47 @@ export default async function PanelPlanPage() {
   const dueno = await requireDueno();
   const db = createAdminClient();
 
-  const [{ data: gym }, cupo, { data: pagosData }] = await Promise.all([
-    db
-      .from("gimnasios")
-      .select(
-        "estado, creado_at, plan_plataforma_vence_el, plan:planes_plataforma(nombre, precio_mensual)",
-      )
-      .eq("id", dueno.gimnasio_id)
-      .single(),
-    cupoSocios(db, dueno.gimnasio_id),
-    db
-      .from("pagos_plataforma")
-      .select(
-        "id, tipo, estado, monto_ars, monto_original_ars, descuento_pct, dias, creado_at, confirmado_at",
-      )
-      .eq("gimnasio_id", dueno.gimnasio_id)
-      .order("creado_at", { ascending: false })
-      .limit(12),
-  ]);
+  const [{ data: gym }, cupo, { data: pagosData }, { data: planesData }] =
+    await Promise.all([
+      db
+        .from("gimnasios")
+        .select(
+          "estado, creado_at, plan_plataforma_id, plan_plataforma_vence_el, plan:planes_plataforma(id, nombre, precio_mensual)",
+        )
+        .eq("id", dueno.gimnasio_id)
+        .single(),
+      cupoSocios(db, dueno.gimnasio_id),
+      db
+        .from("pagos_plataforma")
+        .select(
+          "id, tipo, estado, monto_ars, monto_original_ars, descuento_pct, dias, creado_at, confirmado_at, plan:planes_plataforma(nombre)",
+        )
+        .eq("gimnasio_id", dueno.gimnasio_id)
+        .order("creado_at", { ascending: false })
+        .limit(12),
+      db
+        .from("planes_plataforma")
+        .select("id, nombre, max_socios, precio_mensual, orden")
+        .eq("activo", true)
+        .order("orden", { ascending: true })
+        .order("precio_mensual", { ascending: true }),
+    ]);
 
-  const pagos = ((pagosData ?? []) as {
+  const planes = ((planesData ?? []) as {
+    id: string;
+    nombre: string;
+    max_socios: number | null;
+    precio_mensual: number | string;
+    orden: number;
+  }[]).map((p) => ({
+    id: p.id,
+    nombre: p.nombre,
+    max_socios: p.max_socios == null ? null : Number(p.max_socios),
+    precio_mensual: Number(p.precio_mensual),
+    orden: Number(p.orden),
+  }));
+
+  const pagos = ((pagosData ?? []) as unknown as {
     id: string;
     tipo: string | null;
     estado: string;
@@ -62,6 +83,7 @@ export default async function PanelPlanPage() {
     dias: number;
     creado_at: string;
     confirmado_at: string | null;
+    plan?: { nombre: string } | null;
   }[]).map((p) => ({
     ...p,
     tipo: (p.tipo ?? "plan_mensual") as TipoPago,
@@ -69,6 +91,7 @@ export default async function PanelPlanPage() {
     monto_original_ars:
       p.monto_original_ars == null ? null : Number(p.monto_original_ars),
     descuento_pct: Number(p.descuento_pct ?? 0),
+    plan_nombre: p.plan?.nombre ?? null,
   }));
 
   // Estado por tipo de cargo: pendiente bloquea; para los cargos únicos, un
@@ -96,12 +119,17 @@ export default async function PanelPlanPage() {
 
   const estado = gym?.estado ?? "prueba";
   const planRaw = (gym?.plan ?? null) as {
+    id?: string;
     nombre: string;
     precio_mensual: number | string;
   } | null;
   // Supabase devuelve numeric como string.
   const plan = planRaw
-    ? { nombre: planRaw.nombre, precio_mensual: Number(planRaw.precio_mensual) }
+    ? {
+        id: gym?.plan_plataforma_id ?? planRaw.id ?? null,
+        nombre: planRaw.nombre,
+        precio_mensual: Number(planRaw.precio_mensual),
+      }
     : null;
   const vence = gym?.plan_plataforma_vence_el
     ? new Date(gym.plan_plataforma_vence_el).toLocaleDateString("es-AR")
@@ -184,16 +212,17 @@ export default async function PanelPlanPage() {
       ) : null}
 
       <div className="card-cut border border-rule bg-paper-2 p-5">
-        <h2 className="mb-1 text-lg">Pagar</h2>
+        <h2 className="mb-1 text-lg">Catálogo y pago de planes</h2>
         <p className="mb-4 text-sm text-ink-soft">
-          El plan mensual renueva 30 días y deja el gimnasio activo al
-          confirmarse. El setup y el Premium son cargos únicos.
+          Seleccioná el plan que mejor se adapte a tu gimnasio para abonar la
+          suscripción mensual o contratar servicios adicionales.
         </p>
         <PagoForm
           alias={DATOS_TRANSFERENCIA.alias}
           titular={DATOS_TRANSFERENCIA.titular}
-          planNombre={plan?.nombre ?? null}
-          planPrecio={plan ? plan.precio_mensual : null}
+          planes={planes}
+          planActualId={plan?.id ?? null}
+          sociosActuales={cupo.usados}
           earlyBird={earlyBird}
           estadoPorTipo={estadoPorTipo}
         />
@@ -220,7 +249,9 @@ export default async function PanelPlanPage() {
                       })}{" "}
                       <span className="text-ink-soft">
                         · {TIPO_PAGO_LABEL[p.tipo]}
-                        {p.tipo === "plan_mensual" ? ` · ${p.dias} días` : ""}
+                        {p.tipo === "plan_mensual"
+                          ? ` (${p.plan_nombre ? `Plan ${p.plan_nombre}` : "plan"} · ${p.dias} días)`
+                          : ""}
                       </span>
                     </span>
                     <span className="block text-xs text-ink-soft">

@@ -29,6 +29,7 @@ import {
   type Rol,
   type Sexo,
   type Tecnica,
+  type Volumen,
 } from "./tipos";
 
 const NIVEL_ORDEN: Record<Nivel, number> = {
@@ -412,11 +413,12 @@ const ESQUEMA: Record<Objetivo, EsquemaObj> = {
   // motoras, tasa de desarrollo de fuerza), no el daño muscular. Descanso largo
   // 2–3 min para recuperar el fosfágeno entre series pesadas (ACSM position
   // stand 2009; Schoenfeld et al. 2021, rep-range meta-analysis: <6 reps es lo
-  // óptimo para fuerza máxima).
+  // óptimo para fuerza máxima en compuestos; aislamientos van en 8–10 reps para
+  // cuidar tendones y articulaciones sin sobrecarga monoarticular innecesaria).
   fuerza: {
     primario: { series: 5, reps: "3–5" },
     secundario: { series: 4, reps: "5" },
-    aislamiento: { series: 3, reps: "5" },
+    aislamiento: { series: 3, reps: "8–10" },
     descanso: "Descanso 2–3 min",
   },
   // Hipertrofia clásica = volumen a intensidad media, rango 6–12 reps. El
@@ -539,8 +541,8 @@ function notaRir(rir: OpcionesAvanzadas["rir"], rol: Rol): string {
   if (rir === "2-3") return " · Dejá 2–3 repeticiones en reserva";
   if (rir === "1-2") return " · Dejá 1–2 repeticiones en reserva";
   return rol === "primario"
-    ? " · Cerca del fallo, sin perder técnica"
-    : " · Última serie al fallo";
+    ? " · RIR 1: cerca del fallo, técnica estricta"
+    : " · Última serie al fallo (RIR 0–1)";
 }
 
 // ── Fase 2 · Presupuesto cerrado de series por día ──
@@ -572,23 +574,54 @@ const FACTOR_ESFUERZO: Record<string, number> = {
   "0-1": 1, // Al límite → volumen pleno
 };
 
-// Fase 2 · ajustarPorSexo: la clienta mujer baja 1 serie por ranura (compuestos
-// y aislamientos). Se aplica sobre el TOTAL del día, no ranura por ranura, para
-// que el techo quede cerrado antes de repartir. Piso: 2 series por ranura.
+// Fase 2 · ajustarPorSexo: fisiología del ejercicio (Roberts et al. 2020; Hunter 2014):
+// las mujeres toleran igual o mayor volumen relativo que los hombres y se recuperan
+// más rápido. En intermedias y avanzadas se respeta el volumen pleno. En principiantes
+// se aplica una adaptación inicial suave (-2 series en el total del día, piso 2 por ranura).
 function ajustarPorSexo(
   total: number,
   sexo: Sexo,
+  nivel: Nivel,
   nRanuras: number,
   trace?: string[],
 ): number {
-  const t = sexo === "mujer" ? total - nRanuras : total;
-  const final = Math.max(2 * nRanuras, t);
-  if (trace && sexo === "mujer") {
+  if (sexo !== "mujer") return total;
+  if (nivel !== "principiante") {
+    if (trace) {
+      trace.push(
+        `Sexo mujer (${nivel}): volumen pleno sostenido (evidencia: Roberts et al. 2020, mayor tolerancia y recuperación muscular).`,
+      );
+    }
+    return total;
+  }
+  const final = Math.max(2 * nRanuras, total - 2);
+  if (trace) {
     trace.push(
-      `Sexo mujer: -1 serie por ranura sobre el total del día (${total} → ${final} series, piso 2 por ranura).`,
+      `Sexo mujer (principiante): ajuste suave de adaptación (-2 series en el día: ${total} → ${final} series).`,
     );
   }
   return final;
+}
+
+// Cuando se elige volumen alto (MAV, ~18–20 series semanales), se expanden los techos
+// duros por rol (+2 primarios hasta 6, +2 secundarios hasta 5, +1 aislamientos hasta 4)
+// para que el presupuesto MAV (ej. 28 series) se pueda distribuir y materializar en la sesión.
+function resolverMaxPorRol(
+  esquema: EsquemaObj,
+  volumen?: Volumen,
+): Record<Rol, number> {
+  if (volumen === "mav") {
+    return {
+      primario: Math.min(6, esquema.primario.series + 2),
+      secundario: Math.min(5, esquema.secundario.series + 2),
+      aislamiento: Math.min(4, esquema.aislamiento.series + 1),
+    };
+  }
+  return {
+    primario: esquema.primario.series,
+    secundario: esquema.secundario.series,
+    aislamiento: esquema.aislamiento.series,
+  };
 }
 
 // Fase 4 · Reparte el presupuesto de series entre las ranuras del día en
@@ -878,13 +911,17 @@ function puntuar(
     p += EQUIPO_PESO[ej.equipo ?? ""] ?? 0;
   }
   if (equipoPrefs.length === 0 || (ej.equipo && equipoPrefs.includes(ej.equipo))) {
-    p += 20;
+    p += 25;
   } else {
-    p -= 25; // fuera de las preferencias: solo si no queda otra
+    p -= 70; // fuera de las preferencias: solo si no queda otra en el catálogo
   }
   if (nivelIdx(ej.nivel) <= NIVEL_ORDEN[nivelCliente]) p += 10;
   else p -= 15 * (nivelIdx(ej.nivel) - NIVEL_ORDEN[nivelCliente]);
-  if (!usadosSemana.has(ej.id)) p += 8; // preferir variedad en la semana
+  if (!usadosSemana.has(ej.id)) {
+    p += 15; // preferir variedad en la semana
+  } else {
+    p -= 25; // penalizar repetir el mismo ejercicio en la semana si hay otra alternativa
+  }
   // Tier 1: sólo empuja compuestos (primario/secundario) hacia los básicos de
   // gama alta. En aislamientos no aplica (elevaciones/curl ya compiten por
   // patrón), salvo que el propio movimiento premium sea un aislamiento del grupo.
@@ -1114,6 +1151,7 @@ export function generarPlan(
     const presupuesto = ajustarPorSexo(
       Math.round(PRESUPUESTO_DIA[entrada.nivel] * factorVol * factorEsf),
       sexo,
+      entrada.nivel,
       esqueleto.length,
       trace,
     );
@@ -1140,11 +1178,7 @@ export function generarPlan(
     const seriesPorRanura = repartirSeries(
       ranuras.map((r) => r.rol),
       presupuesto,
-      {
-        primario: esquema.primario.series,
-        secundario: esquema.secundario.series,
-        aislamiento: esquema.aislamiento.series,
-      },
+      resolverMaxPorRol(esquema, avanzado?.volumen),
     );
 
     // Firewall B/C: rastreo por día para el bloqueo axial (¿ya entró un lift de

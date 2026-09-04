@@ -598,5 +598,105 @@
     "nivel": "principiante",
     "descripcion": "Sentado, abrí las piernas contra la resistencia y volvé despacio sin golpear el tope.",
     "imagen_url": null
+  },
+  {
+    "slug": "flexiones-pica",
+    "nombre": "Flexiones en pica",
+    "grupo_muscular": "hombros",
+    "patron": "empuje_vertical",
+    "equipo": "peso_corporal",
+    "nivel": "principiante",
+    "descripcion": "Cuerpo en V invertida, baja la coronilla hacia el suelo flexionando los codos y empuja hacia arriba.",
+    "imagen_url": null
+  },
+  {
+    "slug": "flexiones-declinadas",
+    "nombre": "Flexiones declinadas",
+    "grupo_muscular": "hombros",
+    "patron": "empuje_vertical",
+    "equipo": "peso_corporal",
+    "nivel": "intermedio",
+    "descripcion": "Pies elevados sobre banco o silla, cuerpo alineado, empuja focalizando en deltoides anterior y pecho superior.",
+    "imagen_url": null
+  },
+  {
+    "slug": "curl-concentrado-mancuerna",
+    "nombre": "Curl concentrado con mancuerna",
+    "grupo_muscular": "biceps",
+    "patron": "aislamiento",
+    "equipo": "mancuernas",
+    "nivel": "principiante",
+    "descripcion": "Sentado con el codo apoyado en la cara interna del muslo, flexiona el brazo aislando completamente el bíceps.",
+    "imagen_url": null
+  },
+  {
+    "slug": "curl-inclinado-mancuernas",
+    "nombre": "Curl en banco inclinado con mancuernas",
+    "grupo_muscular": "biceps",
+    "patron": "aislamiento",
+    "equipo": "mancuernas",
+    "nivel": "intermedio",
+    "descripcion": "Banco a 45–60°, brazos colgando perpendiculares, curl controlando el máximo estiramiento del bíceps.",
+    "imagen_url": null
+  },
+  {
+    "slug": "extension-triceps-mancuerna",
+    "nombre": "Extensión de tríceps tras nuca con mancuerna",
+    "grupo_muscular": "triceps",
+    "patron": "aislamiento",
+    "equipo": "mancuernas",
+    "nivel": "principiante",
+    "descripcion": "Mancuerna tomada a dos manos por detrás de la cabeza, extiende los codos manteniendo los brazos verticales.",
+    "imagen_url": null
+  },
+  {
+    "slug": "flexiones-diamante",
+    "nombre": "Flexiones diamante",
+    "grupo_muscular": "triceps",
+    "patron": "empuje_horizontal",
+    "equipo": "peso_corporal",
+    "nivel": "intermedio",
+    "descripcion": "Manos juntas formando un triángulo bajo el pecho, baja y empuja enfatizando el tríceps.",
+    "imagen_url": null
+  },
+  {
+    "slug": "elevacion-gemelos-sentado",
+    "nombre": "Elevación de gemelos sentado",
+    "grupo_muscular": "gemelos",
+    "patron": "aislamiento",
+    "equipo": "mancuernas",
+    "nivel": "principiante",
+    "descripcion": "Sentado con mancuernas sobre las rodillas flexionadas a 90°, eleva los talones contrayendo el sóleo.",
+    "imagen_url": null
+  },
+  {
+    "slug": "crunch-suelo",
+    "nombre": "Crunch abdominal en suelo",
+    "grupo_muscular": "core",
+    "patron": "aislamiento",
+    "equipo": "peso_corporal",
+    "nivel": "principiante",
+    "descripcion": "Acostado boca arriba con rodillas flexionadas, despega las escápulas del suelo contrayendo el abdomen.",
+    "imagen_url": null
+  },
+  {
+    "slug": "crunch-maquina",
+    "nombre": "Crunch en máquina",
+    "grupo_muscular": "core",
+    "patron": "aislamiento",
+    "equipo": "maquina",
+    "nivel": "principiante",
+    "descripcion": "Sentado en máquina de abdomen, flexiona el torso contra la resistencia guiada con movimiento controlado.",
+    "imagen_url": null
+  },
+  {
+    "slug": "lenador-polea",
+    "nombre": "Leñador en polea (Woodchopper)",
+    "grupo_muscular": "core",
+    "patron": "core_anti_rotacion",
+    "equipo": "polea",
+    "nivel": "intermedio",
+    "descripcion": "De pie en polea, rotación diagonal controlada del torso resistiendo con oblicuos y zona media.",
+    "imagen_url": null
   }
 ]
