@@ -35,6 +35,7 @@
 | Avisos al superadmin (push + email) | `src/lib/admin/notificar.ts` → `notificarSuperadmin()`; enganchado en `registrarError`, `registrarAccionAdmin`, cron de cuotas, y form "Contactar soporte" en `panel/ajustes` (`contactar-soporte-form.tsx` + `contactarSoporte`) | ✅ código + typecheck (2026-09-03). **Falta manual**: env `SUPERADMIN_EMAIL` (+ `RESEND_API_KEY` / `RESEND_FROM` de arriba) |
 | Cron `recalcular_estado_cuota()` | — | 🔲 sin empezar |
 | Fallback offline ante caída de Supabase | `src/lib/offline/*` (`conexion.tsx`, `cola.ts`, `cache.ts`, `handlers.ts`), `src/components/offline/*` (`provider.tsx`, `banner.tsx`, `conflictos.tsx`, `cache-al-vuelo.tsx`), `error.tsx` en `mi/` y `panel/clientes/`, wiring en los 3 layouts + `checkin-form.tsx` + `alta-form.tsx` | ✅ código + typecheck + smoke test (2026-09-03). Sin migración. Spec `SPEC_OFFLINE_FALLBACK.md` |
+| Cobro automático socio→dueño con Mercado Pago (solo Elite) | `src/lib/pagos/mercadopago-connect.ts` (OAuth + refresh en 401), `src/lib/pagos/cobro-socio.ts` (gate Elite + `confirmarPagoSocio`), `api/mp-connect/{iniciar,callback}`, `api/pagos-socio/webhook`, `panel/plan/mp-connect-card.tsx` + `mp-connect-actions.ts`, `mi/pagos/{actions.ts,pagar-mp-button.tsx}`, migraciones `0029`/`0030` | ✅ COMPLETO (2026-09-04) — aplicado, deployado y probado end-to-end. Envs: `MP_CONNECT_CLIENT_ID` / `_SECRET` / `_REDIRECT_URI` |
 | GIFs de ejercicios (wger.de / exercise-library) | `scripts/seed-ejercicios.mjs` | ❌ descartado — se mantiene `imagen_url` de free-exercise-db |
 
 ## Specs (`SPEC_*.md`) — quién los tiene que ejecutar
@@ -51,6 +52,7 @@
 | `SPEC_RUTINA_AVANZADA.md` | — | ⚠️ ver si es el mismo que panel avanzado o distinto |
 | `SPEC_TEMATICAS_PULIDO.md` / `SPEC_TEMATICAS_VISUALES.md` | — | ⚠️ no descritos en contex-sysgym.md |
 | `SPEC_RESET_CLAVE_Y_NOTIFICACIONES.md` | Claude Code | ✅ ejecutado 2026-09-03 (código + typecheck; falta manual: migración `0021`, Resend, envs, Redirect URL) |
+| `SPEC_MP_CONNECT_SOCIOS.md` | Claude Code | ✅ ejecutado 2026-09-04 — código + migraciones `0029`/`0030` aplicadas + envs en Vercel + **probado end-to-end en producción** |
 
 ## Cola sin spec armado
 

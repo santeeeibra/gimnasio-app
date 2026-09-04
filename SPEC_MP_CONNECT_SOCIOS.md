@@ -1,6 +1,9 @@
 # SPEC — Cobro automático a socios vía Mercado Pago (solo plan Elite)
 
-> **Estado: NO EMPEZADO.** Feature grande, multi\-archivo → hacer con Claude Code.
+> **Estado: ✅ IMPLEMENTADO (2026\-09\-04).** Código, migraciones `0029`/`0030`,
+> envs en Vercel y prueba end\-to\-end en producción, todo hecho. El detalle de
+> lo que quedó implementado está en `contex-sysgym.md` → "Cobro automático
+> socio→dueño con Mercado Pago".
 > Decisiones de producto ya tomadas con Santiago (2026\-09\-04), ver abajo.
 
 ## Qué resuelve

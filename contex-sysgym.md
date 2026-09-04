@@ -123,6 +123,56 @@ dato de contacto + un flujo asistido que funciona sin infraestructura de mail.
     "te llega un mail": cae igual al camino B.
 - Sin migración extra para el flujo. Commits `a24de7d` + `b8e9531`.
 
+### Cobro automático socio→dueño con Mercado Pago — solo plan Elite (2026-09-04)
+
+Segundo camino de cobro, además del manual (transferencia + el dueño la carga).
+SPEC `SPEC_MP_CONNECT_SOCIOS.md`. **Básico/Pro no cambian en nada.**
+
+- **Gate**: `estadoCobroAutomatico()` en `src/lib/pagos/cobro-socio.ts` calcula al
+  vuelo `plan == Elite && vigente && estado != solo_lectura && hay token`. No hay
+  columna `activo`: si el gimnasio baja de Elite el cobro se apaga solo, y si
+  vuelve se reactiva porque el token **no se borra** en el downgrade.
+- **Vinculación (OAuth MP Connect)**: `/panel/plan` → card "Cobros automáticos
+  con Mercado Pago" → `GET /api/mp-connect/iniciar` (redirect a MP con el
+  `gimnasio_id` firmado con HMAC en el `state`, TTL 15 min) →
+  `GET /api/mp-connect/callback` canjea el `code` y guarda
+  `gimnasios.mp_access_token` / `mp_refresh_token` / `mp_collector_id` /
+  `mp_vinculado_at`. Desvincular borra los 4 campos.
+- **Token vencido**: `fetchMP()` refresca con el `refresh_token` ante un 401,
+  guarda el token nuevo y reintenta una vez. Sin esto el cobro se caía en
+  silencio a los ~180 días.
+- **Cobro**: `/mi/pagos` muestra "Pagar con Mercado Pago" sólo si el gate da
+  true y el socio tiene plan con precio. `iniciarPagoMercadoPago`
+  (`mi/pagos/actions.ts`) inserta el pago con `estado = 'pendiente'`,
+  `proveedor = 'mercadopago'` y `cubre_hasta` provisorio (la columna es not
+  null), crea la preferencia con el **token del dueño** y redirige al
+  `init_point`. Si el token está revocado → mensaje + caída al flujo manual.
+- **Webhook multi-tenant**: `POST /api/pagos-socio/webhook` (el de
+  `/api/pagos/webhook`, dueño→plataforma, no se tocó). Para resolver el tenant
+  antes de poder llamar a la API de MP, el `notification_url` lleva
+  `?ref=<pagos.id>`; después se **verifica** que el `external_reference` real
+  coincida (si no, 409). Idempotente por el unique index
+  `pagos_prov_ref_idx (proveedor, proveedor_ref)`.
+- **Lógica compartida**: `calcularCubreHasta()` / `aplicarCuotaAlDia()` viven en
+  `cobro-socio.ts` y las usan tanto `registrarPago` (panel del dueño) como
+  `confirmarPagoSocio` (webhook). El `sumarDias` local de
+  `panel/clientes/actions.ts` se eliminó.
+- **Migraciones**: `0029_mp_connect_gimnasio.sql` (4 columnas `mp_*`),
+  `0030_pagos_estado_proveedor.sql` (`pagos.estado` default `'confirmado'`,
+  `proveedor` default `'manual'`, `proveedor_ref` + unique index). Defaults
+  elegidos para no tocar el flujo manual existente. `/mi/pagos` filtra el
+  historial a `estado = 'confirmado'`.
+- **Middleware**: `/api/pagos/webhook` y `/api/pagos-socio/webhook` agregados a
+  `PUBLIC_PATHS` (MP llama sin sesión; el primero estaba mal, quedaba detrás del
+  redirect a `/login`).
+- **Envs**: `MP_CONNECT_CLIENT_ID`, `MP_CONNECT_CLIENT_SECRET`,
+  `MP_CONNECT_REDIRECT_URI`. Son **distintas** de `MP_ACCESS_TOKEN` /
+  `MP_WEBHOOK_SECRET` (esas siguen siendo dueño→plataforma). Redirect URI
+  registrada en la app de MP: `<origin>/api/mp-connect/callback` — MP no acepta
+  `http://localhost`, así que la vinculación sólo se prueba en producción.
+- **Fuera de alcance v1**: `marketplace_fee`, reintentos ante token revocado,
+  avisar al dueño si MP le revocó el permiso.
+
 ### Planes y cuotas
 - Planes los define cada dueño (nombre, precio, duración).
 - El pago se hace por fuera del sistema (transferencia); el dueño lo registra a
