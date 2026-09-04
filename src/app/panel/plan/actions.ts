@@ -8,7 +8,14 @@ import { pasarela } from "@/lib/pagos";
 
 export type SolicitudState = { ok?: boolean; msg?: string };
 
-export type PagoState = { ok?: boolean; msg?: string; redirect?: string };
+export type PagoState = {
+  ok?: boolean;
+  msg?: string;
+  redirect?: string;
+  montoARS?: number;
+  dias?: number;
+  planNombre?: string;
+};
 
 // El dueño genera un pago de su plan de plataforma. Crea la fila en
 // pagos_plataforma y delega en la pasarela configurada (env PASARELA_PAGO).
@@ -115,6 +122,9 @@ export async function generarPagoPlan(
   return {
     ok: true,
     msg: "Pago registrado. Hacé la transferencia y soporte lo confirma; tu plan se renueva al confirmarlo.",
+    montoARS,
+    dias,
+    planNombre: plan?.nombre ?? "plataforma",
   };
 }
 

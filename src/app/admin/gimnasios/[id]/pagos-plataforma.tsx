@@ -14,10 +14,26 @@ export type PagoPlataformaRow = {
   creado_at: string;
 };
 
-function ConfirmarBtn({ pagoId }: { pagoId: string }) {
+function ConfirmarBtn({ pagoId, monto }: { pagoId: string; monto: number }) {
   const [state, action, pending] = useActionState(confirmarPagoPlataforma, null);
   return (
-    <form action={action} className="flex items-center gap-2">
+    <form
+      action={action}
+      className="flex items-center gap-2"
+      onSubmit={(e) => {
+        const montoFmt = monto.toLocaleString("es-AR", {
+          style: "currency",
+          currency: "ARS",
+        });
+        if (
+          !window.confirm(
+            `¿Confirmar este pago de ${montoFmt}?\n\nEsto renueva el plan del gimnasio por 30 días y lo deja en estado "activo". No se puede deshacer.`,
+          )
+        ) {
+          e.preventDefault();
+        }
+      }}
+    >
       <input type="hidden" name="pago_id" value={pagoId} />
       <Button type="submit" variant="ghost" loading={pending}>
         {pending ? "…" : "Confirmar"}
@@ -56,7 +72,7 @@ export function PagosPlataforma({ pagos }: { pagos: PagoPlataformaRow[] }) {
             </span>
           </span>
           {p.estado === "pendiente" ? (
-            <ConfirmarBtn pagoId={p.id} />
+            <ConfirmarBtn pagoId={p.id} monto={Number(p.monto_ars)} />
           ) : (
             <span
               className={`shrink-0 text-xs ${

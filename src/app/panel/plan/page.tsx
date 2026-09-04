@@ -137,6 +137,7 @@ export default async function PanelPlanPage() {
         <PagoForm
           alias={DATOS_TRANSFERENCIA.alias}
           titular={DATOS_TRANSFERENCIA.titular}
+          hayPendiente={pagos.some((p) => p.estado === "pendiente")}
         />
       </div>
 
