@@ -1,119 +1,127 @@
-# Reglas de UI - Estilo Emil Kowalski (Mobile-First)
+# Reglas de UI - Identidad "Obsidian High-Performance" (Mobile-First)
 
-> **Contexto**: App de gestión de gimnasios, principalmente usada en móviles.
-> Estas reglas aseguran coherencia visual, performance táctil y cero regresiones.
-> **Antes de tocar UI**: leer este archivo + pasar por la skill `emil-design-eng`.
+> **Contexto**: App de gestión de gimnasios (SysGym), principalmente usada en móviles dentro de la sala de pesas.
+> Estas reglas aseguran rendimiento atlético premium, performance táctil instantánea, consistencia visual y cero regresiones.
+> **Antes de tocar UI**: leer este archivo + verificar el checklist de usabilidad (§21 y §10).
 
 ---
 
 ## 1. Sistema de tokens CSS (NO inventar valores)
 
-### Colores dinámicos (tema personalizable)
+La app cuenta con dos presets oficiales polaridad-conscientes que comparten la misma jerarquía de variables semánticas:
+
+### Tokens Base (Modo Oscuro — Obsidian Core / Default)
 ```
---paper      → fondo general
---paper-2    → tarjetas, barras
---ink        → texto principal
---ink-soft   → texto secundario
---rule       → bordes
---volt       → acento (botones, badges)
---volt-ink   → texto sobre acento
+--paper             → #090d14 (fondo general obsidiana profunda)
+--paper-2           → #121722 (tarjetas, barras y contenedores en carbón satinado)
+--paper-3           → #1b2232 (superficies elevadas, popovers y modales)
+--ink               → #f8fafc (texto principal blanco titanio de ultra-alto contraste)
+--ink-soft          → #94a3b8 (texto secundario pizarra técnica)
+--rule              → rgba(255, 255, 255, 0.08) (hairline 1px preciso)
+--accent            → #10e7a0 (Hyper-Mint / Emerald Glow, foco y energía primaria)
+--accent-ink        → #042417 (texto de máximo contraste sobre el acento)
+--accent-secondary  → #ff5252 (Coral de alta energía para series activas, récords y badges)
+--ring              → rgba(16, 231, 160, 0.35) (color del focus-visible ring)
+--scrim             → rgba(4, 7, 12, 0.78) (backdrop de modal con blur)
+```
+
+### Tokens Base (Modo Claro — Titanium Daylight / Preset Claro Coherente)
+```
+--paper             → #f8fafc (fondo general titanio claro)
+--paper-2           → #ffffff (tarjetas y superficies puras de alto contraste)
+--paper-3           → #f1f5f9 (superficies elevadas y hover)
+--ink               → #090d14 (texto principal carbón oscuro)
+--ink-soft          → #64748b (texto secundario grafito)
+--rule              → #e2e8f0 (hairlines sutiles)
+--accent            → #059669 (Emerald deportivo calibrado para contraste WCAG ≥ 4.5)
+--accent-ink        → #ffffff (texto blanco sobre acento)
+--accent-secondary  → #ef4444 (Coral deportivo)
+--ring              → rgba(5, 150, 105, 0.30)
+--scrim             → rgba(15, 23, 42, 0.60)
 ```
 
 ### Colores semánticos (re-derivados por tema)
 ```
---danger      → errores, vencido        (base #c1362f)
---warn        → advertencias            (base #b9791a)
---ok          → éxito                   (base #2f7d4f)
+--danger      → errores, vencido, alerta máxima (base #ef4444)
+--warn        → advertencias, atención          (base #f59e0b)
+--ok          → éxito, al día, completado       (base #10b981)
 --danger-weak / --danger-strong  → fills y estados hover del rojo
 ```
-`temaToVars()` re-deriva `--danger/--warn/--ok` contra el `--paper` real con
-piso de contraste 4.0 (en tema oscuro el hex fijo queda ilegible). **Nunca**
-uses los hex `#c1362f` / `#b9791a` / `#2f7d4f` en JSX: van por token.
+`temaToVars()` re-deriva `--danger/--warn/--ok` contra el `--paper` real con piso de contraste 4.0. **Nunca** uses hex fijos en JSX: van siempre por token.
 
-### Capa ambiental (siempre disponible, ver §20)
+### Capa ambiental (§20)
 ```
 --accent / --accent-contrast / --accent-weak / --accent-strong
---ring            → color del focus ring
---paper-3         → superficie elevada (popover, glow sobre card)
---scrim           → backdrop de modal (reemplaza bg-ink/60)
---elev-shadow-sm / --elev-shadow-md   (o utilities .elev-sm / .elev-md)
---glow-soft / --glow-strong / --glow-strength   → glow polaridad-consciente
---texture-color / --texture-alpha
+--paper-3         → superficie elevada (popover, sheet sobre card)
+--scrim           → backdrop de modal
+--elev-shadow-sm / --elev-shadow-md
+--glow-soft / --glow-strong / --glow-strength   → glow bioluminiscente en acentos
 --dur-fast (150ms) / --dur-base (220ms) / --dur-slow (350ms)
---ease-drawer     → curva iOS para sheets/drawers
+--ease-out        → cubic-bezier(0.23, 1, 0.32, 1)
+--ease-in-out     → cubic-bezier(0.77, 0, 0.175, 1)
 ```
-Estos los emite `src/lib/tema.ts` (`temaToVars` + `derivarAmbiente`) y
-`globals.css`. **Regla:** ningún `color-mix(... var(--volt) ...)` ni
-`var(--volt)` literal fuera de `src/lib/tema.ts` y `src/app/globals.css`; en
-pantallas se usa `--accent` y sus derivados.
 
 ### ❌ PROHIBIDO
-- `bg-white` / `bg-black` → usar tokens (`bg-paper`, `bg-paper-2`)
+- `bg-white` / `bg-black` en Tailwind → usar tokens (`bg-paper`, `bg-paper-2`)
 - `text-gray-500` → usar `text-ink-soft`
-- Hex literales en className
+- Hex literales en `className`
 
 ### ✅ Permitido
-- Opacidades: `bg-paper/70`, `text-ink/40`
+- Opacidades sobre tokens: `bg-paper/80`, `text-ink/60`, `border-rule/50`
 - Hover: `hover:bg-paper-2`
 
 ---
 
-## 2. Tipografía
+## 2. Tipografía (Obsidian High-Performance)
 
 ### Familias
 ```
-font-display  → títulos, números héroe
-font-sans     → cuerpo, UI (default)
---font-hero   → números especiales (anillos de progreso, métricas destacadas)
-                Orbitron (pesos 700 y 900), fuente tecnológica para datos numéricos
+font-display  → Plus Jakarta Sans (títulos y jerarquía principal)
+font-sans     → Plus Jakarta Sans (cuerpo, UI y navegación, default)
+--font-hero   → JetBrains Mono (pesos 600 y 700: números tabulares técnicos para
+                series, repeticiones, kilajes, cronómetros de descanso y volúmenes)
 ```
 
 ### Escala de tamaños (mobile-first)
 ```
 text-[11px]   → kickers uppercase + tracking-[0.08em]
-text-xs       → timestamps
-text-[13px]   → labels campos
-text-sm       → texto compacto
+text-xs       → timestamps y metadata complementaria
+text-[13px]   → labels de campos
+text-sm       → texto compacto de listas y descripciones
 text-[15px]   → cuerpo legible
 text-base     → botones CTA
-text-lg       → subtítulos
-text-xl       → nombres destacados
-text-2xl      → números importantes
+text-lg       → subtítulos de sección
+text-xl       → nombres destacados de pantalla
+text-2xl      → números destacados / títulos principales
 
-text-[clamp(4rem,22vw,7rem)]  → héroe dashboard
+text-[clamp(4rem,22vw,7rem)]  → número héroe de tableros
 ```
 
-### Interlineado (alineación vertical del texto)
+### Interlineado
 ```
 leading-tight  → títulos de card / nombres (1-2 líneas)
-leading-snug   → descripciones, párrafos cortos
+leading-snug   → descripciones y párrafos cortos
 leading-normal → cuerpo largo
 ```
 
 ### ❌ PROHIBIDO
 - Inventar tamaños arbitrarios
-- `font-bold` (usar font-display con weight default)
+- `font-bold` suelto (usar `font-semibold` o `font-display` con su peso correspondiente)
 
 ---
 
 ## 3. Espaciado y dimensiones
 
-### Targets táctiles (WCAG móvil)
+### Targets táctiles (WCAG móvil — NO NEGOCIABLE)
 ```
-h-11 / h-12     → inputs, botones principales (44-48px)
-h-9 / h-10      → botones secundarios (36-40px)
-h-8 + px-2.5    → acción terciaria dentro de una card (mínimo tappable)
-size-9          → botón-icono (cerrar, más opciones)
-min-w-[3.5rem]  → botón toggle (56px mínimo)
+h-11 / h-12 (44-48px)   → inputs, botones principales, presets de timer y botones de series (min-w-[44px] h-11)
+h-9 / h-10 (36-40px)    → botones secundarios compactos
+size-9 (36x36px)        → botón-icono terciario (cerrar modal, más opciones)
+min-w-[3.5rem] (56px)   → botón toggle o pestañas principales
 ```
-Nada interactivo por debajo de 32px de alto. Un link de texto suelto NO es un
-target: envolverlo en un `<button>`/`<Link>` con padding.
+**Regla crítica:** Todo elemento tocable frecuente (como tildar series en el gimnasio o elegir el tiempo de descanso) **debe tener al menos 44px de alto y ancho efectivo** para permitir interacción precisa con dedos sudorosos o en movimiento, sin desbordar pantallas de 375px. Nada interactivo por debajo de 32px de alto absoluto. Un link de texto suelto NO es un target: envolverlo en un `<button>`/`<Link>` con padding táctil.
 
-**Links de texto**: el estilo lo define `linkClasses` en `src/components/ui.tsx`
-(`linkClasses.inline` para prosa, `linkClasses.accion` para acciones sueltas
-tipo "Salir" / "← Volver" / "Ver de nuevo" / `<summary>` que hace de link).
-Ningún `<a>` / `<Link>` / `<button>` textual arma su `className` a mano
-(sin `underline underline-offset-2` sueltos, sin `text-ink-soft` repetido).
+**Links de texto**: el estilo lo define `linkClasses` en `src/components/ui.tsx` (`linkClasses.inline` para prosa, `linkClasses.accion` para acciones). Ningún interactivo textual arma su clase a mano sin padding.
 
 ### Padding y gap
 ```
@@ -132,109 +140,57 @@ max-w-md mx-auto   → pantallas de cliente (una columna)
 max-w-lg / max-w-xl → paneles densos del dueño
 max-w-sm           → modales / overlays
 ```
-- `main` en mobile: **mínimo `px-5`** de padding lateral (`px-5 py-6`), nunca
-  contenido pegado al borde.
+- `main` en mobile: **mínimo `px-5`** de padding lateral (`px-5 py-6`), nunca contenido pegado al borde.
 - Prohibido ancho fijo en px mayor a ~320. Usar `w-full`, `max-w-*`, `flex-1`.
-- Todo hijo de flex/grid que contenga texto que deba envolver o truncar lleva
-  **`min-w-0`** (sin esto el texto empuja y rompe el ancho de la pantalla).
+- Todo hijo de flex/grid que contenga texto que deba envolver o truncar lleva **`min-w-0`** (sin esto el texto empuja y rompe el ancho de pantalla).
 
-### Border radius
+### Border radius (Obsidian High-Performance)
 ```
-rounded-[5px]   → inputs, botones, selects (STANDARD)
-rounded-[6px]   → cards, listas
-rounded-[8px]   → miniaturas de imagen
-rounded-[14px]  → modales / hojas inferiores
-rounded-lg      → inputs login (h-12)
-rounded-full    → badges, pills, avatares
+rounded-[10px]  → inputs, botones secundarios, selects
+rounded-[12px]  → botones principales, chips interactivos
+rounded-[14px]  → cards estándar, contenedores de lista
+rounded-[16px]  → hero cards, tarjeta de resumen de día
+rounded-[22px]  → modales, hojas inferiores (bottom sheets)
+rounded-full    → badges, pills de prescripción, avatares
 ```
 
 ---
 
-## 4. Bordes y superficies
+## 4. Bordes y superficies (Firma Visual: Soft Glass & Precision Lines)
 
-- Hairline **siempre** `border border-rule` (1px). `border-2` solo para estado
-  activo/seleccionado (`peer-checked:border-ink`).
-- Card: `border border-rule rounded-[6px] bg-paper-2`.
-- Input / select: `border border-rule rounded-[5px] bg-paper` (**`bg-paper`, no
-  `bg-white`**).
-- Foco de input: subir contraste del borde → `focus:border-ink` (no ring en
-  inputs; el ring se reserva para `focus-visible` de botones/links).
-- Lista: `<ul>` con `divide-y divide-rule` **y `overflow-hidden`** para que el
-  redondeo recorte la primera y última fila.
-- Separador de sección: `border-t border-rule pt-4`.
-- Card que contiene imagen: `overflow-hidden` para recortar la imagen al radio.
+- **Hairline de precisión**: `border border-rule` (1px). `border-2` solo para estado activo/seleccionado.
+- **Card**: `border border-rule rounded-[14px] bg-paper-2`.
+- **Card destacada / Hero**: `border border-rule rounded-[16px] bg-paper-2` con leve elevación ambiental (`shadow-sm`).
+- **Input / select**: `border border-rule rounded-[10px] bg-paper` (**`bg-paper`, no `bg-white`**).
+- **Foco de input**: subir contraste del borde → `focus:border-ink`.
+- **Lista con separadores**: `<ul>` con `divide-y divide-rule` y `overflow-hidden rounded-[14px]`.
+- **Separador de sección**: `border-t border-rule pt-4`.
 
-### Firma visual: corte asimétrico (`.card-cut`)
-- Clase en `globals.css`: `.card-cut` (corte de `--cut:18px` en la esquina
-  superior derecha vía `clip-path`) + modificador `.card-cut-lg` (`22px`).
-- Se usa en **cards destacadas y `<ul>` de lista** en lugar del
-  `rounded-[6px]` (no combinar con `rounded-*`: el polígono tiene esquinas
-  rectas). Reemplaza a `<Panel>` cuando la superficie es protagonista.
-- El `clip-path` recorta el borde sobre la diagonal — es intencional. El
-  resto de bordes (incl. `border-l-*` semántico) se conservan; en `<ul>`
-  mantener `overflow-hidden` para el `divide-y`.
-- **No** aplicar a: chat bubbles, inputs/botones, nav, chips, modales.
+### Firma visual Obsidian
+- Se descarta el corte poligonal rígido (`.card-cut`) en favor de una **geometría ergonómica fluida**:
+  - Curvatura suave (`14px` a `16px`) optimizada para la mano al sostener el móvil.
+  - Micro-glow pasivo bioluminiscente en el acento activo (`--accent` / `#10e7a0`).
+  - Chips de prescripción con números en `JetBrains Mono` y fondo `bg-paper`.
+  - Gradiente ambiental radial sutil en el fondo de pantallas clave.
 
 ---
 
 ## 5. Imágenes y media (⚠️ causa de regresión conocida)
 
-> **Bug histórico (2026-09-02)**: faltaba el reset `img { max-width:100%;
-> height:auto }` en `globals.css`. Una `<img>` con fuente grande y `shrink-0`
-> dentro de un flex empujaba el texto fuera de la pantalla en 375px. Ya está el
-> reset global, pero **igual aplicar estas reglas siempre**:
-
 ### Reglas
-- Toda `<img>` va **dentro de un contenedor de tamaño fijo**: `size-[72px]`,
-  `aspect-square`/`aspect-video` + `w-full`, etc. Nunca una `<img>` suelta
-  definiendo el tamaño del layout.
-- La imagen dentro del contenedor: `h-full w-full object-contain` (dibujos /
-  siluetas) u `object-cover` (fotos de fondo).
-- En filas `flex`: el contenedor de la imagen lleva **`shrink-0`** y el bloque
-  de texto **`min-w-0 flex-1`**.
+- Toda `<img>` va **dentro de un contenedor de tamaño fijo**: `size-[72px]`, `aspect-square`/`aspect-video` + `w-full`, etc. Nunca una `<img>` suelta definiendo el tamaño del layout.
+- La imagen dentro del contenedor: `h-full w-full object-contain` (siluetas y ejercicios) u `object-cover` (fotografías).
+- En filas `flex`: el contenedor de la imagen lleva **`shrink-0`** y el bloque de texto **`min-w-0 flex-1`**.
 - `loading="lazy"` + `decoding="async"` salvo que esté en el primer viewport.
 - `alt` siempre: descriptivo, o `alt=""` si es puramente decorativa.
-- **Fallback obligatorio**: `onError` → estado que renderiza un glifo/placeholder
-  **del mismo tamaño** que la imagen (no colapsar la caja).
-- Miniatura de contenido (ejercicio, avatar): caja 56-80px, `rounded-[8px]`,
-  `bg-paper-2`, `overflow-hidden`.
-- Imágenes externas (free-exercise-db, etc.): `<img>` plano, **no `next/image`**
-  (evita configurar `remotePatterns`). El reset global las contiene.
-- Animar cuadros (pseudo-GIF): alternar `src` con `setInterval`; respetar
-  `prefers-reduced-motion` (no animar si el usuario lo pide).
-
-### Ejemplo — miniatura con fallback
-```jsx
-url && !err ? (
-  <div className="size-[72px] shrink-0 overflow-hidden rounded-[8px] border border-rule bg-paper-2">
-    <img
-      src={src} alt="" loading="lazy" decoding="async"
-      onError={() => setErr(true)}
-      className="h-full w-full object-contain"
-    />
-  </div>
-) : (
-  <div className="grid size-[72px] shrink-0 place-items-center rounded-[8px] border border-rule bg-paper-2 text-ink-soft">
-    <Glifo className="size-6" />
-  </div>
-)
-```
+- **Fallback obligatorio**: `onError` → estado que renderiza un glifo/placeholder **del mismo tamaño** que la imagen (no colapsar la caja).
+- Miniatura de ejercicio/avatar: caja 56-80px, `rounded-[10px]`, `bg-paper-2`, `overflow-hidden`.
+- Imágenes externas (free-exercise-db, etc.): `<img>` plano, **no `next/image`**.
 
 ### Logo del gimnasio (branding dinámico)
-- El logo (`gimnasios.logo_url`, puede ser `null`) siempre va en **caja de
-  tamaño fijo** con `object-contain` — nunca `object-cover` (recortaría un
-  isotipo). Tamaños por contexto: `size-9` sidebar `/panel`, `size-7` topbar
-  móvil, `size-8` header `/mi`, `size-4` avatar inline en mensajes.
-- Caja: `overflow-hidden rounded-[6px] border border-rule bg-paper-2`
-  (`rounded-full` sólo para el avatar de mensajes). `shrink-0` en filas flex;
-  el bloque de texto al lado `min-w-0` + `truncate`.
-- `null` ⇒ **no** renderizar la caja: caer al nombre en texto / ícono genérico.
-  Ninguna pantalla debe cambiar de layout por tener o no logo.
-- Es imagen de terceros servida desde Storage: `<img>` plano (no `next/image`),
-  `alt=""` si va acompañado del nombre, `decoding="async"` + `loading="lazy"`
-  fuera del primer viewport.
-- Subida: comprimir **en el navegador** a WebP ≤512² y <300 KB antes de tocar
-  Storage (`src/lib/logo/comprimir.ts`). Nunca subir el archivo crudo.
+- El logo (`gimnasios.logo_url`, puede ser `null`) siempre va en **caja de tamaño fijo** con `object-contain`. Tamaños: `size-9` sidebar `/panel`, `size-7` topbar móvil, `size-8` header `/mi`.
+- Caja: `overflow-hidden rounded-[10px] border border-rule bg-paper-2`. `shrink-0` en filas flex; bloque de texto al lado `min-w-0` + `truncate`.
+- Subida: comprimir **en el navegador** a WebP ≤512² y <300 KB antes de tocar Storage.
 
 ---
 
@@ -243,59 +199,38 @@ url && !err ? (
 - Filas `imagen + texto` de 2+ líneas: `items-start` (no `items-center`).
 - Iconos junto a texto: `inline-flex items-center gap-2` y `shrink-0` en el icono.
 - Valores numéricos en inputs cortos (series, reps): `text-center`.
-- Título + acción en la misma fila: `flex items-start justify-between gap-2`,
-  el título en `min-w-0` y la acción en `shrink-0`.
-- **Acción secundaria de una sección** (regenerar, editar, ver todo) va en la
-  fila del encabezado con `justify-between` (usar `flex-wrap` si la acción
-  despliega un panel), **nunca** como hijo suelto del stack con `ml-auto`
-  (rompe la alineación con el resto de la columna).
-- Truncado explícito: `truncate` (1 línea) o `line-clamp-2` (2 líneas). Nunca
-  dejar una cadena larga (nombre, email) sin límite.
-- Contenido centrado en pantalla: `mx-auto` sobre el `max-w-*`, no `margin` a mano.
+- Título + acción en la misma fila: `flex items-start justify-between gap-2`, el título en `min-w-0` y la acción en `shrink-0`.
+- **Acción secundaria de sección**: va en la fila del encabezado con `justify-between`, **nunca** suelta en el stack con `ml-auto`.
+- Truncado explícito: `truncate` (1 línea) o `line-clamp-2` (2 líneas).
 
 ---
 
 ## 7. Desbordes / overflow (probar a 375px)
 
 - El `body` **nunca** scrollea horizontal.
-- Contenido intrínsecamente ancho (tabla, bloque de código, fila de chips que no
-  envuelve, diagrama): envolver en su propio `overflow-x-auto`.
-- `min-w-0` en el hijo flex con texto = regla de oro contra "texto empujado
-  fuera de pantalla".
-- `overflow-hidden` en la card con imagen y en el `<ul>` con `divide-y`.
-- Checklist: abrir a 375px y confirmar cero scroll horizontal.
+- Contenido intrínsecamente ancho: envolver en `overflow-x-auto`.
+- `min-w-0` en todo hijo flex con texto (regla de oro contra texto desbordado).
+- `overflow-hidden` en cards con imagen y en `<ul>` con `divide-y`.
+- Checklist: probar siempre a 375px sin scroll horizontal.
 
 ---
 
-## 8. Animaciones
+## 8. Animaciones y microinteracciones
 
 ### Timing (usar SIEMPRE)
 ```
 [transition-timing-function:var(--ease-out)]
-duration-150   → hover, active, press
+duration-150   → hover, active, press táctil
 duration-200   → inputs (border/box-shadow)
-duration-350   → apariciones
+duration-350   → apariciones de paneles
 ```
-- Transicionar **propiedades concretas** (`transition-[transform,background-color]`),
-  nunca `transition-all`.
-- Entrada/salida: `ease-out`. Movimiento en pantalla: `ease-in-out`. Nunca
-  `ease-in` en UI.
-- Nada de animación en acciones repetidas 100+ veces/día (atajos de teclado,
-  toggles de nav).
-
-### Clases predefinidas
-```
-.animate-rise      → entrada suave (login)
-.animate-fade-in   → aparición de paneles / overlays
-.animate-error     → error snappy
-.stagger           → entrada escalonada (hasta 6 hijos)
-.spin-fast         → spinner de botón
-```
+- Transicionar **propiedades concretas** (`transition-[transform,background-color,opacity]`), **nunca** `transition-all`.
+- Entrada/salida: `ease-out`. Movimiento continuo en pantalla: `ease-in-out`. Nunca `ease-in` en UI.
 
 ### Feedback táctil (OBLIGATORIO)
 ```
-active:scale-95        → botones secundarios, chips, miniaturas
-active:scale-[0.97]    → botones primarios
+active:scale-95        → botones secundarios, chips, miniaturas, series marcadas
+active:scale-[0.97]    → botones primarios CTA
 active:scale-90        → botón-icono chico
 active:bg-paper        → filas de lista
 ```
@@ -308,29 +243,27 @@ active:bg-paper        → filas de lista
 <div
   role="dialog" aria-modal="true" aria-label={titulo}
   onClick={onClose}
-  className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-[color:var(--scrim)] p-4 animate-fade-in"
+  className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-[color:var(--scrim)] p-4 animate-fade-in backdrop-blur-sm"
 >
   <div
     onClick={(e) => e.stopPropagation()}
-    className="w-full max-w-sm rounded-[14px] border border-rule bg-paper p-4 shadow-xl"
+    className="w-full max-w-sm rounded-[22px] border border-rule bg-paper p-5 shadow-2xl"
   >
     {/* contenido */}
   </div>
 </div>
 ```
 - Cerrar por: click en backdrop **+** tecla `Escape` **+** botón X (`size-9`).
-- Bloquear scroll del body mientras está abierto
-  (`document.body.style.overflow = "hidden"` y restaurar al desmontar).
-- En mobile entra desde abajo (`items-end`), en `sm+` centrado.
-- El contenido interno usa las mismas reglas de imagen/overflow (`aspect-square`
-  + `object-contain` para la imagen grande).
+- Bloquear scroll del body mientras está abierto (`document.body.style.overflow = "hidden"`).
+- En mobile entra desde abajo (`items-end`), en desktop centrado.
 
 ---
 
-## 10. z-index (escala fija, no inventar)
+## 10. z-index (escala fija)
 
 ```
 z-10   → sticky header / barra de sección
+z-35   → timer flotante colapsado (sobre el contenido pero bajo el modal)
 z-40   → nav fija (bottom/top)
 z-50   → overlays, modales, toasts
 ```
@@ -339,31 +272,10 @@ z-50   → overlays, modales, toasts
 
 ## 11. Accesibilidad (no negociable)
 
-### ✅ HACER
-- `<button>` para acciones (NO `<div onClick>`)
-- `<Link>` para navegación
-- `<label>` asociado con `<input>` siempre
-- Jerarquía h1 → h2 → h3 correcta (no saltear niveles)
-
-### Focus visible
-```
-focus-visible:outline-none
-focus-visible:ring-2
-focus-visible:ring-ink/20
-```
-
-### ARIA (con moderación)
-```jsx
-<button aria-pressed={active}>Toggle</button>
-<button aria-label="Cerrar"><span aria-hidden>{icon}</span></button>
-<div role="alert">{error}</div>
-```
-
-### ❌ PROHIBIDO
-- `<div onClick>` sin role + tabindex + onKeyDown
-- `outline: none` sin alternativa visible
-- Iconos sin texto/aria-label
-- Imagen sin `alt`
+- `<button>` para acciones, `<Link>` para navegación.
+- `<label>` asociado con `<input>` siempre.
+- Focus visible: `focus-visible:ring-2 focus-visible:ring-accent/40`.
+- Iconos con `aria-label` descriptivo.
 
 ---
 
@@ -372,367 +284,110 @@ focus-visible:ring-ink/20
 ### Input con label
 ```jsx
 <label className="block">
-  <span className="block text-[13px] font-medium text-ink-soft mb-1.5">
-    Label
-  </span>
+  <span className="block text-[13px] font-medium text-ink-soft mb-1.5">Label</span>
   <input
-    className="w-full h-11 px-3 rounded-[5px] border border-rule bg-paper text-[16px] outline-none transition-[border-color,box-shadow] duration-150 [transition-timing-function:var(--ease-out)] focus:border-ink"
+    className="w-full h-11 px-3 rounded-[10px] border border-rule bg-paper text-[16px] text-ink outline-none transition-[border-color] duration-150 [transition-timing-function:var(--ease-out)] focus:border-accent"
   />
 </label>
 ```
 
-### Botón con spinner
+### Botón principal con spinner
 ```jsx
-<Button disabled={pending}>
-  {pending ? (
-    <>
-      <span className="size-4 rounded-full border-2 border-paper/30 border-t-paper spin-fast" />
-      Guardando…
-    </>
-  ) : "Guardar"}
-</Button>
-```
-
-### Lista con separadores
-```jsx
-<ul className="overflow-hidden rounded-[6px] border border-rule bg-paper-2 divide-y divide-rule">
-  {items.map(item => (
-    <li key={item.id}>
-      <Link
-        href={`/ruta/${item.id}`}
-        className="block px-4 py-4 transition-colors duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper active:bg-paper"
-      >
-        {item.nombre}
-      </Link>
-    </li>
-  ))}
-</ul>
-```
-
-### Fila con miniatura + texto + acción
-```jsx
-<li className="p-4">
-  <div className="flex gap-3">
-    <ExThumb ej={ej} />                     {/* size-[72px] shrink-0 */}
-    <div className="min-w-0 flex-1">
-      <div className="flex items-start justify-between gap-2">
-        <p className="font-medium leading-tight min-w-0">{ej.nombre}</p>
-        <button className="shrink-0 h-8 px-2.5 ...">Acción</button>
-      </div>
-      {/* meta, campos, etc. */}
-    </div>
-  </div>
-</li>
+<button className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-[12px] bg-accent text-accent-ink font-semibold text-sm transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97]">
+  {pending ? <Spinner /> : "Guardar sesión"}
+</button>
 ```
 
 ---
 
 ## 13. Layouts móviles
 
-### Grid mobile-first
+### Navegación Bottom Bar
 ```jsx
-<div className="grid sm:grid-cols-2 gap-4">
-  {/* campos */}
-</div>
-```
-
-### Navegación bottom
-```jsx
-<nav className="md:hidden fixed bottom-0 inset-x-0 z-40 flex border-t border-rule bg-paper">
+<nav className="md:hidden fixed bottom-0 inset-x-0 z-40 flex border-t border-rule bg-paper/95 backdrop-blur-md h-16 pb-2">
   {NAV.map(item => (
-    <Link className="relative flex-1 flex flex-col items-center gap-1 py-2.5 text-[11px] active:scale-95 transition-transform duration-150 [transition-timing-function:var(--ease-out)]">
-      <span className={`absolute top-0 h-0.5 w-8 rounded-full ${active ? "bg-volt" : "bg-transparent"}`} />
+    <Link className="relative flex-1 flex flex-col items-center justify-center gap-1 text-[11px] font-medium transition-colors">
+      <span className={`absolute top-0 h-0.5 w-8 rounded-full ${active ? "bg-accent" : "bg-transparent"}`} />
       {item.label}
     </Link>
   ))}
 </nav>
 ```
 
-### Número héroe (jerarquía)
-```jsx
-<div className="mb-10">
-  <p className="font-display leading-[0.82] tracking-tight text-[clamp(4rem,22vw,7rem)] text-danger">
-    3
-  </p>
-  <p className="mt-2 text-base text-ink-soft">por vencer</p>
-</div>
-```
-
 ---
 
-## 17. Patrón "Futurista"
+## 17. Patrón "High-Performance" (Métricas, Halo y Progreso)
 
-Patrón visual para métricas destacadas: **fondo oscuro**, `--volt` como único
-acento, números en `--font-hero` (Orbitron). Da un aire de instrumento /
-consola sin caer en lo genérico. (Antes lo llamábamos "Cronómetro de box";
-el nombre en código y docs es **"Futurista"**.)
-
-### Tokens (nada nuevo suelto)
-- Acento: `--volt` (y derivados vía `color-mix`, no colores nuevos)
-- Números: `--font-hero` → Orbitron, `font-[700]`
-- Líneas / textura: `--rule`
-- Curvas: `--ease-out`, `--ease-in-out`
-
-### Animaciones ambientales (pasivas)
-Todo en `src/app/globals.css`, **CSS puro** (`@keyframes` / `transition`),
-**sin JS ni librerías**. Son ambientales: dan sensación de "vivo" sin
-distraer ni pesar en mobile. **Prohibido**: parpadeo agresivo, spinners
-rápidos como decoración, indicadores "en vivo" con blink (se quitaron a
-propósito de una versión anterior — no volver a meterlos).
-
-| Clase | Efecto | Detalle |
-|---|---|---|
-| `.futurista-anillo-glow` | Glow del anillo `--volt` | `drop-shadow` animado, pulso lento de 6s (no parpadeo) |
-| `.futurista-fondo` | Grid muy tenue de fondo | `::before` con `repeating-linear-gradient` de `--rule`, `opacity` baja, desplazamiento de 40s. Los hijos directos van con `z-index:1` |
-| `.futurista-num-in` | Entrada suave del número | Se combina con `key={valor}` para remontar y animar el cambio en vez de saltar |
-
-**`prefers-reduced-motion: reduce`**: un bloque `@media` al final de
-`globals.css` desactiva las tres (`animation: none !important`). Al agregar
-animaciones nuevas a este patrón, sumarlas a ese bloque.
+Patrón visual para métricas destacadas y feedback de entrenamiento: **fondo carbón satinado**, `--accent` (Hyper-Mint) como emisor de energía, números tabulares en `--font-hero` (JetBrains Mono). Reemplaza al antiguo patrón noventero por una estética de instrumentación deportiva moderna.
 
 ### Componente `AnilloProgreso`
-Indicador circular de progreso con número central. Implementa el patrón.
+- Anillo SVG con círculo de fondo (`--rule`) y círculo de progreso en `--accent`.
+- Círculo de progreso con glow sutil bioluminiscente (`filter: drop-shadow(0 0 4px var(--accent))`).
+- Número central en `--font-hero` (`JetBrains Mono`, bold) + label uppercase en tracking `0.08em`.
+- Transición suave con `var(--ease-out)` en `stroke-dashoffset`.
 
-**Ubicación**: `src/components/anillo-progreso.tsx`
-
-**Props**:
-- `valor: number` — valor actual
-- `max: number` — valor máximo para calcular el porcentaje
-- `label: string` — etiqueta descriptiva (ej: "días", "kg")
-- `className?: string` — clases adicionales opcionales
-
-**Características**:
-- Anillo SVG con círculo de fondo (`--rule`) y progreso (`--volt`)
-- Círculo de progreso lleva `.futurista-anillo-glow`
-- Número central usa `--font-hero` (Orbitron) con `font-[700]` + `.futurista-num-in` con `key={valor}`
-- Label en uppercase + tracking `[0.08em]` (estilo kicker)
-- Transición suave con `var(--ease-out)` en `stroke-dashoffset`
-- Radio fijo 54px, stroke 8px (tamaño compacto para cards)
-
-**Ejemplo de uso**:
-```jsx
-<div className="futurista-fondo p-5">
-  <AnilloProgreso valor={diasRestantes} max={duracionPlan} label="días" />
-</div>
-```
-
-### Cómo propagarlo a otras pantallas
-Al llevar el patrón al dashboard del dueño o a la rutina: envolver el
-contenedor de la métrica en `.futurista-fondo`, usar `AnilloProgreso` (o
-`--font-hero` + `--volt` a mano con los mismos tokens), y **no** agregar
-colores ni fuentes fuera de los listados arriba.
-
-**Corte asimétrico `.card-cut` + `.stagger` aplicados en** (todas las pantallas
-principales, dirección visual de `design/sysgym-10-pantallas.html`): `/mi`,
-`/panel` (Resumen), `/panel/clientes` (+ alta-form), `/panel/planes`,
-`/panel/ajustes`, `/panel/mensajes` (+ hilo), `/mi/mensajes` (+ hilo),
-`/mi/rutina` (+ generar-form, rutina-editor). Login queda con su propio
-patrón (`animate-slide-up` escalonado + display grande).
-
-**Aplicado en** (`AnilloProgreso`):
-- `/mi` (card "Tu cuota" — días restantes del plan, con `AnilloProgreso`)
-- `/panel` (bloque héroe del Resumen — grid `futurista-fondo` + `futurista-num-in`
-  en el número; **se conservan los tonos semánticos** `text-danger`/`text-warn`
-  porque la urgencia manda sobre la pureza de `--volt`, y `font-display` en vez de
-  Orbitron para no romper la identidad de la pantalla principal del dueño)
-
-**No aplicado en `/mi/rutina`**: no hay una métrica de progreso-hacia-un-máximo
-que justifique el anillo. Meter `futurista-fondo` en la metadata (objetivo ·
-nivel · días) sería decorar texto, no una métrica. Si más adelante hay algo tipo
-"días completados / días de la semana", ahí sí entra `AnilloProgreso`.
+### Timer de descanso flotante arrastrable (§17.1)
+- **Modo colapsado**: Píldora táctil o burbuja ergonómica con altura ≥ 48px y padding táctil generoso.
+- **Touch-drag con PointerEvents**: El usuario puede mover el timer libremente por la pantalla con un dedo.
+- **Edge-snapping magnético**: Al soltarse, se pega automáticamente al borde izquierdo o derecho más cercano con una curva fluida (`cubic-bezier(0.2, 0.9, 0.3, 1.2)`), evitando tapar el contenido de la pantalla.
+- **Discriminación de tap/click vs arrastre**: Un arrastre no dispara la apertura del timer; sólo un tap estático (sin desplazamiento) expande o colapsa el panel.
+- **Expansión in situ**: Al expandirse, se despliega en la posición donde se soltó el widget, autoconteniéndose para no desbordar el viewport ni tapar la barra de navegación inferior (`bottom-nav`).
+- **Persistencia en sesión**: Recuerda sus coordenadas en la sesión actual mientras el usuario navega la rutina.
 
 ---
 
 ## 18. Hidratación y SSR
 
-### suppressHydrationWarning en layout
-El elemento `<html>` en `src/app/layout.tsx` incluye `suppressHydrationWarning` para evitar errores de hidratación causados por:
-- Extensiones del navegador que inyectan atributos (ej: `his_skin_checked`, `data-*`)
-- Herramientas de seguridad/privacidad que modifican el DOM
-- Diferencias menores entre renderizado del servidor y cliente
-
 ```tsx
 <html lang="es" suppressHydrationWarning>
 ```
-
-**No aplicar** `suppressHydrationWarning` a otros elementos sin justificación. Solo usar en `<html>` o `<body>` cuando sea necesario para ignorar modificaciones externas al código.
+No aplicar `suppressHydrationWarning` a otros elementos sin justificación.
 
 ---
 
 ## 19. Checklist pre-commit
 
-- [ ] Solo tokens CSS (sin `bg-white`, sin hex, sin `text-gray-*`)
-- [ ] Inputs con `text-[16px]` y `bg-paper`
-- [ ] Toda `<img>` en contenedor de tamaño fijo + `object-contain/cover` + `alt` + fallback `onError`
-- [ ] Hijos flex con texto llevan `min-w-0`; imagen lleva `shrink-0`
-- [ ] Botones/links/chips con `active:scale-*`
-- [ ] Transiciones con propiedad concreta + `var(--ease-out)` (nunca `transition-all`)
-- [ ] Interactivos con `focus-visible:ring-2 ring-ink/20`
-- [ ] Nada tappable < 32px de alto; links de texto envueltos en botón con padding
-- [ ] Modales: Escape + backdrop + X, scroll de body bloqueado, `z-50`
-- [ ] Sin `<div onClick>`; iconos con `aria-label`
-- [ ] **Probado a 375px: cero scroll horizontal**
-- [ ] **Pasa el checklist §21** (30 s) y `scripts/revisar-ui.ps1` sin hallazgos
+- [ ] Solo tokens CSS (sin `bg-white`, sin hex, sin `text-gray-*`).
+- [ ] Inputs con `text-[16px]` y `bg-paper`.
+- [ ] Toda `<img>` en contenedor de tamaño fijo con `shrink-0` + fallback `onError`.
+- [ ] Hijos flex con texto llevan `min-w-0`.
+- [ ] Botones/links/chips con `active:scale-*`.
+- [ ] Transiciones con propiedad concreta + `var(--ease-out)`.
+- [ ] Nada tappable < 32px de alto; targets principales 44×44px.
+- [ ] Modales: Escape + backdrop + X, scroll bloqueado, `z-50`.
+- [ ] **Probado a 375px: cero scroll horizontal**.
 
 ---
 
-## 20. Capa ambiental (comportamiento por defecto de toda pantalla)
+## 20. Capa ambiental y polaridad consciente
 
-La app tiene UNA capa de efectos ambientales **preset-agnóstica**: funciona con
-cualquier `PRESETS_TEMA` y con cualquier `estiloVisual`. Cuelga del root
-tematizado (`className="capa-ambiental"` + `data-theme-polarity` + `data-motion`
-en los 3 layouts, `mi/layout.tsx` tiene 2 roots) — **no** de `estiloVisual`.
-Una pantalla nueva la hereda sola por usar los tokens; no reinventa lo suyo.
-
-### Qué provee, sin que la pantalla haga nada
-- **Textura** de grid tenue derivada de `--texture-color` (fija, `mask` que se
-  desvanece, `opacity` = `0.35 * --texture-alpha`).
-- **Semánticos legibles** en cualquier polaridad (`--danger/--warn/--ok`
-  re-derivados).
-- **Escalera de acento**, **superficies elevadas**, **scrim**, **sombras** y
-  **glow** como tokens polaridad-conscientes (ver §1).
-
-### Contrato: qué garantiza `temaToVars()` para TODO tema
-`--accent`, `--accent-contrast`, `--accent-weak`, `--accent-strong`, `--ring`,
-`--paper-3`, `--scrim`, `--elev-shadow-sm/-md`, `--danger(+-weak/-strong)`,
-`--warn`, `--ok`, `--glow-soft`, `--glow-strong`, `--glow-strength`,
-`--texture-color`, `--texture-alpha`, `--dur-fast/-base/-slow`, `--ease-drawer`.
-Pantalla y `globals.css` consumen sólo estos — nunca un hex, nunca `bg-white`,
-nunca `bg-ink/60`, nunca un `color-mix` ad-hoc contra `--volt`.
-
-### Preset-agnóstico vs. no (dónde va cada efecto)
-- **Va en la capa por defecto** si anima sólo `transform`/`opacity`/`filter:blur`
-  **y** su color sale de un token con piso de legibilidad (`--texture-color`,
-  `--glow-*`, `--elev-shadow-*`). Ej.: press feedback, entradas
-  (`.animate-*`, `.stagger`), textura de grid, slide del número, `card-cut`.
-- **Va detrás de `[data-estilo-visual]` / `[data-theme-polarity="dark"]`** si
-  depende de un tono/contraste concreto: glow neón en acento, scanline /
-  vignette / `mix-blend-mode: screen`, texturas de identidad (wash Estudio,
-  hatch Concreto, cuña Cancha).
-
-### `data-motion` (lo pide el tema) + `prefers-reduced-motion` (lo pide el SO)
-`resolverMotion(tema)` → `full` | `reduced` | `still`. `clasico` ⇒ `reduced`
-(conserva textura sutil + elevación + entradas, pierde los loops ambientales).
-`prefers-reduced-motion: reduce` sólo puede bajarlo más (bloque `@media` al
-final de `globals.css`). Loop ambiental nuevo ⇒ sumarlo a los selectores
-`[data-motion="reduced"], [data-motion="still"]` **y** al `@media` de reduced.
-
-### Anillo semántico
-`AnilloProgreso` con `tono="peligro|aviso|ok"`: el anillo **entero** (arco +
-número + glow) adopta el tono. No alcanza con teñir el número o un borde
-lateral. `tono="acento"` (default) = número en `--ink`, arco en `--accent`.
+- La app tiene una capa preset-agnóstica que resuelve contraste en modo oscuro (**Obsidian**) y claro (**Titanium Daylight**).
+- `temaToVars()` garantiza `--accent`, `--paper`, `--paper-2`, `--ink`, `--rule` y `--scrim` en ambos modos.
+- Prohibido acentos con contraste menor a 4.5 sobre el fondo correspondiente.
 
 ---
 
-## 21. Checklist de 30 segundos (repasar mirando una pantalla nueva)
+## 21. Checklist de 30 segundos
 
-Objetivo: no interpretable. Todo "sí" ⇒ la pantalla está lista. Referenciar en
-cualquier sesión como: **"pasá el checklist §21 de REGLAS_UI_EMIL.md"**.
-Chequeo automático de los patrones más comunes: `scripts/revisar-ui.ps1`.
-
-- [ ] **Color por token**: cero hex en JSX, cero `var(--volt)` literal (va
-      `--accent`), cero `bg-white`/`text-gray-*`. (`tema.ts` y `globals.css`
-      son los únicos que tocan `--volt` / hex crudos.)
-- [ ] **Links**: todo `<a>`/`<Link>`/`<button>`/`<summary>` textual usa
-      `linkClasses` (`inline` o `accion`). Ningún `underline underline-offset-2`
-      suelto.
-- [ ] **Encabezado de sección**: título + acción secundaria en fila
-      `justify-between`. Ningún `ml-auto` suelto en el stack vertical.
-- [ ] **Modal**: backdrop `bg-[color:var(--scrim)]` (no `bg-ink/60`); Escape +
-      backdrop + X; scroll del body bloqueado; `z-50`.
-- [ ] **Semánticos**: estado "vencido/urgente" se distingue al instante
-      (color + tamaño/peso, no sólo un borde de 2px). Anillo semántico usa
-      `tono`.
-- [ ] **Probado en preset oscuro Y claro** (p. ej. Noche y Papel): texto
-      legible, inputs y cards se distinguen del fondo, glow/scrim no rompen
-      contraste, textura apenas visible.
-- [ ] **Motion**: transiciones con propiedad concreta + `var(--ease-out)` (nunca
-      `transition-all`); loops ambientales nuevos apagados en `data-motion` y en
-      `prefers-reduced-motion`.
-- [ ] **375px**: cero scroll horizontal; `min-w-0` en hijos flex con texto;
-      `<img>` en caja de tamaño fijo con fallback.
-- [ ] **Táctil**: botones/links/chips con `active:scale-*`; nada tappable
-      < 32px; inputs con `text-[16px]` y `bg-paper`.
+- [ ] **Color por token**: cero hex en JSX, cero `bg-white`/`text-gray-*`.
+- [ ] **Links**: usan `linkClasses` (`inline` o `accion`), sin texto suelto sin caja.
+- [ ] **Encabezado de sección**: título + acción en fila `justify-between`.
+- [ ] **Modal**: backdrop `bg-[color:var(--scrim)]`, Escape + backdrop + X, `z-50`.
+- [ ] **Probado en preset Oscuro Y Claro**: texto legible, tarjetas distinguibles, sin pérdida de contraste.
+- [ ] **375px**: cero scroll horizontal, `min-w-0` en flex texto, imágenes con caja fija.
+- [ ] **Táctil**: elementos interactivos ≥ 44px, inputs con `text-[16px]`.
 
 ---
 
-## §10 — Checklist de afordancia (obligatorio antes de cerrar cualquier tarea de UI)
+## §10 — Checklist de afordancia
 
-Antes de marcar una pantalla como terminada, verificar:
-- [ ] Todo elemento que dispare una acción (link, tab, botón secundario)
-      tiene contenedor visual (borde y/o fondo) — nunca texto suelto sin caja.
-- [ ] Elementos "hermanos" del mismo tipo (pestañas, chips, tabs) comparten
-      el mismo tratamiento base — solo cambia el peso visual entre
-      seleccionado/no seleccionado. Nunca uno con caja y el resto sin caja.
-- [ ] Los íconos coinciden semánticamente con la acción (ej: "+" es agregar,
-      no cerrar; "×" o flecha es cerrar/colapsar).
-- [ ] Texto de ayuda o de error nunca comparte línea con un botón primario —
-      va en su propia línea, debajo.
-- [ ] Nada se corta a mitad de palabra (sin `truncate`/`line-clamp` en
-      contenido variable como listas de tags) — usar `flex flex-wrap` en
-      su lugar.
-- [ ] Ningún contenedor de página fuerza `min-h-screen` + `justify-between`
-      si el contenido puede ser corto — dejar que fluya con `pb-24` para
-      la bottom nav.
+- [ ] Todo elemento que dispare una acción tiene contenedor visual (borde y/o fondo).
+- [ ] Elementos hermanos comparten el mismo tratamiento base (ej: pastillas de series).
+- [ ] Íconos coinciden semánticamente con la acción.
+- [ ] Texto de ayuda/error va en su propia línea, debajo de la acción.
+- [ ] Nada se corta a mitad de palabra en listas variables (`flex-wrap`).
 - [ ] Todo elemento tocable tiene mínimo 44×44px de área táctil.
 
 ---
 
-## 15. Archivos de referencia
-
-```
-src/app/layout.tsx              → Orbitron font, suppressHydrationWarning
-src/app/globals.css              → tokens, capa ambiental, reset img, animaciones
-src/lib/tema.ts                  → DEFAULT_TEMA, temaToVars, derivarAmbiente,
-                                   polaridadTema, resolverMotion, --font-hero
-src/components/ui.tsx            → Button, Field, linkClasses
-src/components/anillo-progreso.tsx → AnilloProgreso (+ prop tono semántico)
-scripts/revisar-ui.ps1           → chequeo automático de patrones prohibidos
-src/app/login/page.tsx          → mobile-first completo
-src/app/panel/page.tsx          → número héroe + patrón Futurista (§17)
-src/app/panel/ajustes/*         → validación contraste
-src/app/mi/page.tsx             → AnilloProgreso en card "Tu cuota"
-src/app/mi/rutina/rutina-editor.tsx → miniatura + fallback + visor modal
-src/lib/logo/comprimir.ts        → compresión canvas → WebP <300 KB
-src/lib/logo/paleta.ts           → color dominante + paletas sugeridas
-src/app/panel/ajustes/logo-uploader.tsx → subida + caja fija + fallback
-```
-
----
-
-## 16. Filosofía Emil Kowalski
-
-- No UI genérica / templates
-- Jerarquía clara: 1 elemento dominante por pantalla
-- Físico > abstracto
-- Animaciones con propósito (nunca "porque queda lindo" en algo frecuente)
-- Mobile-first, táctil por defecto
-
----
-
-**Última actualización**: 2026-09-03 (§10 "Checklist de afordancia" nuevo —
-obligatorio antes de cerrar tarea de UI: contenedor visual en todo lo
-accionable, hermanos con mismo tratamiento base, íconos semánticos, ayuda/error
-en línea propia, sin corte a mitad de palabra, área táctil 44×44).
-Anterior: 2026-09-03 (§20 Capa ambiental preset-agnóstica:
-contrato de tokens que `temaToVars()`/`derivarAmbiente()` garantizan para todo
-tema — acento derivado, superficies elevadas, scrim, glow polaridad-consciente,
-semánticos re-derivados, `data-theme-polarity` + `data-motion` en los layouts,
-clase `.capa-ambiental` con textura universal; §21 Checklist de 30 s objetivo +
-`scripts/revisar-ui.ps1`; §1 tokens ambientales y regla "cero `var(--volt)`
-literal fuera de tema.ts/globals.css"; §6 acción de sección en fila
-`justify-between`; §9 backdrop `var(--scrim)`; §11 `linkClasses`; §17
-`AnilloProgreso` prop `tono` semántico).
-Anterior: 2026-09-02 (secciones 4-10 nuevas: bordes, imágenes,
-alineación, overflow, overlays, z-index — tras el bug de imágenes que rompían
-el layout en `/mi/rutina`; §5 subsección "Logo del gimnasio" tras el SPEC de
-logo + paletas; §17 componente `AnilloProgreso` + token `--font-hero` (Orbitron)
-para números especiales en indicadores circulares; §18 `suppressHydrationWarning`
-en layout para prevenir errores de extensiones del navegador; §17 reescrita como
-patrón "Futurista" con animaciones ambientales pasivas — glow del anillo, grid
-de fondo y transición del número — todo CSS puro y con `prefers-reduced-motion`);
-§17 patrón Futurista propagado a `/panel` (héroe del Resumen) conservando tonos
-semánticos; se descartó `/mi/rutina` por no tener métrica de progreso).
-**Aplicar al editar**: `src/app/` y `src/components/`.
-
-**Crítico:** `text-[16px]` en inputs evita el zoom en iOS.
+**Última actualización**: 2026-09-04 — Renovación completa a la identidad **Obsidian High-Performance**: paleta carbón/obsidiana con Hyper-Mint y Coral secundario, tipografía Plus Jakarta Sans + JetBrains Mono, esquinas redondeadas 10-16px ergonómicas, preset claro Titanium Daylight coherente, y preservación total de las reglas de usabilidad y rendimiento táctil móvil.

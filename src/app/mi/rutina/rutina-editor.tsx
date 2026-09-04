@@ -18,7 +18,7 @@ import {
 } from "@/lib/rutina/tipos";
 
 const campoCls =
-  "h-11 rounded-[5px] border border-rule bg-paper text-[16px] outline-none transition-[border-color] duration-150 [transition-timing-function:var(--ease-out)] focus:border-ink";
+  "h-11 rounded-[10px] border border-rule bg-paper text-[16px] outline-none transition-[border-color] duration-150 [transition-timing-function:var(--ease-out)] focus:border-ink";
 import { editarItem, editarTecnica, sustituirEjercicio } from "./actions";
 
 export type ItemEditable = {
@@ -132,7 +132,7 @@ function ExThumb({
   if (!url || err) {
     return (
       <div
-        className="grid size-[72px] shrink-0 place-items-center rounded-[8px] border border-rule bg-paper-2 text-ink-soft"
+        className="grid size-[68px] shrink-0 place-items-center rounded-[10px] border border-rule bg-paper-2 text-ink-soft"
         aria-hidden
       >
         <Glifo className="size-6" />
@@ -145,7 +145,7 @@ function ExThumb({
       type="button"
       onClick={onOpen}
       aria-label={`Ver ${ej?.nombre ?? "ejercicio"} en grande`}
-      className="group relative size-[72px] shrink-0 overflow-hidden rounded-[8px] border border-rule bg-paper-2 transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20"
+      className="group relative size-[68px] shrink-0 overflow-hidden rounded-[10px] border border-rule bg-paper-2 transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20"
     >
       <ImagenAnimada
         url={url}
@@ -250,6 +250,20 @@ export function RutinaEditor({
   const [seriesGuardadas, setSeriesGuardadas] = useState<Record<string, number>>(
     {},
   );
+  // Progreso de series completadas hoy (guardado en memoria local de la sesión por ejercicio)
+  const [setsCompletados, setSetsCompletados] = useState<Record<string, number[]>>({});
+
+  function toggleSet(itemId: string, setIndex: number) {
+    setSetsCompletados((prev) => {
+      const actuales = prev[itemId] ?? [];
+      const existe = actuales.includes(setIndex);
+      const nuevos = existe
+        ? actuales.filter((s) => s !== setIndex)
+        : [...actuales, setIndex];
+      return { ...prev, [itemId]: nuevos };
+    });
+  }
+
   const multi = dias.length > 1;
   const visibles = multi ? dias.filter((d) => d.numero === activo) : dias;
   return (
@@ -258,61 +272,186 @@ export function RutinaEditor({
         <DiaTabs dias={dias} activo={activo} onSelect={setActivo} />
       ) : null}
       <div key={activo} className="stagger space-y-8">
-      {visibles.map((dia) => {
-        const tiempoMin = Math.round(
-          dia.items.reduce(
-            (a, it) => a + (seriesGuardadas[it.id] ?? it.series) * 2.2,
+        {visibles.map((dia) => {
+          const totalSeries = dia.items.reduce(
+            (acc, it) => acc + (seriesGuardadas[it.id] ?? it.series),
             0,
-          ),
-        );
-        const musculos = [
-          ...new Set(
-            dia.items.map(
-              (i) => GRUPO_MUSCULAR_LABEL[i.ejercicio?.grupo_muscular ?? ""],
-            ),
-          ),
-        ]
-          .filter(Boolean)
-          .join(" · ");
-        return (
-          <section key={dia.numero}>
-            <h2 className="font-display text-lg">{dia.titulo}</h2>
-            <p className="mt-0.5 text-xs text-ink-soft">
-              {dia.items.length} ejercicios · ~{tiempoMin} min
-            </p>
-            {musculos ? (
-              <div className="mt-1.5 flex flex-wrap gap-1.5">
-                {[...new Set(dia.items.map(i => GRUPO_MUSCULAR_LABEL[i.ejercicio?.grupo_muscular ?? ""]))].filter(Boolean).map((g, i) => (
-                  <span key={i} className="inline-block rounded-full border border-rule bg-paper px-2 py-0.5 text-[11px] uppercase tracking-[0.08em] text-ink-soft">
-                    {g}
-                  </span>
-                ))}
-              </div>
-            ) : null}
+          );
+          const tiempoMin = Math.round(totalSeries * 2.2);
 
-            <div className="mt-3 pb-32 md:pb-4">
-              {/* Orden tal cual lo arma el motor (prioridad de énfasis,
-                  prefatiga y rol de ranura). No reagrupar por básicos/
-                  accesorios: eso rompía la secuencia pensada del día. */}
-              <ul className="stagger-in card-cut border border-rule divide-y divide-rule bg-paper-2 overflow-hidden">
-                {dia.items.map((item, i) => (
-                  <ItemFila
-                    key={item.id}
-                    indice={i + 1}
-                    item={item}
-                    ejercicios={ejercicios}
-                    mostrarTecnica={mostrarTecnica}
-                    onVer={setVisor}
-                    onSeriesGuardadas={(n) =>
-                      setSeriesGuardadas((p) => ({ ...p, [item.id]: n }))
-                    }
-                  />
-                ))}
-              </ul>
-            </div>
-          </section>
-        );
-      })}
+          // Contar series completadas del día actual
+          const seriesHechas = dia.items.reduce((acc, it) => {
+            const hechas = (setsCompletados[it.id] ?? []).filter(
+              (s) => s < (seriesGuardadas[it.id] ?? it.series),
+            ).length;
+            return acc + hechas;
+          }, 0);
+
+          const pct = totalSeries > 0 ? Math.round((seriesHechas / totalSeries) * 100) : 0;
+
+          // Estimación de volumen de carga basado en las series
+          const volumenKilos = totalSeries * 140;
+
+          const musculos = [
+            ...new Set(
+              dia.items.map(
+                (i) => GRUPO_MUSCULAR_LABEL[i.ejercicio?.grupo_muscular ?? ""],
+              ),
+            ),
+          ]
+            .filter(Boolean)
+            .join(" · ");
+
+          // Circunferencia del anillo SVG (radio 23 -> 2 * PI * 23 = ~144.5)
+          const strokeCirc = 144.5;
+          const strokeOffset = strokeCirc - (strokeCirc * pct) / 100;
+
+          return (
+            <section key={dia.numero}>
+              {/* Hero Card: Resumen del Día y Progreso de Sesión */}
+              <div className="relative overflow-hidden rounded-[16px] border border-rule bg-paper-2 p-4 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="rounded-[5px] bg-[color:var(--accent-glow)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-accent">
+                        Sesión Activa
+                      </span>
+                      <span className="text-[11px] text-ink-soft">
+                        {dia.items.length} ejercicios
+                      </span>
+                    </div>
+                    <h2 className="mt-1 font-display text-lg font-bold tracking-tight text-ink">
+                      {dia.titulo}
+                    </h2>
+                    {musculos ? (
+                      <p className="mt-0.5 text-xs text-ink-soft">
+                        {musculos}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  {/* Anillo de progreso circular */}
+                  <div className="relative size-[54px] shrink-0">
+                    <svg viewBox="0 0 54 54" className="size-full -rotate-90">
+                      <circle
+                        cx="27"
+                        cy="27"
+                        r="23"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="4.5"
+                        className="text-rule"
+                      />
+                      <circle
+                        cx="27"
+                        cy="27"
+                        r="23"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="4.5"
+                        strokeLinecap="round"
+                        strokeDasharray={strokeCirc}
+                        strokeDashoffset={strokeOffset}
+                        className="text-accent transition-[stroke-dashoffset] duration-500 [transition-timing-function:var(--ease-out)]"
+                      />
+                    </svg>
+                    <span
+                      className="absolute inset-0 flex items-center justify-center text-xs font-bold text-ink"
+                      style={{ fontFamily: "var(--font-hero)" }}
+                    >
+                      {pct}%
+                    </span>
+                  </div>
+                </div>
+
+                {/* Grilla de Métricas Técnicas */}
+                <div className="mt-3.5 grid grid-cols-3 gap-2 border-t border-rule pt-3">
+                  <div>
+                    <div
+                      className="text-[15px] font-bold leading-tight text-ink"
+                      style={{ fontFamily: "var(--font-hero)" }}
+                    >
+                      {seriesHechas}/{totalSeries}
+                    </div>
+                    <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-ink-soft">
+                      Series
+                    </div>
+                  </div>
+                  <div>
+                    <div
+                      className="text-[15px] font-bold leading-tight text-ink"
+                      style={{ fontFamily: "var(--font-hero)" }}
+                    >
+                      ~{tiempoMin}m
+                    </div>
+                    <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-ink-soft">
+                      Duración
+                    </div>
+                  </div>
+                  <div>
+                    <div
+                      className="text-[15px] font-bold leading-tight text-ink"
+                      style={{ fontFamily: "var(--font-hero)" }}
+                    >
+                      ~{volumenKilos.toLocaleString("es-AR")} kg
+                    </div>
+                    <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-ink-soft">
+                      Volumen Est.
+                    </div>
+                  </div>
+                </div>
+
+                {/* Barra horizontal de progreso de sesión */}
+                <div className="mt-3">
+                  <div className="flex items-center justify-between text-[11px] text-ink-soft">
+                    <span>Progreso de entrenamiento</span>
+                    <span
+                      className="font-bold text-ink"
+                      style={{ fontFamily: "var(--font-hero)" }}
+                    >
+                      {seriesHechas} de {totalSeries} series
+                    </span>
+                  </div>
+                  <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full border border-rule bg-paper">
+                    <div
+                      className="h-full bg-accent transition-[width] duration-300 [transition-timing-function:var(--ease-out)]"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Lista de ejercicios con nuevo card style Obsidian */}
+              <div className="mt-5 pb-32 md:pb-4">
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-ink-soft">
+                    Ejercicios del día
+                  </span>
+                  <span className="text-[11px] text-ink-soft">
+                    Tildá cada serie al terminar
+                  </span>
+                </div>
+                <ul className="stagger-in divide-y divide-rule overflow-hidden rounded-[16px] border border-rule bg-paper-2 shadow-sm">
+                  {dia.items.map((item, i) => (
+                    <ItemFila
+                      key={item.id}
+                      indice={i + 1}
+                      item={item}
+                      ejercicios={ejercicios}
+                      mostrarTecnica={mostrarTecnica}
+                      onVer={setVisor}
+                      setsCompletados={setsCompletados[item.id] ?? []}
+                      onToggleSet={(idx) => toggleSet(item.id, idx)}
+                      onSeriesGuardadas={(n) =>
+                        setSeriesGuardadas((p) => ({ ...p, [item.id]: n }))
+                      }
+                    />
+                  ))}
+                </ul>
+              </div>
+            </section>
+          );
+        })}
       </div>
       {visor ? (
         <VisorEjercicio ej={visor} onClose={() => setVisor(null)} />
@@ -321,8 +460,7 @@ export function RutinaEditor({
   );
 }
 
-/** Selector de días: las 3 pestañas comparten contenedor (borde); la activa
- *  además va con fondo relleno. */
+/** Selector de días: pestañas Obsidian con esquinas redondeadas 12px */
 function DiaTabs({
   dias,
   activo,
@@ -342,9 +480,9 @@ function DiaTabs({
             type="button"
             onClick={() => onSelect(d.numero)}
             aria-pressed={on}
-            className={`flex-1 rounded-lg border px-3 py-2 text-xs transition-[transform,color,background-color,border-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${
+            className={`flex-1 rounded-[12px] border px-3 py-2.5 text-xs font-semibold transition-[transform,color,background-color,border-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${
               on
-                ? "border-ink bg-ink font-medium text-paper"
+                ? "border-accent bg-accent text-accent-ink shadow-sm"
                 : "border-rule bg-paper-2 text-ink hover:border-ink/40"
             }`}
           >
@@ -366,6 +504,8 @@ function ItemFila({
   mostrarTecnica,
   onVer,
   onSeriesGuardadas,
+  setsCompletados,
+  onToggleSet,
 }: {
   item: ItemEditable;
   indice: number;
@@ -373,6 +513,8 @@ function ItemFila({
   mostrarTecnica: boolean;
   onVer: (ej: Ejercicio) => void;
   onSeriesGuardadas: (series: number) => void;
+  setsCompletados: number[];
+  onToggleSet: (setIndex: number) => void;
 }) {
   const [series, setSeries] = useState(String(item.series));
   const [reps, setReps] = useState(item.repeticiones);
@@ -451,8 +593,10 @@ function ItemFila({
   if (!seriesOpts.includes(series)) seriesOpts.unshift(series);
   if (!repsOpts.includes(reps)) repsOpts.unshift(reps);
 
+  const numSeries = Number(series) || item.series;
+
   return (
-    <li className="p-4">
+    <li className="p-4 transition-colors duration-150">
       <div className="flex items-start gap-3">
         <ExThumb ej={ej} onOpen={() => ej && onVer(ej)} />
 
@@ -461,18 +605,18 @@ function ItemFila({
             <div className="min-w-0">
               <div className="flex items-baseline gap-1.5">
                 <span
-                  className="shrink-0 text-[11px] font-[700] leading-none text-ink-soft"
+                  className="shrink-0 text-[11px] font-[700] leading-none text-accent"
                   style={{ fontFamily: "var(--font-hero)" }}
                   aria-hidden
                 >
                   {String(indice).padStart(2, "0")}
                 </span>
-                <p className="min-w-0 font-display text-[15px] leading-tight text-ink">
+                <p className="min-w-0 font-display text-[15px] font-bold leading-tight text-ink">
                   {ej?.nombre ?? "Ejercicio"}
                 </p>
               </div>
               {ej?.grupo_muscular ? (
-                <span className="mt-1 inline-block text-[11px] uppercase tracking-[0.08em] text-ink-soft">
+                <span className="mt-1 inline-block text-[10.5px] font-semibold uppercase tracking-[0.06em] text-ink-soft">
                   {GRUPO_MUSCULAR_LABEL[ej.grupo_muscular] ?? ej.grupo_muscular}
                 </span>
               ) : null}
@@ -486,7 +630,7 @@ function ItemFila({
                   ? "Cerrar alternativas"
                   : "No conozco este ejercicio o me molesta"
               }
-              className="-mr-1 -mt-1 grid size-8 shrink-0 place-items-center rounded-[6px] text-ink-soft transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-90 active:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20"
+              className="-mr-1 -mt-1 grid size-8 shrink-0 place-items-center rounded-[8px] text-ink-soft transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-90 active:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20"
             >
               <svg
                 viewBox="0 0 24 24"
@@ -513,9 +657,9 @@ function ItemFila({
             </button>
           </div>
 
-          {/* Prescripción: el dato dominante de la card. */}
+          {/* Prescripción: el dato dominante de la card con JetBrains Mono */}
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
-            <span className="inline-flex items-baseline gap-1 rounded-full border border-rule bg-paper px-2 py-0.5 text-[11px] text-ink-soft">
+            <span className="inline-flex items-baseline gap-1 rounded-full border border-rule bg-paper px-2.5 py-0.5 text-[11px] text-ink-soft">
               <b
                 className="font-[700] text-ink"
                 style={{ fontFamily: "var(--font-hero)" }}
@@ -524,7 +668,7 @@ function ItemFila({
               </b>
               series
             </span>
-            <span className="inline-flex items-baseline gap-1 rounded-full border border-rule bg-paper px-2 py-0.5 text-[11px] text-ink-soft">
+            <span className="inline-flex items-baseline gap-1 rounded-full border border-rule bg-paper px-2.5 py-0.5 text-[11px] text-ink-soft">
               <b
                 className="font-[700] text-ink"
                 style={{ fontFamily: "var(--font-hero)" }}
@@ -534,10 +678,38 @@ function ItemFila({
               reps
             </span>
             {item.tecnica ? (
-              <span className="inline-flex items-center rounded-full border border-rule bg-paper px-2 py-0.5 text-[11px] text-ink-soft">
+              <span className="inline-flex items-center rounded-full border border-rule bg-paper px-2.5 py-0.5 text-[11px] font-medium text-ink-soft">
                 {TECNICA_LABEL[item.tecnica]}
               </span>
             ) : null}
+          </div>
+
+          {/* Tracker táctil de series de hoy (mínimo 44x44px por botón táctil §3 WCAG) */}
+          <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 rounded-[10px] border border-rule bg-paper p-2">
+            <span className="text-[11px] font-semibold text-ink-soft">
+              Series de hoy:
+            </span>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {Array.from({ length: Math.min(numSeries, 8) }).map((_, sIdx) => {
+                const hecho = setsCompletados.includes(sIdx);
+                return (
+                  <button
+                    key={sIdx}
+                    type="button"
+                    onClick={() => onToggleSet(sIdx)}
+                    aria-label={`Serie ${sIdx + 1} de ${numSeries} ${hecho ? "completada" : "pendiente"}`}
+                    className={`grid size-11 min-w-[44px] place-items-center rounded-[10px] border text-xs font-bold transition-all duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${
+                      hecho
+                        ? "border-accent bg-accent text-accent-ink shadow-sm"
+                        : "border-rule bg-paper-2 text-ink-soft hover:border-ink/40"
+                    }`}
+                    style={{ fontFamily: "var(--font-hero)" }}
+                  >
+                    {hecho ? "✓" : sIdx + 1}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {ej?.descripcion ? (
@@ -547,7 +719,7 @@ function ItemFila({
           ) : null}
 
           <details className="group mt-2">
-            <summary className="inline-flex w-fit cursor-pointer select-none list-none items-center gap-1 rounded-[5px] border border-rule px-2.5 py-1 text-[11px] text-ink-soft transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 active:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 [&::-webkit-details-marker]:hidden">
+            <summary className="inline-flex w-fit cursor-pointer select-none list-none items-center gap-1 rounded-[8px] border border-rule px-2.5 py-1 text-[11px] font-medium text-ink-soft transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 active:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 [&::-webkit-details-marker]:hidden">
               <svg
                 viewBox="0 0 24 24"
                 width="12"
@@ -562,59 +734,59 @@ function ItemFila({
               >
                 <path d="m6 9 6 6 6-6" />
               </svg>
-              <span className="group-open:hidden">Ajustar</span>
+              <span className="group-open:hidden">Ajustar plan</span>
               <span className="hidden group-open:inline">Listo</span>
             </summary>
             <div className="mt-3 flex flex-wrap items-end gap-3">
-            <label className="block">
-              <span className="block text-[11px] text-ink-soft mb-1">Series</span>
-              <select
-                value={series}
-                onChange={(e) => setSeries(e.target.value)}
-                className={`${campoCls} w-16 px-2 text-center`}
-              >
-                {seriesOpts.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <span className="pb-3 text-ink-soft">×</span>
-            <label className="block">
-              <span className="block text-[11px] text-ink-soft mb-1">Reps</span>
-              <select
-                value={reps}
-                onChange={(e) => setReps(e.target.value)}
-                className={`${campoCls} w-24 px-2`}
-              >
-                {repsOpts.map((r) => (
-                  <option key={r} value={r}>
-                    {r}
-                  </option>
-                ))}
-              </select>
-            </label>
-            {dirty ? (
-              <button
-                type="button"
-                onClick={guardar}
-                disabled={pending}
-                className="inline-flex items-center gap-2 h-11 px-4 rounded-[5px] bg-ink text-paper text-sm font-medium transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 disabled:opacity-50"
-              >
-                {pending ? (
-                  <>
-                    <Spinner />
-                    Guardando…
-                  </>
-                ) : (
-                  "Guardar"
-                )}
-              </button>
-            ) : null}
-            {msg ? (
-              <span className="pb-3 text-xs text-ok animate-fade-in">{msg}</span>
-            ) : null}
+              <label className="block">
+                <span className="block text-[11px] text-ink-soft mb-1">Series</span>
+                <select
+                  value={series}
+                  onChange={(e) => setSeries(e.target.value)}
+                  className={`${campoCls} w-16 px-2 text-center`}
+                >
+                  {seriesOpts.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <span className="pb-3 text-ink-soft">×</span>
+              <label className="block">
+                <span className="block text-[11px] text-ink-soft mb-1">Reps</span>
+                <select
+                  value={reps}
+                  onChange={(e) => setReps(e.target.value)}
+                  className={`${campoCls} w-24 px-2`}
+                >
+                  {repsOpts.map((r) => (
+                    <option key={r} value={r}>
+                      {r}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {dirty ? (
+                <button
+                  type="button"
+                  onClick={guardar}
+                  disabled={pending}
+                  className="inline-flex items-center gap-2 h-11 px-4 rounded-[10px] bg-accent text-accent-ink text-sm font-bold transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 disabled:opacity-50 shadow-sm"
+                >
+                  {pending ? (
+                    <>
+                      <Spinner />
+                      Guardando…
+                    </>
+                  ) : (
+                    "Guardar"
+                  )}
+                </button>
+              ) : null}
+              {msg ? (
+                <span className="pb-3 text-xs text-ok animate-fade-in font-medium">{msg}</span>
+              ) : null}
             </div>
           </details>
 
@@ -650,7 +822,7 @@ function ItemFila({
           ) : null}
 
           {abrirCambio ? (
-            <div className="mt-3 rounded-[5px] border border-rule bg-paper p-3 animate-fade-in">
+            <div className="mt-3 rounded-[12px] border border-rule bg-paper p-3 animate-fade-in">
               <div className="mb-2 flex flex-wrap gap-1.5">
                 {MOLESTIAS.map((m) => {
                   const on = molestias.includes(m);
@@ -663,10 +835,10 @@ function ItemFila({
                           on ? p.filter((x) => x !== m) : [...p, m],
                         )
                       }
-                      className={`h-11 rounded-[5px] border px-3 text-[11px] transition-colors ${
+                      className={`h-11 rounded-[10px] border px-3 text-[11px] font-semibold transition-colors ${
                         on
-                          ? "border-ink bg-ink text-paper"
-                          : "border-rule text-ink-soft"
+                          ? "border-accent bg-accent text-accent-ink"
+                          : "border-rule text-ink-soft hover:border-ink/40"
                       }`}
                     >
                       {MOLESTIA_LABEL[m]}
@@ -687,7 +859,7 @@ function ItemFila({
                       type="button"
                       onClick={() => cambiar(alt)}
                       disabled={pending}
-                      className="h-11 px-3 rounded-[5px] border border-rule bg-paper-2 text-sm transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 disabled:opacity-50"
+                      className="h-11 px-3 rounded-[10px] border border-rule bg-paper-2 text-sm font-medium transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 disabled:opacity-50"
                     >
                       {alt.nombre}
                     </button>

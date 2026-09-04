@@ -79,7 +79,7 @@ export default async function MiRutinaPage() {
   const entradaManual = (
     <details className="group">
       <summary
-        className={`border border-border rounded-lg px-3 py-2 inline-flex items-center gap-1.5 w-fit cursor-pointer select-none list-none text-sm text-ink-soft [&::-webkit-details-marker]:hidden ${linkClasses.inline}`}
+        className={`border border-rule rounded-[10px] px-3 py-2 inline-flex items-center gap-1.5 w-fit cursor-pointer select-none list-none text-sm text-ink-soft [&::-webkit-details-marker]:hidden ${linkClasses.inline}`}
       >
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="shrink-0 transition-transform duration-150 [transition-timing-function:var(--ease-out)] group-open:rotate-45">
           <path d="M12 5v14M5 12h14"/>
@@ -89,7 +89,7 @@ export default async function MiRutinaPage() {
         </span>
         <span className="hidden group-open:inline">Cerrar armado manual</span>
       </summary>
-      <div className="mt-3 rounded-[6px] border border-rule bg-paper-2 p-4 animate-fade-in">
+      <div className="mt-3 rounded-[14px] border border-rule bg-paper-2 p-4 animate-fade-in">
         <p className="mb-3 text-xs leading-snug text-ink-soft">
           Elegí ejercicios, series y reps, y sumá una técnica de intensidad por
           ejercicio si la usás. Se guarda como tu rutina y reemplaza la que
@@ -103,7 +103,7 @@ export default async function MiRutinaPage() {
   const linkAvanzado = (
     <Link
       href="/mi/rutina/avanzado"
-      className={`border border-border rounded-lg px-3 py-2 inline-flex items-center gap-1.5 w-fit text-sm text-ink-soft ${linkClasses.inline}`}
+      className={`border border-rule rounded-[10px] px-3 py-2 inline-flex items-center gap-1.5 w-fit text-sm text-ink-soft ${linkClasses.inline}`}
     >
       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="shrink-0">
         <path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM12 14l3-3m-6 0l3 3"/>
@@ -114,7 +114,7 @@ export default async function MiRutinaPage() {
 
   const regenerarDetails = rutina ? (
     <details className="group">
-      <summary className="flex w-fit cursor-pointer select-none list-none items-center gap-1.5 rounded-[5px] border border-rule px-3 py-2 text-sm text-ink-soft transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 active:bg-paper-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 [&::-webkit-details-marker]:hidden">
+      <summary className="flex w-fit cursor-pointer select-none list-none items-center gap-1.5 rounded-[10px] border border-rule px-3 py-2 text-sm text-ink-soft transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 active:bg-paper-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 [&::-webkit-details-marker]:hidden">
         <svg
           viewBox="0 0 24 24"
           width="15"
@@ -135,7 +135,7 @@ export default async function MiRutinaPage() {
       </summary>
       <div
         id="generar-rutina-auto"
-        className="mt-3 w-[min(22rem,calc(100vw-2.5rem))] scroll-mt-4 rounded-[6px] border border-rule bg-paper-2 p-4 animate-fade-in"
+        className="mt-3 w-[min(22rem,calc(100vw-2.5rem))] scroll-mt-4 rounded-[14px] border border-rule bg-paper-2 p-4 animate-fade-in"
       >
         <p className="mb-3 text-xs text-ink-soft">
           Cambiá lo que haga falta y armamos un plan nuevo. Reemplaza los
@@ -219,7 +219,7 @@ export default async function MiRutinaPage() {
             const pasos = p?.explicacion ?? [];
             if (rutina.origen === "manual" || pasos.length === 0) return null;
             return (
-              <details className="group rounded-[6px] border border-rule bg-paper-2 p-4">
+              <details className="group rounded-[14px] border border-rule bg-paper-2 p-4">
                 <summary
                   className={`w-fit cursor-pointer select-none text-sm text-ink-soft [&::-webkit-details-marker]:hidden ${linkClasses.inline}`}
                 >
