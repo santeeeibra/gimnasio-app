@@ -15,6 +15,7 @@ const NAV = [
   { href: "/admin/errores", label: "Errores" },
   { href: "/admin/planes", label: "Planes" },
   { href: "/admin/push-prueba", label: "Push de prueba" },
+  { href: "/admin/simulador-rutina", label: "Simulador rutinas" },
 ];
 
 export default async function AdminLayout({

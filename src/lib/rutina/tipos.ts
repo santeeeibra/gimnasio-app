@@ -319,7 +319,13 @@ export type EntradaMotor = {
   zonasDolor?: string[];
   seed?: number; // varía la selección entre candidatos equivalentes (regenerar)
   avanzado?: OpcionesAvanzadas; // solo nivel avanzado; undefined = flujo actual
+  // Solo para el simulador de /admin: acumula un trace legible de qué le suma
+  // cada elección al plan. El flujo real nunca lo pasa → cero cambio de salida.
+  debug?: boolean;
 };
+
+// Rol de la ranura que ocupa el ejercicio dentro del día.
+export type Rol = "primario" | "secundario" | "aislamiento";
 
 export type ItemGenerado = {
   ejercicio_slug: string;
@@ -327,6 +333,7 @@ export type ItemGenerado = {
   repeticiones: string;
   nota: string; // descanso / cue corto / RIR
   tecnica?: Tecnica; // técnica de intensidad en la última serie (modo avanzado)
+  rol?: Rol; // informativo (lo usa el simulador de /admin); no se persiste
 };
 
 export type DiaGenerado = {
@@ -337,4 +344,6 @@ export type DiaGenerado = {
 export type PlanGenerado = {
   entrada: EntradaMotor;
   dias: DiaGenerado[];
+  // Presente solo si entrada.debug === true (simulador del panel de soporte).
+  trace?: string[];
 };

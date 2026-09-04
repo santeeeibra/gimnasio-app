@@ -26,6 +26,7 @@ import {
   type PlanGenerado,
   type ItemGenerado,
   type Rango,
+  type Rol,
   type Sexo,
   type Tecnica,
 } from "./tipos";
@@ -50,8 +51,6 @@ const EQUIPO_PESO: Record<string, number> = {
 // ─────────────────────────────────────────────────────────────
 // Ranuras: cada día es una lista de "huecos" a llenar
 // ─────────────────────────────────────────────────────────────
-
-type Rol = "primario" | "secundario" | "aislamiento";
 
 type Ranura = {
   grupo: string;
@@ -310,10 +309,17 @@ function intercambiarPorEnfasis(
   enfasis: Enfasis[],
   sexo: Sexo,
   esFullBody: boolean,
+  trace?: string[],
+  tituloDia?: string,
 ): Ranura[] {
   const zonas: Enfasis[] =
     enfasis.length > 0 ? enfasis : sexo === "mujer" ? ["gluteos"] : [];
   if (zonas.length === 0) return ranuras;
+  if (trace && enfasis.length === 0 && sexo === "mujer") {
+    trace.push(
+      `${tituloDia}: sin zona elegida + mujer → énfasis por defecto en glúteos (por trueque, no suma series).`,
+    );
+  }
 
   const out = [...ranuras];
   const gruposBase = new Set(ranuras.map((r) => r.grupo));
@@ -323,7 +329,12 @@ function intercambiarPorEnfasis(
   for (const zona of zonas) {
     const gruposZona = ENFASIS_GRUPOS[zona];
     // Afinidad de día: en split dividido, sólo si el día ya entrena la zona.
-    if (!esFullBody && !gruposZona.some((g) => gruposBase.has(g))) continue;
+    if (!esFullBody && !gruposZona.some((g) => gruposBase.has(g))) {
+      trace?.push(
+        `${tituloDia}: énfasis en ${zona} NO se aplica (el día no entrena esa zona; guard de afinidad).`,
+      );
+      continue;
+    }
     // Apuntar a un grupo real de la zona que el día ya toque; si no, el primero.
     const grupoObjetivo =
       gruposZona.find((g) => gruposBase.has(g)) ?? gruposZona[0];
@@ -331,6 +342,9 @@ function intercambiarPorEnfasis(
     for (let t = 0; t < trueques; t++) {
       const donante = elegirDonante(out, gruposEnfasis);
       if (donante === -1) break;
+      trace?.push(
+        `${tituloDia}: énfasis en ${zona} → ranura de ${out[donante].grupo} (${out[donante].rol}) se convierte en ${grupoObjetivo}. No suma series: el presupuesto del día no cambia.`,
+      );
       out[donante] = {
         grupo: grupoObjetivo,
         patron,
@@ -561,9 +575,20 @@ const FACTOR_ESFUERZO: Record<string, number> = {
 // Fase 2 · ajustarPorSexo: la clienta mujer baja 1 serie por ranura (compuestos
 // y aislamientos). Se aplica sobre el TOTAL del día, no ranura por ranura, para
 // que el techo quede cerrado antes de repartir. Piso: 2 series por ranura.
-function ajustarPorSexo(total: number, sexo: Sexo, nRanuras: number): number {
+function ajustarPorSexo(
+  total: number,
+  sexo: Sexo,
+  nRanuras: number,
+  trace?: string[],
+): number {
   const t = sexo === "mujer" ? total - nRanuras : total;
-  return Math.max(2 * nRanuras, t);
+  const final = Math.max(2 * nRanuras, t);
+  if (trace && sexo === "mujer") {
+    trace.push(
+      `Sexo mujer: -1 serie por ranura sobre el total del día (${total} → ${final} series, piso 2 por ranura).`,
+    );
+  }
+  return final;
 }
 
 // Fase 4 · Reparte el presupuesto de series entre las ranuras del día en
@@ -942,6 +967,21 @@ function elegir(
 // API pública
 // ─────────────────────────────────────────────────────────────
 
+// Solo para el trace del simulador: describe en una línea qué sesga cada
+// objetivo en la selección de ejercicios (ver sesgoObjetivo()).
+const TRACE_OBJETIVO: Record<Objetivo, string> = {
+  fuerza:
+    "prioriza barra en los primarios (+18) y castiga máquina/polea y aislamientos; recorta accesorias a 2 por día.",
+  hipertrofia:
+    "barra en el primario (+6) y mancuerna/máquina/polea en secundarios y aislamientos (+8); sesión completa.",
+  tonificar:
+    "máquina/polea en accesorios (+8) y compuestos de mancuerna/peso corporal (+4); garantiza core al cierre.",
+  resistencia:
+    "máquina/polea/peso corporal (+10) y penaliza barra en primarios (-8); garantiza core al cierre.",
+  bajar_grasa:
+    "igual que fuerza: barra pesada en primarios (+18), penaliza accesorios; el déficit lo hace la dieta.",
+};
+
 export function generarPlan(
   entrada: EntradaMotor,
   ejercicios: Ejercicio[],
@@ -963,6 +1003,36 @@ export function generarPlan(
     ...new Set<Molestia>([...(avanzado?.evitar ?? []), ...zonasDolor]),
   ];
 
+  // Trace del simulador (/admin/simulador-rutina). Sin debug queda undefined y
+  // ninguna línea se calcula.
+  const trace: string[] | undefined = entrada.debug ? [] : undefined;
+  trace?.push(`Objetivo ${objetivo}: ${TRACE_OBJETIVO[objetivo]}`);
+  trace?.push(
+    `Objetivo ${objetivo}: esquema base ${ESQUEMA[objetivo].primario.series}×${ESQUEMA[objetivo].primario.reps} primario · ${ESQUEMA[objetivo].secundario.series}×${ESQUEMA[objetivo].secundario.reps} secundario · ${ESQUEMA[objetivo].aislamiento.series}×${ESQUEMA[objetivo].aislamiento.reps} aislamiento · ${ESQUEMA[objetivo].descanso}. Es además el TECHO DURO de series por rol.`,
+  );
+  trace?.push(
+    `Nivel ${entrada.nivel}: presupuesto base de ${PRESUPUESTO_DIA[entrada.nivel]} series por día (techo cerrado; el énfasis no lo sube).`,
+  );
+  trace?.push(
+    `Equipo "${entrada.preferencia}": ${
+      equipoPrefs.length === 0
+        ? "sin restricción, todos los ejercicios puntúan igual por equipo."
+        : `+20 a ${equipoPrefs.join(" / ")}, -25 al resto (solo entra si no queda otra).`
+    }`,
+  );
+  if (evitar.length > 0) {
+    for (const m of evitar) {
+      trace?.push(
+        `Evitar ${m}: se descartan los ejercicios que cargan esa zona (patrón + equipo). Si un hueco queda sin candidato, se ignora el filtro para ese hueco.`,
+      );
+    }
+  }
+  if (sexo === "mujer") {
+    trace?.push(
+      "Sexo mujer: sesgo de puntaje (+6 glúteos/isquios, +4 patrón de cadera, +4 accesorios en máquina/polea). Es sesgo, no filtro.",
+    );
+  }
+
   // Fase 2: factor de volumen (solo avanzado) que escala el presupuesto cerrado
   // de series por día. Sin avanzado → 1.
   const factorVol = FACTOR_VOLUMEN[avanzado?.volumen ?? "estandar"] ?? 1;
@@ -977,6 +1047,48 @@ export function generarPlan(
       : [];
   const bloques =
     explicito.length > 0 ? explicito : splitPorDias(dias, entrada.nivel);
+
+  if (avanzado) {
+    trace?.push(
+      `(avanzado) Volumen "${avanzado.volumen}": factor ×${factorVol} sobre el presupuesto del día.`,
+    );
+    trace?.push(
+      `(avanzado) Esfuerzo "${avanzado.rir}": factor ×${factorEsf} sobre el presupuesto + nota de RIR en cada ítem.`,
+    );
+    trace?.push(
+      `(avanzado) Repeticiones "${avanzado.rango}": ${
+        avanzado.rango === "estandar"
+          ? "usa el esquema del objetivo."
+          : avanzado.rango === "ondulante"
+            ? "rota pesado / liviano / medio por día (DUP)."
+            : "reemplaza el esquema del objetivo por uno fijo."
+      }`,
+    );
+    trace?.push(
+      `(avanzado) Estructura "${avanzado.split}": ${
+        explicito.length > 0
+          ? "split forzado por el cliente."
+          : "no cerraba con los días elegidos → cae en el split automático por días + nivel."
+      }`,
+    );
+    trace?.push(
+      `(avanzado) Orden "${avanzado.orden}": ${
+        avanzado.orden === "prefatiga_zona"
+          ? "en las zonas de énfasis el aislamiento va antes del compuesto (se saltea el orden de booteo)."
+          : "compuestos antes que aislamientos, core al cierre."
+      }`,
+    );
+    trace?.push(
+      `(avanzado) Técnica en aislamientos "${avanzado.tecnicaAislamientos}": ${
+        avanzado.tecnicaAislamientos === "ninguna"
+          ? "sin técnica."
+          : "se marca en los últimos 1–2 aislamientos del día."
+      }`,
+    );
+  }
+  trace?.push(
+    `Split resultante (${dias} días, nivel ${entrada.nivel}): ${bloques.map((b) => b.titulo).join(" · ")}`,
+  );
 
   const usadosSemana = new Set<string>();
 
@@ -993,16 +1105,26 @@ export function generarPlan(
     // ── Fase 2 · Presupuesto cerrado: techo fijo de series del día (nivel ×
     //    volumen, con ajustarPorSexo). Inamovible: el trueque de Fase 3 no
     //    cambia la cantidad de ranuras y la Fase 4 sólo reparte dentro. ──
+    const tituloDia = `Día ${di + 1} · ${bloque.titulo}`;
+    if (trace && esqueleto.length !== bloque.ranuras.length) {
+      trace.push(
+        `${tituloDia}: objetivo ${objetivo} moldea la sesión — ${bloque.ranuras.length} → ${esqueleto.length} ranuras.`,
+      );
+    }
     const presupuesto = ajustarPorSexo(
       Math.round(PRESUPUESTO_DIA[entrada.nivel] * factorVol * factorEsf),
       sexo,
       esqueleto.length,
+      trace,
+    );
+    trace?.push(
+      `${tituloDia}: presupuesto cerrado = ${presupuesto} series repartidas entre ${esqueleto.length} ranuras.`,
     );
 
     // ── Fase 3 · Trueque por énfasis: redirige ranuras secundarias a la zona
     //    enfatizada, SIN agregar ni quitar ranuras (presupuesto intacto). ──
     let ranuras = priorizarEnfasis(
-      intercambiarPorEnfasis(esqueleto, enfasis, sexo, esFullBody),
+      intercambiarPorEnfasis(esqueleto, enfasis, sexo, esFullBody, trace, tituloDia),
       enfasis,
     );
     // Firewall A · orden de booteo: compuestos antes que aislamientos, core al
@@ -1084,6 +1206,7 @@ export function generarPlan(
         series: seriesPorRanura[si],
         repeticiones: esquema[ranura.rol].reps,
         nota,
+        rol: ranura.rol,
       };
       itemPorSlug.set(ej.slug, item);
       items.push(item);
@@ -1100,12 +1223,17 @@ export function generarPlan(
       for (const i of aisl) items[i].tecnica = tec as Tecnica;
     }
 
-    return { titulo: `Día ${di + 1} · ${bloque.titulo}`, items };
+    trace?.push(
+      `${tituloDia}: ${items.length} ejercicios, ${items.reduce((a, b) => a + b.series, 0)} series reales (el techo por rol puede dejar sobrante del presupuesto).`,
+    );
+
+    return { titulo: tituloDia, items };
   });
 
   return {
     entrada: { ...entrada, dias, sexo, enfasis, zonasDolor },
     dias: diasPlan,
+    ...(trace ? { trace } : {}),
   };
 }
 
