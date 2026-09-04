@@ -155,7 +155,7 @@ export default async function ClienteDetallePage({
               {dias !== null ? (
                 <span className="text-sm text-ink-soft">
                   {" "}
-                  ({dias < 0 ? `hace ${Math.abs(dias)} d` : `en ${dias} d`})
+                  ({dias < 0 ? `hace ${Math.abs(dias)} d` : dias === 0 ? "vence hoy" : `en ${dias} d`})
                 </span>
               ) : null}
             </p>

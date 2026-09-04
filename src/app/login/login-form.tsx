@@ -1,8 +1,9 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
+import Link from "next/link";
 import { login, type LoginState } from "./actions";
-import { Button } from "@/components/ui";
+import { Button, linkClasses } from "@/components/ui";
 
 const STORAGE_KEY = "gym.ultimo_slug";
 
@@ -12,14 +13,14 @@ export function LoginForm({ paramG }: { paramG: string | null }) {
     {},
   );
   const [showPass, setShowPass] = useState(false);
-  const [gimnasioRecordado, setGimnasioRecordado] = useState<string | null>(null);
+  const [gimnasio, setGimnasio] = useState("");
   const [gimnasioNombre, setGimnasioNombre] = useState<string | null>(null);
   const [mostrarCambiar, setMostrarCambiar] = useState(false);
 
   // Cargar gimnasio recordado o desde query param
   useEffect(() => {
     if (paramG) {
-      setGimnasioRecordado(paramG);
+      setGimnasio(paramG);
       setMostrarCambiar(true);
       return;
     }
@@ -27,7 +28,7 @@ export function LoginForm({ paramG }: { paramG: string | null }) {
     if (recordado) {
       try {
         const data = JSON.parse(recordado);
-        setGimnasioRecordado(data.slug);
+        setGimnasio(data.slug ?? "");
         setGimnasioNombre(data.nombre);
         setMostrarCambiar(true);
       } catch {
@@ -45,15 +46,13 @@ export function LoginForm({ paramG }: { paramG: string | null }) {
 
   const limpiarGimnasio = () => {
     localStorage.removeItem(STORAGE_KEY);
-    setGimnasioRecordado(null);
+    setGimnasio("");
     setGimnasioNombre(null);
     setMostrarCambiar(false);
     // Enfocar el campo gimnasio
-    const input = document.querySelector<HTMLInputElement>('input[name="gimnasio"]');
-    if (input) {
-      input.value = "";
-      input.focus();
-    }
+    document
+      .querySelector<HTMLInputElement>('input[name="gimnasio"]')
+      ?.focus();
   };
 
   return (
@@ -104,7 +103,8 @@ export function LoginForm({ paramG }: { paramG: string | null }) {
               name="gimnasio"
               autoComplete="organization"
               placeholder="nombre o código"
-              defaultValue={gimnasioRecordado || ""}
+              value={gimnasio}
+              onChange={(e) => setGimnasio(e.target.value)}
               required
               className="w-full h-12 px-4 rounded-lg border border-rule bg-paper-2 text-[16px] placeholder:text-ink-soft/40 outline-none transition-[border-color,box-shadow] duration-200 ease-out focus:border-ink focus:shadow-[0_0_0_3px_var(--ink)]/8 focus:bg-paper"
             />
@@ -160,7 +160,7 @@ export function LoginForm({ paramG }: { paramG: string | null }) {
                 aria-label={
                   showPass ? "Ocultar contraseña" : "Mostrar contraseña"
                 }
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 h-9 min-w-[3.5rem] px-3 text-xs font-medium text-ink-soft rounded-md select-none touch-manipulation transition-[transform,background-color] duration-150 ease-out active:scale-95 hover:bg-rule/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 h-11 min-w-[3.5rem] px-3 text-xs font-medium text-ink-soft rounded-md select-none touch-manipulation transition-[transform,background-color] duration-150 ease-out active:scale-95 hover:bg-rule/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20"
               >
                 {showPass ? "Ocultar" : "Ver"}
               </button>
@@ -205,12 +205,12 @@ export function LoginForm({ paramG }: { paramG: string | null }) {
             className="text-center text-[13px] animate-fade-in"
             style={{ animationDelay: "320ms" }}
           >
-            <a
+            <Link
               href="/login/olvide-clave"
-              className="text-ink-soft underline underline-offset-2 hover:text-ink transition-colors"
+              className={`inline-flex items-center justify-center min-h-11 px-2 text-ink-soft hover:text-ink ${linkClasses.plano}`}
             >
               Olvidé mi contraseña
-            </a>
+            </Link>
           </p>
         </form>
       </section>

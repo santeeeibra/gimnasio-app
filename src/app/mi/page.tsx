@@ -98,10 +98,10 @@ export default async function MiPage() {
 
       <div className="flex items-baseline justify-between">
         <h1 className="text-2xl">Hola, {profile.nombre.split(" ")[0]}</h1>
-        <div className="flex shrink-0 items-baseline gap-3">
-          <VerTutorialDeNuevo className={`text-xs px-2 py-2 -mr-2 ${linkClasses.accion}`} />
+        <div className="-mr-2 flex shrink-0 items-baseline gap-5">
+          <VerTutorialDeNuevo className={`text-xs px-2 py-2 ${linkClasses.accion}`} />
           <form action={logout}>
-            <button className={`text-xs px-2 py-2 -mr-2 ${linkClasses.accion}`}>Salir</button>
+            <button className={`text-xs px-2 py-2 ${linkClasses.accion}`}>Salir</button>
           </form>
         </div>
       </div>
@@ -150,7 +150,9 @@ export default async function MiPage() {
                     dias !== null
                       ? dias < 0
                         ? ` (hace ${Math.abs(dias)} días)`
-                        : ` (en ${dias} días)`
+                        : dias === 0
+                          ? " (vence hoy)"
+                          : ` (en ${dias} días)`
                       : ""
                   }`
                 : ""}

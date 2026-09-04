@@ -4,6 +4,7 @@ import { linkClasses } from "@/components/ui";
 import { createClient } from "@/lib/supabase/server";
 import type {
   Enfasis,
+  Molestia,
   Nivel,
   Objetivo,
   PreferenciaEquipo,
@@ -21,6 +22,7 @@ type Prefs = {
   equipo?: PreferenciaEquipo;
   sexo?: Sexo;
   enfasis?: Enfasis[];
+  zonasDolor?: Molestia[];
   avanzado?: AvanzadoDefaults | null;
 } | null;
 
@@ -74,6 +76,7 @@ export default async function RutinaAvanzadaPage() {
           preferencia: prefs?.equipo ?? undefined,
           sexo: prefs?.sexo ?? undefined,
           enfasis: prefs?.enfasis ?? undefined,
+          zonasDolor: prefs?.zonasDolor ?? undefined,
         }}
         clienteSexo={clienteSexo}
         avanzadoDefaults={prefs?.avanzado ?? undefined}

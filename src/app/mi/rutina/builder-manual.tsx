@@ -323,7 +323,7 @@ export function BuilderManual({ ejercicios }: { ejercicios: Ejercicio[] }) {
             type="button"
             onClick={() => agregarFila(dia.key)}
             disabled={dia.filas.length >= MAX_EJERCICIOS_DIA}
-            className="mt-3 h-9 rounded-[5px] border border-rule px-3 text-sm text-ink-soft transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 disabled:opacity-50"
+            className="mt-3 h-11 rounded-[5px] border border-rule px-3 text-sm text-ink-soft transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 disabled:opacity-50"
           >
             + Ejercicio
           </button>
@@ -334,7 +334,7 @@ export function BuilderManual({ ejercicios }: { ejercicios: Ejercicio[] }) {
         type="button"
         onClick={agregarDia}
         disabled={dias.length >= MAX_DIAS_MANUAL}
-        className="h-9 rounded-[5px] border border-rule px-3 text-sm transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 disabled:opacity-50"
+        className="h-11 rounded-[5px] border border-rule px-3 text-sm transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 disabled:opacity-50"
       >
         + Día
       </button>
@@ -358,7 +358,7 @@ export function BuilderManual({ ejercicios }: { ejercicios: Ejercicio[] }) {
         <button
           type="button"
           onClick={generarAutoConManual}
-          className="h-9 rounded-[5px] border border-rule px-3 text-sm text-ink-soft transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20"
+          className="h-11 rounded-[5px] border border-rule px-3 text-sm text-ink-soft transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20"
         >
           Generar automático con lo que tengo
         </button>

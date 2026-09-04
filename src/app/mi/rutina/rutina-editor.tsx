@@ -246,6 +246,10 @@ export function RutinaEditor({
 }) {
   const [visor, setVisor] = useState<Ejercicio | null>(null);
   const [activo, setActivo] = useState(dias[0]?.numero ?? 1);
+  // Series guardadas en caliente: el tiempo estimado se recalcula sin recargar.
+  const [seriesGuardadas, setSeriesGuardadas] = useState<Record<string, number>>(
+    {},
+  );
   const multi = dias.length > 1;
   const visibles = multi ? dias.filter((d) => d.numero === activo) : dias;
   return (
@@ -256,7 +260,10 @@ export function RutinaEditor({
       <div key={activo} className="stagger space-y-8">
       {visibles.map((dia) => {
         const tiempoMin = Math.round(
-          dia.items.reduce((a, it) => a + it.series * 2.2, 0),
+          dia.items.reduce(
+            (a, it) => a + (seriesGuardadas[it.id] ?? it.series) * 2.2,
+            0,
+          ),
         );
         const musculos = [
           ...new Set(
@@ -296,6 +303,9 @@ export function RutinaEditor({
                     ejercicios={ejercicios}
                     mostrarTecnica={mostrarTecnica}
                     onVer={setVisor}
+                    onSeriesGuardadas={(n) =>
+                      setSeriesGuardadas((p) => ({ ...p, [item.id]: n }))
+                    }
                   />
                 ))}
               </ul>
@@ -334,8 +344,8 @@ function DiaTabs({
             aria-pressed={on}
             className={`flex-1 rounded-lg border px-3 py-2 text-xs transition-[transform,color,background-color,border-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${
               on
-                ? "border-rule bg-paper font-medium text-ink"
-                : "border-rule bg-transparent text-ink-soft"
+                ? "border-ink bg-ink font-medium text-paper"
+                : "border-rule bg-paper-2 text-ink hover:border-ink/40"
             }`}
           >
             {(() => {
@@ -355,12 +365,14 @@ function ItemFila({
   ejercicios,
   mostrarTecnica,
   onVer,
+  onSeriesGuardadas,
 }: {
   item: ItemEditable;
   indice: number;
   ejercicios: Ejercicio[];
   mostrarTecnica: boolean;
   onVer: (ej: Ejercicio) => void;
+  onSeriesGuardadas: (series: number) => void;
 }) {
   const [series, setSeries] = useState(String(item.series));
   const [reps, setReps] = useState(item.repeticiones);
@@ -392,6 +404,7 @@ function ItemFila({
       if (!r.error) {
         item.series = Number(series) || item.series;
         item.repeticiones = reps.trim() || item.repeticiones;
+        onSeriesGuardadas(item.series);
       }
     });
   }
@@ -650,7 +663,7 @@ function ItemFila({
                           on ? p.filter((x) => x !== m) : [...p, m],
                         )
                       }
-                      className={`h-7 rounded-[5px] border px-2 text-[11px] transition-colors ${
+                      className={`h-11 rounded-[5px] border px-3 text-[11px] transition-colors ${
                         on
                           ? "border-ink bg-ink text-paper"
                           : "border-rule text-ink-soft"
@@ -674,7 +687,7 @@ function ItemFila({
                       type="button"
                       onClick={() => cambiar(alt)}
                       disabled={pending}
-                      className="h-9 px-3 rounded-[5px] border border-rule bg-paper-2 text-sm transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 disabled:opacity-50"
+                      className="h-11 px-3 rounded-[5px] border border-rule bg-paper-2 text-sm transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 disabled:opacity-50"
                     >
                       {alt.nombre}
                     </button>
