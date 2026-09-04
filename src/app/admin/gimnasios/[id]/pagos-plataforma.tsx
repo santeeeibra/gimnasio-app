@@ -151,7 +151,7 @@ function RechazarBtn({
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-sm rounded-[14px] border border-rule bg-paper p-5 shadow-xl"
+            className="max-h-[90vh] w-full max-w-sm overflow-y-auto rounded-[14px] border border-rule bg-paper p-5 shadow-xl"
           >
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">

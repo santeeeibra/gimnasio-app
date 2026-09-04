@@ -137,5 +137,27 @@ async function correrCron() {
     avisos++;
   }
 
+  // ─── Purga de buzón: borrar comentarios resueltos con más de 60 días ────────
+  // Caso A: resueltos con respuesta → filtrar por respondido_at
+  // Caso B: resueltos sin respuesta (marcados a mano) → filtrar por creado_at
+  const hace60Dias = new Date();
+  hace60Dias.setDate(hace60Dias.getDate() - 60);
+  const hace60ISO = hace60Dias.toISOString();
+
+  await Promise.all([
+    admin
+      .from("buzon_comentarios")
+      .delete()
+      .eq("estado", "resuelto")
+      .not("respondido_at", "is", null)
+      .lt("respondido_at", hace60ISO),
+    admin
+      .from("buzon_comentarios")
+      .delete()
+      .eq("estado", "resuelto")
+      .is("respondido_at", null)
+      .lt("creado_at", hace60ISO),
+  ]);
+
   return NextResponse.json({ ok: true, avisos, avisosMorosidad });
 }

@@ -6,6 +6,7 @@ import { logout } from "@/app/actions";
 import { pillClasses } from "@/components/ui";
 import {
   CreditCard,
+  Inbox,
   LayoutDashboard,
   LifeBuoy,
   MessageSquare,
@@ -30,6 +31,7 @@ const NAV: NavItem[] = [
   { href: "/panel/clientes", label: "Clientes", Icono: Users },
   { href: "/panel/planes", label: "Planes de socios", corto: "Planes", Icono: Tags },
   { href: "/panel/mensajes", label: "Mensajes", Icono: MessageSquare },
+  { href: "/panel/buzon", label: "Buzón", Icono: Inbox },
   { href: "/panel/ingresos", label: "Ingresos", Icono: Wallet },
   { href: "/panel/plan", label: "Mi plan", soloDesktop: true, Icono: CreditCard },
   { href: "/panel/ajustes", label: "Ajustes", Icono: Settings },
