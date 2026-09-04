@@ -166,17 +166,38 @@ dato de contacto + un flujo asistido que funciona sin infraestructura de mail.
   - `SERIES_OPCIONES` / `REPS_OPCIONES`: valores fijos para menús desplegables
     del editor (series: 1-5; reps: 5, 6, 6-8, 8-10, 8-12, 10-12, 12-15, 15,
     15-20, 20).
-  - `EntradaMotor` ahora incluye `sexo: Sexo` y `enfasis: Enfasis[]`.
-- **`src/lib/rutina/motor.ts`**: lógica de generación
-  - `ajustarPorSexo()`: si `sexo === "mujer"` baja 1 serie en compuestos
-    (mín. 3) y aislamientos (mín. 2), sin tocar rangos de reps. Genera planes
-    más livianos y manejables.
-  - `aplicarEnfasis()`: agrega hasta 3 ranuras extra por día para las zonas
-    elegidas (máx. 8 ejercicios/día total). Usa `PATRON_ENFASIS` (patrones
-    reales: hip thrust, sentadilla búlgara, press inclinado, dominadas, press
-    militar, curl con barra, crunch). Si el cliente es mujer y no eligió
-    ninguna zona → énfasis en glúteos por defecto.
-- **`src/lib/rutina/generar.ts`**: persiste `sexo` y `enfasis` en
+  - `EntradaMotor` incluye `sexo: Sexo`, `enfasis: Enfasis[]` y
+    `zonasDolor?: string[]` (zonas de dolor a evitar desde la generación
+    inicial; mismo vocabulario que `MOLESTIAS`).
+- **`src/lib/rutina/motor.ts`**: **modelo de "presupuesto cerrado"**
+  (refactor 2026-09-03, línea de ensamblaje en 4 fases; reemplaza el modelo
+  aditivo que se disparaba a 30-40 series/día). `generarPlan` por cada día:
+  1. **Esqueleto** (`moldearPorObjetivo`): qué músculos/roles entrena el día,
+     sin series todavía.
+  2. **Presupuesto cerrado**: techo TOTAL de series del día por nivel
+     (`PRESUPUESTO_DIA`: principiante 18 / intermedio 21 / avanzado 24),
+     escalado por `FACTOR_VOLUMEN` (mev .85 / estándar 1 / mav 1.15) y pasado
+     por `ajustarPorSexo(total, sexo, nRanuras)` (mujer: −1 serie por ranura
+     sobre el total; piso 2·n). Ese número queda fijo.
+  3. **Trueque por énfasis** (`intercambiarPorEnfasis`, reemplaza a
+     `aplicarEnfasis`): **NO agrega ranuras**; convierte hasta 2 ranuras de
+     músculos secundarios del día (nunca un primario) en ranuras del músculo
+     enfatizado. Cantidad de ranuras constante ⇒ presupuesto intacto. Mujer sin
+     zona → glúteos por defecto, también por trueque. **Guard de afinidad**: en
+     split dividido sólo refuerza la zona en días que ya la entrenan (en full
+     body siempre). Usa `PATRON_ENFASIS`.
+  4. **Selección** (`repartirSeries` + `elegir`): reparte el presupuesto entre
+     las ranuras proporcional al peso de cada rol (primario > secundario >
+     aislamiento, con piso 2 / techo 5, suma exacta, determinista sin `seed`),
+     y llena cada ranura con el ejercicio real (objetivo + equipo + molestias).
+  - Se eliminaron `aplicarEnfasis()` y `ajustarSeries()` (nivel y sexo ahora
+    viven en la Fase 2, no ranura por ranura).
+  - `ESQUEMA.hipertrofia.primario.series = 4` (peso de rol en el reparto): así
+    el día no sale todo con el mismo número de series.
+  - Molestias/dolor: `estaBloqueado(ej, evitar)` + `MOLESTIA_BLOQUEA`. `evitar`
+    fusiona `avanzado.evitar` (solo avanzado) + `zonasDolor` (todos los
+    niveles, desde el form de generación) antes de la Fase 4.
+- **`src/lib/rutina/generar.ts`**: persiste `sexo`, `enfasis` y `zonasDolor` en
   `rutinas.preferencias` (jsonb), sin migración SQL (columna ya existía).
 - **Formulario de generación** (`generar-form.tsx`):
   - Select "Sexo" **condicional**: solo se renderiza si el cliente tiene
@@ -186,12 +207,18 @@ dato de contacto + un flujo asistido que funciona sin infraestructura de mail.
     (`alta-form.tsx` + `altaCliente` en `panel/clientes/actions.ts`).
   - Fieldset "Zona a enfocar" con chips controlados (máx. 2 seleccionados a la
     vez). Estado local con `toggleEnfasis()`.
-  - Defaults: se releen de `rutinas.preferencias` en `mi/rutina/page.tsx`,
-    `panel/clientes/[id]/page.tsx` y `rutina-panel.tsx`.
+  - Fieldset "Evitar dolor en (opcional)" debajo de "Zona a enfocar": chips
+    controlados (`name="zonasDolor"`, vocabulario `MOLESTIAS`: hombro, rodilla,
+    lumbar, muñeca, codo), sin tope. Estilo de advertencia sutil —
+    `peer-checked:border-danger` + `bg-[color:var(--danger-weak)]` +
+    `text-ink` — distinto del `--volt` de "Zona a enfocar". `toggleDolor()`.
+  - Defaults: se releen de `rutinas.preferencias` (`enfasis` + `zonasDolor`) en
+    `mi/rutina/page.tsx`, `panel/clientes/[id]/page.tsx` y `rutina-panel.tsx`.
 - **Actions** (`mi/rutina/actions.ts`, `panel/clientes/actions.ts`):
-  - `parseSexo()` y `parseEnfasis()` validan y parsean los campos del form.
-  - `generarMiRutina` y la generación para clientes pasan `sexo` y `enfasis` a
-    `generarYGuardar()`.
+  - `parseSexo()`, `parseEnfasis()` y `parseZonasDolor()` validan los campos
+    del form.
+  - `generarMiRutina` y la generación para clientes pasan `sexo`, `enfasis` y
+    `zonasDolor` a `generarYGuardar()`.
 - **Editor de rutina** (`rutina-editor.tsx`):
   - Series y reps ahora son `<select>` en lugar de `<input type="number">`.
   - Valores de `SERIES_OPCIONES` / `REPS_OPCIONES`.
@@ -440,7 +467,7 @@ SECURITY DEFINER (`soy_destinatario`, `mensaje_gimnasio`, `mensaje_remitente`,
 | Branding / tema personalizable | ✅ **COMPLETO y ampliado** — 7 colores (con base/derivados + "Calcular desde la base") + 9 presets tipográficos (10 fuentes) + tamaño base + redondeo + espaciado + estilo de navegación + densidad + validación contraste WCAG 2.1 (avisos salteables + **bloqueos duros no salteables**: `ink`/`paper`, `ink`/`paper-2` ≥ 4.5 y separación `paper`/`paper-2` ≥ 1.05, vía `chequearBloqueos()`) + preview en vivo. Ver `VALIDACION_CONTRASTE.md` y `FUENTES_PERSONALIZABLES.md`. Migración `0004_tema_jsonb.sql` ✅ aplicada (2026-09-01). **Rediseño guiado ✅ (2026-09-02)**: 6 paletas prearmadas validadas (`PRESETS_TEMA` en `src/lib/tema.ts`: Papel/Arena/Océano/Bosque/Noche/Carbón) — un tap y guardar; los controles finos quedan bajo "Personalizar a mano" (plegado); mini-preview sticky pegado a los controles en móvil + preview completo en columna en desktop. Umbral del par `rule`/`paper` bajado a 1.35 (hairline decorativo, no control WCAG 1.4.11). Prueba end-to-end ✅ y paleta del gimnasio de prueba re-guardada como **Océano** (reemplaza la vieja `#05fffb` cian que rompía la UI). **Logo del gimnasio ✅ (2026-09-02)**: subida con compresión client-side a WebP <300 KB (bucket `logos`, `gimnasios.logo_url`), paletas sugeridas desde el color dominante del logo (mismo flujo que `PRESETS_TEMA`), logo mostrado en `/panel` (nav), `/mi` (header) y avatar de mensajes. Migración `0006_logo_gimnasio.sql` (pendiente de aplicar). Ver sección "Branding por gimnasio → Logo". |
 | Rediseño UI mobile-first con `emil-design-eng` | 🔄 EN CURSO — `/login` ✅. `/panel/ajustes` ✅ (rediseño guiado hecho 2026-09-02: paletas prearmadas + "Personalizar a mano" plegado + preview sticky). `/mi/rutina` editor ✅ (miniaturas + visor + táctil). **`/mi` home + form de generar/regenerar rutina ✅ (SPEC `SPEC_UI_HOME_RUTINA.md`, 2026-09-02)**: componente `Select` reusable en `src/components/ui.tsx` (`appearance-none` + chevron SVG, `bg-paper`, `text-[16px]`) → aplicado en `generar-form.tsx` y `alta-form.tsx`; variante `volt` de `Button` (`bg-volt`/`text-volt-ink`) para "Regenerar rutina" + chips "Zona a enfocar" seleccionados en `--volt`; token `--color-volt-ink` expuesto como utility en `globals.css`; filas "Mensajes" / "Tu rutina" de `/mi` agrupadas en un `<ul>` con `divide-y` + íconos SVG inline; bottom nav de cliente `src/app/mi/mi-nav.tsx` (Inicio · Rutina · Mensajes) montada en `mi/layout.tsx`. Próximo `/panel` (dashboard). Reglas en `REGLAS_UI_EMIL.md` (ampliado 2026-09-02: §5 imágenes, §6 alineación, §7 overflow, §9 modales). Dirección de tema en `INSTRUCCIONES_TEMA.md` §4 |
 | 3 — Push web nativo | ✅ **COMPLETO (2026-09-02)** — Código completo y verificado (typecheck limpio, `/sw.js` y `/manifest` sirven 200, cron sin auth → 401, card "Notificaciones" renderiza en `/mi`). **Archivos nuevos**: `public/sw.js` (service worker con listeners `push` + `notificationclick`), `public/manifest.webmanifest` (PWA mínima, link + themeColor + appleWebApp en `layout.tsx`), `src/lib/push/cliente.ts` (registrar SW, pedir permiso, `pushManager.subscribe`), `src/lib/push/enviar.ts` (`enviarPush(profileIds, {title,body,url,tag})`, borra subs muertas 404/410), `src/app/mi/push-actions.ts` (`guardarSuscripcion` / `borrarSuscripcion`), `src/app/mi/activar-notificaciones.tsx` (botón en `/mi`), `src/app/api/cron/cuotas/route.ts` + `vercel.json` (cron diario 12:00, avisa a 6 y 1 días). **Modificados**: `middleware.ts` (whitelist `/sw.js`, `/manifest.webmanifest`, `/icon-`, `/badge-`, `/api/cron`), `panel/mensajes/actions.ts` (enviar + responder dueño), `mi/mensajes/actions.ts` (responder cliente → avisa dueño), `mi/page.tsx`. **Pendiente manual**: (1) Generar claves VAPID: `npx web-push generate-vapid-keys` → `.env.local` (`NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT=mailto:…`) + `CRON_SECRET`; las mismas 4 en Vercel → Project Settings → Environment Variables. (2) Iconos en `public/`: `icon-192.png`, `icon-512.png`, `badge-72.png` (referenciados por SW y manifest). (3) Reiniciar dev server (toma nuevo `.env.local`) y probar en navegador real con permiso: `/mi` → "Activar" → mensaje desde panel → debe llegar notificación. (4) Deploy a Vercel (cron se registra solo desde `vercel.json`). Disparar manualmente: `curl -H "authorization: Bearer $CRON_SECRET" https://<dominio>/api/cron/cuotas`. **Nota iOS**: solo funciona en 16.4+ y con app agregada a pantalla de inicio. |
-| 4 — Rutinas (motor de reglas + editor + seed imágenes) | ✅ **COMPLETO (2026-09-02)** — Motor con **sexo y énfasis** (generación liviana + zona a enfocar): `tipos.ts` nuevos `SEXOS`/`SEXO_LABEL`, `ENFASIS`/`ENFASIS_LABEL`/`ENFASIS_GRUPOS` (7 zonas: Glúteos, Piernas, Pecho, Espalda, Hombros, Brazos, Abdomen), `MAX_ENFASIS = 2`, `SERIES_OPCIONES`/`REPS_OPCIONES` para menús. `EntradaMotor` ahora lleva `sexo` y `enfasis[]`. `motor.ts`: `ajustarPorSexo()` — mujer baja 1 serie en compuestos/aislamientos (mín. 3/2), sin tocar reps; `aplicarEnfasis()` — agrega hasta 3 ranuras extra/día para las zonas elegidas (máx. 8 ejercicios/día), con patrón real. Si es mujer y no eligió zona → glúteos por defecto. `generar.ts`: persiste sexo/énfasis en `preferencias` jsonb (sin migración SQL). Actions (`mi/rutina/actions.ts`, `panel/clientes/actions.ts`): `parseSexo()` y `parseEnfasis()` validan campos. Formulario (`generar-form.tsx`): select "Sexo" **condicional** (solo se muestra si `clienteSexo` prop existe; sino pasa `"sin_especificar"` por defecto) + fieldset "Zona a enfocar" (chips, máx. 2, controlado). Defaults se releen en `mi/rutina/page.tsx`, `panel/clientes/[id]/page.tsx`, `rutina-panel.tsx`. **Series/Reps sin escribir** (`rutina-editor.tsx`): los 2 `<input>` ahora `<select>` — Series 1–5, Reps 10 opciones fijas (5, 6, 6–8, 8–10, 8–12, 10–12, 12–15, 15, 15–20, 20). Si el valor guardado no está en la lista se agrega como primera opción (compat. hacia atrás). Typecheck limpio ✅. **Imágenes**: cambió wger por **free-exercise-db** (fotos fondo blanco). Editor alterna `/0.jpg`↔`/1.jpg` cada 900 ms + visor grande al tocar. Fix mobile: `img,video{max-width:100%;height:auto}` en `globals.css` + miniatura caja fija 72px. Seed corrido (2026-09-02): `imagen_url` de 53 ejercicios en tabla (verificado, cargan desde jsdelivr). |
+| 4 — Rutinas (motor de reglas + editor + seed imágenes) | ✅ **COMPLETO** — **Motor refactorizado a "presupuesto cerrado" (2026-09-03)**: techo TOTAL de series por día fijo por nivel (`PRESUPUESTO_DIA` 18/21/24 × `FACTOR_VOLUMEN` × `ajustarPorSexo`), 4 fases (esqueleto → presupuesto → trueque por énfasis sin agregar ranuras + guard de afinidad de día → `repartirSeries` por peso de rol + `elegir`). Eliminados `aplicarEnfasis()` y `ajustarSeries()`. `ESQUEMA.hipertrofia.primario` 3→4. Verificado: avanzado hipertrofia = 24 series/día clavadas, énfasis por trueque, no se cuela en días no afines. **Zonas de dolor en la generación inicial (2026-09-03)**: fieldset "Evitar dolor en" en `generar-form.tsx`, `EntradaMotor.zonasDolor`, `parseZonasDolor()`, fusión con `avanzado.evitar` en el motor, persistido en `preferencias.zonasDolor` + re-hidratado al regenerar. — Motor con **sexo y énfasis** (generación liviana + zona a enfocar): `tipos.ts` nuevos `SEXOS`/`SEXO_LABEL`, `ENFASIS`/`ENFASIS_LABEL`/`ENFASIS_GRUPOS` (7 zonas: Glúteos, Piernas, Pecho, Espalda, Hombros, Brazos, Abdomen), `MAX_ENFASIS = 2`, `SERIES_OPCIONES`/`REPS_OPCIONES` para menús. `EntradaMotor` ahora lleva `sexo` y `enfasis[]`. `motor.ts`: `ajustarPorSexo()` — mujer baja 1 serie en compuestos/aislamientos (mín. 3/2), sin tocar reps; `aplicarEnfasis()` — agrega hasta 3 ranuras extra/día para las zonas elegidas (máx. 8 ejercicios/día), con patrón real. Si es mujer y no eligió zona → glúteos por defecto. `generar.ts`: persiste sexo/énfasis en `preferencias` jsonb (sin migración SQL). Actions (`mi/rutina/actions.ts`, `panel/clientes/actions.ts`): `parseSexo()` y `parseEnfasis()` validan campos. Formulario (`generar-form.tsx`): select "Sexo" **condicional** (solo se muestra si `clienteSexo` prop existe; sino pasa `"sin_especificar"` por defecto) + fieldset "Zona a enfocar" (chips, máx. 2, controlado). Defaults se releen en `mi/rutina/page.tsx`, `panel/clientes/[id]/page.tsx`, `rutina-panel.tsx`. **Series/Reps sin escribir** (`rutina-editor.tsx`): los 2 `<input>` ahora `<select>` — Series 1–5, Reps 10 opciones fijas (5, 6, 6–8, 8–10, 8–12, 10–12, 12–15, 15, 15–20, 20). Si el valor guardado no está en la lista se agrega como primera opción (compat. hacia atrás). Typecheck limpio ✅. **Imágenes**: cambió wger por **free-exercise-db** (fotos fondo blanco). Editor alterna `/0.jpg`↔`/1.jpg` cada 900 ms + visor grande al tocar. Fix mobile: `img,video{max-width:100%;height:auto}` en `globals.css` + miniatura caja fija 72px. Seed corrido (2026-09-02): `imagen_url` de 53 ejercicios en tabla (verificado, cargan desde jsdelivr). |
 | 5 — Cron `recalcular_estado_cuota()` diario (pg_cron o Vercel cron) | Sin empezar |
 | Check-in por DNI + día de prueba (SPEC `SPEC_CHECKIN_PRUEBA.md`) | ✅ código + typecheck (2026-09-02). Migración `0009` aplicada; falta probar RLS end-to-end. Ver sección "Check-in por DNI…". |
 | Ingresos — pagos por mes protegidos por PIN (Cline) | ✅ código (2026-09-02). Migración `0008_pin_ingresos.sql` ✅ aplicada. Buscador por nombre de socio en `listado-ingresos.tsx` (filtra la lista + total, client-side) — 2026-09-03. |
@@ -515,6 +542,36 @@ SECURITY DEFINER (`soy_destinatario`, `mensaje_gimnasio`, `mensaje_remitente`,
 ## Cómo seguir (próxima sesión)
 
 Ya hecho (2026-09-03):
+- **Zonas de dolor conectadas a la generación inicial de rutinas**. El filtro
+  `estaBloqueado()` / `MOLESTIA_BLOQUEA` ya se usaba en las sustituciones
+  manuales; ahora también al crear el plan. Fieldset nuevo "Evitar dolor en
+  (opcional)" en `generar-form.tsx` (chips `MOLESTIAS`, estilo advertencia
+  `--danger-weak` + `border-danger`, distinto del `--volt` de "Zona a
+  enfocar"). `EntradaMotor.zonasDolor?: string[]`; `parseZonasDolor()` en
+  `mi/rutina/actions.ts` y `panel/clientes/actions.ts`; el motor fusiona
+  `zonasDolor` con `avanzado.evitar` en `evitar` antes de la Fase 4; se
+  persiste en `rutinas.preferencias.zonasDolor` (sin migración) y se re-hidrata
+  al regenerar en `mi/rutina/page.tsx`, `rutina-panel.tsx` y
+  `panel/clientes/[id]/page.tsx`. `tsc --noEmit` limpio; verificado en browser.
+- **Motor de rutinas — refactor a "presupuesto cerrado" (4 fases)**
+  (`src/lib/rutina/motor.ts`). El modelo aditivo (6 ranuras base + hasta 3
+  extra de énfasis, cada una 3-5 series) se disparaba a 30-40 series/día. Ahora
+  el día tiene un **techo TOTAL fijo** (`PRESUPUESTO_DIA` por nivel:
+  principiante 18 / intermedio 21 / avanzado 24, × `FACTOR_VOLUMEN`
+  .85/1/1.15, − 1·nRanuras si mujer vía `ajustarPorSexo`). Fases: (1) esqueleto
+  `moldearPorObjetivo`; (2) presupuesto cerrado; (3) `intercambiarPorEnfasis`
+  reemplaza a `aplicarEnfasis` — **trueque** de ranuras secundarias → músculo
+  enfatizado, sin agregar ranuras (presupuesto intacto), con **guard de
+  afinidad de día** (en split dividido solo refuerza días que ya entrenan la
+  zona; full body siempre); (4) `repartirSeries` reparte el techo por peso de
+  rol (primario>secundario>aislamiento, piso 2 / techo 5, determinista sin
+  `seed`) + `elegir`. Se eliminaron `aplicarEnfasis()` y `ajustarSeries()`.
+  `ESQUEMA.hipertrofia.primario.series` 3→4 (peso de rol) para que el día no
+  salga todo con el mismo nº de series. Verificado en browser regenerando el
+  socio de prueba: avanzado hipertrofia 3d = **24 series/día** clavadas
+  (5·4·4·3·3·5), énfasis Pecho+Brazos entra por trueque en los días de tren
+  superior y **ya no se cuela** en el día de pierna; principiante = 18/día.
+  `tsc --noEmit` limpio. **Las rutinas ya guardadas no se recalculan solas**.
 - **Motor de rutinas — volumen excesivo en primarios (avanzado)**
   (`src/lib/rutina/motor.ts`). Reporte del dueño: "5 series" en compuestos de
   arranque, y dos de 5 seguidos. Dos causas: (1) `ajustarSeries` sumaba `+1` al

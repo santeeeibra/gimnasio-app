@@ -13,9 +13,10 @@
 | Editar datos del socio ya creado | `panel/clientes/[id]/editar-datos.tsx`, `editarCliente` en `clientes/actions.ts` | ✅ código (2026-09-03) — migraciones aplicadas, falta probar end-to-end |
 | Ingresos — pagos por mes + PIN + buscador por socio | `src/app/panel/ingresos/*`, `api/panel/ingresos/route.ts` | ✅ código + migración `0008` aplicada — buscador por nombre 2026-09-03; falta probar |
 | Planes y cuotas | tabla `planes`, `recalcular_estado_cuota()` | ✅ HECHO (cron pendiente) |
-| Rutinas — motor de reglas | `src/lib/rutina/motor.ts` | ✅ COMPLETO, bug de variedad corregido 2026-09-02 |
-| Rutinas — tipos/constantes | `src/lib/rutina/tipos.ts` (SEXOS, ENFASIS, SERIES/REPS) | ✅ HECHO |
-| Rutinas — generación/persistencia | `src/lib/rutina/generar.ts` | ✅ HECHO |
+| Rutinas — motor de reglas | `src/lib/rutina/motor.ts` | ✅ COMPLETO — refactor a "presupuesto cerrado" 4 fases (2026-09-03): techo fijo de series/día por nivel, trueque de énfasis sin sumar ranuras + guard de afinidad de día, `repartirSeries` por peso de rol. Sin `aplicarEnfasis`/`ajustarSeries` |
+| Rutinas — tipos/constantes | `src/lib/rutina/tipos.ts` (SEXOS, ENFASIS, SERIES/REPS) | ✅ HECHO — `EntradaMotor.zonasDolor?` agregado 2026-09-03 |
+| Rutinas — generación/persistencia | `src/lib/rutina/generar.ts` | ✅ HECHO — persiste `zonasDolor` en `preferencias` 2026-09-03 |
+| Rutinas — zonas de dolor en generación inicial | `generar-form.tsx` (fieldset "Evitar dolor en"), `motor.ts` (`estaBloqueado`), `mi/rutina/actions.ts` + `panel/clientes/actions.ts` (`parseZonasDolor`) | ✅ código + typecheck + browser (2026-09-03), sin migración |
 | Rutinas — editor cliente | `src/app/mi/rutina/rutina-editor.tsx` | ✅ HECHO (animación 2 frames a mejorar) |
 | Rutinas — panel dueño | `src/app/panel/clientes/[id]/rutina-panel.tsx` | ✅ HECHO |
 | Rutinas — panel avanzado (dropset, myo-reps, etc.) | `SPEC_PANEL_AVANZADO_RUTINA.md` | 🔲 spec armado, no pasado a nadie |
