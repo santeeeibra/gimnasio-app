@@ -343,7 +343,9 @@ export function TimerDescanso() {
         });
       } else {
         // Fue un tap limpio sin arrastre: toggle in situ
-        setColapsado((prev) => !prev);
+        // Mismo camino que el botón de cerrar: al expandir hay que reencuadrar
+        // el panel para que no quede cortado contra el borde o la bottom nav.
+        toggleExpandirInSitu(!colapsado);
       }
     };
 
