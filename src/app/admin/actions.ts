@@ -321,3 +321,83 @@ export async function enviarPushPrueba(
 
   return { ok: true, msg: "Enviado a tus dispositivos suscriptos." };
 }
+
+// Convierte un gimnasio genérico precargado (slug "dispN", ver
+// scripts/seed.mjs) en el gimnasio real de un dueño que firmó en el momento:
+// pisa nombre del gym, DNI y nombre del dueño (y clave, derivada del DNI
+// nuevo). El slug de login se mantiene salvo que se pase uno nuevo.
+export async function activarGimnasioDisponible(
+  _prev: { ok: boolean; msg: string } | null,
+  formData: FormData,
+): Promise<{ ok: boolean; msg: string }> {
+  const admin = await requireSuperadmin();
+  const gimnasioId = String(formData.get("gimnasio_id") ?? "");
+  const nombreGym = String(formData.get("nombre_gym") ?? "").trim();
+  const dni = String(formData.get("dni") ?? "").trim();
+  const nombreDueno = String(formData.get("nombre_dueno") ?? "").trim();
+  const nuevoSlugRaw = String(formData.get("nuevo_slug") ?? "")
+    .trim()
+    .toLowerCase();
+
+  if (!gimnasioId || !nombreGym || !dni || !nombreDueno) {
+    return { ok: false, msg: "Completá nombre del gym, DNI y nombre del dueño." };
+  }
+  if (!/^\d{6,}$/.test(dni)) {
+    return { ok: false, msg: "El DNI debe ser numérico (mínimo 6 dígitos)." };
+  }
+
+  const db = createAdminClient();
+
+  const { data: gym } = await db
+    .from("gimnasios")
+    .select("id, slug")
+    .eq("id", gimnasioId)
+    .single();
+  if (!gym) return { ok: false, msg: "No se encontró el gimnasio." };
+
+  const { data: dueno } = await db
+    .from("profiles")
+    .select("id")
+    .eq("gimnasio_id", gym.id)
+    .eq("rol", "dueno")
+    .maybeSingle();
+  if (!dueno) {
+    return { ok: false, msg: "No se encontró el dueño de ese gimnasio." };
+  }
+
+  const slugFinal = (nuevoSlugRaw || gym.slug || "").toLowerCase();
+  const email = `${dni.toLowerCase()}@${slugFinal}.gym.local`;
+  const password = `gym${dni.replace(/\D/g, "").slice(-4)}`;
+
+  const { error: authErr } = await db.auth.admin.updateUserById(dueno.id, {
+    email,
+    password,
+    email_confirm: true,
+  });
+  if (authErr) return { ok: false, msg: authErr.message };
+
+  const { error: profErr } = await db
+    .from("profiles")
+    .update({ dni, nombre: nombreDueno, debe_cambiar_clave: true })
+    .eq("id", dueno.id);
+  if (profErr) return { ok: false, msg: profErr.message };
+
+  const gymUpdate: { nombre: string; slug?: string } = { nombre: nombreGym };
+  if (nuevoSlugRaw) gymUpdate.slug = slugFinal;
+  const { error: gymUpdErr } = await db
+    .from("gimnasios")
+    .update(gymUpdate)
+    .eq("id", gym.id);
+  if (gymUpdErr) return { ok: false, msg: gymUpdErr.message };
+
+  await registrarAccionAdmin(admin.id, "activar_gimnasio_disponible", gym.id, {
+    nombre_gym: nombreGym,
+    slug: slugFinal,
+  });
+
+  revalidatePath("/admin/gimnasios");
+  return {
+    ok: true,
+    msg: `Activado. Login → gimnasio: ${slugFinal} · DNI: ${dni} · clave: ${password}`,
+  };
+}

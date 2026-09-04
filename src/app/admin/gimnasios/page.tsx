@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { registrarAccionAdmin } from "@/lib/admin/audit";
 import { SEMAFORO_COLOR, SEMAFORO_TITULO, semaforo } from "@/lib/admin/errores";
 import { linkClasses } from "@/components/ui";
+import { ActivarGimnasioForm } from "./activar-form";
 
 export const dynamic = "force-dynamic";
 
@@ -90,6 +91,34 @@ export default async function AdminGimnasiosPage() {
           </span>
         ) : null}
       </p>
+
+      {lista.some((g) => g.slug?.startsWith("disp")) ? (
+        <div className="mb-8">
+          <h2 className="mb-1 text-sm font-semibold text-ink">
+            Gimnasios disponibles para activar
+          </h2>
+          <p className="mb-3 text-xs text-ink-soft">
+            Precargados para dar de alta en el momento (ver{" "}
+            <code className="rounded bg-paper px-1 py-0.5">scripts/seed.mjs</code>
+            ). Tocá &quot;Activar&quot; y cargá los datos reales del dueño que firmó.
+          </p>
+          <ul className="card-cut divide-y divide-rule border border-rule bg-paper-2 overflow-hidden">
+            {lista
+              .filter((g) => g.slug?.startsWith("disp"))
+              .map((g) => (
+                <li key={g.id} className="flex flex-wrap items-start justify-between gap-3 px-5 py-4">
+                  <span className="min-w-0">
+                    <span className="block truncate text-base">{g.nombre}</span>
+                    <span className="block truncate text-xs text-ink-soft">
+                      slug: {g.slug}
+                    </span>
+                  </span>
+                  <ActivarGimnasioForm gimnasioId={g.id} slugActual={g.slug ?? ""} />
+                </li>
+              ))}
+          </ul>
+        </div>
+      ) : null}
 
       {lista.length === 0 ? (
         <p className="text-sm text-ink-soft">No hay gimnasios.</p>
