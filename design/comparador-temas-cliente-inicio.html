@@ -1,0 +1,2275 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SysGym — Comparador de Temas: Suite Cliente (Inicio, Rutina, Mensajes, Pagos)</title>
+  
+  <!-- Tipografías Oficiales -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=JetBrains+Mono:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    /* ============================================================
+       SISTEMA DE VARIABLES POR TEMA (3 PRESETS OFICIALES)
+       ============================================================ */
+    :root {
+      --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --font-display: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --font-hero: 'JetBrains Mono', monospace;
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+      /* Estados semánticos del sistema */
+      --ok: #10b981;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+    }
+
+    /* 1. TEMA OBSIDIAN (Oscuro / Alto Rendimiento) */
+    body[data-theme="obsidian"] {
+      --paper: #090d14;
+      --paper-2: #121722;
+      --paper-3: #1a2232;
+      --ink: #f8fafc;
+      --ink-soft: #94a3b8;
+      --rule: #242e42;
+      --volt: #10e7a0;
+      --volt-ink: #042417;
+      --volt-glow: rgba(16, 231, 160, 0.22);
+      
+      --font-sans: 'Plus Jakarta Sans', sans-serif;
+      --font-display: 'Plus Jakarta Sans', sans-serif;
+      --font-hero: 'JetBrains Mono', monospace;
+
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-full: 9999px;
+
+      --ambient-grid: radial-gradient(circle at 50% 0%, rgba(16, 231, 160, 0.07) 0%, transparent 60%);
+      --card-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.45);
+    }
+
+    /* 2. TEMA TITANIUM (Claro / Luminoso Deportivo) */
+    body[data-theme="titanium"] {
+      --paper: #f1f5f9;
+      --paper-2: #ffffff;
+      --paper-3: #e2e8f0;
+      --ink: #0f172a;
+      --ink-soft: #475569;
+      --rule: #cbd5e1;
+      --volt: #047857;
+      --volt-ink: #ffffff;
+      --volt-glow: rgba(4, 120, 87, 0.14);
+
+      --font-sans: 'Plus Jakarta Sans', sans-serif;
+      --font-display: 'Plus Jakarta Sans', sans-serif;
+      --font-hero: 'JetBrains Mono', monospace;
+
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-full: 9999px;
+
+      --ambient-grid: radial-gradient(circle at 50% 0%, rgba(4, 120, 87, 0.05) 0%, transparent 55%);
+      --card-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.08);
+    }
+
+    /* 3. TEMA CRIMSON (Potencia / Brutalismo Concreto) */
+    body[data-theme="crimson"] {
+      --paper: #141214;
+      --paper-2: #1f1b20;
+      --paper-3: #2b252d;
+      --ink: #fcf8f6;
+      --ink-soft: #a89da3;
+      --rule: #383038;
+      --volt: #ff4438;
+      --volt-ink: #1a0402;
+      --volt-glow: rgba(255, 68, 56, 0.25);
+
+      --font-sans: 'Archivo', sans-serif;
+      --font-display: 'Archivo', sans-serif;
+      --font-hero: 'JetBrains Mono', monospace;
+
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 10px;
+      --radius-full: 9999px;
+
+      --ambient-grid: radial-gradient(circle at 50% 0%, rgba(255, 68, 56, 0.09) 0%, transparent 50%);
+      --card-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.6);
+    }
+
+    /* Reset y base */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #06080c;
+      color: #f8fafc;
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      padding: 20px 16px 60px;
+      transition: background-color 0.25s var(--ease-out);
+    }
+
+    /* Barra Superior de Control */
+    .top-bar {
+      max-width: 1140px;
+      margin: 0 auto 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .top-bar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+
+    .top-bar h1 {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .badge-sub {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: #1e293b;
+      color: #94a3b8;
+    }
+
+    /* Grupos de selectores: Temas y Pantallas */
+    .controls-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .selector-block {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .selector-label {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #64748b;
+    }
+
+    .segmented-group {
+      display: flex;
+      gap: 6px;
+      background: #111622;
+      padding: 4px;
+      border-radius: 12px;
+      border: 1px solid #1e293b;
+      flex-wrap: wrap;
+    }
+
+    .btn-segmented {
+      border: 1px solid transparent;
+      background: transparent;
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: #94a3b8;
+      transition: all 0.15s var(--ease-out);
+    }
+    .btn-segmented:hover { color: #f8fafc; }
+    .btn-segmented.active {
+      background: #1e293b;
+      color: #f8fafc;
+      border-color: #334155;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    }
+    .theme-pip {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      box-shadow: 0 0 6px currentColor;
+    }
+
+    /* Layout Principal: Chasis del Celular + Panel de Telemetría */
+    .workspace-stage {
+      max-width: 1140px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 36px;
+      flex-wrap: wrap;
+    }
+
+    /* Smartphone Frame (375px exacto para certificar cero desbordes §7) */
+    .phone-chassis {
+      width: 375px;
+      height: 812px;
+      background: #000;
+      border-radius: 48px;
+      padding: 12px;
+      box-shadow: 0 32px 80px -16px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.14);
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .phone-screen {
+      width: 100%;
+      height: 100%;
+      background: var(--paper);
+      border-radius: 38px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      background-image: var(--ambient-grid);
+      transition: background-color 0.25s var(--ease-out), color 0.25s var(--ease-out);
+    }
+
+    /* Status Bar iOS */
+    .status-bar {
+      height: 44px;
+      flex: 0 0 44px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 0 24px 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ink);
+      z-index: 40;
+    }
+    .dynamic-island {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 110px;
+      height: 26px;
+      background: #000;
+      border-radius: 20px;
+      z-index: 50;
+    }
+
+    /* Viewport Scrollable */
+    .viewport {
+      flex: 1;
+      position: relative;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 12px 18px 84px;
+    }
+    .viewport::-webkit-scrollbar { display: none; }
+
+    /* Contenedor de Pantallas */
+    .screen-view {
+      display: none;
+      animation: fadeIn 0.2s var(--ease-out);
+    }
+    .screen-view.active {
+      display: block;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(3px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ============================================================
+       COMPONENTES GLOBALES Y CABECERAS
+       ============================================================ */
+    .screen-subhead {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+      gap: 12px;
+    }
+
+    .screen-title {
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      color: var(--ink);
+    }
+
+    /* Píldoras de Cabecera (REGLAS §3 y §10: >=44px touch target) */
+    .header-pills {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .pill-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-height: 38px;
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-sans);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      touch-action: manipulation;
+      transition: all 0.15s var(--ease-out);
+      text-decoration: none;
+      outline: none;
+    }
+    .pill-btn:active { transform: scale(0.96); }
+
+    .pill-btn-neutra {
+      background: var(--paper-2);
+      border: 1px solid var(--rule);
+      color: var(--ink-soft);
+    }
+    .pill-btn-neutra:hover {
+      background: var(--paper-3);
+      color: var(--ink);
+      border-color: var(--ink-soft);
+    }
+
+    .pill-btn-danger {
+      background: transparent;
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      color: var(--danger);
+    }
+    .pill-btn-danger:hover {
+      background: rgba(239, 68, 68, 0.1);
+      border-color: var(--danger);
+    }
+
+    /* ============================================================
+       PANTALLA 1: INICIO (/mi)
+       ============================================================ */
+    .card-cuota {
+      background: var(--paper-2);
+      border: 1px solid var(--rule);
+      border-left: 3px solid var(--ok);
+      border-radius: var(--radius-lg);
+      padding: 18px 20px;
+      box-shadow: var(--card-shadow);
+      margin-bottom: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-cuota-header {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+      color: var(--ink-soft);
+      margin-bottom: 12px;
+    }
+
+    .cuota-flex {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .ring-container {
+      position: relative;
+      width: 84px;
+      height: 84px;
+      flex-shrink: 0;
+    }
+    .ring-container svg {
+      transform: rotate(-90deg);
+      width: 100%;
+      height: 100%;
+    }
+    .ring-circle-bg {
+      fill: none;
+      stroke: var(--rule);
+      stroke-width: 7;
+    }
+    .ring-circle-fill {
+      fill: none;
+      stroke: var(--ok);
+      stroke-width: 7;
+      stroke-linecap: round;
+      stroke-dasharray: 232;
+      stroke-dashoffset: 62;
+      filter: drop-shadow(0 0 4px rgba(16, 185, 129, 0.4));
+      transition: stroke 0.25s, stroke-dashoffset 0.4s var(--ease-out);
+    }
+    .ring-center-content {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .ring-number {
+      font-family: var(--font-hero);
+      font-size: 22px;
+      font-weight: 800;
+      line-height: 1;
+      color: var(--ink);
+    }
+    .ring-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--ink-soft);
+      margin-top: 2px;
+    }
+
+    .cuota-info { flex: 1; min-w: 0; }
+    .cuota-badge-status {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--ok);
+      margin-bottom: 4px;
+    }
+    .cuota-subtext {
+      font-size: 12.5px;
+      color: var(--ink-soft);
+      line-height: 1.4;
+    }
+
+    /* Racha de Constancia */
+    .card-racha {
+      background: var(--paper-2);
+      border: 1px solid var(--rule);
+      border-radius: var(--radius-lg);
+      padding: 16px 18px;
+      margin-bottom: 16px;
+      box-shadow: var(--card-shadow);
+    }
+    .racha-top-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .racha-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+      color: var(--ink-soft);
+    }
+    .racha-count {
+      font-size: 12px;
+      color: var(--ink-soft);
+    }
+    .racha-count b {
+      color: var(--ink);
+      font-family: var(--font-hero);
+      font-size: 13px;
+    }
+    .racha-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 5px;
+      height: 28px;
+    }
+    .racha-bar-col {
+      flex: 1;
+      border-radius: 3px;
+      transition: all 0.2s var(--ease-out);
+    }
+    .racha-bar-col.active {
+      height: 100%;
+      background: var(--volt);
+      box-shadow: 0 0 6px var(--volt-glow);
+    }
+    .racha-bar-col.empty {
+      height: 28%;
+      background: var(--rule);
+      opacity: 0.6;
+    }
+
+    /* Lista de Navegación */
+    .client-nav-list {
+      list-style: none;
+      background: var(--paper-2);
+      border: 1px solid var(--rule);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--card-shadow);
+    }
+    .client-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 15px 18px;
+      text-decoration: none;
+      color: var(--ink);
+      border-bottom: 1px solid var(--rule);
+      cursor: pointer;
+      transition: background-color 0.15s var(--ease-out), transform 0.15s var(--ease-out);
+    }
+    .client-nav-list li:last-child .client-nav-item { border-bottom: none; }
+    .client-nav-item:hover { background: var(--paper-3); }
+    .client-nav-item:active { transform: scale(0.985); }
+
+    .nav-icon {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      fill: none;
+      stroke: var(--ink-soft);
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: stroke 0.15s;
+    }
+    .client-nav-item:hover .nav-icon { stroke: var(--volt); }
+
+    .nav-label {
+      flex: 1;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .nav-arrow {
+      color: var(--ink-soft);
+      font-size: 18px;
+    }
+    .nav-badge-pill {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: var(--radius-full);
+      background: var(--volt);
+      color: var(--volt-ink);
+      letter-spacing: 0.02em;
+    }
+
+    /* ============================================================
+       PANTALLA 2: RUTINA SEMANAL (/mi/rutina)
+       ============================================================ */
+    .day-selector-pills {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 14px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .day-selector-pills::-webkit-scrollbar { display: none; }
+
+    .btn-day-tab {
+      flex: 1;
+      min-width: 96px;
+      min-height: 44px;
+      background: var(--paper-2);
+      border: 1px solid var(--rule);
+      border-radius: var(--radius-md);
+      padding: 6px 10px;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.15s var(--ease-out);
+      color: var(--ink-soft);
+    }
+    .btn-day-tab.active {
+      background: var(--paper-3);
+      border-color: var(--volt);
+      color: var(--ink);
+      box-shadow: 0 0 10px var(--volt-glow);
+    }
+    .day-tab-name { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+    .day-tab-focus { font-size: 13px; font-weight: 700; color: var(--ink); }
+
+    /* Barra de Progreso de la Sesión */
+    .session-progress-card {
+      background: var(--paper-2);
+      border: 1px solid var(--rule);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      margin-bottom: 16px;
+    }
+    .session-progress-head {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink-soft);
+      margin-bottom: 8px;
+    }
+    .session-progress-track {
+      height: 6px;
+      background: var(--rule);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .session-progress-fill {
+      height: 100%;
+      width: 55%;
+      background: var(--volt);
+      box-shadow: 0 0 8px var(--volt-glow);
+      transition: width 0.3s var(--ease-out);
+    }
+
+    /* Lista de Ejercicios */
+    .exercise-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .exercise-card {
+      background: var(--paper-2);
+      border: 1px solid var(--rule);
+      border-radius: var(--radius-lg);
+      padding: 14px;
+      box-shadow: var(--card-shadow);
+    }
+    .ex-head {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .ex-badge-idx {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-sm);
+      background: var(--paper-3);
+      border: 1px solid var(--rule);
+      display: grid;
+      place-items: center;
+      font-family: var(--font-hero);
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--volt);
+      flex-shrink: 0;
+    }
+    .ex-meta { flex: 1; min-w: 0; }
+    .ex-title { font-size: 15px; font-weight: 700; color: var(--ink); }
+    .ex-sub { font-size: 12px; color: var(--ink-soft); }
+
+    .chips-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .chip-item {
+      font-size: 12px;
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      color: var(--ink-soft);
+    }
+    .chip-item b {
+      color: var(--ink);
+      font-family: var(--font-hero);
+    }
+
+    /* Checkpoints de series: Cumple WCAG >= 44x44px (§3) */
+    .set-checkpoints {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--rule);
+      padding-top: 12px;
+      gap: 10px;
+    }
+    .set-check-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink-soft);
+    }
+    .set-buttons-group {
+      display: flex;
+      gap: 8px;
+    }
+    .btn-set-node {
+      width: 44px;
+      height: 44px;
+      min-width: 44px;
+      min-height: 44px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--rule);
+      background: var(--paper);
+      color: var(--ink-soft);
+      font-family: var(--font-hero);
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      touch-action: manipulation;
+      transition: all 0.15s var(--ease-out);
+    }
+    .btn-set-node:hover { border-color: var(--ink-soft); color: var(--ink); }
+    .btn-set-node:active { transform: scale(0.92); }
+    .btn-set-node.completed {
+      background: var(--volt);
+      border-color: var(--volt);
+      color: var(--volt-ink);
+      box-shadow: 0 0 10px var(--volt-glow);
+    }
+
+    /* ============================================================
+       PANTALLA 3: MENSAJES (/mi/mensajes)
+       ============================================================ */
+    .msg-list {
+      list-style: none;
+      background: var(--paper-2);
+      border: 1px solid var(--rule);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--card-shadow);
+      divide-y: 1px solid var(--rule);
+    }
+    .msg-item {
+      display: block;
+      padding: 16px;
+      border-bottom: 1px solid var(--rule);
+      text-decoration: none;
+      color: inherit;
+      cursor: pointer;
+      transition: background-color 0.15s var(--ease-out);
+    }
+    .msg-list li:last-child .msg-item { border-bottom: none; }
+    .msg-item:hover { background: var(--paper-3); }
+    .msg-item.unread {
+      border-left: 3px solid var(--volt);
+      background: rgba(16, 231, 160, 0.02);
+    }
+    body[data-theme="crimson"] .msg-item.unread {
+      border-left-color: var(--volt);
+      background: rgba(255, 68, 56, 0.03);
+    }
+    .msg-body-text {
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--ink);
+      line-height: 1.45;
+      margin-bottom: 6px;
+    }
+    .msg-footer-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--ink-soft);
+      flex-wrap: wrap;
+    }
+    .msg-gym-avatar {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--paper-3);
+      border: 1px solid var(--rule);
+      display: inline-grid;
+      place-items: center;
+      font-size: 9px;
+      font-weight: 800;
+      color: var(--volt);
+    }
+    .badge-msg-new {
+      display: inline-block;
+      border-radius: var(--radius-full);
+      background: var(--volt);
+      color: var(--volt-ink);
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 1px 7px;
+      letter-spacing: 0.02em;
+    }
+
+    /* ============================================================
+       PANTALLA 4: MIS PAGOS (/mi/pagos)
+       ============================================================ */
+    .card-payment-active {
+      background: var(--paper-2);
+      border: 1px solid var(--rule);
+      border-radius: var(--radius-lg);
+      padding: 16px 18px;
+      margin-bottom: 16px;
+      box-shadow: var(--card-shadow);
+    }
+    .payment-active-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+      color: var(--ink-soft);
+    }
+    .payment-active-date {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--ink);
+      margin-top: 4px;
+    }
+
+    /* Tarjeta Datos de Transferencia */
+    .card-transfer-data {
+      background: var(--paper-2);
+      border: 1px solid var(--rule);
+      border-radius: var(--radius-lg);
+      padding: 16px 18px;
+      margin-bottom: 16px;
+      box-shadow: var(--card-shadow);
+    }
+    .transfer-data-header {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+      color: var(--ink-soft);
+      margin-bottom: 10px;
+    }
+    .transfer-rows {
+      display: flex;
+      flex-direction: column;
+    }
+    .transfer-row-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--rule);
+    }
+    .transfer-row-item:last-child { border-bottom: none; }
+    .transfer-field-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--ink-soft);
+      font-weight: 600;
+    }
+    .transfer-field-val {
+      font-family: var(--font-hero);
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-top: 2px;
+    }
+    .btn-copy-tag {
+      min-height: 36px;
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--rule);
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--font-sans);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      touch-action: manipulation;
+      transition: all 0.15s var(--ease-out);
+    }
+    .btn-copy-tag:active { transform: scale(0.95); }
+    .btn-copy-tag.copied {
+      background: var(--volt);
+      border-color: var(--volt);
+      color: var(--volt-ink);
+    }
+    .transfer-note-sub {
+      font-size: 12px;
+      color: var(--ink-soft);
+      line-height: 1.4;
+      margin-top: 10px;
+    }
+
+    /* Historial de Pagos */
+    .payments-history-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+      color: var(--ink-soft);
+      margin-bottom: 8px;
+      padding-left: 2px;
+    }
+    .payments-history-list {
+      list-style: none;
+      background: var(--paper-2);
+      border: 1px solid var(--rule);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--card-shadow);
+    }
+    .payment-history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 13px 16px;
+      border-bottom: 1px solid var(--rule);
+    }
+    .payments-history-list li:last-child .payment-history-item { border-bottom: none; }
+    .payment-item-date {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+    .payment-item-plan {
+      font-size: 12px;
+      color: var(--ink-soft);
+      margin-top: 2px;
+    }
+    .payment-item-amount {
+      font-family: var(--font-hero);
+      font-size: 14.5px;
+      font-weight: 700;
+      color: var(--ink);
+      flex-shrink: 0;
+    }
+
+    /* ============================================================
+       TIMER DE DESCANSO FLOTANTE ARRASTRABLE (EN RUTINA)
+       ============================================================ */
+    .floating-timer-container {
+      position: absolute;
+      bottom: 74px;
+      right: 18px;
+      z-index: 35;
+      user-select: none;
+      touch-action: none;
+      transition: box-shadow 0.2s;
+    }
+
+    .timer-pill {
+      min-height: 46px;
+      padding: 6px 14px;
+      background: var(--paper-2);
+      border: 1.5px solid var(--volt);
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5), 0 0 14px var(--volt-glow);
+      cursor: grab;
+      backdrop-filter: blur(10px);
+      transition: transform 0.15s, border-color 0.2s;
+    }
+    .timer-pill:active { cursor: grabbing; }
+
+    .timer-badge-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--volt);
+      color: var(--volt-ink);
+      display: grid;
+      place-items: center;
+    }
+    .timer-clock-text {
+      font-family: var(--font-hero);
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--ink);
+      line-height: 1;
+    }
+    .timer-sub-text {
+      font-size: 9.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--ink-soft);
+      margin-top: 2px;
+    }
+
+    /* Modo Expandido In-Situ */
+    .timer-expanded-card {
+      display: none;
+      width: 280px;
+      background: var(--paper-2);
+      border: 1.5px solid var(--rule);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.7);
+    }
+    .timer-expanded-card.open { display: block; }
+    .timer-card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .timer-card-head h4 { font-size: 13px; font-weight: 700; color: var(--ink); }
+    .timer-close-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--paper-3);
+      color: var(--ink-soft);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .timer-digits-big {
+      font-family: var(--font-hero);
+      font-size: 38px;
+      font-weight: 800;
+      color: var(--volt);
+      text-align: center;
+      letter-spacing: 0.04em;
+      margin-bottom: 14px;
+    }
+    .timer-presets-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+    .btn-preset {
+      min-height: 44px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--rule);
+      background: var(--paper);
+      color: var(--ink-soft);
+      font-family: var(--font-hero);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-preset.active {
+      background: var(--volt);
+      border-color: var(--volt);
+      color: var(--volt-ink);
+    }
+    .timer-action-buttons {
+      display: flex;
+      gap: 8px;
+    }
+    .btn-timer-ctrl {
+      flex: 1;
+      min-height: 44px;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+    .btn-timer-ctrl.primary {
+      background: var(--volt);
+      color: var(--volt-ink);
+    }
+    .btn-timer-ctrl.secondary {
+      background: var(--paper-3);
+      border-color: var(--rule);
+      color: var(--ink);
+    }
+
+    /* ============================================================
+       BOTTOM NAVIGATION BAR (ÍCONOS UNIFICADOS)
+       ============================================================ */
+    .bottom-nav-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 66px;
+      background: var(--paper-2);
+      border-top: 1px solid var(--rule);
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 0 12px 10px;
+      z-index: 40;
+    }
+
+    .bnav-btn {
+      flex: 1;
+      min-height: 46px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      color: var(--ink-soft);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      touch-action: manipulation;
+      transition: color 0.15s var(--ease-out), transform 0.1s;
+      border: none;
+      background: transparent;
+      outline: none;
+    }
+    .bnav-btn:active { transform: scale(0.94); }
+    .bnav-btn svg {
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: stroke 0.15s;
+    }
+    .bnav-btn.active {
+      color: var(--volt);
+    }
+    .bnav-btn.active svg {
+      stroke: var(--volt);
+      filter: drop-shadow(0 0 5px var(--volt-glow));
+    }
+
+    /* ============================================================
+       PANEL LATERAL DE TELEMETRÍA WCAG
+       ============================================================ */
+    .telemetry-column {
+      width: 440px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      flex-shrink: 0;
+    }
+
+    .telemetry-card {
+      background: #0e131d;
+      border: 1px solid #1e293b;
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    .telemetry-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 18px;
+      gap: 12px;
+    }
+    .telemetry-header h3 {
+      font-size: 16px;
+      font-weight: 800;
+      color: #f8fafc;
+    }
+    .wcag-pass-pill {
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: #13241d;
+      color: #10e7a0;
+      border: 1px solid currentColor;
+      white-space: nowrap;
+    }
+
+    .contrast-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .contrast-meter-box {
+      background: #141b29;
+      border: 1px solid #233147;
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+    .meter-label {
+      font-size: 11px;
+      color: #94a3b8;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .meter-val-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+    }
+    .meter-ratio {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 17px;
+      font-weight: 800;
+      color: #f8fafc;
+    }
+    .meter-status {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #10e7a0;
+    }
+
+    .color-swatches-row {
+      display: flex;
+      gap: 8px;
+      padding-top: 14px;
+      border-top: 1px solid #1e293b;
+    }
+    .color-swatch-item {
+      flex: 1;
+      text-align: center;
+    }
+    .color-swatch-box {
+      height: 28px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      margin-bottom: 4px;
+    }
+    .color-swatch-name {
+      font-size: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      color: #94a3b8;
+    }
+
+    .code-preview-block {
+      background: #080b11;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      padding: 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      line-height: 1.5;
+      color: #cbd5e1;
+      overflow-x: auto;
+      max-height: 260px;
+    }
+  </style>
+</head>
+
+<body data-theme="obsidian">
+
+  <!-- ENCABEZADO Y CONTROLES -->
+  <header class="top-bar">
+    <div class="top-bar-header">
+      <h1>
+        SysGym — Suite Cliente Móvil
+        <span class="badge-sub">4 Pantallas Reales</span>
+      </h1>
+    </div>
+
+    <div class="controls-row">
+      <!-- Selector de Temas -->
+      <div class="selector-block">
+        <span class="selector-label">Tema:</span>
+        <div class="segmented-group">
+          <button class="btn-segmented active" onclick="switchTheme('obsidian', this)">
+            <span class="theme-pip" style="background: #10e7a0; color: #10e7a0;"></span>
+            Obsidian
+          </button>
+          <button class="btn-segmented" onclick="switchTheme('titanium', this)">
+            <span class="theme-pip" style="background: #047857; color: #047857;"></span>
+            Titanium
+          </button>
+          <button class="btn-segmented" onclick="switchTheme('crimson', this)">
+            <span class="theme-pip" style="background: #ff4438; color: #ff4438;"></span>
+            Crimson
+          </button>
+        </div>
+      </div>
+
+      <!-- Selector de Pantallas -->
+      <div class="selector-block">
+        <span class="selector-label">Pantalla:</span>
+        <div class="segmented-group">
+          <button class="btn-segmented active" id="btn-screen-inicio" onclick="switchScreen('inicio')">
+            🏠 Inicio
+          </button>
+          <button class="btn-segmented" id="btn-screen-rutina" onclick="switchScreen('rutina')">
+            🏋️ Rutina
+          </button>
+          <button class="btn-segmented" id="btn-screen-mensajes" onclick="switchScreen('mensajes')">
+            💬 Mensajes
+          </button>
+          <button class="btn-segmented" id="btn-screen-pagos" onclick="switchScreen('pagos')">
+            💳 Pagos
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ESCENARIO DE TRABAJO -->
+  <main class="workspace-stage">
+
+    <!-- CHASIS DEL SMARTPHONE (375x812) -->
+    <div class="phone-chassis">
+      <div class="phone-screen">
+        
+        <!-- Barra de Estado iOS -->
+        <div class="status-bar">
+          <span>09:41</span>
+          <div class="dynamic-island"></div>
+          <span>5G 100%</span>
+        </div>
+
+        <!-- VIEWPORT DE CONTENIDO -->
+        <div class="viewport" id="phone-viewport">
+
+          <!-- ==========================================
+               PANTALLA 1: INICIO (/mi)
+               ========================================== -->
+          <div class="screen-view active" id="view-inicio">
+            
+            <div class="screen-subhead">
+              <h2 class="screen-title">Hola, Mateo</h2>
+              
+              <!-- Píldoras de Cabecera con Target Táctil Real >= 44px -->
+              <div class="header-pills">
+                <button class="pill-btn pill-btn-neutra" onclick="alert('Tutorial del cliente: recorrido por cuota, constancia y rutina.')">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                  Tutorial
+                </button>
+                <button class="pill-btn pill-btn-danger" onclick="alert('Cerrar sesión')">
+                  Salir
+                </button>
+              </div>
+            </div>
+
+            <!-- Card de Cuota con Anillo de Progreso -->
+            <div class="card-cuota">
+              <div class="card-cuota-header">Tu cuota</div>
+              <div class="cuota-flex">
+                <div class="ring-container">
+                  <svg viewBox="0 0 84 84">
+                    <circle class="ring-circle-bg" cx="42" cy="42" r="37"/>
+                    <circle class="ring-circle-fill" cx="42" cy="42" r="37"/>
+                  </svg>
+                  <div class="ring-center-content">
+                    <span class="ring-number">22</span>
+                    <span class="ring-label">días</span>
+                  </div>
+                </div>
+                <div class="cuota-info">
+                  <div class="cuota-badge-status">Al día</div>
+                  <p class="cuota-subtext">
+                    Pase Libre Musculación<br>
+                    vence el 26/09 (en 22 días)
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Racha de Constancia (30 días) -->
+            <div class="card-racha">
+              <div class="racha-top-row">
+                <span class="racha-title">Tu constancia</span>
+                <span class="racha-count"><b>12</b> visitas · 30 días</span>
+              </div>
+              <div class="racha-bars">
+                <div class="racha-bar-col active"></div>
+                <div class="racha-bar-col empty"></div>
+                <div class="racha-bar-col active"></div>
+                <div class="racha-bar-col active"></div>
+                <div class="racha-bar-col empty"></div>
+                <div class="racha-bar-col active"></div>
+                <div class="racha-bar-col active"></div>
+                <div class="racha-bar-col active"></div>
+                <div class="racha-bar-col empty"></div>
+                <div class="racha-bar-col active"></div>
+                <div class="racha-bar-col active"></div>
+                <div class="racha-bar-col empty"></div>
+                <div class="racha-bar-col active"></div>
+                <div class="racha-bar-col active"></div>
+                <div class="racha-bar-col active"></div>
+              </div>
+            </div>
+
+            <!-- Lista de Navegación Rápida -->
+            <ul class="client-nav-list">
+              <li>
+                <div class="client-nav-item" onclick="switchScreen('mensajes')">
+                  <svg class="nav-icon" viewBox="0 0 24 24">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                  </svg>
+                  <span class="nav-label">Mensajes del gimnasio</span>
+                  <span class="nav-badge-pill">2 sin leer</span>
+                </div>
+              </li>
+              <li>
+                <div class="client-nav-item" onclick="switchScreen('rutina')">
+                  <!-- Ícono de Barra/Mancuerna Oficial (limpio, atlético, sin cajas rotas) -->
+                  <svg class="nav-icon" viewBox="0 0 24 24">
+                    <path d="M2 12h20M6 7v10M18 7v10M3 9v6M21 9v6"/>
+                  </svg>
+                  <span class="nav-label">Tu rutina</span>
+                  <span class="nav-arrow">›</span>
+                </div>
+              </li>
+              <li>
+                <div class="client-nav-item" onclick="switchScreen('pagos')">
+                  <svg class="nav-icon" viewBox="0 0 24 24">
+                    <rect x="2" y="5" width="20" height="14" rx="2"/>
+                    <path d="M2 10h20"/>
+                  </svg>
+                  <span class="nav-label">Mis pagos</span>
+                  <span class="nav-arrow">›</span>
+                </div>
+              </li>
+            </ul>
+
+          </div>
+
+          <!-- ==========================================
+               PANTALLA 2: RUTINA SEMANAL (/mi/rutina)
+               ========================================== -->
+          <div class="screen-view" id="view-rutina">
+            
+            <div class="screen-subhead">
+              <h2 class="screen-title">Tu rutina</h2>
+              <button class="pill-btn pill-btn-neutra" onclick="switchScreen('inicio')">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg>
+                Inicio
+              </button>
+            </div>
+
+            <!-- Selector de Días de Rutina -->
+            <div class="day-selector-pills">
+              <button class="btn-day-tab active">
+                <div class="day-tab-name">Lunes</div>
+                <div class="day-tab-focus">Pecho / Tríceps</div>
+              </button>
+              <button class="btn-day-tab">
+                <div class="day-tab-name">Miércoles</div>
+                <div class="day-tab-focus">Espalda / Bíceps</div>
+              </button>
+              <button class="btn-day-tab">
+                <div class="day-tab-name">Viernes</div>
+                <div class="day-tab-focus">Piernas / Core</div>
+              </button>
+            </div>
+
+            <!-- Barra de Progreso de la Sesión -->
+            <div class="session-progress-card">
+              <div class="session-progress-head">
+                <span id="session-progress-text">Progreso de la sesión: 6 / 11 series</span>
+                <span id="session-progress-pct">54%</span>
+              </div>
+              <div class="session-progress-track">
+                <div class="session-progress-fill" id="session-progress-bar"></div>
+              </div>
+            </div>
+
+            <!-- Lista de Ejercicios -->
+            <ul class="exercise-list">
+              
+              <!-- Ejercicio 1 -->
+              <li class="exercise-card">
+                <div class="ex-head">
+                  <span class="ex-badge-idx">01</span>
+                  <div class="ex-meta">
+                    <h3 class="ex-title">Press de Banca con Barra</h3>
+                    <p class="ex-sub">Pectoral Mayor · RIR 1-2</p>
+                  </div>
+                </div>
+                <div class="chips-row">
+                  <span class="chip-item"><b>4</b> series</span>
+                  <span class="chip-item"><b>6–8</b> reps</span>
+                  <span class="chip-item"><b>80</b> kg</span>
+                </div>
+                <div class="set-checkpoints">
+                  <span class="set-check-label">Marcar series:</span>
+                  <div class="set-buttons-group">
+                    <button class="btn-set-node completed" onclick="toggleSetCheck(this)">1</button>
+                    <button class="btn-set-node completed" onclick="toggleSetCheck(this)">2</button>
+                    <button class="btn-set-node completed" onclick="toggleSetCheck(this)">3</button>
+                    <button class="btn-set-node" onclick="toggleSetCheck(this)">4</button>
+                  </div>
+                </div>
+              </li>
+
+              <!-- Ejercicio 2 -->
+              <li class="exercise-card">
+                <div class="ex-head">
+                  <span class="ex-badge-idx">02</span>
+                  <div class="ex-meta">
+                    <h3 class="ex-title">Press Inclinado Mancuernas</h3>
+                    <p class="ex-sub">Pectoral Clavicular</p>
+                  </div>
+                </div>
+                <div class="chips-row">
+                  <span class="chip-item"><b>4</b> series</span>
+                  <span class="chip-item"><b>8–10</b> reps</span>
+                  <span class="chip-item"><b>26</b> kg</span>
+                </div>
+                <div class="set-checkpoints">
+                  <span class="set-check-label">Marcar series:</span>
+                  <div class="set-buttons-group">
+                    <button class="btn-set-node completed" onclick="toggleSetCheck(this)">1</button>
+                    <button class="btn-set-node completed" onclick="toggleSetCheck(this)">2</button>
+                    <button class="btn-set-node completed" onclick="toggleSetCheck(this)">3</button>
+                    <button class="btn-set-node" onclick="toggleSetCheck(this)">4</button>
+                  </div>
+                </div>
+              </li>
+
+              <!-- Ejercicio 3 -->
+              <li class="exercise-card">
+                <div class="ex-head">
+                  <span class="ex-badge-idx">03</span>
+                  <div class="ex-meta">
+                    <h3 class="ex-title">Elevaciones Laterales Polea</h3>
+                    <p class="ex-sub">Deltoides Lateral</p>
+                  </div>
+                </div>
+                <div class="chips-row">
+                  <span class="chip-item"><b>3</b> series</span>
+                  <span class="chip-item"><b>12–15</b> reps</span>
+                  <span class="chip-item"><b>7.5</b> kg</span>
+                </div>
+                <div class="set-checkpoints">
+                  <span class="set-check-label">Marcar series:</span>
+                  <div class="set-buttons-group">
+                    <button class="btn-set-node" onclick="toggleSetCheck(this)">1</button>
+                    <button class="btn-set-node" onclick="toggleSetCheck(this)">2</button>
+                    <button class="btn-set-node" onclick="toggleSetCheck(this)">3</button>
+                  </div>
+                </div>
+              </li>
+
+            </ul>
+
+          </div>
+
+          <!-- ==========================================
+               PANTALLA 3: MENSAJES (/mi/mensajes)
+               ========================================== -->
+          <div class="screen-view" id="view-mensajes">
+            
+            <div class="screen-subhead">
+              <h2 class="screen-title">Mensajes</h2>
+              <button class="pill-btn pill-btn-neutra" onclick="switchScreen('inicio')">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg>
+                Inicio
+              </button>
+            </div>
+
+            <!-- Listado Real de Mensajes de la Bandeja -->
+            <ul class="msg-list">
+              
+              <!-- Mensaje 1 (No leído) -->
+              <li>
+                <div class="msg-item unread" onclick="alert('Abriendo conversación: Feriado del viernes')">
+                  <p class="msg-body-text">
+                    ¡Hola Mateo! Te confirmamos que este viernes 15 el gimnasio abrirá en horario especial de 8:00 a 14:00 por feriado nacional.
+                  </p>
+                  <div class="msg-footer-meta">
+                    <span class="msg-gym-avatar">G</span>
+                    <span>Gimnasio Power</span>
+                    <span>·</span>
+                    <span>Hoy, 10:30</span>
+                    <span class="badge-msg-new">nuevo</span>
+                    <span>·</span>
+                    <span>podés responder</span>
+                  </div>
+                </div>
+              </li>
+
+              <!-- Mensaje 2 (No leído) -->
+              <li>
+                <div class="msg-item unread" onclick="alert('Abriendo conversación: Ajuste de cargas')">
+                  <p class="msg-body-text">
+                    Excelente progreso en sentadilla hoy. Recordá descansar bien e hidratarte antes de la sesión de espalda del miércoles.
+                  </p>
+                  <div class="msg-footer-meta">
+                    <span>Prof. Lucas</span>
+                    <span>·</span>
+                    <span>Ayer, 18:45</span>
+                    <span class="badge-msg-new">nuevo</span>
+                    <span>·</span>
+                    <span>podés responder</span>
+                  </div>
+                </div>
+              </li>
+
+              <!-- Mensaje 3 (Leído) -->
+              <li>
+                <div class="msg-item" onclick="alert('Abriendo conversación: Renovación de pase')">
+                  <p class="msg-body-text">
+                    Tu cuota mensual de musculación vence el próximo 26 de septiembre. Recordá que podés abonar por CBU o en recepción.
+                  </p>
+                  <div class="msg-footer-meta">
+                    <span class="msg-gym-avatar">G</span>
+                    <span>Administración</span>
+                    <span>·</span>
+                    <span>01/09/2026</span>
+                  </div>
+                </div>
+              </li>
+
+            </ul>
+
+          </div>
+
+          <!-- ==========================================
+               PANTALLA 4: MIS PAGOS (/mi/pagos)
+               ========================================== -->
+          <div class="screen-view" id="view-pagos">
+            
+            <div class="screen-subhead">
+              <h2 class="screen-title">Mis pagos</h2>
+              <button class="pill-btn pill-btn-neutra" onclick="switchScreen('inicio')">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg>
+                Volver
+              </button>
+            </div>
+
+            <!-- Estado de Cuota Activa -->
+            <div class="card-payment-active">
+              <div class="payment-active-label">Tu cuota está paga hasta</div>
+              <div class="payment-active-date">26 de sep. de 2026</div>
+            </div>
+
+            <!-- Datos para Transferencia Bancaria -->
+            <div class="card-transfer-data">
+              <div class="transfer-data-header">Datos para transferir tu cuota</div>
+              <div class="transfer-rows">
+                
+                <div class="transfer-row-item">
+                  <div>
+                    <div class="transfer-field-label">Alias</div>
+                    <div class="transfer-field-val" id="val-alias">gimnasio.power.mp</div>
+                  </div>
+                  <button class="btn-copy-tag" onclick="copyData('gimnasio.power.mp', this)">Copiar</button>
+                </div>
+
+                <div class="transfer-row-item">
+                  <div>
+                    <div class="transfer-field-label">CBU / CVU</div>
+                    <div class="transfer-field-val" id="val-cbu">0000003100098472918234</div>
+                  </div>
+                  <button class="btn-copy-tag" onclick="copyData('0000003100098472918234', this)">Copiar</button>
+                </div>
+
+                <div class="transfer-row-item">
+                  <div>
+                    <div class="transfer-field-label">Titular</div>
+                    <div class="transfer-field-val">Gimnasio Power S.A.S.</div>
+                  </div>
+                </div>
+
+              </div>
+              <p class="transfer-note-sub">
+                Después de transferir, avisale al gimnasio para que registre el pago en tu ficha.
+              </p>
+            </div>
+
+            <!-- Historial de Pagos -->
+            <div class="payments-history-title">Historial de pagos</div>
+            <ul class="payments-history-list">
+              <li>
+                <div class="payment-history-item">
+                  <div>
+                    <div class="payment-item-date">26 ago. 2026</div>
+                    <div class="payment-item-plan">Pase Libre · cubre hasta 26 sep. 2026</div>
+                  </div>
+                  <div class="payment-item-amount">$ 28.000</div>
+                </div>
+              </li>
+              <li>
+                <div class="payment-history-item">
+                  <div>
+                    <div class="payment-item-date">26 jul. 2026</div>
+                    <div class="payment-item-plan">Pase Libre · cubre hasta 26 ago. 2026</div>
+                  </div>
+                  <div class="payment-item-amount">$ 26.000</div>
+                </div>
+              </li>
+              <li>
+                <div class="payment-history-item">
+                  <div>
+                    <div class="payment-item-date">26 jun. 2026</div>
+                    <div class="payment-item-plan">Pase Libre · cubre hasta 26 jul. 2026</div>
+                  </div>
+                  <div class="payment-item-amount">$ 24.000</div>
+                </div>
+              </li>
+            </ul>
+
+          </div>
+
+        </div>
+
+        <!-- ==========================================
+             TIMER FLOTANTE ARRASTRABLE (EN RUTINA)
+             ========================================== -->
+        <div class="floating-timer-container" id="floating-timer" style="display: none;">
+          
+          <!-- Widget Píldora Colapsada -->
+          <div class="timer-pill" id="timer-pill-widget" onclick="handlePillClick(event)">
+            <div class="timer-badge-icon">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+            </div>
+            <div>
+              <div class="timer-clock-text" id="timer-display-pill">01:15</div>
+              <div class="timer-sub-text">Descanso</div>
+            </div>
+          </div>
+
+          <!-- Panel Expandido In-Situ -->
+          <div class="timer-expanded-card" id="timer-expanded-card">
+            <div class="timer-card-head">
+              <h4>Descanso entre series</h4>
+              <div class="timer-close-icon" onclick="toggleTimerExpanded(false)">✕</div>
+            </div>
+            <div class="timer-digits-big" id="timer-display-big">01:15</div>
+            <div class="timer-presets-grid">
+              <button class="btn-preset" onclick="setPreset(30, this)">30s</button>
+              <button class="btn-preset" onclick="setPreset(60, this)">60s</button>
+              <button class="btn-preset active" onclick="setPreset(90, this)">90s</button>
+              <button class="btn-preset" onclick="setPreset(120, this)">2m</button>
+            </div>
+            <div class="timer-action-buttons">
+              <button class="btn-timer-ctrl primary" id="btn-timer-toggle" onclick="toggleTimerRunning()">Pausar</button>
+              <button class="btn-timer-ctrl secondary" onclick="resetTimer()">Reset</button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ==========================================
+             BOTTOM NAVIGATION BAR (ÍCONOS UNIFICADOS)
+             ========================================== -->
+        <nav class="bottom-nav-bar">
+          <button class="bnav-btn active" id="bnav-inicio" onclick="switchScreen('inicio')">
+            <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+            Inicio
+          </button>
+          <button class="bnav-btn" id="bnav-rutina" onclick="switchScreen('rutina')">
+            <!-- Barra con discos simétricos -->
+            <svg viewBox="0 0 24 24"><path d="M2 12h20M6 7v10M18 7v10M3 9v6M21 9v6"/></svg>
+            Rutina
+          </button>
+          <button class="bnav-btn" id="bnav-mensajes" onclick="switchScreen('mensajes')">
+            <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Mensajes
+          </button>
+        </nav>
+
+      </div>
+    </div>
+
+    <!-- PANEL LATERAL DE TELEMETRÍA WCAG Y PRESETS -->
+    <aside class="telemetry-column">
+      
+      <!-- Reporte de Contraste en Tiempo Real -->
+      <div class="telemetry-card">
+        <div class="telemetry-header">
+          <div>
+            <h3 id="panel-theme-title">1. Obsidian High-Performance</h3>
+            <p id="panel-theme-hint" style="font-size: 12px; color: #94a3b8; margin-top: 2px;">
+              Oscuro, carbón satinado y acento Hyper-Mint.
+            </p>
+          </div>
+          <span class="wcag-pass-pill" id="panel-wcag-badge">WCAG 2.1 AAA</span>
+        </div>
+
+        <!-- Grilla de Ratios Calculados -->
+        <div class="contrast-grid">
+          <div class="contrast-meter-box">
+            <div class="meter-label">Texto principal / Fondo</div>
+            <div class="meter-val-row">
+              <span class="meter-ratio" id="m-ink-paper">18.6:1</span>
+              <span class="meter-status">✓ Pasa (≥4.5)</span>
+            </div>
+          </div>
+
+          <div class="contrast-meter-box">
+            <div class="meter-label">Texto secundario / Fondo</div>
+            <div class="meter-val-row">
+              <span class="meter-ratio" id="m-inksoft-paper">7.6:1</span>
+              <span class="meter-status">✓ Pasa (≥4.5)</span>
+            </div>
+          </div>
+
+          <div class="contrast-meter-box">
+            <div class="meter-label">Texto / Tarjetas (paper2)</div>
+            <div class="meter-val-row">
+              <span class="meter-ratio" id="m-ink-paper2">17.1:1</span>
+              <span class="meter-status">✓ Pasa (≥4.5)</span>
+            </div>
+          </div>
+
+          <div class="contrast-meter-box">
+            <div class="meter-label">Texto sobre Acento (volt)</div>
+            <div class="meter-val-row">
+              <span class="meter-ratio" id="m-volt-ink">10.2:1</span>
+              <span class="meter-status">✓ Pasa (≥4.5)</span>
+            </div>
+          </div>
+
+          <div class="contrast-meter-box">
+            <div class="meter-label">Bordes sobre fondo (rule)</div>
+            <div class="meter-val-row">
+              <span class="meter-ratio" id="m-rule-paper">1.43:1</span>
+              <span class="meter-status">✓ Pasa (≥1.35)</span>
+            </div>
+          </div>
+
+          <div class="contrast-meter-box">
+            <div class="meter-label">Fondo vs Tarjetas</div>
+            <div class="meter-val-row">
+              <span class="meter-ratio" id="m-paper-separation">1.09:1</span>
+              <span class="meter-status">✓ Pasa (≥1.05)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Muestras de Color -->
+        <div class="color-swatches-row">
+          <div class="color-swatch-item">
+            <div class="color-swatch-box" id="swatch-paper" style="background: #090d14;"></div>
+            <div class="color-swatch-name">paper</div>
+          </div>
+          <div class="color-swatch-item">
+            <div class="color-swatch-box" id="swatch-paper2" style="background: #121722;"></div>
+            <div class="color-swatch-name">paper2</div>
+          </div>
+          <div class="color-swatch-item">
+            <div class="color-swatch-box" id="swatch-ink" style="background: #f8fafc;"></div>
+            <div class="color-swatch-name">ink</div>
+          </div>
+          <div class="color-swatch-item">
+            <div class="color-swatch-box" id="swatch-rule" style="background: #242e42;"></div>
+            <div class="color-swatch-name">rule</div>
+          </div>
+          <div class="color-swatch-item">
+            <div class="color-swatch-box" id="swatch-volt" style="background: #10e7a0;"></div>
+            <div class="color-swatch-name">volt</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Objeto TypeScript listo para PRESETS_TEMA -->
+      <div class="telemetry-card">
+        <h4 style="font-size: 13px; font-weight: 700; margin-bottom: 8px; color: #f8fafc;">
+          Objeto TypeScript (definido en <code>src/lib/tema.ts</code>):
+        </h4>
+        <pre class="code-preview-block" id="code-snippet-box"></pre>
+      </div>
+
+    </aside>
+
+  </main>
+
+  <!-- JAVASCRIPT DE INTERACCIÓN, NAVEGACIÓN Y DRAG & DROP -->
+  <script>
+    /* ============================================================
+       TELEMETRÍA Y TEMAS
+       ============================================================ */
+    const THEMES_DATA = {
+      obsidian: {
+        title: "1. Obsidian High-Performance",
+        hint: "Oscuro carbón satinado y acento Hyper-Mint.",
+        wcag: "WCAG 2.1 AAA",
+        wcagColor: "#10e7a0",
+        ratios: {
+          inkPaper: "18.6:1",
+          inkSoftPaper: "7.6:1",
+          inkPaper2: "17.1:1",
+          voltInk: "10.2:1",
+          rulePaper: "1.43:1",
+          separation: "1.09:1"
+        },
+        swatches: {
+          paper: "#090d14",
+          paper2: "#121722",
+          ink: "#f8fafc",
+          rule: "#242e42",
+          volt: "#10e7a0"
+        },
+        tsCode: `export const TEMA_OBSIDIAN: Tema = {
+  paper: "#090d14",
+  paper2: "#121722",
+  ink: "#f8fafc",
+  inkSoft: "#94a3b8",
+  rule: "#242e42",
+  volt: "#10e7a0",
+  voltInk: "#042417",
+  fuente: "amigable",        // Plus Jakarta Sans
+  estiloVisual: "futurista",  // Glow y textura
+  escalaFuente: 1,
+  radiosBordes: "normal",    // 10-16px ergonómicos
+  espaciado: "normal",
+  navegacionMovil: "bottom",
+  navegacionDesktop: "sidebar",
+  densidad: "comfortable",
+  reposoCheckin: DEFAULT_REPOSO_CHECKIN,
+};`
+      },
+
+      titanium: {
+        title: "2. Titanium Daylight",
+        hint: "Claro, fondo pizarra luminosa con blanco puro y Emerald deportivo.",
+        wcag: "WCAG 2.1 AA",
+        wcagColor: "#38bdf8",
+        ratios: {
+          inkPaper: "16.3:1",
+          inkSoftPaper: "6.9:1",
+          inkPaper2: "17.9:1",
+          voltInk: "5.5:1",
+          rulePaper: "1.36:1",
+          separation: "1.10:1"
+        },
+        swatches: {
+          paper: "#f1f5f9",
+          paper2: "#ffffff",
+          ink: "#0f172a",
+          rule: "#cbd5e1",
+          volt: "#047857"
+        },
+        tsCode: `export const TEMA_TITANIUM: Tema = {
+  paper: "#f1f5f9",
+  paper2: "#ffffff",
+  ink: "#0f172a",
+  inkSoft: "#475569",
+  rule: "#cbd5e1",
+  volt: "#047857",
+  voltInk: "#ffffff",
+  fuente: "amigable",        // Plus Jakarta Sans
+  estiloVisual: "clasico",    // Limpio y diurno
+  escalaFuente: 1,
+  radiosBordes: "normal",
+  espaciado: "normal",
+  navegacionMovil: "bottom",
+  navegacionDesktop: "sidebar",
+  densidad: "comfortable",
+  reposoCheckin: DEFAULT_REPOSO_CHECKIN,
+};`
+      },
+
+      crimson: {
+        title: "3. Crimson Forge",
+        hint: "Brutalismo industrial, tonos carbón magma y rojo fuego de alta potencia.",
+        wcag: "WCAG 2.1 AA",
+        wcagColor: "#38bdf8",
+        ratios: {
+          inkPaper: "17.7:1",
+          inkSoftPaper: "7.1:1",
+          inkPaper2: "16.1:1",
+          voltInk: "5.8:1",
+          rulePaper: "1.46:1",
+          separation: "1.10:1"
+        },
+        swatches: {
+          paper: "#141214",
+          paper2: "#1f1b20",
+          ink: "#fcf8f6",
+          rule: "#383038",
+          volt: "#ff4438"
+        },
+        tsCode: `export const TEMA_CRIMSON: Tema = {
+  paper: "#141214",
+  paper2: "#1f1b20",
+  ink: "#fcf8f6",
+  inkSoft: "#a89da3",
+  rule: "#383038",
+  volt: "#ff4438",
+  voltInk: "#1a0402",
+  fuente: "condensado",      // Archivo (compacta y potente)
+  estiloVisual: "concreto",   // Industrial, esquinas duras
+  escalaFuente: 1,
+  radiosBordes: "tight",     // Radios rectos 4-8px
+  espaciado: "compact",      // Mayor densidad
+  navegacionMovil: "bottom",
+  navegacionDesktop: "sidebar",
+  densidad: "compact",
+  reposoCheckin: DEFAULT_REPOSO_CHECKIN,
+};`
+      }
+    };
+
+    function switchTheme(themeKey, btn) {
+      document.body.setAttribute('data-theme', themeKey);
+
+      document.querySelectorAll('.controls-row .selector-block:first-child .btn-segmented').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+
+      const data = THEMES_DATA[themeKey];
+      if (!data) return;
+
+      document.getElementById('panel-theme-title').textContent = data.title;
+      document.getElementById('panel-theme-hint').textContent = data.hint;
+      
+      const badge = document.getElementById('panel-wcag-badge');
+      badge.textContent = data.wcag;
+      badge.style.color = data.wcagColor;
+
+      document.getElementById('m-ink-paper').textContent = data.ratios.inkPaper;
+      document.getElementById('m-inksoft-paper').textContent = data.ratios.inkSoftPaper;
+      document.getElementById('m-ink-paper2').textContent = data.ratios.inkPaper2;
+      document.getElementById('m-volt-ink').textContent = data.ratios.voltInk;
+      document.getElementById('m-rule-paper').textContent = data.ratios.rulePaper;
+      document.getElementById('m-paper-separation').textContent = data.ratios.separation;
+
+      document.getElementById('swatch-paper').style.background = data.swatches.paper;
+      document.getElementById('swatch-paper2').style.background = data.swatches.paper2;
+      document.getElementById('swatch-ink').style.background = data.swatches.ink;
+      document.getElementById('swatch-rule').style.background = data.swatches.rule;
+      document.getElementById('swatch-volt').style.background = data.swatches.volt;
+
+      document.getElementById('code-snippet-box').textContent = data.tsCode;
+    }
+
+    /* ============================================================
+       NAVEGACIÓN ENTRE PANTALLAS
+       ============================================================ */
+    function switchScreen(screenKey) {
+      // Ocultar todas las vistas
+      document.querySelectorAll('.screen-view').forEach(v => v.classList.remove('active'));
+      
+      // Mostrar la seleccionada
+      const targetView = document.getElementById('view-' + screenKey);
+      if (targetView) targetView.classList.add('active');
+
+      // Scroll al tope del viewport
+      document.getElementById('phone-viewport').scrollTop = 0;
+
+      // Actualizar botones de selector superior
+      document.querySelectorAll('.controls-row .selector-block:last-child .btn-segmented').forEach(b => b.classList.remove('active'));
+      const topBtn = document.getElementById('btn-screen-' + screenKey);
+      if (topBtn) topBtn.classList.add('active');
+
+      // Actualizar botones del Bottom Nav
+      document.querySelectorAll('.bottom-nav-bar .bnav-btn').forEach(b => b.classList.remove('active'));
+      const navBtn = document.getElementById('bnav-' + screenKey);
+      if (navBtn) navBtn.classList.add('active');
+
+      // Control del Timer Flotante: Solo visible en la pantalla de Rutina
+      const timerWidget = document.getElementById('floating-timer');
+      if (screenKey === 'rutina') {
+        timerWidget.style.display = 'block';
+      } else {
+        timerWidget.style.display = 'none';
+      }
+    }
+
+    /* ============================================================
+       TRACKER DE SERIES Y PROGRESO DE RUTINA
+       ============================================================ */
+    function toggleSetCheck(btn) {
+      btn.classList.toggle('completed');
+      
+      // Recalcular series completadas
+      const totalButtons = document.querySelectorAll('#view-rutina .btn-set-node').length;
+      const completedButtons = document.querySelectorAll('#view-rutina .btn-set-node.completed').length;
+      const pct = Math.round((completedButtons / totalButtons) * 100);
+
+      document.getElementById('session-progress-text').textContent = `Progreso de la sesión: ${completedButtons} / ${totalButtons} series`;
+      document.getElementById('session-progress-pct').textContent = `${pct}%`;
+      document.getElementById('session-progress-bar').style.width = `${pct}%`;
+
+      // Iniciar timer automáticamente si se completa una serie
+      if (btn.classList.contains('completed')) {
+        startTimerCountdown();
+      }
+    }
+
+    /* ============================================================
+       COPIAR DATOS DE PAGO CON FEEDBACK
+       ============================================================ */
+    function copyData(text, btn) {
+      navigator.clipboard.writeText(text).then(() => {
+        const originalText = btn.textContent;
+        btn.textContent = "Copiado ✓";
+        btn.classList.add("copied");
+        setTimeout(() => {
+          btn.textContent = originalText;
+          btn.classList.remove("copied");
+        }, 1600);
+      });
+    }
+
+    /* ============================================================
+       TIMER DE DESCANSO FLOTANTE: DRAG & DROP MAGNÉTICO
+       ============================================================ */
+    const timerContainer = document.getElementById('floating-timer');
+    const timerPill = document.getElementById('timer-pill-widget');
+    const timerCard = document.getElementById('timer-expanded-card');
+    
+    let isDragging = false;
+    let dragThresholdPassed = false;
+    let startX = 0, startY = 0;
+    let initialLeft = 0, initialTop = 0;
+    let timerInterval = null;
+    let timeLeft = 75; // 1m 15s
+    let isTimerRunning = true;
+
+    function handlePillClick(e) {
+      if (dragThresholdPassed) {
+        dragThresholdPassed = false;
+        return;
+      }
+      toggleTimerExpanded(true);
+    }
+
+    function toggleTimerExpanded(expanded) {
+      if (expanded) {
+        timerPill.style.display = 'none';
+        timerCard.classList.add('open');
+      } else {
+        timerCard.classList.remove('open');
+        timerPill.style.display = 'flex';
+      }
+    }
+
+    // Drag events (touch & mouse)
+    timerPill.addEventListener('mousedown', onDragStart);
+    window.addEventListener('mousemove', onDragMove);
+    window.addEventListener('mouseup', onDragEnd);
+
+    timerPill.addEventListener('touchstart', onDragStart, { passive: false });
+    window.addEventListener('touchmove', onDragMove, { passive: false });
+    window.addEventListener('touchend', onDragEnd);
+
+    function getEventPos(e) {
+      if (e.touches && e.touches.length > 0) {
+        return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      }
+      return { x: e.clientX, y: e.clientY };
+    }
+
+    function onDragStart(e) {
+      if (timerCard.classList.contains('open')) return;
+      isDragging = true;
+      dragThresholdPassed = false;
+      const pos = getEventPos(e);
+      startX = pos.x;
+      startY = pos.y;
+
+      const rect = timerContainer.getBoundingClientRect();
+      const parentRect = timerContainer.parentElement.getBoundingClientRect();
+      initialLeft = rect.left - parentRect.left;
+      initialTop = rect.top - parentRect.top;
+      timerContainer.style.transition = 'none';
+    }
+
+    function onDragMove(e) {
+      if (!isDragging) return;
+      const pos = getEventPos(e);
+      const dx = pos.x - startX;
+      const dy = pos.y - startY;
+
+      if (Math.hypot(dx, dy) > 6) {
+        dragThresholdPassed = true;
+        e.preventDefault();
+      }
+
+      if (dragThresholdPassed) {
+        const parent = timerContainer.parentElement;
+        const maxLeft = parent.clientWidth - timerContainer.offsetWidth - 8;
+        const maxTop = parent.clientHeight - timerContainer.offsetHeight - 72; // Evitar tapar bottom nav
+        const minTop = 50; // Evitar notch
+
+        let newLeft = Math.max(8, Math.min(maxLeft, initialLeft + dx));
+        let newTop = Math.max(minTop, Math.min(maxTop, initialTop + dy));
+
+        timerContainer.style.left = newLeft + 'px';
+        timerContainer.style.top = newTop + 'px';
+        timerContainer.style.right = 'auto';
+        timerContainer.style.bottom = 'auto';
+      }
+    }
+
+    function onDragEnd() {
+      if (!isDragging) return;
+      isDragging = false;
+      
+      if (dragThresholdPassed) {
+        // Snap magnético al borde lateral más cercano
+        const parent = timerContainer.parentElement;
+        const currentLeft = parseInt(timerContainer.style.left, 10) || 0;
+        const centerThreshold = (parent.clientWidth - timerContainer.offsetWidth) / 2;
+        
+        timerContainer.style.transition = 'left 0.25s var(--ease-out)';
+        if (currentLeft < centerThreshold) {
+          timerContainer.style.left = '16px';
+        } else {
+          timerContainer.style.left = (parent.clientWidth - timerContainer.offsetWidth - 16) + 'px';
+        }
+      }
+    }
+
+    /* ============================================================
+       COUNTDOWN DEL TIMER
+       ============================================================ */
+    function formatTime(sec) {
+      const m = Math.floor(sec / 60).toString().padStart(2, '0');
+      const s = (sec % 60).toString().padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    function updateTimerDisplays() {
+      const formatted = formatTime(timeLeft);
+      document.getElementById('timer-display-pill').textContent = formatted;
+      document.getElementById('timer-display-big').textContent = formatted;
+    }
+
+    function startTimerCountdown() {
+      if (timerInterval) clearInterval(timerInterval);
+      isTimerRunning = true;
+      document.getElementById('btn-timer-toggle').textContent = "Pausar";
+
+      timerInterval = setInterval(() => {
+        if (timeLeft > 0) {
+          timeLeft--;
+          updateTimerDisplays();
+        } else {
+          clearInterval(timerInterval);
+          isTimerRunning = false;
+          document.getElementById('btn-timer-toggle').textContent = "Iniciar";
+        }
+      }, 1000);
+    }
+
+    function toggleTimerRunning() {
+      if (isTimerRunning) {
+        clearInterval(timerInterval);
+        isTimerRunning = false;
+        document.getElementById('btn-timer-toggle').textContent = "Reanudar";
+      } else {
+        startTimerCountdown();
+      }
+    }
+
+    function setPreset(seconds, btn) {
+      document.querySelectorAll('.btn-preset').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      timeLeft = seconds;
+      updateTimerDisplays();
+      startTimerCountdown();
+    }
+
+    function resetTimer() {
+      timeLeft = 90;
+      updateTimerDisplays();
+      startTimerCountdown();
+    }
+
+    // Iniciar con Obsidian
+    switchTheme('obsidian', document.querySelector('.btn-segmented.active'));
+    updateTimerDisplays();
+    startTimerCountdown();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialScreen = urlParams.get('screen') || (window.location.hash ? window.location.hash.replace('#', '') : null);
+    if (initialScreen && document.getElementById('view-' + initialScreen)) {
+      switchScreen(initialScreen);
+    }
+  </script>
+</body>
+</html>

@@ -46,19 +46,19 @@ export default async function MisPagosPage() {
   const cubiertoHasta = cli?.fecha_vencimiento ?? null;
 
   return (
-    <main className="stagger max-w-md mx-auto p-6 space-y-6">
+    <main className="stagger max-w-md mx-auto p-5 pb-24 space-y-6">
       <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl">Mis pagos</h1>
+        <h1 className="text-2xl font-display font-extrabold tracking-tight text-ink">Mis pagos</h1>
         <Link href="/mi" className={pillClasses.neutra}>
-          <ChevronLeft aria-hidden strokeWidth={2} className="size-4" />
+          <ChevronLeft aria-hidden strokeWidth={2} className="size-4 shrink-0" />
           Volver
         </Link>
       </div>
 
       {cubiertoHasta ? (
-        <div className="card-cut border border-rule bg-paper-2 p-4">
-          <p className="text-xs text-ink-soft">Tu cuota está paga hasta</p>
-          <p className="font-display text-xl">{fecha(cubiertoHasta)}</p>
+        <div className="rounded-[14px] border border-rule bg-paper-2 p-5 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-wider text-ink-soft">Tu cuota está paga hasta</p>
+          <p className="font-display text-2xl font-extrabold text-ink mt-1">{fecha(cubiertoHasta)}</p>
         </div>
       ) : null}
 
@@ -69,23 +69,28 @@ export default async function MisPagosPage() {
       />
 
       {pagos.length === 0 ? (
-        <p className="text-sm text-ink-soft">Todavía no hay pagos registrados.</p>
+        <div className="rounded-[14px] border border-rule bg-paper-2 p-8 text-center text-sm text-ink-soft shadow-sm">
+          Todavía no hay pagos registrados.
+        </div>
       ) : (
-        <ul className="card-cut overflow-hidden border border-rule bg-paper-2 divide-y divide-rule">
-          {pagos.map((p) => (
-            <li key={p.id} className="flex items-center justify-between gap-3 px-4 py-3">
-              <div className="min-w-0">
-                <p className="text-sm font-medium">{fecha(p.fecha_pago)}</p>
-                <p className="truncate text-xs text-ink-soft">
-                  {p.plan?.nombre ?? "Plan"} · cubre hasta {fecha(p.cubre_hasta)}
-                </p>
-              </div>
-              <span className="shrink-0 font-display text-sm tabular-nums">
-                {money(Number(p.monto) || 0)}
-              </span>
-            </li>
-          ))}
-        </ul>
+        <div className="space-y-2.5">
+          <p className="text-xs font-semibold uppercase tracking-wider text-ink-soft px-1">Historial de pagos</p>
+          <ul className="overflow-hidden rounded-[14px] border border-rule bg-paper-2 divide-y divide-rule shadow-sm">
+            {pagos.map((p) => (
+              <li key={p.id} className="flex items-center justify-between gap-3 px-4 py-3.5">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-ink">{fecha(p.fecha_pago)}</p>
+                  <p className="truncate text-xs text-ink-soft mt-0.5">
+                    {p.plan?.nombre ?? "Plan"} · cubre hasta {fecha(p.cubre_hasta)}
+                  </p>
+                </div>
+                <span className="shrink-0 font-hero text-base font-bold tabular-nums text-ink">
+                  {money(Number(p.monto) || 0)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </main>
   );
