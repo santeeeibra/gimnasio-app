@@ -1,10 +1,19 @@
 import { requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { parseTema, temaToVars, polaridadTema, resolverMotion } from "@/lib/tema";
+import {
+  parseTema,
+  resolverTemaCliente,
+  temaToVars,
+  polaridadTema,
+  resolverMotion,
+} from "@/lib/tema";
 import { MiBottomNav } from "./mi-nav";
 import { Tutorial } from "@/components/tutorial/tutorial";
 import { ImpersonationBanner } from "@/components/impersonation/banner";
 import { OfflineProvider } from "@/components/offline/provider";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function MiLayout({
   children,
@@ -13,7 +22,7 @@ export default async function MiLayout({
 }) {
   const profile = await requireProfile();
   const supabase = await createClient();
-  const [{ data: gym }, { data: cli }] = await Promise.all([
+  const [{ data: gym }, cliRes] = await Promise.all([
     supabase
       .from("gimnasios")
       .select("nombre, tema, logo_url")
@@ -21,12 +30,27 @@ export default async function MiLayout({
       .single(),
     supabase
       .from("clientes")
-      .select("acceso_habilitado")
+      .select("acceso_habilitado, tema_personalizado")
       .eq("profile_id", profile.id)
       .maybeSingle(),
   ]);
 
-  const tema = parseTema(gym?.tema);
+  let cli = cliRes.data;
+  // Fallback defensivo si la columna tema_personalizado todavía no fue migrada en la DB
+  if (cliRes.error && (cliRes.error as { code?: string }).code === "42703") {
+    const { data: fallbackCli } = await supabase
+      .from("clientes")
+      .select("acceso_habilitado")
+      .eq("profile_id", profile.id)
+      .maybeSingle();
+    cli = fallbackCli as typeof cli;
+  }
+
+  const temaBase = parseTema(gym?.tema);
+  const tema = resolverTemaCliente(
+    temaBase,
+    (cli as { tema_personalizado?: unknown } | null)?.tema_personalizado,
+  );
 
   // Alta sin pago: el socio existe pero no puede usar la app hasta que el dueño
   // registre el primer pago.

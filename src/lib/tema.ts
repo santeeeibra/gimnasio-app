@@ -3,7 +3,13 @@
  * Se guarda en `gimnasios.tema` (jsonb). `null` => valores por defecto.
  */
 
-import { hexToRgb, luminanciaRelativa, ratio, sugerirAjuste } from "./contraste";
+import {
+  derivarVoltInk,
+  hexToRgb,
+  luminanciaRelativa,
+  ratio,
+  sugerirAjuste,
+} from "./contraste";
 
 export type FuenteKey =
   | "moderno"
@@ -597,6 +603,61 @@ export function parseTema(raw: unknown): Tema {
     reposoCheckin,
   };
 }
+
+export { derivarVoltInk };
+
+/**
+ * Tema personalizado que puede definir un socio de forma independiente
+ * para su propia vista /mi/*. Solo pisa los campos definidos (ej: color de acento).
+ */
+export type TemaPersonalizado = {
+  volt?: string;
+  voltInk?: string;
+  fuente?: FuenteKey;
+  escalaFuente?: number;
+};
+
+/**
+ * Resuelve el tema visual final para un socio (/mi/*).
+ * Si el socio tiene `tema_personalizado` (jsonb), fusiona sus overrides sobre el tema
+ * base del gimnasio sin reemplazarlo en su totalidad, preservando fondos, tarjetas,
+ * bordes y tipografía a menos que estén explícitamente sobreescritos.
+ * Si `temaPersonalizadoRaw` es null o vacío, devuelve el tema del gimnasio intacto.
+ */
+export function resolverTemaCliente(
+  temaGym: Tema,
+  temaPersonalizadoRaw: unknown,
+): Tema {
+  if (!temaPersonalizadoRaw || typeof temaPersonalizadoRaw !== "object") {
+    return temaGym;
+  }
+
+  const custom = temaPersonalizadoRaw as Record<string, unknown>;
+  const merged: Tema = { ...temaGym };
+
+  if (isHex(custom.volt)) {
+    merged.volt = custom.volt;
+    if (isHex(custom.voltInk)) {
+      merged.voltInk = custom.voltInk;
+    } else {
+      merged.voltInk = derivarVoltInk(custom.volt);
+    }
+  }
+
+  if (typeof custom.fuente === "string" && custom.fuente in FUENTES) {
+    merged.fuente = custom.fuente as FuenteKey;
+  }
+
+  if (
+    typeof custom.escalaFuente === "number" &&
+    [0.875, 1, 1.125, 1.25].includes(custom.escalaFuente)
+  ) {
+    merged.escalaFuente = custom.escalaFuente;
+  }
+
+  return merged;
+}
+
 
 /* ============================================================
    Capa ambiental (Opción A del análisis). Tokens DERIVADOS que todo tema

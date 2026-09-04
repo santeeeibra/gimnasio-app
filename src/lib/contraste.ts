@@ -62,7 +62,7 @@ export function hexToRgb(hex: string): [number, number, number] | null {
 }
 
 /** Convierte RGB a HSL. */
-function rgbToHsl(r: number, g: number, b: number): [number, number, number] {
+export function rgbToHsl(r: number, g: number, b: number): [number, number, number] {
   const [rs, gs, bs] = [r / 255, g / 255, b / 255];
   const max = Math.max(rs, gs, bs);
   const min = Math.min(rs, gs, bs);
@@ -82,7 +82,7 @@ function rgbToHsl(r: number, g: number, b: number): [number, number, number] {
 }
 
 /** Convierte HSL a RGB. */
-function hslToRgb(h: number, s: number, l: number): [number, number, number] {
+export function hslToRgb(h: number, s: number, l: number): [number, number, number] {
   const hue2rgb = (p: number, q: number, t: number) => {
     if (t < 0) t += 1;
     if (t > 1) t -= 1;
@@ -108,7 +108,7 @@ function hslToRgb(h: number, s: number, l: number): [number, number, number] {
 }
 
 /** Convierte [r, g, b] a #RRGGBB. */
-function rgbToHex(r: number, g: number, b: number): string {
+export function rgbToHex(r: number, g: number, b: number): string {
   return `#${[r, g, b].map((c) => c.toString(16).padStart(2, "0")).join("")}`;
 }
 
@@ -288,16 +288,43 @@ export function derivarPaleta(
   }
 
   // Texto sobre el acento: claro u oscuro según el acento, teñido con su hue.
+  const voltInk = derivarVoltInk(volt);
+
+  return { paper2, inkSoft, rule, voltInk };
+}
+
+/**
+ * Calcula un color de texto (--volt-ink) con contraste garantizado >= 4.5
+ * contra el color de acento (--volt) dado, teñido ligeramente con su tono.
+ */
+export function derivarVoltInk(volt: string): string {
   const vRgb = hexToRgb(volt) ?? [0, 0, 0];
   const [vH, vS] = rgbToHsl(...vRgb);
-  const acentoClaro = luminanciaRelativa(...vRgb) > 0.4;
+
+  // Determinar qué extremo (oscuro o claro) tiene mayor ratio de contraste potencial
+  const ratioContraBlanco = ratio("#ffffff", volt);
+  const ratioContraNegro = ratio("#000000", volt);
+  const preferirOscuro = ratioContraNegro >= ratioContraBlanco;
+
   let voltInk = rgbToHex(
-    ...hslToRgb(vH, Math.min(vS, 0.4), acentoClaro ? 0.12 : 0.96),
+    ...hslToRgb(vH, Math.min(vS, 0.35), preferirOscuro ? 0.08 : 0.96),
   );
   if (ratio(voltInk, volt) < 4.5) {
     voltInk = sugerirAjuste(volt, voltInk, 4.5);
   }
 
-  return { paper2, inkSoft, rule, voltInk };
+  // Si no alcanzó 4.5 en esa dirección, probar la alternativa
+  if (ratio(voltInk, volt) < 4.5) {
+    const altInk = rgbToHex(
+      ...hslToRgb(vH, Math.min(vS, 0.35), preferirOscuro ? 0.96 : 0.08),
+    );
+    const altAjustado = sugerirAjuste(volt, altInk, 4.5);
+    if (ratio(altAjustado, volt) > ratio(voltInk, volt)) {
+      voltInk = altAjustado;
+    }
+  }
+
+  return voltInk;
 }
+
 

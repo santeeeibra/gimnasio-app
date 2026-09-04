@@ -6,6 +6,9 @@ import { Tutorial } from "@/components/tutorial/tutorial";
 import { ImpersonationBanner } from "@/components/impersonation/banner";
 import { OfflineProvider } from "@/components/offline/provider";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function PanelLayout({
   children,
 }: {

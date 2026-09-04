@@ -7,10 +7,13 @@ import { ActivarNotificaciones } from "./activar-notificaciones";
 import { VerTutorialDeNuevo } from "@/components/tutorial/tutorial";
 import { AnilloProgreso } from "@/components/anillo-progreso";
 import { pillClasses } from "@/components/ui";
-import { ChevronRight, CreditCard, Dumbbell, MessageSquare } from "lucide-react";
+import { ChevronRight, CreditCard, Dumbbell, MessageSquare, Palette } from "lucide-react";
 import { RachaConstancia } from "@/components/mi/racha-constancia";
 import { DatosTransferencia } from "@/components/mi/datos-transferencia";
 import { CacheAlVuelo } from "@/components/offline/cache-al-vuelo";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function MiPage() {
   const profile = await requireProfile();
@@ -220,6 +223,20 @@ export default async function MiPage() {
           >
             <CreditCard aria-hidden strokeWidth={2} className="size-[18px] shrink-0 text-ink-soft transition-colors duration-150 [transition-timing-function:var(--ease-out)] group-active:text-ink" />
             <span className="min-w-0 flex-1 text-sm font-medium">Mis pagos</span>
+            <ChevronRight
+              aria-hidden
+              strokeWidth={2}
+              className="size-4 shrink-0 text-ink-soft transition-transform duration-150 [transition-timing-function:var(--ease-out)] group-active:translate-x-[3px]"
+            />
+          </Link>
+        </li>
+        <li>
+          <Link
+            href="/mi/ajustes"
+            className="group flex items-center gap-3 px-4 py-4 transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper active:bg-paper active:scale-[0.985]"
+          >
+            <Palette aria-hidden strokeWidth={2} className="size-[18px] shrink-0 text-ink-soft transition-colors duration-150 [transition-timing-function:var(--ease-out)] group-active:text-ink" />
+            <span className="min-w-0 flex-1 text-sm font-medium">Personalizar tema</span>
             <ChevronRight
               aria-hidden
               strokeWidth={2}
