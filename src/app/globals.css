@@ -222,12 +222,11 @@ h3 {
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
   }
 }
 .page-transition {
-  animation: page-enter 180ms var(--ease-out) both;
-  will-change: transform, opacity;
+  animation: page-enter 180ms var(--ease-out);
 }
 
 @view-transition {

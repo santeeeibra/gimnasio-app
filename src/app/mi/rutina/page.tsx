@@ -19,8 +19,8 @@ type Prefs = {
   enfasis?: Enfasis[];
   zonasDolor?: Molestia[];
 } | null;
-import { linkClasses, pillClasses } from "@/components/ui";
-import { ChevronLeft } from "lucide-react";
+import { pillClasses } from "@/components/ui";
+import { ChevronLeft, ChevronRight, Plus, SlidersHorizontal } from "lucide-react";
 import { generarMiRutina } from "./actions";
 import { GenerarRutinaForm } from "./generar-form";
 import { RutinaEditor, type DiaEditable } from "./rutina-editor";
@@ -77,20 +77,28 @@ export default async function MiRutinaPage() {
 
   // SPEC modo manual: nunca es el flujo por default, siempre detrás de un
   // <details> cerrado, debajo del generador automático.
+  // Controles de personalización (armado manual y modo avanzado).
+  // Se presentan como tarjetas de acción sólidas con superficie Obsidian (bg-paper-2,
+  // borde preciso, feedback táctil e íconos con acento) en lugar de botones fantasma transparentes.
   const entradaManual = (
     <details className="group">
       <summary
-        className={`border border-rule rounded-[10px] px-3 py-2 inline-flex items-center gap-1.5 w-fit cursor-pointer select-none list-none text-sm text-ink-soft [&::-webkit-details-marker]:hidden ${linkClasses.inline}`}
+        className="flex w-full cursor-pointer select-none list-none items-center justify-between rounded-[12px] border border-rule bg-paper-2 p-3 text-sm font-medium text-ink transition-all duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper-3 hover:border-ink/20 active:scale-[0.99] shadow-sm [&::-webkit-details-marker]:hidden"
       >
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="shrink-0 transition-transform duration-150 [transition-timing-function:var(--ease-out)] group-open:rotate-45">
-          <path d="M12 5v14M5 12h14"/>
-        </svg>
-        <span className="group-open:hidden">
-          ¿Ya entrenás y querés armar tu rutina a mano?
-        </span>
-        <span className="hidden group-open:inline">Cerrar armado manual</span>
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="grid size-8 shrink-0 place-items-center rounded-[8px] border border-rule bg-paper text-accent">
+            <Plus aria-hidden className="size-4 transition-transform duration-150 [transition-timing-function:var(--ease-out)] group-open:rotate-45" />
+          </span>
+          <span className="truncate group-open:hidden">
+            ¿Ya entrenás y querés armar tu rutina a mano?
+          </span>
+          <span className="hidden truncate group-open:inline">
+            Cerrar armado manual
+          </span>
+        </div>
+        <ChevronRight aria-hidden className="size-4 shrink-0 text-ink-soft transition-transform duration-150 [transition-timing-function:var(--ease-out)] group-open:rotate-90" />
       </summary>
-      <div className="mt-3 rounded-[14px] border border-rule bg-paper-2 p-4 animate-fade-in">
+      <div className="mt-2.5 rounded-[14px] border border-rule bg-paper-2 p-4 animate-fade-in shadow-sm">
         <p className="mb-3 text-xs leading-snug text-ink-soft">
           Elegí ejercicios, series y reps, y sumá una técnica de intensidad por
           ejercicio si la usás. Se guarda como tu rutina y reemplaza la que
@@ -104,13 +112,23 @@ export default async function MiRutinaPage() {
   const linkAvanzado = (
     <Link
       href="/mi/rutina/avanzado"
-      className={`border border-rule rounded-[10px] px-3 py-2 inline-flex items-center gap-1.5 w-fit text-sm text-ink-soft ${linkClasses.inline}`}
+      className="flex w-full items-center justify-between rounded-[12px] border border-rule bg-paper-2 p-3 text-sm font-medium text-ink transition-all duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper-3 hover:border-ink/20 active:scale-[0.99] shadow-sm"
     >
-      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="shrink-0">
-        <path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM12 14l3-3m-6 0l3 3"/>
-      </svg>
-      Modo avanzado — afinar el plan
+      <div className="flex items-center gap-3 min-w-0">
+        <span className="grid size-8 shrink-0 place-items-center rounded-[8px] border border-rule bg-paper text-accent">
+          <SlidersHorizontal aria-hidden className="size-4" />
+        </span>
+        <span className="truncate">Modo avanzado — afinar el plan</span>
+      </div>
+      <ChevronRight aria-hidden className="size-4 shrink-0 text-ink-soft" />
     </Link>
+  );
+
+  const opcionesPersonalizacion = (
+    <div className="space-y-2.5">
+      {entradaManual}
+      {linkAvanzado}
+    </div>
   );
 
   const regenerarDetails = rutina ? (
@@ -206,13 +224,11 @@ export default async function MiRutinaPage() {
           <div id="generar-rutina-auto" className="scroll-mt-4">
             <GenerarRutinaForm action={generarMiRutina} />
           </div>
-          {entradaManual}
-          {linkAvanzado}
+          {opcionesPersonalizacion}
         </>
       ) : (
         <>
-          {entradaManual}
-          {linkAvanzado}
+          {opcionesPersonalizacion}
 
           {(() => {
             const p = rutina.preferencias as
@@ -221,10 +237,11 @@ export default async function MiRutinaPage() {
             const pasos = p?.explicacion ?? [];
             if (rutina.origen === "manual" || pasos.length === 0) return null;
             return (
-              <details className="group rounded-[14px] border border-rule bg-paper-2 p-4">
+              <details className="group rounded-[14px] border border-rule bg-paper-2 p-4 shadow-sm">
                 <summary
-                  className={`w-fit cursor-pointer select-none text-sm text-ink-soft [&::-webkit-details-marker]:hidden ${linkClasses.inline}`}
+                  className="flex w-fit cursor-pointer select-none list-none items-center gap-2 text-sm font-medium text-ink-soft hover:text-ink transition-colors [&::-webkit-details-marker]:hidden"
                 >
+                  <ChevronRight aria-hidden className="size-4 shrink-0 transition-transform duration-150 [transition-timing-function:var(--ease-out)] group-open:rotate-90 text-accent" />
                   <span className="group-open:hidden">Explicame esta rutina</span>
                   <span className="hidden group-open:inline">Cerrar explicación</span>
                 </summary>

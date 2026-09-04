@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
+import { createPortal } from "react-dom";
 import { ejerciciosSimilares, estaBloqueado } from "@/lib/rutina/motor";
 import { Spinner } from "@/components/ui";
 import {
@@ -164,31 +165,39 @@ function VisorEjercicio({
   ej: Ejercicio;
   onClose: () => void;
 }) {
+  const [mounted, setMounted] = useState(false);
   const reduce = usePrefiereMenosMovimiento();
   const [err, setErr] = useState(false);
   const url = ej.imagen_url ?? null;
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
     const on = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", on);
+    const scrollOrig = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       window.removeEventListener("keydown", on);
-      document.body.style.overflow = "";
+      document.body.style.overflow = scrollOrig;
     };
   }, [onClose]);
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
       aria-label={ej.nombre}
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-[color:var(--scrim)] p-4 animate-fade-in"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-[color:var(--scrim)] p-4 backdrop-blur-sm animate-fade-in"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-sm rounded-[14px] border border-rule bg-paper p-4 shadow-xl"
+        className="w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-[16px] border border-rule bg-paper p-4 shadow-2xl animate-scale-in"
       >
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -203,22 +212,22 @@ function VisorEjercicio({
             type="button"
             onClick={onClose}
             aria-label="Cerrar"
-            className="-mr-1 -mt-1 grid size-9 shrink-0 place-items-center rounded-[6px] text-ink-soft transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20"
+            className="-mr-1 -mt-1 grid size-9 shrink-0 place-items-center rounded-[8px] border border-rule bg-paper-2 text-ink-soft transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-90 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20"
           >
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
               <path d="M6 6l12 12M18 6L6 18" />
             </svg>
           </button>
         </div>
 
-        <div className="relative mt-3 grid aspect-square w-full place-items-center overflow-hidden rounded-[10px] border border-rule bg-paper-2">
+        <div className="relative mt-3 grid aspect-square w-full place-items-center overflow-hidden rounded-[12px] border border-rule bg-paper-2">
           {url && !err ? (
             <ImagenAnimada
               url={url}
               activo={!reduce && !err}
               onError={() => setErr(true)}
               alt={ej.nombre}
-              className="h-full w-full object-contain"
+              className="h-full w-full object-contain p-2"
             />
           ) : (
             <Glifo className="size-10 text-ink-soft" />
@@ -231,7 +240,8 @@ function VisorEjercicio({
           </p>
         ) : null}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
