@@ -43,6 +43,19 @@ export function PagoForm({
         </Button>
       </div>
 
+      <label className="block">
+        <span className="block text-[13px] font-medium text-ink-soft mb-1.5">
+          Comprobante / referencia{" "}
+          <span className="font-normal text-ink-soft/70">(opcional)</span>
+        </span>
+        <input
+          type="text"
+          name="comprobante_ref"
+          placeholder="Nro. de operación, referencia de transferencia, link de Drive…"
+          className="w-full h-10 px-3 rounded-[5px] border border-rule bg-paper text-sm outline-none focus:border-ink"
+        />
+      </label>
+
       <div className="space-y-1.5">
         <label className="flex items-center gap-2 text-xs text-ink-soft">
           <input

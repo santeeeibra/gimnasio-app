@@ -152,7 +152,7 @@ function ExThumb({
         url={url}
         activo={!reduce && !err}
         onError={() => setErr(true)}
-        className="h-full w-full object-contain p-1"
+        className="h-full w-full object-contain object-center p-1"
       />
     </button>
   );

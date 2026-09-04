@@ -77,7 +77,7 @@ export default async function ClienteDetallePage({
         .order("nombre"),
       supabase
         .from("pagos")
-        .select("id, monto, fecha_pago, cubre_hasta, plan:planes(nombre)")
+        .select("id, monto, fecha_pago, cubre_hasta, comprobante_ref, plan:planes(nombre)")
         .eq("cliente_id", id)
         .order("fecha_pago", { ascending: false }),
       supabase
@@ -337,19 +337,42 @@ export default async function ClienteDetallePage({
           <p className="text-sm text-ink-soft">Sin pagos registrados.</p>
         ) : (
           <ul className="border border-rule rounded-[6px] divide-y divide-rule text-sm">
-            {pagos.map((p) => (
-              <li
-                key={p.id}
-                className="px-4 py-3 flex items-center justify-between"
-              >
-                <span>
-                  {p.fecha_pago} · {p.plan?.nombre ?? "—"}
-                </span>
-                <span className="text-ink-soft">
-                  ${p.monto} · cubre hasta {p.cubre_hasta}
-                </span>
-              </li>
-            ))}
+            {pagos.map((p) => {
+              const ref: string | null = p.comprobante_ref ?? null;
+              const esUrl =
+                ref && (ref.startsWith("http://") || ref.startsWith("https://"));
+              return (
+                <li
+                  key={p.id}
+                  className="px-4 py-3 flex flex-col gap-0.5"
+                >
+                  <div className="flex items-center justify-between">
+                    <span>
+                      {p.fecha_pago} · {p.plan?.nombre ?? "—"}
+                    </span>
+                    <span className="text-ink-soft">
+                      ${p.monto} · cubre hasta {p.cubre_hasta}
+                    </span>
+                  </div>
+                  {ref ? (
+                    esUrl ? (
+                      <a
+                        href={ref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-ink-soft underline underline-offset-2 truncate hover:text-ink"
+                      >
+                        🔗 Ver comprobante
+                      </a>
+                    ) : (
+                      <p className="text-xs text-ink-soft truncate">
+                        Ref: {ref}
+                      </p>
+                    )
+                  ) : null}
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>

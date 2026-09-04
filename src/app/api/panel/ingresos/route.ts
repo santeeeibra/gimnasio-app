@@ -14,6 +14,7 @@ export async function GET() {
         id,
         monto,
         fecha_pago,
+        comprobante_ref,
         cliente:clientes!inner(
           gimnasio_id,
           profile:profiles(nombre)
@@ -34,6 +35,7 @@ export async function GET() {
       id: p.id,
       fecha_pago: p.fecha_pago,
       monto: p.monto,
+      comprobante_ref: p.comprobante_ref ?? null,
       cliente_nombre: p.cliente?.profile?.nombre || "Cliente desconocido",
       plan_nombre: p.plan?.nombre || "Sin plan",
     }));

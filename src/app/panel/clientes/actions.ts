@@ -189,6 +189,8 @@ async function registrarPagoInterno(
   const planId = String(formData.get("plan_id") ?? "") || null;
   const fechaManual =
     String(formData.get("fecha_vencimiento_manual") ?? "").trim() || null;
+  const comprobanteRef =
+    String(formData.get("comprobante_ref") ?? "").trim() || null;
   if (!clienteId || !planId) return { error: "Elegí el plan que pagó." };
   if (fechaManual && !/^\d{4}-\d{2}-\d{2}$/.test(fechaManual)) {
     return { error: "La fecha de vencimiento no es válida." };
@@ -223,6 +225,7 @@ async function registrarPagoInterno(
     monto: monto || plan.precio,
     cubre_hasta: cubreHasta,
     registrado_por: dueno.id,
+    comprobante_ref: comprobanteRef,
   });
   if (pagoErr) {
     await registrarError(dueno.gimnasio_id, "pago", pagoErr);

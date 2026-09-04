@@ -9,6 +9,7 @@ type Pago = {
   id: string;
   fecha_pago: string;
   monto: number;
+  comprobante_ref: string | null;
   cliente_nombre: string;
   plan_nombre: string;
 };
@@ -159,19 +160,39 @@ export function ListadoIngresos() {
             </div>
 
             <ul className="divide-y divide-rule">
-              {pagosMes.map((pago) => (
-                <li key={pago.id} className="px-4 py-3 flex items-center justify-between gap-4">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium truncate">{pago.cliente_nombre}</p>
-                    <p className="text-xs text-ink-soft">
-                      {pago.plan_nombre} · {new Date(pago.fecha_pago).toLocaleDateString("es-AR")}
+              {pagosMes.map((pago) => {
+                const ref = pago.comprobante_ref;
+                const esUrl =
+                  ref &&
+                  (ref.startsWith("http://") || ref.startsWith("https://"));
+                return (
+                  <li key={pago.id} className="px-4 py-3 flex items-center justify-between gap-4">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium truncate">{pago.cliente_nombre}</p>
+                      <p className="text-xs text-ink-soft">
+                        {pago.plan_nombre} · {new Date(pago.fecha_pago).toLocaleDateString("es-AR")}
+                      </p>
+                      {ref ? (
+                        esUrl ? (
+                          <a
+                            href={ref}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-ink-soft underline underline-offset-2 truncate hover:text-ink"
+                          >
+                            🔗 Ver comprobante
+                          </a>
+                        ) : (
+                          <p className="text-xs text-ink-soft truncate">Ref: {ref}</p>
+                        )
+                      ) : null}
+                    </div>
+                    <p className="text-sm font-medium shrink-0">
+                      ${pago.monto.toLocaleString("es-AR")}
                     </p>
-                  </div>
-                  <p className="text-sm font-medium shrink-0">
-                    ${pago.monto.toLocaleString("es-AR")}
-                  </p>
-                </li>
-              ))}
+                  </li>
+                );
+              })}
             </ul>
           </div>
         );
