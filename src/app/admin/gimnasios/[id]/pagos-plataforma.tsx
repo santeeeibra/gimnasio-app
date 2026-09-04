@@ -232,45 +232,53 @@ export function PagosPlataforma({ pagos }: { pagos: PagoPlataformaRow[] }) {
   if (pagos.length === 0) {
     return <p className="text-sm text-ink-soft">Sin pagos de plataforma.</p>;
   }
+  const primerPendienteId = pagos.find((p) => p.estado === "pendiente")?.id;
+
   return (
     <ul className="divide-y divide-rule">
-      {pagos.map((p) => (
-        <li
-          key={p.id}
-          className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm"
-        >
-          <span className="min-w-0">
-            <span className="block">
-              {Number(p.monto_ars).toLocaleString("es-AR", {
-                style: "currency",
-                currency: "ARS",
-              })}{" "}
-              · {TIPO_PAGO_LABEL[p.tipo]}
-              {p.tipo === "plan_mensual"
-                ? ` (${p.plan_nombre ? `Plan ${p.plan_nombre}` : "plan"} · ${p.dias} días)`
-                : " · cargo único"}{" "}
-              · {p.proveedor}
+      {pagos.map((p) => {
+        const esPrimerPendiente = p.id === primerPendienteId;
+        return (
+          <li
+            key={p.id}
+            data-tour={esPrimerPendiente ? "admin-pago-pendiente" : undefined}
+            className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm"
+          >
+            <span className="min-w-0">
+              <span className="block">
+                {Number(p.monto_ars).toLocaleString("es-AR", {
+                  style: "currency",
+                  currency: "ARS",
+                })}{" "}
+                · {TIPO_PAGO_LABEL[p.tipo]}
+                {p.tipo === "plan_mensual"
+                  ? ` (${p.plan_nombre ? `Plan ${p.plan_nombre}` : "plan"} · ${p.dias} días)`
+                  : " · cargo único"}{" "}
+                · {p.proveedor}
+              </span>
+              <span className="block text-xs text-ink-soft">
+                {new Date(p.creado_at).toLocaleDateString("es-AR")}
+                {p.descuento_pct > 0 ? ` · early-bird −${p.descuento_pct}%` : ""}
+                {p.nota ? ` · ${p.nota}` : ""}
+              </span>
             </span>
-            <span className="block text-xs text-ink-soft">
-              {new Date(p.creado_at).toLocaleDateString("es-AR")}
-              {p.descuento_pct > 0 ? ` · early-bird −${p.descuento_pct}%` : ""}
-              {p.nota ? ` · ${p.nota}` : ""}
-            </span>
-          </span>
-          {p.estado === "pendiente" ? (
-            <div className="flex items-center gap-2">
-              <ConfirmarBtn
-                pagoId={p.id}
-                monto={Number(p.monto_ars)}
-                tipo={p.tipo}
-              />
-              <RechazarBtn
-                pagoId={p.id}
-                monto={Number(p.monto_ars)}
-                tipo={p.tipo}
-              />
-            </div>
-          ) : (
+            {p.estado === "pendiente" ? (
+              <div
+                data-tour={esPrimerPendiente ? "admin-pago-confirmar" : undefined}
+                className="flex items-center gap-2"
+              >
+                <ConfirmarBtn
+                  pagoId={p.id}
+                  monto={Number(p.monto_ars)}
+                  tipo={p.tipo}
+                />
+                <RechazarBtn
+                  pagoId={p.id}
+                  monto={Number(p.monto_ars)}
+                  tipo={p.tipo}
+                />
+              </div>
+            ) : (
             <span
               className={`shrink-0 text-xs ${
                 p.estado === "aprobado" ? "text-ok" : "text-danger"
@@ -279,8 +287,9 @@ export function PagosPlataforma({ pagos }: { pagos: PagoPlataformaRow[] }) {
               {p.estado}
             </span>
           )}
-        </li>
-      ))}
+          </li>
+        );
+      })}
     </ul>
   );
 }

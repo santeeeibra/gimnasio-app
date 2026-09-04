@@ -14,6 +14,7 @@ import {
 } from "@/lib/plataforma/precios";
 import { SolicitarForm } from "./solicitar-form";
 import { PagoForm } from "./pago-form";
+import { TourDueno } from "./tour-dueno";
 
 const PAGO_ESTADO_LABEL: Record<string, string> = {
   pendiente: "pendiente de confirmación",
@@ -38,7 +39,7 @@ export default async function PanelPlanPage() {
       db
         .from("gimnasios")
         .select(
-          "estado, creado_at, plan_plataforma_id, plan_plataforma_vence_el, plan:planes_plataforma(id, nombre, precio_mensual)",
+          "estado, creado_at, plan_plataforma_id, plan_plataforma_vence_el, tour_pago_visto, plan:planes_plataforma(id, nombre, precio_mensual)",
         )
         .eq("id", dueno.gimnasio_id)
         .single(),
@@ -145,7 +146,7 @@ export default async function PanelPlanPage() {
         <h1 className="mt-2 text-2xl">Tu plan</h1>
       </div>
 
-      <dl className="card-cut border border-rule bg-paper-2 p-5 text-sm">
+      <dl data-tour="plan-estado" className="card-cut border border-rule bg-paper-2 p-5 text-sm">
         <div className="flex justify-between gap-3 py-1.5">
           <dt className="text-ink-soft">Estado</dt>
           <dd
@@ -211,7 +212,7 @@ export default async function PanelPlanPage() {
         </p>
       ) : null}
 
-      <div className="card-cut border border-rule bg-paper-2 p-5">
+      <div data-tour="plan-catalogo" className="card-cut border border-rule bg-paper-2 p-5">
         <h2 className="mb-1 text-lg">Catálogo y pago de planes</h2>
         <p className="mb-4 text-sm text-ink-soft">
           Seleccioná el plan que mejor se adapte a tu gimnasio para abonar la
@@ -283,6 +284,8 @@ export default async function PanelPlanPage() {
         <h2 className="mb-3 text-lg">¿Dudas con el plan?</h2>
         <SolicitarForm />
       </div>
+
+      <TourDueno tourVistoInicial={Boolean(gym?.tour_pago_visto)} />
     </div>
   );
 }

@@ -124,7 +124,7 @@ export function PagoForm({
       state.montoARS != null && state.montoARS > 0 ? ars(state.montoARS) : null;
 
     return (
-      <div className="space-y-4 text-sm">
+      <div data-tour="plan-pago" className="space-y-4 text-sm">
         <p className="font-medium text-ok">✓ Pago registrado</p>
 
         <p className="text-ink-soft">
@@ -201,7 +201,7 @@ export function PagoForm({
 
   if (disponibles.length === 0) {
     return (
-      <div className="space-y-2 text-sm">
+      <div data-tour="plan-pago" className="space-y-2 text-sm">
         <p className="text-ink-soft">
           Ya tenés un pago pendiente de confirmación por cada concepto.
         </p>
@@ -439,7 +439,7 @@ export function PagoForm({
       ) : null}
 
       {/* ── 3. Resumen y envío de pago ── */}
-      <div className="space-y-4 border-t border-rule pt-4">
+      <div data-tour="plan-pago" className="space-y-4 border-t border-rule pt-4">
         <label className="block">
           <span className="mb-1.5 block text-[13px] font-medium text-ink-soft">
             Nota (opcional)

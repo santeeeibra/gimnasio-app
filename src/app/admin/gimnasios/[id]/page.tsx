@@ -10,6 +10,7 @@ import { EstadoForm } from "./estado-form";
 import { PlanPlataformaForm } from "./plan-plataforma-form";
 import { PagosPlataforma, type PagoPlataformaRow } from "./pagos-plataforma";
 import { DisparadoresSocio } from "./disparadores-socio";
+import { TourDev } from "./tour-dev";
 
 export const dynamic = "force-dynamic";
 
@@ -143,7 +144,7 @@ export default async function AdminGimnasioDetalle({
         {gym.dias_aviso_morosidad ?? "—"} días
       </p>
 
-      <div className="card-cut mb-8 border border-rule bg-paper-2 p-5">
+      <div data-tour="admin-plan-card" className="card-cut mb-8 border border-rule bg-paper-2 p-5">
         <h2 className="mb-1 text-sm uppercase tracking-[0.14em] text-ink-soft">
           Plan de plataforma
         </h2>
@@ -169,7 +170,7 @@ export default async function AdminGimnasioDetalle({
         />
       </div>
 
-      <div className="card-cut mb-8 border border-rule bg-paper-2 p-5">
+      <div id="pagos-plataforma" data-tour="admin-pagos-card" className="card-cut mb-8 border border-rule bg-paper-2 p-5">
         <h2 className="mb-1 text-sm uppercase tracking-[0.14em] text-ink-soft">
           Pagos de plataforma
         </h2>
@@ -302,6 +303,8 @@ export default async function AdminGimnasioDetalle({
           ))}
         </ul>
       )}
+
+      <TourDev />
     </div>
   );
 }

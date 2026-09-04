@@ -308,3 +308,28 @@ export async function solicitarActivacionPlan(
     ? { ok: true, msg: "Listo, le avisamos a soporte. Te contactan a la brevedad." }
     : { ok: false, msg: "No se pudo enviar la solicitud. Probá de nuevo en un rato." };
 }
+
+/**
+ * Registra que el dueño del gimnasio ya completó o cerró el tour guiado
+ * del flujo de pagos de planes.
+ */
+export async function marcarTourPagoVisto(): Promise<{ ok: boolean }> {
+  try {
+    const dueno = await requireDueno();
+    const db = createAdminClient();
+    const { error } = await db
+      .from("gimnasios")
+      .update({ tour_pago_visto: true })
+      .eq("id", dueno.gimnasio_id);
+
+    if (error) {
+      console.error("[marcarTourPagoVisto]", error);
+      return { ok: false };
+    }
+    return { ok: true };
+  } catch (err) {
+    console.error("[marcarTourPagoVisto]", err);
+    return { ok: false };
+  }
+}
+
