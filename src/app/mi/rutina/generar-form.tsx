@@ -95,6 +95,7 @@ export function GenerarRutinaForm({
     preferencia?: PreferenciaEquipo;
     sexo?: Sexo;
     enfasis?: Enfasis[];
+    zonasDolor?: Molestia[];
   };
   clienteSexo?: Sexo | null;
   mostrarAvanzado?: boolean;
@@ -103,6 +104,9 @@ export function GenerarRutinaForm({
   const router = useRouter();
   const [state, formAction, pending] = useActionState<S, FormData>(action, {});
   const [enfasis, setEnfasis] = useState<Enfasis[]>(defaults?.enfasis ?? []);
+  const [zonasDolor, setZonasDolor] = useState<Molestia[]>(
+    defaults?.zonasDolor ?? [],
+  );
   const [dias, setDias] = useState(String(defaults?.dias ?? 3));
   const [objetivo, setObjetivo] = useState<Objetivo>(
     defaults?.objetivo ?? "hipertrofia",
@@ -154,6 +158,12 @@ export function GenerarRutinaForm({
         : prev.length >= MAX_ENFASIS
           ? prev
           : [...prev, e],
+    );
+  }
+
+  function toggleDolor(m: Molestia) {
+    setZonasDolor((prev) =>
+      prev.includes(m) ? prev.filter((x) => x !== m) : [...prev, m],
     );
   }
 
@@ -250,6 +260,36 @@ export function GenerarRutinaForm({
         </div>
         <p className="mt-1.5 text-xs text-ink-soft">
           Se agregan series extra para esa zona.
+        </p>
+      </fieldset>
+
+      <fieldset className="sm:col-span-2">
+        <legend className="text-[13px] font-medium text-ink-soft mb-1.5">
+          Evitar dolor en{" "}
+          <span className="font-normal text-ink-soft/70">(opcional)</span>
+        </legend>
+        <div className="flex flex-wrap gap-2">
+          {MOLESTIAS.map((m) => {
+            const on = zonasDolor.includes(m);
+            return (
+              <label key={m} className="cursor-pointer touch-manipulation">
+                <input
+                  type="checkbox"
+                  name="zonasDolor"
+                  value={m}
+                  checked={on}
+                  onChange={() => toggleDolor(m)}
+                  className="peer sr-only"
+                />
+                <span className="inline-flex h-10 items-center rounded-[5px] border border-rule px-3 text-sm transition-colors duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 peer-checked:border-danger peer-checked:bg-[color:var(--danger-weak)] peer-checked:text-ink peer-focus-visible:shadow-[0_0_0_3px_rgb(22_24_29_/_0.12)]">
+                  {MOLESTIA_LABEL[m]}
+                </span>
+              </label>
+            );
+          })}
+        </div>
+        <p className="mt-1.5 text-xs leading-snug text-ink-soft">
+          Sacamos del plan los ejercicios que suelen cargar esa zona.
         </p>
       </fieldset>
 

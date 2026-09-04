@@ -67,6 +67,7 @@ async function generarYGuardarInterno(
       equipo: entrada.preferencia,
       sexo: entrada.sexo,
       enfasis: entrada.enfasis,
+      zonasDolor: entrada.zonasDolor ?? [],
       avanzado: entrada.avanzado ?? null,
       explicacion,
       explicacionGeneral,

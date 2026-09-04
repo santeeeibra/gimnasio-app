@@ -3,6 +3,7 @@
 import { GenerarRutinaForm } from "@/app/mi/rutina/generar-form";
 import type {
   Enfasis,
+  Molestia,
   Nivel,
   Objetivo,
   PreferenciaEquipo,
@@ -26,6 +27,7 @@ export function RutinaPanelDueno({
     preferencia?: PreferenciaEquipo;
     sexo?: Sexo;
     enfasis?: Enfasis[];
+    zonasDolor?: Molestia[];
   };
 }) {
   return (

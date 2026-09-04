@@ -14,8 +14,8 @@
 
 import {
   ENFASIS_GRUPOS,
+  MOLESTIAS,
   PREFERENCIAS_EQUIPO,
-  VOLUMEN_PARAMS,
   type Ejercicio,
   type Enfasis,
   type EntradaMotor,
@@ -279,53 +279,51 @@ const PATRON_ENFASIS: Record<string, string | undefined> = {
   hombros: "empuje_vertical",
 };
 
-// Suma ranuras extra para las zonas que el cliente pidió priorizar. Si no pidió
-// ninguna y es mujer, prioriza glúteos por defecto. Tope: +3 ranuras y 8 por
-// día para no inflar la sesión. Si la zona tiene un patrón compuesto asociado,
-// la ranura extra entra como "secundario" (más carga real para esa zona).
-//
-// En splits DIVIDIDOS (upper/lower, PPL, torso/pierna) cada zona ya tiene su
-// propio día, así que el refuerzo solo cae en los días que efectivamente
-// entrenan esa zona: sin esto, un día de tren superior terminaba con ejercicios
-// de pierna que no correspondían. En FULL BODY no hay día dedicado a cada zona,
-// así que el énfasis puede caer en cualquiera de los días (comportamiento de
-// siempre).
-function aplicarEnfasis(
+// ── Fase 3 · Intercambio por énfasis (presupuesto cerrado) ──
+// NO agrega ranuras. Hace un TRUEQUE: convierte ranuras de músculos secundarios
+// del día (nunca un primario) en ranuras del músculo enfatizado. Como la
+// cantidad total de ranuras del día no cambia, el presupuesto de series de la
+// Fase 2 se mantiene idéntico. Mujer sin zona elegida → glúteos por defecto,
+// también por trueque. Hasta 2 trueques por día: 2 si hay una sola zona, 1 por
+// zona si hay dos.
+function elegirDonante(out: Ranura[], gruposEnfasis: Set<string>): number {
+  const cand = out
+    .map((r, i) => ({ r, i }))
+    .filter((x) => x.r.rol !== "primario" && !gruposEnfasis.has(x.r.grupo));
+  if (cand.length === 0) return -1;
+  // Preferir un grupo que ese día tenga más de una ranura (no dejar un músculo
+  // en cero si se puede evitar); si no hay, cae en cualquier ranura secundaria.
+  const conSobra = cand.filter(
+    (x) => out.filter((y) => y.grupo === x.r.grupo).length > 1,
+  );
+  const pool = conSobra.length > 0 ? conSobra : cand;
+  return pool[pool.length - 1].i; // la última: preserva los apoyos tempranos
+}
+
+function intercambiarPorEnfasis(
   ranuras: Ranura[],
   enfasis: Enfasis[],
   sexo: Sexo,
-  esFullBody: boolean,
-  extras = 3,
-  maxDia = 8,
 ): Ranura[] {
   const zonas: Enfasis[] =
     enfasis.length > 0 ? enfasis : sexo === "mujer" ? ["gluteos"] : [];
   if (zonas.length === 0) return ranuras;
 
   const out = [...ranuras];
-  const gruposBase = new Set(ranuras.map((r) => r.grupo));
-
-  // El presupuesto de ranuras extra (3) se reparte en partes iguales entre las
-  // zonas elegidas: cada zona recibe la misma cuota, sin importar el orden de
-  // inserción ni cuántas ranuras base ya tenga. División impar → el sobrante se
-  // descarta (no se prioriza una zona). Si después falta un ejercicio en la
-  // base para una zona, `elegir` la deja sin ese item y la otra no lo compensa.
-  const cuota = Math.floor(extras / zonas.length);
+  const gruposEnfasis = new Set(zonas.flatMap((z) => ENFASIS_GRUPOS[z]));
+  const trueques = zonas.length === 1 ? 2 : 1;
 
   for (const zona of zonas) {
-    // Split dividido: solo reforzamos la zona si el día ya la entrena; si no,
-    // esa zona recibe su volumen en su propio día del split.
-    const grupos = esFullBody
-      ? ENFASIS_GRUPOS[zona]
-      : ENFASIS_GRUPOS[zona].filter((g) => gruposBase.has(g));
-    if (grupos.length === 0) continue;
-    const porGrupo = new Map<string, number>();
-    for (let i = 0; i < cuota && out.length < maxDia; i++) {
-      const grupo = grupos[i % grupos.length];
-      if ((porGrupo.get(grupo) ?? 0) >= 2) continue; // tope de densidad por grupo
-      porGrupo.set(grupo, (porGrupo.get(grupo) ?? 0) + 1);
-      const patron = PATRON_ENFASIS[grupo];
-      out.push({ grupo, patron, rol: patron ? "secundario" : "aislamiento" });
+    const grupoObjetivo = ENFASIS_GRUPOS[zona][0];
+    for (let t = 0; t < trueques; t++) {
+      const donante = elegirDonante(out, gruposEnfasis);
+      if (donante === -1) break;
+      const patron = PATRON_ENFASIS[grupoObjetivo];
+      out[donante] = {
+        grupo: grupoObjetivo,
+        patron,
+        rol: patron ? "secundario" : "aislamiento",
+      };
     }
   }
   return out;
@@ -389,9 +387,9 @@ const ESQUEMA: Record<Objetivo, EsquemaObj> = {
     aislamiento: { series: 3, reps: "8–10" },
     descanso: "Descanso 2–3 min",
   },
-  // Hipertrofia = volumen a intensidad media, no fuerza. El primario arranca en
-  // 3 series base (avanzado sube a 4 vía ajustarSeries) y 8–10 reps: un rango
-  // productivo para el básico sin caer en el 5×5 de fuerza. Descanso 90–120 s:
+  // Hipertrofia = volumen a intensidad media, no fuerza. El primario pesa 3 en
+  // el reparto de series (peso de rol, Fase 4) y 8–10 reps: un rango productivo
+  // para el básico sin caer en el 5×5 de fuerza. Descanso 90–120 s:
   // suficiente para sostener la carga entre series (Schoenfeld et al. 2016, "Longer
   // inter-set rest periods enhance muscle strength and hypertrophy").
   hipertrofia: {
@@ -496,20 +494,80 @@ function notaRir(rir: OpcionesAvanzadas["rir"], rol: Rol): string {
     : " · Última serie al fallo";
 }
 
-// Nivel y sexo ajustan volumen sobre la serie base (nunca tocan el rango de
-// reps). Principiante entrena más liviano; avanzado sube el trabajo pesado;
-// "mujer" baja un set en compuestos ("me queda muy pesado" es la queja).
-function ajustarSeries(base: number, rol: Rol, nivel: Nivel, sexo: Sexo): number {
-  let s = base;
-  if (nivel === "principiante") s -= 1;
-  // El +1 de avanzado solo levanta esquemas livianos (estándar hipertrofia
-  // arranca en 3 series): nunca empuja a 5 un primario que ya venía en 4 —
-  // eso daba 5×8–10 en dos compuestos seguidos, demasiado. El 5×5 queda para
-  // fuerza y el día pesado de la ondulante, que ya salen en 5 de base.
-  if (nivel === "avanzado" && rol === "primario" && base <= 3) s += 1;
-  if (sexo === "mujer" && rol !== "aislamiento") s -= 1;
-  const min = rol === "aislamiento" ? 2 : 3;
-  return Math.max(min, Math.min(5, s));
+// ── Fase 2 · Presupuesto cerrado de series por día ──
+// Techo TOTAL de series del día (no por ranura). Reemplaza al viejo modelo
+// aditivo (6 ranuras base + hasta 3 extra de énfasis, cada una 3-5 series, que
+// se disparaba a 30-40 series/día). Ahora el día tiene un total fijo por nivel
+// y todo lo demás se reparte dentro de ese techo.
+const PRESUPUESTO_DIA: Record<Nivel, number> = {
+  principiante: 18,
+  intermedio: 21,
+  avanzado: 24,
+};
+
+// Modo avanzado: el volumen semanal elegido escala el presupuesto del día.
+// Sin avanzado → factor 1 (estándar).
+const FACTOR_VOLUMEN: Record<string, number> = {
+  mev: 0.85,
+  estandar: 1,
+  mav: 1.15,
+};
+
+// Fase 2 · ajustarPorSexo: la clienta mujer baja 1 serie por ranura (compuestos
+// y aislamientos). Se aplica sobre el TOTAL del día, no ranura por ranura, para
+// que el techo quede cerrado antes de repartir. Piso: 2 series por ranura.
+function ajustarPorSexo(total: number, sexo: Sexo, nRanuras: number): number {
+  const t = sexo === "mujer" ? total - nRanuras : total;
+  return Math.max(2 * nRanuras, t);
+}
+
+// Fase 4 · Reparte un total FIJO de series entre las ranuras del día, en
+// proporción al peso de cada rol (primario > secundario > aislamiento), con
+// piso 2 y techo 5 por ranura. La suma resultante es exactamente `presupuesto`
+// (recortado a [2·n, 5·n]). No depende de `seed`: el desempate es por orden de
+// ranura, así que sin seed la salida sigue siendo determinista.
+function repartirSeries(
+  roles: Rol[],
+  presupuesto: number,
+  peso: Record<Rol, number>,
+): number[] {
+  const n = roles.length;
+  if (n === 0) return [];
+  const MIN = 2;
+  const MAX = 5;
+  const objetivo = Math.max(MIN * n, Math.min(MAX * n, presupuesto));
+  const sumaPeso = roles.reduce((s, r) => s + (peso[r] || 1), 0);
+  const series = roles.map((r) =>
+    Math.max(
+      MIN,
+      Math.min(MAX, Math.round(((peso[r] || 1) / sumaPeso) * objetivo)),
+    ),
+  );
+  // Ajuste fino: sumar/restar de a 1 hasta cuadrar con `objetivo`, tocando
+  // primero los roles más pesados al sumar y los más livianos al restar.
+  const porPesoDesc = [...series.keys()].sort(
+    (a, b) => (peso[roles[b]] || 1) - (peso[roles[a]] || 1) || a - b,
+  );
+  let diff = objetivo - series.reduce((a, b) => a + b, 0);
+  let guarda = 0;
+  while (diff !== 0 && guarda++ < 100) {
+    const orden = diff > 0 ? porPesoDesc : [...porPesoDesc].reverse();
+    let movido = false;
+    for (const i of orden) {
+      if (diff > 0 && series[i] < MAX) {
+        series[i]++;
+        diff--;
+        movido = true;
+      } else if (diff < 0 && series[i] > MIN) {
+        series[i]--;
+        diff++;
+        movido = true;
+      }
+      if (diff === 0) break;
+    }
+    if (!movido) break;
+  }
+  return series;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -724,11 +782,19 @@ export function generarPlan(
   const objetivo = entrada.objetivo;
   const avanzado = entrada.avanzado;
   const equipoPrefs = PREFERENCIAS_EQUIPO[entrada.preferencia] ?? [];
-  const evitar: Molestia[] = avanzado?.evitar ?? [];
+  // El form de generación ("Evitar dolor en", todos los niveles) y los ajustes
+  // avanzados ("Molestias a evitar", solo avanzado) alimentan el MISMO filtro
+  // estaBloqueado(). Se normalizan, fusionan y deduplican antes de la selección.
+  const zonasDolor = (entrada.zonasDolor ?? []).filter(
+    (z): z is Molestia => (MOLESTIAS as readonly string[]).includes(z),
+  );
+  const evitar: Molestia[] = [
+    ...new Set<Molestia>([...(avanzado?.evitar ?? []), ...zonasDolor]),
+  ];
 
-  // Volumen: modo avanzado ajusta el presupuesto de ranuras extra y el tope
-  // por día. Sin avanzado, los valores por defecto reproducen los hardcodes.
-  const vol = VOLUMEN_PARAMS[avanzado?.volumen ?? "estandar"];
+  // Fase 2: factor de volumen (solo avanzado) que escala el presupuesto cerrado
+  // de series por día. Sin avanzado → 1.
+  const factorVol = FACTOR_VOLUMEN[avanzado?.volumen ?? "estandar"] ?? 1;
 
   // Split: explícito si el avanzado lo pidió y la combinación cierra; si no,
   // el automático de siempre.
@@ -746,22 +812,40 @@ export function generarPlan(
     const items: ItemGenerado[] = [];
     const rolItems: Rol[] = [];
     const esquema = resolverEsquema(objetivo, avanzado, di);
-    const esFullBody = bloque.titulo.startsWith("Cuerpo completo");
 
+    // ── Fase 1 · Esqueleto: qué músculos entrena el día, sin series todavía. ──
+    const esqueleto = moldearPorObjetivo(bloque.ranuras, objetivo);
+
+    // ── Fase 2 · Presupuesto cerrado: techo fijo de series del día (nivel ×
+    //    volumen, con ajustarPorSexo). Inamovible: el trueque de Fase 3 no
+    //    cambia la cantidad de ranuras y la Fase 4 sólo reparte dentro. ──
+    const presupuesto = ajustarPorSexo(
+      Math.round(PRESUPUESTO_DIA[entrada.nivel] * factorVol),
+      sexo,
+      esqueleto.length,
+    );
+
+    // ── Fase 3 · Trueque por énfasis: redirige ranuras secundarias a la zona
+    //    enfatizada, SIN agregar ni quitar ranuras (presupuesto intacto). ──
     let ranuras = priorizarEnfasis(
-      aplicarEnfasis(
-        moldearPorObjetivo(bloque.ranuras, objetivo),
-        enfasis,
-        sexo,
-        esFullBody,
-        vol.extras,
-        vol.maxDia,
-      ),
+      intercambiarPorEnfasis(esqueleto, enfasis, sexo),
       enfasis,
     );
     if (avanzado?.orden === "prefatiga_zona") {
       ranuras = aplicarPrefatiga(ranuras, enfasis);
     }
+
+    // ── Fase 4 · Selección: reparte el presupuesto entre las ranuras y llena
+    //    cada una con un ejercicio real (objetivo + equipo + molestias). ──
+    const seriesPorRanura = repartirSeries(
+      ranuras.map((r) => r.rol),
+      presupuesto,
+      {
+        primario: esquema.primario.series,
+        secundario: esquema.secundario.series,
+        aislamiento: esquema.aislamiento.series,
+      },
+    );
 
     ranuras.forEach((ranura, si) => {
       const ej = elegir(
@@ -781,14 +865,13 @@ export function generarPlan(
       usadosDia.add(ej.id);
       usadosSemana.add(ej.id);
 
-      const rx = esquema[ranura.rol];
       const nota = avanzado
         ? esquema.descanso + notaRir(avanzado.rir, ranura.rol)
         : esquema.descanso;
       items.push({
         ejercicio_slug: ej.slug,
-        series: ajustarSeries(rx.series, ranura.rol, entrada.nivel, sexo),
-        repeticiones: rx.reps,
+        series: seriesPorRanura[si],
+        repeticiones: esquema[ranura.rol].reps,
         nota,
       });
       rolItems.push(ranura.rol);
@@ -807,7 +890,10 @@ export function generarPlan(
     return { titulo: `Día ${di + 1} · ${bloque.titulo}`, items };
   });
 
-  return { entrada: { ...entrada, dias, sexo, enfasis }, dias: diasPlan };
+  return {
+    entrada: { ...entrada, dias, sexo, enfasis, zonasDolor },
+    dias: diasPlan,
+  };
 }
 
 /**

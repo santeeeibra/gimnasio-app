@@ -10,11 +10,13 @@ import { registrarError } from "@/lib/admin/errores";
 import {
   ENFASIS,
   MAX_ENFASIS,
+  MOLESTIAS,
   NIVELES,
   OBJETIVOS,
   PREFERENCIAS_EQUIPO,
   SEXOS,
   type Enfasis,
+  type Molestia,
   type Nivel,
   type Objetivo,
   type PreferenciaEquipo,
@@ -402,6 +404,10 @@ export async function generarRutinaCliente(
     .map(String)
     .filter((v): v is Enfasis => (ENFASIS as readonly string[]).includes(v))
     .slice(0, MAX_ENFASIS);
+  const zonasDolor = formData
+    .getAll("zonasDolor")
+    .map(String)
+    .filter((v): v is Molestia => (MOLESTIAS as readonly string[]).includes(v));
 
   if (!clienteId) return { error: "Falta el cliente." };
   if (!OBJETIVOS.includes(objetivo)) return { error: "Elegí un objetivo." };
@@ -424,7 +430,7 @@ export async function generarRutinaCliente(
   const res = await generarYGuardar(supabase, {
     gimnasioId: dueno.gimnasio_id,
     clienteId,
-    entrada: { objetivo, nivel, preferencia, dias, sexo, enfasis, seed },
+    entrada: { objetivo, nivel, preferencia, dias, sexo, enfasis, zonasDolor, seed },
   });
   if (res.error) return { error: res.error };
 

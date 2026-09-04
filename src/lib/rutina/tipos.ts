@@ -309,6 +309,10 @@ export type EntradaMotor = {
   preferencia: PreferenciaEquipo;
   sexo: Sexo;
   enfasis: Enfasis[]; // 0..MAX_ENFASIS zonas a priorizar
+  // Zonas con dolor/molestia a evitar desde el armado inicial. Mismo vocabulario
+  // que MOLESTIAS; se pasa al filtro estaBloqueado() en la selección (Fase 4).
+  // Aplica a todos los niveles (el "evitar" de OpcionesAvanzadas es solo avanzado).
+  zonasDolor?: string[];
   seed?: number; // varía la selección entre candidatos equivalentes (regenerar)
   avanzado?: OpcionesAvanzadas; // solo nivel avanzado; undefined = flujo actual
 };

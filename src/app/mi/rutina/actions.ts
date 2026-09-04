@@ -45,6 +45,13 @@ function parseEnfasis(fd: FormData): Enfasis[] {
     .slice(0, MAX_ENFASIS);
 }
 
+function parseZonasDolor(fd: FormData): Molestia[] {
+  return fd
+    .getAll("zonasDolor")
+    .map(String)
+    .filter((v): v is Molestia => (MOLESTIAS as readonly string[]).includes(v));
+}
+
 function pick<T extends string>(
   fd: FormData,
   key: string,
@@ -101,6 +108,7 @@ async function generarComun(
   const dias = Number(formData.get("dias") ?? 0);
   const sexo = parseSexo(formData);
   const enfasis = parseEnfasis(formData);
+  const zonasDolor = parseZonasDolor(formData);
 
   if (!OBJETIVOS.includes(objetivo)) return { error: "Elegí un objetivo." };
   if (!NIVELES.includes(nivel)) return { error: "Elegí tu nivel." };
@@ -117,7 +125,9 @@ async function generarComun(
   const res = await generarYGuardar(supabase, {
     gimnasioId: cliente.gimnasio_id,
     clienteId: cliente.id,
-    entrada: { objetivo, nivel, preferencia, dias, sexo, enfasis, seed, avanzado },
+    entrada: {
+      objetivo, nivel, preferencia, dias, sexo, enfasis, zonasDolor, seed, avanzado,
+    },
   });
   if (res.error) return { error: res.error };
 

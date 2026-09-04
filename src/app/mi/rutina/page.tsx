@@ -6,6 +6,7 @@ import {
   OBJETIVO_LABEL,
   type Ejercicio,
   type Enfasis,
+  type Molestia,
   type Nivel,
   type Objetivo,
   type PreferenciaEquipo,
@@ -16,6 +17,7 @@ type Prefs = {
   equipo?: PreferenciaEquipo;
   sexo?: Sexo;
   enfasis?: Enfasis[];
+  zonasDolor?: Molestia[];
 } | null;
 import { linkClasses } from "@/components/ui";
 import { generarMiRutina } from "./actions";
@@ -149,6 +151,7 @@ export default async function MiRutinaPage() {
             preferencia: (rutina.preferencias as Prefs)?.equipo ?? undefined,
             sexo: (rutina.preferencias as Prefs)?.sexo ?? undefined,
             enfasis: (rutina.preferencias as Prefs)?.enfasis ?? undefined,
+            zonasDolor: (rutina.preferencias as Prefs)?.zonasDolor ?? undefined,
           }}
         />
       </div>

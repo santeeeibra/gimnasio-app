@@ -15,6 +15,7 @@ import {
   TECNICA_LABEL,
   VOLUMEN_LABEL,
   type Enfasis,
+  type Molestia,
   type Nivel,
   type Objetivo,
   type OpcionesAvanzadas,
@@ -27,6 +28,7 @@ type Prefs = {
   equipo?: PreferenciaEquipo;
   sexo?: Sexo;
   enfasis?: Enfasis[];
+  zonasDolor?: Molestia[];
   avanzado?: OpcionesAvanzadas | null;
   explicacionGeneral?: string;
 } | null;
@@ -313,6 +315,8 @@ export default async function ClienteDetallePage({
                   preferencia: (rutina.preferencias as Prefs)?.equipo ?? undefined,
                   sexo: (rutina.preferencias as Prefs)?.sexo ?? undefined,
                   enfasis: (rutina.preferencias as Prefs)?.enfasis ?? undefined,
+                  zonasDolor:
+                    (rutina.preferencias as Prefs)?.zonasDolor ?? undefined,
                 }
               : undefined
           }
