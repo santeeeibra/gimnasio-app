@@ -350,7 +350,7 @@ export async function activarGimnasioDisponible(
 
   const { data: gym } = await db
     .from("gimnasios")
-    .select("id, slug")
+    .select("id, slug, plan_plataforma_id")
     .eq("id", gimnasioId)
     .single();
   if (!gym) return { ok: false, msg: "No se encontró el gimnasio." };
@@ -382,7 +382,22 @@ export async function activarGimnasioDisponible(
     .eq("id", dueno.id);
   if (profErr) return { ok: false, msg: profErr.message };
 
-  const gymUpdate: { nombre: string; slug?: string } = { nombre: nombreGym };
+  let planId = gym.plan_plataforma_id;
+  if (!planId) {
+    const { data: planBasico } = await db
+      .from("planes_plataforma")
+      .select("id")
+      .eq("nombre", "Básico")
+      .maybeSingle();
+    if (planBasico) planId = planBasico.id;
+  }
+
+  const gymUpdate: {
+    nombre: string;
+    slug?: string;
+    plan_plataforma_id?: string;
+  } = { nombre: nombreGym };
+  if (planId) gymUpdate.plan_plataforma_id = planId;
   if (nuevoSlugRaw) gymUpdate.slug = slugFinal;
   const { error: gymUpdErr } = await db
     .from("gimnasios")

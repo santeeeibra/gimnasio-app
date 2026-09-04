@@ -24,10 +24,24 @@ export async function cupoSocios(
     .eq("id", gimnasioId)
     .single();
 
-  const plan = (gym?.plan ?? null) as {
+  let plan = (gym?.plan ?? null) as {
     nombre: string;
     max_socios: number | null;
   } | null;
+
+  // Si no tiene plan asignado (ej. gimnasio nuevo o en prueba sin plan explícito),
+  // el free tier de 14 días activa el plan Básico (30 socios).
+  if (!plan) {
+    const { data: planBasico } = await db
+      .from("planes_plataforma")
+      .select("nombre, max_socios")
+      .eq("nombre", "Básico")
+      .maybeSingle();
+
+    if (planBasico) {
+      plan = planBasico;
+    }
+  }
 
   const { count } = await db
     .from("clientes")
@@ -35,11 +49,11 @@ export async function cupoSocios(
     .eq("gimnasio_id", gimnasioId);
   const usados = count ?? 0;
 
-  const max = plan?.max_socios ?? null;
+  const max = plan?.max_socios ?? 30;
   return {
     ok: max == null || usados < max,
     usados,
     max,
-    plan: plan?.nombre ?? null,
+    plan: plan?.nombre ?? "Básico",
   };
 }

@@ -23,9 +23,15 @@ const db = createClient(
   { auth: { persistSession: false } },
 );
 
+const { data: planBasico } = await db
+  .from("planes_plataforma")
+  .select("id")
+  .eq("nombre", "Básico")
+  .maybeSingle();
+
 const { data: gym, error: gymErr } = await db
   .from("gimnasios")
-  .insert({ nombre, slug })
+  .insert({ nombre, slug, plan_plataforma_id: planBasico?.id ?? null })
   .select()
   .single();
 if (gymErr) throw gymErr;

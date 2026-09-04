@@ -50,7 +50,8 @@ export default async function AjustesPage() {
 
   const estado = gym?.estado ?? "prueba";
   const planNombre =
-    (planPlat?.plan as unknown as { nombre: string } | null)?.nombre ?? null;
+    (planPlat?.plan as unknown as { nombre: string } | null)?.nombre ??
+    (estado === "prueba" ? "Básico" : null);
   const venceDias = diasRestantes(gym?.plan_plataforma_vence_el ?? null);
   const vence = gym?.plan_plataforma_vence_el
     ? new Date(gym.plan_plataforma_vence_el).toLocaleDateString("es-AR")
@@ -83,7 +84,7 @@ export default async function AjustesPage() {
           </div>
           <div className="flex gap-2">
             <dt className="text-ink-soft">Plan</dt>
-            <dd>{planNombre ?? "Sin plan"}</dd>
+            <dd>{planNombre ?? "Básico"}</dd>
           </div>
           <div className="flex gap-2">
             <dt className="text-ink-soft">Socios</dt>

@@ -33,7 +33,7 @@ const db = createClient(
 
 const { data: gym, error: gymErr } = await db
   .from("gimnasios")
-  .select("id, slug")
+  .select("id, slug, plan_plataforma_id")
   .eq("slug", slugActual)
   .single();
 if (gymErr || !gym) {
@@ -74,7 +74,18 @@ const { error: profErr } = await db
   .eq("id", dueno.id);
 if (profErr) throw profErr;
 
+let planId = gym.plan_plataforma_id;
+if (!planId) {
+  const { data: planBasico } = await db
+    .from("planes_plataforma")
+    .select("id")
+    .eq("nombre", "Básico")
+    .maybeSingle();
+  if (planBasico) planId = planBasico.id;
+}
+
 const gymUpdate = { nombre: nombreGym };
+if (planId) gymUpdate.plan_plataforma_id = planId;
 if (nuevoSlug) gymUpdate.slug = slugFinal;
 const { error: gymUpdErr } = await db
   .from("gimnasios")

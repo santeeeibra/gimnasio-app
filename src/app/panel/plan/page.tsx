@@ -125,16 +125,34 @@ export default async function PanelPlanPage() {
     precio_mensual: number | string;
   } | null;
   // Supabase devuelve numeric como string.
-  const plan = planRaw
+  let plan = planRaw
     ? {
         id: gym?.plan_plataforma_id ?? planRaw.id ?? null,
         nombre: planRaw.nombre,
         precio_mensual: Number(planRaw.precio_mensual),
       }
     : null;
+
+  // Si está en período de prueba o sin plan explícito, el free tier activa el Plan Básico
+  if (!plan && estado === "prueba") {
+    const planBasico = planes.find((p) => p.nombre === "Básico");
+    if (planBasico) {
+      plan = {
+        id: planBasico.id,
+        nombre: planBasico.nombre,
+        precio_mensual: planBasico.precio_mensual,
+      };
+    }
+  }
+
+  const finPruebaDate = creadoAt
+    ? new Date(new Date(creadoAt).getTime() + 14 * 86_400_000)
+    : null;
   const vence = gym?.plan_plataforma_vence_el
     ? new Date(gym.plan_plataforma_vence_el).toLocaleDateString("es-AR")
-    : null;
+    : estado === "prueba" && finPruebaDate
+      ? finPruebaDate.toLocaleDateString("es-AR")
+      : null;
 
   return (
     <div className="stagger max-w-lg space-y-6">
@@ -157,7 +175,14 @@ export default async function PanelPlanPage() {
         </div>
         <div className="flex justify-between gap-3 py-1.5">
           <dt className="text-ink-soft">Plan</dt>
-          <dd>{plan?.nombre ?? "Sin plan asignado"}</dd>
+          <dd>
+            {plan?.nombre ?? "Básico"}
+            {estado === "prueba" ? (
+              <span className="ml-1.5 rounded bg-volt/10 px-1.5 py-0.5 text-xs font-medium text-ink">
+                Free tier 14 días
+              </span>
+            ) : null}
+          </dd>
         </div>
         <div className="flex justify-between gap-3 py-1.5">
           <dt className="text-ink-soft">Socios</dt>
@@ -171,17 +196,32 @@ export default async function PanelPlanPage() {
           <div className="flex justify-between gap-3 py-1.5">
             <dt className="text-ink-soft">Precio</dt>
             <dd>
-              {plan.precio_mensual.toLocaleString("es-AR", {
-                style: "currency",
-                currency: "ARS",
-              })}
-              /mes
+              {estado === "prueba" ? (
+                <span>
+                  Gratis{" "}
+                  <span className="text-xs text-ink-soft">
+                    (luego{" "}
+                    {plan.precio_mensual.toLocaleString("es-AR", {
+                      style: "currency",
+                      currency: "ARS",
+                    })}
+                    /mes)
+                  </span>
+                </span>
+              ) : (
+                `${plan.precio_mensual.toLocaleString("es-AR", {
+                  style: "currency",
+                  currency: "ARS",
+                })}/mes`
+              )}
             </dd>
           </div>
         ) : null}
         {vence ? (
           <div className="flex justify-between gap-3 py-1.5">
-            <dt className="text-ink-soft">Vence</dt>
+            <dt className="text-ink-soft">
+              {estado === "prueba" ? "Prueba vence" : "Vence"}
+            </dt>
             <dd>{vence}</dd>
           </div>
         ) : null}
@@ -195,9 +235,9 @@ export default async function PanelPlanPage() {
       ) : estado === "prueba" ? (
         <p className="text-sm text-ink-soft">
           {diasPrueba > 0
-            ? `Prueba gratis: te ${diasPrueba === 1 ? "queda" : "quedan"} ${diasPrueba} ${
+            ? `Prueba gratis (Plan Básico activo): te ${diasPrueba === 1 ? "queda" : "quedan"} ${diasPrueba} ${
                 diasPrueba === 1 ? "día" : "días"
-              }. Activá un plan cuando quieras.`
+              }. Podés abonar tu plan o subir a Pro/Elite cuando quieras.`
             : "Tu prueba gratis terminó. Activá un plan para seguir operando."}
         </p>
       ) : null}
