@@ -10,10 +10,10 @@ import { ConflictosOffline } from "@/components/offline/conflictos";
 export default async function ClientesPage() {
   const dueno = await requireDueno();
   const supabase = await createClient();
-  const cupo = await cupoSocios(createAdminClient(), dueno.gimnasio_id);
-
-  const [{ data: clientesData }, { data: planesData }, { data: registrosData }] =
+  const adminDb = createAdminClient();
+  const [cupo, { data: clientesData }, { data: planesData }, { data: registrosData }] =
     await Promise.all([
+      cupoSocios(adminDb, dueno.gimnasio_id),
       supabase
         .from("clientes")
         .select(

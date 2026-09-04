@@ -11,28 +11,30 @@ export default async function ResumenPage() {
   const dueno = await requireDueno();
   const supabase = await createClient();
 
-  const { data: gym } = await supabase
-    .from("gimnasios")
-    .select("estado")
-    .eq("id", dueno.gimnasio_id)
-    .single();
+  const adminDb = createAdminClient();
+  const [{ data: gym }, cupo, { data }] = await Promise.all([
+    supabase
+      .from("gimnasios")
+      .select("estado")
+      .eq("id", dueno.gimnasio_id)
+      .single(),
+    cupoSocios(adminDb, dueno.gimnasio_id),
+    supabase
+      .from("clientes")
+      .select(
+        "id, estado_cuota, fecha_vencimiento, plan_id, profile:profiles(nombre, dni, telefono), plan:planes(nombre)",
+      )
+      .order("fecha_vencimiento", { ascending: true, nullsFirst: true }),
+  ]);
 
   const estadoGimnasio = gym?.estado ?? "prueba";
   const soloLectura = estadoGimnasio === "solo_lectura";
 
-  const cupo = await cupoSocios(createAdminClient(), dueno.gimnasio_id);
   const cupoCasiLleno =
     cupo.max != null && cupo.usados / cupo.max >= 0.9;
   const mostrarBannerPlan =
     !soloLectura &&
     (estadoGimnasio === "prueba" || !cupo.ok || cupoCasiLleno);
-
-  const { data } = await supabase
-    .from("clientes")
-    .select(
-      "id, estado_cuota, fecha_vencimiento, plan_id, profile:profiles(nombre, dni, telefono), plan:planes(nombre)",
-    )
-    .order("fecha_vencimiento", { ascending: true, nullsFirst: true });
 
   const clientes = (data ?? []) as unknown as ClienteVista[];
   const total = clientes.length;

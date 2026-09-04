@@ -19,26 +19,26 @@ export default async function MiPage() {
   const profile = await requireProfile();
   const supabase = await createClient();
 
-  const { data: gym } = await supabase
-    .from("gimnasios")
-    .select("estado, pago_alias, pago_cbu, pago_titular")
-    .eq("id", profile.gimnasio_id)
-    .single();
+  const [{ data: gym }, { data }, { count: noLeidos }] = await Promise.all([
+    supabase
+      .from("gimnasios")
+      .select("estado, pago_alias, pago_cbu, pago_titular")
+      .eq("id", profile.gimnasio_id)
+      .single(),
+    supabase
+      .from("clientes")
+      .select("id, fecha_vencimiento, plan:planes(nombre, duracion_dias)")
+      .eq("profile_id", profile.id)
+      .maybeSingle(),
+    supabase
+      .from("mensaje_destinatarios")
+      .select("id", { count: "exact", head: true })
+      .eq("profile_id", profile.id)
+      .eq("leido", false),
+  ]);
 
   const estadoGimnasio = gym?.estado ?? "prueba";
   const soloLectura = estadoGimnasio === "solo_lectura";
-
-  const { data } = await supabase
-    .from("clientes")
-    .select("id, fecha_vencimiento, plan:planes(nombre, duracion_dias)")
-    .eq("profile_id", profile.id)
-    .maybeSingle();
-
-  const { count: noLeidos } = await supabase
-    .from("mensaje_destinatarios")
-    .select("id", { count: "exact", head: true })
-    .eq("profile_id", profile.id)
-    .eq("leido", false);
 
   const c = data as any;
 

@@ -107,6 +107,7 @@ export function PanelSidebar({
             <Link
               key={item.href}
               href={item.href}
+              prefetch={true}
               aria-current={active ? "page" : undefined}
               className={`px-3 py-2 rounded-[5px] text-sm transition-colors duration-150 [transition-timing-function:var(--ease-out)] ${
                 active
@@ -201,6 +202,7 @@ export function PanelBottomNav() {
           <Link
             key={item.href}
             href={item.href}
+            prefetch={true}
             aria-current={active ? "page" : undefined}
             className={`relative flex-1 flex min-h-14 flex-col items-center justify-center gap-1 py-2 text-[11px] tracking-tight touch-manipulation active:scale-95 transition-[transform,color] duration-150 [transition-timing-function:var(--ease-out)] ${
               active ? "text-ink" : "text-ink-soft"
