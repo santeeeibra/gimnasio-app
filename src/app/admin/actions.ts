@@ -6,6 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { enviarPush } from "@/lib/push/enviar";
 import { registrarAccionAdmin } from "@/lib/admin/audit";
 import { aprobarPagoPlataforma } from "@/lib/plataforma/aprobar-pago";
+import { rechazarPagoPlataforma as ejecutarRechazoPagoPlataforma } from "@/lib/plataforma/rechazar-pago";
 
 const ESTADOS = ["prueba", "activo", "solo_lectura"] as const;
 type EstadoGym = (typeof ESTADOS)[number];
@@ -180,6 +181,32 @@ export async function confirmarPagoPlataforma(
   );
   if (r.gimnasioId) revalidatePath(`/admin/gimnasios/${r.gimnasioId}`);
   return { ok: true, msg: `Pago confirmado. ${r.msg}` };
+}
+
+// Rechaza a mano un pago pendiente de gimnasio -> plataforma con motivo.
+// Registra el motivo en la nota, notifica al dueño y audita la acción.
+export async function rechazarPagoPlataforma(
+  _prev: { ok: boolean; msg: string } | null,
+  formData: FormData,
+): Promise<{ ok: boolean; msg: string }> {
+  const admin = await requireSuperadmin();
+  const pagoId = String(formData.get("pago_id") ?? "");
+  const motivo = String(formData.get("motivo") ?? "").trim();
+  if (!pagoId) return { ok: false, msg: "Falta el pago." };
+  if (!motivo) return { ok: false, msg: "Tenés que indicar un motivo de rechazo." };
+
+  const db = createAdminClient();
+  const r = await ejecutarRechazoPagoPlataforma(db, pagoId, motivo);
+  if (!r.ok) return { ok: false, msg: r.msg };
+
+  await registrarAccionAdmin(
+    admin.id,
+    "rechazar_pago_plataforma",
+    r.gimnasioId ?? null,
+    { pago_id: pagoId, motivo },
+  );
+  if (r.gimnasioId) revalidatePath(`/admin/gimnasios/${r.gimnasioId}`);
+  return { ok: true, msg: "Pago rechazado." };
 }
 
 // Fuerza el estado de cuota / prueba de un socio puntual, para probar los

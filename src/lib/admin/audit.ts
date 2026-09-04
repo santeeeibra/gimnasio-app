@@ -9,6 +9,7 @@ const AVISA_SUPERADMIN = new Set<AccionAdmin>([
   "asignar_plan_plataforma",
   "renovar_plan_plataforma",
   "confirmar_pago_plataforma",
+  "rechazar_pago_plataforma",
   "entrar_como",
 ]);
 
@@ -23,6 +24,7 @@ type AccionAdmin =
   | "asignar_plan_plataforma"
   | "renovar_plan_plataforma"
   | "confirmar_pago_plataforma"
+  | "rechazar_pago_plataforma"
   | "forzar_estado_socio";
 
 // Registra una acción del superadmin en admin_audit_log. No lanza: si falla,
