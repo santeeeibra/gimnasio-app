@@ -3,6 +3,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { enviarEmail } from "@/lib/mail/enviar";
 import { enviarPush } from "@/lib/push/enviar";
+import { TIPO_PAGO_LABEL } from "@/lib/plataforma/precios";
 
 export type ResultadoAprobacion = {
   ok: boolean;
@@ -25,7 +26,7 @@ export async function aprobarPagoPlataforma(
 ): Promise<ResultadoAprobacion> {
   const { data: pago } = await db
     .from("pagos_plataforma")
-    .select("id, gimnasio_id, dias, estado, monto_ars")
+    .select("id, gimnasio_id, dias, estado, monto_ars, tipo")
     .eq("id", pagoId)
     .single();
   if (!pago) return { ok: false, msg: "Pago inexistente." };
@@ -35,6 +36,46 @@ export async function aprobarPagoPlataforma(
       yaProcesado: true,
       gimnasioId: pago.gimnasio_id,
       msg: `El pago ya está ${pago.estado}.`,
+    };
+  }
+
+  // Cargos únicos (setup / premium): se aprueban con el mismo flujo pero NO
+  // tocan el vencimiento del plan ni el estado del gimnasio.
+  const tipo = (pago.tipo ?? "plan_mensual") as
+    | "plan_mensual"
+    | "setup"
+    | "premium";
+  if (tipo !== "plan_mensual") {
+    const { data: upd, error } = await db
+      .from("pagos_plataforma")
+      .update({
+        estado: "aprobado",
+        confirmado_at: new Date().toISOString(),
+        ...(proveedorRef ? { proveedor_ref: proveedorRef } : {}),
+      })
+      .eq("id", pagoId)
+      .eq("estado", "pendiente")
+      .select("id");
+    if (error)
+      return { ok: false, msg: error.message, gimnasioId: pago.gimnasio_id };
+    if (!upd || upd.length === 0) {
+      return {
+        ok: false,
+        yaProcesado: true,
+        gimnasioId: pago.gimnasio_id,
+        msg: "El pago ya fue procesado.",
+      };
+    }
+    await avisarCargoUnico(
+      db,
+      pago.gimnasio_id,
+      tipo,
+      Number(pago.monto_ars ?? 0),
+    );
+    return {
+      ok: true,
+      msg: "Cargo único confirmado (no renueva el plan).",
+      gimnasioId: pago.gimnasio_id,
     };
   }
 
@@ -96,6 +137,58 @@ export async function aprobarPagoPlataforma(
     gimnasioId: pago.gimnasio_id,
     venceEl,
   };
+}
+
+async function avisarCargoUnico(
+  db: SupabaseClient,
+  gimnasioId: string,
+  tipo: "setup" | "premium",
+  montoARS: number,
+): Promise<void> {
+  try {
+    const [{ data: dueno }, { data: gym }] = await Promise.all([
+      db
+        .from("profiles")
+        .select("id")
+        .eq("gimnasio_id", gimnasioId)
+        .eq("rol", "dueno")
+        .limit(1)
+        .maybeSingle(),
+      db.from("gimnasios").select("nombre").eq("id", gimnasioId).single(),
+    ]);
+
+    const label = TIPO_PAGO_LABEL[tipo];
+    const montoFmt = montoARS.toLocaleString("es-AR", {
+      style: "currency",
+      currency: "ARS",
+    });
+
+    if (dueno?.id) {
+      await enviarPush([dueno.id], {
+        title: "Pago confirmado",
+        body: `Confirmamos tu pago de "${label}".`,
+        url: "/panel/plan",
+        tag: `cargo-${tipo}-${gimnasioId}`,
+      });
+    }
+
+    const to = process.env.PAGOS_EMAIL ?? process.env.ADMIN_EMAIL;
+    if (to) {
+      await enviarEmail({
+        to,
+        subject: `[Pago] ${gym?.nombre ?? gimnasioId} — ${label} confirmado`,
+        text: [
+          `Cargo único confirmado.`,
+          ``,
+          `Gimnasio: ${gym?.nombre ?? gimnasioId}`,
+          `Concepto: ${label}`,
+          `Monto: ${montoFmt}`,
+        ].join("\n"),
+      });
+    }
+  } catch (err) {
+    console.error("[aprobar-pago] aviso cargo único:", err);
+  }
 }
 
 async function avisarRenovacion(

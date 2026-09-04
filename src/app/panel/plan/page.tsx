@@ -5,6 +5,13 @@ import { ChevronLeft } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { cupoSocios } from "@/lib/plataforma/cupo";
 import { DATOS_TRANSFERENCIA } from "@/lib/pagos/manual";
+import {
+  type TipoPago,
+  TIPO_PAGO_LABEL,
+  EARLY_BIRD_PCT,
+  diasRestantesPrueba,
+  enVentanaEarlyBird,
+} from "@/lib/plataforma/precios";
 import { SolicitarForm } from "./solicitar-form";
 import { PagoForm } from "./pago-form";
 
@@ -30,14 +37,16 @@ export default async function PanelPlanPage() {
     db
       .from("gimnasios")
       .select(
-        "estado, plan_plataforma_vence_el, plan:planes_plataforma(nombre, precio_mensual)",
+        "estado, creado_at, plan_plataforma_vence_el, plan:planes_plataforma(nombre, precio_mensual)",
       )
       .eq("id", dueno.gimnasio_id)
       .single(),
     cupoSocios(db, dueno.gimnasio_id),
     db
       .from("pagos_plataforma")
-      .select("id, estado, monto_ars, dias, creado_at, confirmado_at")
+      .select(
+        "id, tipo, estado, monto_ars, monto_original_ars, descuento_pct, dias, creado_at, confirmado_at",
+      )
       .eq("gimnasio_id", dueno.gimnasio_id)
       .order("creado_at", { ascending: false })
       .limit(12),
@@ -45,12 +54,45 @@ export default async function PanelPlanPage() {
 
   const pagos = ((pagosData ?? []) as {
     id: string;
+    tipo: string | null;
     estado: string;
     monto_ars: number | string;
+    monto_original_ars: number | string | null;
+    descuento_pct: number | string | null;
     dias: number;
     creado_at: string;
     confirmado_at: string | null;
-  }[]).map((p) => ({ ...p, monto_ars: Number(p.monto_ars) }));
+  }[]).map((p) => ({
+    ...p,
+    tipo: (p.tipo ?? "plan_mensual") as TipoPago,
+    monto_ars: Number(p.monto_ars),
+    monto_original_ars:
+      p.monto_original_ars == null ? null : Number(p.monto_original_ars),
+    descuento_pct: Number(p.descuento_pct ?? 0),
+  }));
+
+  // Estado por tipo de cargo: pendiente bloquea; para los cargos únicos, un
+  // aprobado también (no se pagan dos veces).
+  const estadoPorTipo: Record<TipoPago, "pendiente" | "aprobado" | null> = {
+    plan_mensual: null,
+    setup: null,
+    premium: null,
+  };
+  for (const p of pagos) {
+    if (p.estado === "pendiente") {
+      estadoPorTipo[p.tipo] = "pendiente";
+    } else if (
+      p.estado === "aprobado" &&
+      p.tipo !== "plan_mensual" &&
+      estadoPorTipo[p.tipo] !== "pendiente"
+    ) {
+      estadoPorTipo[p.tipo] = "aprobado";
+    }
+  }
+
+  const creadoAt = gym?.creado_at ?? null;
+  const diasPrueba = creadoAt ? diasRestantesPrueba(creadoAt) : 0;
+  const earlyBird = creadoAt ? enVentanaEarlyBird(creadoAt) : false;
 
   const estado = gym?.estado ?? "prueba";
   const planRaw = (gym?.plan ?? null) as {
@@ -123,21 +165,37 @@ export default async function PanelPlanPage() {
         </p>
       ) : estado === "prueba" ? (
         <p className="text-sm text-ink-soft">
-          Estás en período de prueba. Cuando quieras, pedí la activación y te
-          pasamos los planes disponibles.
+          {diasPrueba > 0
+            ? `Prueba gratis: te ${diasPrueba === 1 ? "queda" : "quedan"} ${diasPrueba} ${
+                diasPrueba === 1 ? "día" : "días"
+              }. Activá un plan cuando quieras.`
+            : "Tu prueba gratis terminó. Activá un plan para seguir operando."}
+        </p>
+      ) : null}
+
+      {earlyBird ? (
+        <p className="card-cut border border-rule bg-paper-2 p-4 text-sm text-ink-soft">
+          <span className="font-medium text-ink">
+            Descuento early-bird −{EARLY_BIRD_PCT}%
+          </span>{" "}
+          si comprás en los primeros días de tu prueba. Aplica al plan mensual y
+          al setup.
         </p>
       ) : null}
 
       <div className="card-cut border border-rule bg-paper-2 p-5">
-        <h2 className="mb-1 text-lg">Pagar el plan</h2>
+        <h2 className="mb-1 text-lg">Pagar</h2>
         <p className="mb-4 text-sm text-ink-soft">
-          Se registra el pago del período (30 días). Al confirmarse, tu plan se
-          renueva y el gimnasio queda activo.
+          El plan mensual renueva 30 días y deja el gimnasio activo al
+          confirmarse. El setup y el Premium son cargos únicos.
         </p>
         <PagoForm
           alias={DATOS_TRANSFERENCIA.alias}
           titular={DATOS_TRANSFERENCIA.titular}
-          hayPendiente={pagos.some((p) => p.estado === "pendiente")}
+          planNombre={plan?.nombre ?? null}
+          planPrecio={plan ? plan.precio_mensual : null}
+          earlyBird={earlyBird}
+          estadoPorTipo={estadoPorTipo}
         />
       </div>
 
@@ -160,9 +218,17 @@ export default async function PanelPlanPage() {
                         style: "currency",
                         currency: "ARS",
                       })}{" "}
-                      <span className="text-ink-soft">· {p.dias} días</span>
+                      <span className="text-ink-soft">
+                        · {TIPO_PAGO_LABEL[p.tipo]}
+                        {p.tipo === "plan_mensual" ? ` · ${p.dias} días` : ""}
+                      </span>
                     </span>
-                    <span className="block text-xs text-ink-soft">{fecha}</span>
+                    <span className="block text-xs text-ink-soft">
+                      {fecha}
+                      {p.descuento_pct > 0
+                        ? ` · early-bird −${p.descuento_pct}%`
+                        : ""}
+                    </span>
                   </span>
                   <span
                     className={`shrink-0 text-xs ${

@@ -66,7 +66,9 @@ export default async function AdminGimnasioDetalle({
       .order("orden", { ascending: true }),
     db
       .from("pagos_plataforma")
-      .select("id, monto_ars, dias, estado, proveedor, nota, creado_at")
+      .select(
+        "id, tipo, monto_ars, monto_original_ars, descuento_pct, dias, estado, proveedor, nota, creado_at",
+      )
       .eq("gimnasio_id", id)
       .order("creado_at", { ascending: false })
       .limit(8),
@@ -99,7 +101,22 @@ export default async function AdminGimnasioDetalle({
     nombre: string;
     max_socios: number | null;
   }[];
-  const pagosPlataforma = (pagosPlataformaData ?? []) as PagoPlataformaRow[];
+  const pagosPlataforma = ((pagosPlataformaData ?? []) as Record<
+    string,
+    unknown
+  >[]).map((p) => ({
+    id: p.id as string,
+    tipo: (p.tipo ?? "plan_mensual") as PagoPlataformaRow["tipo"],
+    monto_ars: Number(p.monto_ars ?? 0),
+    monto_original_ars:
+      p.monto_original_ars == null ? null : Number(p.monto_original_ars),
+    descuento_pct: Number(p.descuento_pct ?? 0),
+    dias: Number(p.dias ?? 0),
+    estado: p.estado as string,
+    proveedor: p.proveedor as string,
+    nota: (p.nota ?? null) as string | null,
+    creado_at: p.creado_at as string,
+  })) satisfies PagoPlataformaRow[];
 
   const ultimosPagos = (pagos ?? []) as unknown as {
     id: string;

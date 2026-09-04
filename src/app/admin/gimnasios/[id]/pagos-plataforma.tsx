@@ -3,10 +3,14 @@
 import { useActionState } from "react";
 import { confirmarPagoPlataforma } from "../../actions";
 import { Button } from "@/components/ui";
+import { type TipoPago, TIPO_PAGO_LABEL } from "@/lib/plataforma/precios";
 
 export type PagoPlataformaRow = {
   id: string;
+  tipo: TipoPago;
   monto_ars: number;
+  monto_original_ars: number | null;
+  descuento_pct: number;
   dias: number;
   estado: string;
   proveedor: string;
@@ -14,7 +18,15 @@ export type PagoPlataformaRow = {
   creado_at: string;
 };
 
-function ConfirmarBtn({ pagoId, monto }: { pagoId: string; monto: number }) {
+function ConfirmarBtn({
+  pagoId,
+  monto,
+  tipo,
+}: {
+  pagoId: string;
+  monto: number;
+  tipo: TipoPago;
+}) {
   const [state, action, pending] = useActionState(confirmarPagoPlataforma, null);
   return (
     <form
@@ -25,9 +37,13 @@ function ConfirmarBtn({ pagoId, monto }: { pagoId: string; monto: number }) {
           style: "currency",
           currency: "ARS",
         });
+        const efecto =
+          tipo === "plan_mensual"
+            ? `Esto renueva el plan del gimnasio por 30 días y lo deja en estado "activo".`
+            : `Es un cargo único (${TIPO_PAGO_LABEL[tipo]}): NO renueva el plan ni cambia el estado del gimnasio.`;
         if (
           !window.confirm(
-            `¿Confirmar este pago de ${montoFmt}?\n\nEsto renueva el plan del gimnasio por 30 días y lo deja en estado "activo". No se puede deshacer.`,
+            `¿Confirmar este pago de ${montoFmt}?\n\n${efecto}\nNo se puede deshacer.`,
           )
         ) {
           e.preventDefault();
@@ -64,15 +80,22 @@ export function PagosPlataforma({ pagos }: { pagos: PagoPlataformaRow[] }) {
                 style: "currency",
                 currency: "ARS",
               })}{" "}
-              · {p.dias} días · {p.proveedor}
+              · {TIPO_PAGO_LABEL[p.tipo]}
+              {p.tipo === "plan_mensual" ? ` · ${p.dias} días` : " · cargo único"}{" "}
+              · {p.proveedor}
             </span>
             <span className="block text-xs text-ink-soft">
               {new Date(p.creado_at).toLocaleDateString("es-AR")}
+              {p.descuento_pct > 0 ? ` · early-bird −${p.descuento_pct}%` : ""}
               {p.nota ? ` · ${p.nota}` : ""}
             </span>
           </span>
           {p.estado === "pendiente" ? (
-            <ConfirmarBtn pagoId={p.id} monto={Number(p.monto_ars)} />
+            <ConfirmarBtn
+              pagoId={p.id}
+              monto={Number(p.monto_ars)}
+              tipo={p.tipo}
+            />
           ) : (
             <span
               className={`shrink-0 text-xs ${

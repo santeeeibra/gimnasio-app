@@ -80,6 +80,12 @@ async function correrCron() {
     avisosMorosidad++;
   }
 
+  // ─── Trials vencidos (gimnasios en prueba > 14 días desde creado_at) y
+  //     planes de plataforma vencidos (gimnasios activos). Se corre siempre,
+  //     no solo cuando hay cuotas de socios por vencer. ───
+  await admin.rpc("chequear_trial_vencido");
+  await admin.rpc("chequear_plan_vencido");
+
   const afectados = (clientes ?? []).filter((c: Row) =>
     DIAS_AVISO.has(diasRestantes(c.fecha_vencimiento) ?? -999),
   );
@@ -130,11 +136,6 @@ async function correrCron() {
     }
     avisos++;
   }
-
-  // ─── Chequear trials vencidos (gimnasios en prueba > 14 días) ───
-  await admin.rpc("chequear_trial_vencido");
-  // ─── Chequear planes de plataforma vencidos (gimnasios activos) ───
-  await admin.rpc("chequear_plan_vencido");
 
   return NextResponse.json({ ok: true, avisos, avisosMorosidad });
 }
