@@ -29,7 +29,8 @@ export const OBJETIVO_AYUDA: Record<Objetivo, string> = {
   tonificar:
     "Bajar algo de grasa y dar forma sin buscar volumen. Repeticiones altas, descansos cortos.",
   resistencia: "Aguantar más. Muchas repeticiones, descansos muy cortos.",
-  bajar_grasa: "Perder grasa. Circuito de compuestos, ritmo sostenido.",
+  bajar_grasa:
+    "Perder grasa sin perder músculo. Compuestos pesados, pocas repeticiones; el déficit se hace en la comida.",
 };
 
 export const NIVEL_LABEL: Record<Nivel, string> = {
@@ -148,9 +149,11 @@ export const MAX_DIAS_MANUAL = 6;
 // libre). Los valores de REPS_OPCIONES cubren todo lo que emite el motor.
 export const SERIES_OPCIONES = [1, 2, 3, 4, 5] as const;
 export const REPS_OPCIONES = [
+  "3–5",
   "5",
   "6",
   "6–8",
+  "6–12",
   "8–10",
   "8–12",
   "10–12",
@@ -158,6 +161,7 @@ export const REPS_OPCIONES = [
   "15",
   "15–20",
   "20",
+  "20+",
 ] as const;
 
 // ── Modo avanzado (SPEC_RUTINA_AVANZADA.md) ──
@@ -203,8 +207,8 @@ export type Rango = (typeof RANGOS)[number];
 export const RANGO_LABEL: Record<Rango, string> = {
   estandar: "Según el objetivo (por defecto)",
   fuerza_hipertrofia: "Fuerza-hipertrofia (6–8)",
-  hipertrofia: "Hipertrofia clásica (8–12)",
-  metabolico: "Metabólico (12–20)",
+  hipertrofia: "Hipertrofia clásica (6–12)",
+  metabolico: "Metabólico (15–20+)",
   ondulante: "Ondulante: pesado / medio / liviano por día",
 };
 

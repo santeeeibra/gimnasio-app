@@ -249,20 +249,20 @@ function splitExplicito(
 }
 
 // El objetivo también moldea la sesión, no solo el rango de reps:
-// - fuerza: pocas accesorias (máx. 2), sesión corta y pesada.
-// - resistencia / bajar grasa / tonificar: garantiza core al cierre.
+// - fuerza / bajar grasa: pocas accesorias (máx. 2), sesión corta y pesada de
+//   compuestos multiarticulares. "Bajar grasa" NO es una rutina liviana de
+//   "marcar": entrena como fuerza/hipertrofia para retener masa muscular en
+//   déficit (Longland et al. 2016; Helms et al. 2014). El déficit calórico lo
+//   hace la dieta, no el rango de reps.
+// - resistencia / tonificar: garantiza core al cierre.
 // - hipertrofia: se deja como viene.
 function moldearPorObjetivo(ranuras: Ranura[], objetivo: Objetivo): Ranura[] {
-  if (objetivo === "fuerza") {
+  if (objetivo === "fuerza" || objetivo === "bajar_grasa") {
     const compuestos = ranuras.filter((r) => r.rol !== "aislamiento");
     const accesorias = ranuras.filter((r) => r.rol === "aislamiento").slice(0, 2);
     return [...compuestos, ...accesorias];
   }
-  if (
-    objetivo === "resistencia" ||
-    objetivo === "bajar_grasa" ||
-    objetivo === "tonificar"
-  ) {
+  if (objetivo === "resistencia" || objetivo === "tonificar") {
     return ranuras.some((r) => r.grupo === "core") ? ranuras : [...ranuras, A("core")];
   }
   return ranuras;
@@ -393,23 +393,31 @@ type EsquemaObj = {
 // el plan mezcla 5×5, 4×6, 3×8–10… como una rutina real. Todos los rangos de
 // reps salen de REPS_OPCIONES (menús del editor).
 const ESQUEMA: Record<Objetivo, EsquemaObj> = {
+  // Fuerza = cargas altas, rango estricto 1–5 reps en todos los roles. El
+  // objetivo es la adaptación neural (reclutamiento, sincronización de unidades
+  // motoras, tasa de desarrollo de fuerza), no el daño muscular. Descanso largo
+  // 2–3 min para recuperar el fosfágeno entre series pesadas (ACSM position
+  // stand 2009; Schoenfeld et al. 2021, rep-range meta-analysis: <6 reps es lo
+  // óptimo para fuerza máxima).
   fuerza: {
-    primario: { series: 5, reps: "5" },
-    secundario: { series: 4, reps: "6" },
-    aislamiento: { series: 3, reps: "8–10" },
+    primario: { series: 5, reps: "3–5" },
+    secundario: { series: 4, reps: "5" },
+    aislamiento: { series: 3, reps: "5" },
     descanso: "Descanso 2–3 min",
   },
-  // Hipertrofia = volumen a intensidad media, no fuerza. El primario pesa 4 y
-  // secundario/aislamiento 3 en el reparto de series (peso de rol, Fase 4): así
-  // el día no sale todo con el mismo número de series y el básico se lleva algo
-  // más de trabajo. Reps 8–10: un rango productivo para el compuesto sin caer
-  // en el 5×5 de fuerza. Descanso 90–120 s: suficiente para sostener la carga
-  // entre series (Schoenfeld et al. 2016, "Longer inter-set rest periods enhance
-  // muscle strength and hypertrophy").
+  // Hipertrofia clásica = volumen a intensidad media, rango 6–12 reps. El
+  // primario pesa 4 y secundario/aislamiento 3 en el reparto de series (peso de
+  // rol, Fase 4): así el día no sale todo con el mismo número y el básico se
+  // lleva algo más de trabajo. 6–8 en el compuesto para carga alta, 8–12 en el
+  // resto para acumular estímulo (Schoenfeld et al. 2017, meta-analysis: la
+  // hipertrofia es similar en 6–20 reps si el volumen y el esfuerzo se igualan;
+  // 6–12 concentra estímulo mecánico y metabólico). Descanso 90–120 s
+  // (Schoenfeld et al. 2016, "Longer inter-set rest periods enhance muscle
+  // strength and hypertrophy").
   hipertrofia: {
-    primario: { series: 4, reps: "8–10" },
-    secundario: { series: 3, reps: "10–12" },
-    aislamiento: { series: 3, reps: "12–15" },
+    primario: { series: 4, reps: "6–8" },
+    secundario: { series: 3, reps: "8–12" },
+    aislamiento: { series: 3, reps: "10–12" },
     descanso: "Descanso 90–120 s",
   },
   // Tonificar / marcar: hipertrofia liviana + densidad. Reps altas y descanso
@@ -421,17 +429,26 @@ const ESQUEMA: Record<Objetivo, EsquemaObj> = {
     aislamiento: { series: 3, reps: "15" },
     descanso: "Descanso 45–60 s",
   },
+  // Resistencia muscular = estrés metabólico, rango 15–20+ reps. Descanso muy
+  // corto para acumular fatiga local (ACSM 2009: >15 reps y <30–60 s de pausa
+  // mejoran la resistencia muscular localizada).
   resistencia: {
     primario: { series: 3, reps: "15–20" },
     secundario: { series: 3, reps: "15–20" },
-    aislamiento: { series: 2, reps: "20" },
+    aislamiento: { series: 2, reps: "20+" },
     descanso: "Descanso 30–45 s",
   },
+  // Bajar grasa: se entrena IGUAL que fuerza/hipertrofia, NO con circuitos
+  // livianos de 20+ reps. En déficit calórico el entrenamiento pesado de
+  // compuestos multiarticulares es la señal que retiene masa muscular; la
+  // pérdida de grasa la genera la dieta, no el rango de reps ni el "ritmo de
+  // circuito" (Longland et al. 2016; Helms et al. 2014; Murphy & Koehler 2022).
+  // Rango 6–8 en el primario (carga alta), 8–12 en el resto, descanso completo.
   bajar_grasa: {
-    primario: { series: 4, reps: "10–12" },
-    secundario: { series: 3, reps: "12–15" },
-    aislamiento: { series: 3, reps: "15" },
-    descanso: "Descanso 45 s · ritmo de circuito",
+    primario: { series: 4, reps: "6–8" },
+    secundario: { series: 4, reps: "8–10" },
+    aislamiento: { series: 2, reps: "10–12" },
+    descanso: "Descanso 2–3 min",
   },
 };
 
@@ -449,39 +466,43 @@ const ESQUEMA_RANGO: Record<
     descanso: "Descanso 2–3 min",
   },
   hipertrofia: {
-    primario: { series: 4, reps: "8–10" },
-    secundario: { series: 3, reps: "10–12" },
-    aislamiento: { series: 3, reps: "12–15" },
+    primario: { series: 4, reps: "6–8" },
+    secundario: { series: 3, reps: "8–12" },
+    aislamiento: { series: 3, reps: "10–12" },
     descanso: "Descanso 90–120 s",
   },
   metabolico: {
-    primario: { series: 3, reps: "12–15" },
+    primario: { series: 3, reps: "15–20" },
     secundario: { series: 3, reps: "15–20" },
-    aislamiento: { series: 2, reps: "20" },
+    aislamiento: { series: 2, reps: "20+" },
     descanso: "Descanso 30–45 s",
   },
 };
 
-// Periodización ondulante diaria (DUP): el rango rota pesado → medio → liviano
-// según el índice de día. Rhea et al. 2002.
+// Periodización ondulante diaria (DUP): el rango rota PESADO → LIVIANO → MEDIO
+// según el índice de día (Rhea et al. 2002; Zourdos et al. 2016). El día liviano
+// va segundo a propósito: intercalado entre los dos días de más carga, sirve de
+// recuperación activa (irrigar la zona, bajar la fatiga del sistema nervioso)
+// sin frenar el estímulo. Evita que se acumulen dos sesiones pesadas seguidas.
+// Día 1 pesado (~5 reps) · Día 2 liviano (~15 reps) · Día 3 medio (~10 reps).
 const ESQUEMA_ONDULANTE: EsquemaObj[] = [
   {
-    primario: { series: 5, reps: "5" },
-    secundario: { series: 4, reps: "6–8" },
-    aislamiento: { series: 3, reps: "8–10" },
+    primario: { series: 5, reps: "3–5" },
+    secundario: { series: 4, reps: "5" },
+    aislamiento: { series: 3, reps: "6–8" },
     descanso: "Día pesado · Descanso 2–3 min",
+  },
+  {
+    primario: { series: 3, reps: "15–20" },
+    secundario: { series: 3, reps: "15–20" },
+    aislamiento: { series: 2, reps: "20+" },
+    descanso: "Día liviano · Descanso 45–60 s · irriga la zona y baja la fatiga",
   },
   {
     primario: { series: 4, reps: "8–10" },
     secundario: { series: 3, reps: "10–12" },
-    aislamiento: { series: 3, reps: "12–15" },
+    aislamiento: { series: 3, reps: "10–12" },
     descanso: "Día medio · Descanso 90–120 s",
-  },
-  {
-    primario: { series: 3, reps: "12–15" },
-    secundario: { series: 3, reps: "15–20" },
-    aislamiento: { series: 2, reps: "20" },
-    descanso: "Día liviano · Descanso 45–60 s",
   },
 ];
 
@@ -592,6 +613,105 @@ function nivelIdx(nivel: string | null): number {
   return NIVEL_ORDEN[(nivel as Nivel) ?? "principiante"] ?? 0;
 }
 
+// ── Tier 1 · Hardware de gama alta ──
+// Movimientos con la mejor relación estímulo/fatiga y curva de carga (tensión
+// mecánica, Schoenfeld). Cuando el equipo del cliente los permite, ganan por
+// puntaje sobre cualquier otra opción del mismo grupo — así el primario/
+// secundario del día cae en un básico probado y no en un accesorio flojo.
+// Se identifican por slug (exacto, sin ambigüedad de acentos/nombres).
+const TIER_1 = new Set<string>([
+  // Pecho
+  "press-inclinado-mancuernas",
+  "press-pecho-maquina",
+  "press-banca-barra",
+  // Espalda
+  "dominadas",
+  "jalon-al-pecho",
+  "remo-maquina",
+  // Cuádriceps
+  "prensa-piernas",
+  "sentadilla-bulgara",
+  // Glúteo / Isquios
+  "peso-muerto-rumano",
+  "peso-muerto-rumano-mancuernas",
+  "rdl-unilateral-mancuerna",
+  "hip-thrust",
+  "hip-thrust-barra",
+  // Hombro
+  "press-hombro-maquina",
+  "press-hombro-mancuernas",
+  "elevaciones-laterales",
+  // Brazos
+  "curl-mancuernas",
+  "press-frances",
+]);
+
+const BONUS_TIER_1 = 30; // supera cualquier match de patrón + equipo del grupo.
+
+// ── Firewall · Prevención de fatiga axial (cuello de botella del SNC) ──
+// Ejercicios de demanda axial extrema (columna comprimida bajo carga libre):
+// sentadilla, peso muerto convencional, RDL con barra, buenos días. Una vez que
+// entra uno de estos en el día, el resto de compuestos de pierna/espalda pasan a
+// versión estabilizada (máquina/polea/unilateral) para no encadenar dos lifts
+// que frían el sistema nervioso central.
+const SLUGS_AXIALES = new Set<string>([
+  "sentadilla-barra",
+  "peso-muerto-barra",
+  "peso-muerto-rumano",
+  "buenos-dias",
+  "remo-barra",
+]);
+
+function esAxialPesado(ej: Ejercicio): boolean {
+  return SLUGS_AXIALES.has(ej.slug ?? "");
+}
+
+// Grupos que comparten el eje axial (piernas + espalda). Sólo entre estos se
+// aplica el bloqueo del segundo compuesto de carga libre.
+const GRUPOS_AXIALES = new Set([
+  "cuadriceps",
+  "isquios",
+  "gluteos",
+  "espalda",
+]);
+
+// Un compuesto de carga libre pesada: barra, patrón compuesto, sobre un grupo
+// axial. Es lo que se prohíbe como SEGUNDO lift del día tras un axial.
+function esCompuestoLibrePesado(ej: Ejercicio): boolean {
+  return (
+    (ej.equipo ?? "") === "barra" &&
+    ej.patron !== "aislamiento" &&
+    GRUPOS_AXIALES.has(ej.grupo_muscular ?? "")
+  );
+}
+
+// ── Firewall · Orden de booteo estricto ──
+// Un aislamiento nunca precede a un compuesto (destruye la producción de fuerza
+// posterior). Orden por rol: primario → secundario → aislamiento → core al
+// cierre. Estable: preserva el orden previo (incluida la priorización de
+// énfasis) dentro de cada nivel. Excepción documentada: prefatiga_zona (avanzado)
+// pide deliberadamente aislar antes del compuesto en la zona de énfasis.
+function rangoRol(r: Ranura): number {
+  if (r.grupo === "core") return 4;
+  if (r.rol === "primario") return 1;
+  if (r.rol === "secundario") return 2;
+  return 3; // aislamiento
+}
+
+function ordenarBooteo(ranuras: Ranura[]): Ranura[] {
+  return ranuras
+    .map((r, i) => ({ r, i }))
+    .sort((a, b) => rangoRol(a.r) - rangoRol(b.r) || a.i - b.i)
+    .map((x) => x.r);
+}
+
+// Consolidación de volumen: tope de ejercicios DISTINTOS por grupo muscular en
+// una misma sesión. Más allá de esto es "volumen basura por dispersión" (Helms):
+// mejor sumar series a un movimiento probado que agregar un 4º ejercicio del
+// mismo grupo. Al llegar al tope, la ranura reusa un ejercicio ya elegido del
+// grupo (concentra series) en vez de estrenar uno nuevo.
+const MAX_DISTINTOS_POR_GRUPO = 3;
+
 // Empuja la selección hacia el tipo de ejercicio que pide cada objetivo, para
 // que 4 objetivos con los mismos datos NO devuelvan la misma rutina.
 function sesgoObjetivo(ej: Ejercicio, ranura: Ranura, objetivo: Objetivo): number {
@@ -632,10 +752,16 @@ function sesgoObjetivo(ej: Ejercicio, ranura: Ranura, objetivo: Objetivo): numbe
       if (ranura.rol === "primario" && eq === "barra") return -8;
       return 0;
     case "bajar_grasa":
-      // compuestos de mancuerna / peso corporal, aptos para circuito.
-      if (!aislado && (eq === "mancuernas" || eq === "peso_corporal")) return 10;
-      if (ranura.rol === "primario" && eq === "barra") return -4;
-      return 0;
+      // Igual que fuerza: básicos pesados multiarticulares de barra en el
+      // arranque, penalizar accesorios. La señal a la placa madre es "necesito
+      // este músculo para mover cargas altas" → lo retiene en déficit. Nada de
+      // circuitos livianos.
+      if (ranura.rol === "primario") {
+        if (eq === "barra") return 18;
+        if (eq === "mancuernas") return 8;
+        if (eq === "maquina" || eq === "polea") return -12;
+      }
+      return aislado ? -8 : 0;
   }
   return 0;
 }
@@ -716,6 +842,10 @@ function puntuar(
   if (nivelIdx(ej.nivel) <= NIVEL_ORDEN[nivelCliente]) p += 10;
   else p -= 15 * (nivelIdx(ej.nivel) - NIVEL_ORDEN[nivelCliente]);
   if (!usadosSemana.has(ej.id)) p += 8; // preferir variedad en la semana
+  // Tier 1: sólo empuja compuestos (primario/secundario) hacia los básicos de
+  // gama alta. En aislamientos no aplica (elevaciones/curl ya compiten por
+  // patrón), salvo que el propio movimiento premium sea un aislamiento del grupo.
+  if (esCompuesto && ej.slug && TIER_1.has(ej.slug)) p += BONUS_TIER_1;
   p += sesgoObjetivo(ej, ranura, objetivo);
   p += sesgoSexo(ej, ranura, sexo);
   return p;
@@ -744,6 +874,7 @@ function elegir(
   usadosDia: Set<string>,
   seed: number,
   claveSlot: string,
+  evitarAxial: boolean,
 ): Ejercicio | null {
   const todos = ejercicios
     .filter((e) => e.grupo_muscular === ranura.grupo && e.slug)
@@ -768,7 +899,15 @@ function elegir(
   // ignorar el filtro para esta ranura (mejor subóptimo que un día incompleto).
   const filtrados =
     evitar.length > 0 ? todos.filter((r) => !estaBloqueado(r.ej, evitar)) : todos;
-  const rankeados = filtrados.length > 0 ? filtrados : todos;
+  // Firewall axial: si ya entró un lift axial pesado en el día, este compuesto
+  // de pierna/espalda no puede ser otra barra libre pesada → forzar versión
+  // estabilizada. Si eso vacía el hueco, se ignora (nunca dejar la ranura sin
+  // ejercicio).
+  const sinAxial = evitarAxial
+    ? filtrados.filter((r) => !esCompuestoLibrePesado(r.ej))
+    : filtrados;
+  const conFiltros = sinAxial.length > 0 ? sinAxial : filtrados;
+  const rankeados = conFiltros.length > 0 ? conFiltros : todos;
 
   if (rankeados.length === 0) return null;
   if (!seed) return rankeados[0].ej;
@@ -846,8 +985,12 @@ export function generarPlan(
       intercambiarPorEnfasis(esqueleto, enfasis, sexo, esFullBody),
       enfasis,
     );
+    // Firewall A · orden de booteo: compuestos antes que aislamientos, core al
+    // cierre. Excepción: prefatiga_zona (avanzado) pide aislar antes a propósito.
     if (avanzado?.orden === "prefatiga_zona") {
       ranuras = aplicarPrefatiga(ranuras, enfasis);
+    } else {
+      ranuras = ordenarBooteo(ranuras);
     }
 
     // ── Fase 4 · Selección: reparte el presupuesto entre las ranuras y llena
@@ -862,7 +1005,36 @@ export function generarPlan(
       },
     );
 
+    // Firewall B/C: rastreo por día para el bloqueo axial (¿ya entró un lift de
+    // columna comprimida?) y para la consolidación de volumen (cuántos
+    // ejercicios distintos lleva cada grupo, y con qué slug e ítem).
+    let axialUsadoDia = false;
+    const distintosPorGrupo = new Map<string, number>();
+    const slugPorGrupo = new Map<string, string>(); // grupo → primer slug elegido
+    const itemPorSlug = new Map<string, ItemGenerado>();
+
     ranuras.forEach((ranura, si) => {
+      const yaEnGrupo = distintosPorGrupo.get(ranura.grupo) ?? 0;
+
+      // Firewall C · consolidación: si el grupo ya llegó al tope de ejercicios
+      // distintos, esta ranura NO estrena un 4º movimiento: suma sus series al
+      // ejercicio ya elegido para el grupo (concentra volumen, evita dispersión).
+      if (yaEnGrupo >= MAX_DISTINTOS_POR_GRUPO) {
+        const slug = slugPorGrupo.get(ranura.grupo);
+        const prev = slug ? itemPorSlug.get(slug) : undefined;
+        if (prev) {
+          prev.series = Math.min(6, prev.series + seriesPorRanura[si]);
+          return;
+        }
+      }
+
+      // Firewall B · fatiga axial: este compuesto de pierna/espalda debe ser
+      // estabilizado si ya hubo un lift axial pesado en el día.
+      const evitarAxial =
+        axialUsadoDia &&
+        ranura.rol !== "aislamiento" &&
+        GRUPOS_AXIALES.has(ranura.grupo);
+
       const ej = elegir(
         ejercicios,
         ranura,
@@ -875,20 +1047,26 @@ export function generarPlan(
         usadosDia,
         seed,
         `${di}:${si}:${ranura.grupo}`,
+        evitarAxial,
       );
       if (!ej || !ej.slug) return;
       usadosDia.add(ej.id);
       usadosSemana.add(ej.id);
+      if (esAxialPesado(ej)) axialUsadoDia = true;
+      distintosPorGrupo.set(ranura.grupo, yaEnGrupo + 1);
+      if (!slugPorGrupo.has(ranura.grupo)) slugPorGrupo.set(ranura.grupo, ej.slug);
 
       const nota = avanzado
         ? esquema.descanso + notaRir(avanzado.rir, ranura.rol)
         : esquema.descanso;
-      items.push({
+      const item: ItemGenerado = {
         ejercicio_slug: ej.slug,
         series: seriesPorRanura[si],
         repeticiones: esquema[ranura.rol].reps,
         nota,
-      });
+      };
+      itemPorSlug.set(ej.slug, item);
+      items.push(item);
       rolItems.push(ranura.rol);
     });
 
