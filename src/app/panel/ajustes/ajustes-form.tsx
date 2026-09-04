@@ -10,6 +10,9 @@ import {
   ESTILOS_VISUALES_KEYS,
   FUENTES,
   PRESETS_TEMA,
+  TEMA_CRIMSON,
+  TEMA_OBSIDIAN,
+  TEMA_TITANIUM,
   polaridadTema,
   resolverMotion,
   temaToVars,
@@ -158,14 +161,115 @@ export function AjustesForm({
           />
         </div>
 
-        {/* Paletas prearmadas: el camino de un solo tap */}
+        {/* 3 Temas Principales Prearmados (1-Click) */}
         <div className="space-y-3">
           <div>
             <span className="block text-[11px] uppercase tracking-[0.08em] text-ink-soft">
-              Paletas
+              Temas recomendados (1 click)
             </span>
             <p className="mt-1 text-xs text-ink-soft">
-              Elegí una y guardá. Todas están probadas para que se lean bien.
+              Elegí un estilo completo prearmado. Aplica colores, tipografía y diseño al instante; podés seguir ajustándolo a mano abajo.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {[
+              {
+                id: "obsidian",
+                nombre: "Obsidian",
+                sub: "Oscuro · Alto Rendimiento",
+                badge: "WCAG AAA",
+                tema: TEMA_OBSIDIAN,
+              },
+              {
+                id: "titanium",
+                nombre: "Titanium",
+                sub: "Claro · Luminoso Deportivo",
+                badge: "WCAG AA",
+                tema: TEMA_TITANIUM,
+              },
+              {
+                id: "crimson",
+                nombre: "Crimson",
+                sub: "Brutalismo · Magma y Fuerza",
+                badge: "WCAG AA",
+                tema: TEMA_CRIMSON,
+              },
+            ].map((t) => {
+              const activo =
+                draft.paper.toLowerCase() === t.tema.paper.toLowerCase() &&
+                draft.volt.toLowerCase() === t.tema.volt.toLowerCase() &&
+                draft.ink.toLowerCase() === t.tema.ink.toLowerCase();
+
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => setDraft((d) => ({ ...d, ...t.tema }))}
+                  aria-pressed={activo}
+                  className={`group relative flex flex-col justify-between rounded-[14px] border p-3.5 text-left transition-[transform,border-color,box-shadow] duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
+                    activo
+                      ? "border-accent ring-2 ring-accent/30 shadow-md bg-paper-2"
+                      : "border-rule bg-paper hover:border-ink/40"
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-1 mb-1">
+                      <span className="font-display text-sm font-bold text-ink">
+                        {t.nombre}
+                      </span>
+                      <span
+                        className={`rounded-[4px] px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wider ${
+                          t.id === "obsidian"
+                            ? "bg-ok/15 text-ok border border-ok/30"
+                            : "bg-ink-soft/15 text-ink-soft border border-rule"
+                        }`}
+                      >
+                        {t.badge}
+                      </span>
+                    </div>
+                    <p className="text-[11.5px] leading-tight text-ink-soft">
+                      {t.sub}
+                    </p>
+                  </div>
+
+                  {/* Swatches de muestra */}
+                  <div
+                    className="mt-3 flex h-8 items-center gap-1.5 overflow-hidden rounded-[8px] border px-2 shadow-inner"
+                    style={{
+                      background: t.tema.paper,
+                      borderColor: t.tema.rule,
+                    }}
+                  >
+                    <span
+                      className="h-4 flex-1 rounded-[3px]"
+                      style={{ background: t.tema.ink }}
+                    />
+                    <span
+                      className="size-4 shrink-0 rounded-full shadow-sm"
+                      style={{ background: t.tema.volt }}
+                    />
+                    <span
+                      className="h-4 w-3 shrink-0 rounded-[3px] border"
+                      style={{
+                        background: t.tema.paper2,
+                        borderColor: t.tema.rule,
+                      }}
+                    />
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Paletas prearmadas complementarias */}
+        <div className="space-y-3 border-t border-rule pt-4">
+          <div>
+            <span className="block text-[11px] uppercase tracking-[0.08em] text-ink-soft">
+              Otras paletas de color
+            </span>
+            <p className="mt-1 text-xs text-ink-soft">
+              Cambian únicamente la paleta cromática, manteniendo tu tipografía y distribución actual.
             </p>
           </div>
           <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">

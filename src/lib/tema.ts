@@ -79,15 +79,18 @@ export const DEFAULT_REPOSO_CHECKIN: ReposoCheckin = {
 };
 
 export const DEFAULT_TEMA: Tema = {
-  paper: "#faf9f6",
-  paper2: "#f2efe7",
-  ink: "#16181d",
-  inkSoft: "#5b5f68",
-  rule: "#e3ddcf",
-  volt: "#cde94a",
-  voltInk: "#1c2205",
-  fuente: "moderno",
-  estiloVisual: "clasico",
+  // Mismos valores que TEMA_OBSIDIAN: es el diseño por defecto para
+  // gimnasios que no personalizaron nada. Obsidian sigue además como
+  // opción elegible en PRESETS_TEMA.
+  paper: "#090d14",
+  paper2: "#121722",
+  ink: "#f8fafc",
+  inkSoft: "#94a3b8",
+  rule: "#242e42",
+  volt: "#10e7a0",
+  voltInk: "#042417",
+  fuente: "amigable",
+  estiloVisual: "futurista",
 
   // Defaults UI
   escalaFuente: 1,
@@ -188,11 +191,69 @@ export const CAMPOS_COLOR: {
 /** Solo las 7 claves de color de un tema. */
 export type ColoresTema = Pick<Tema, ColorKey>;
 
+export const TEMA_OBSIDIAN: Tema = {
+  paper: "#090d14",
+  paper2: "#121722",
+  ink: "#f8fafc",
+  inkSoft: "#94a3b8",
+  rule: "#242e42",
+  volt: "#10e7a0",
+  voltInk: "#042417",
+  fuente: "amigable",
+  estiloVisual: "futurista",
+  escalaFuente: 1,
+  radiosBordes: "normal",
+  espaciado: "normal",
+  navegacionMovil: "bottom",
+  navegacionDesktop: "sidebar",
+  densidad: "comfortable",
+  reposoCheckin: DEFAULT_REPOSO_CHECKIN,
+};
+
+export const TEMA_TITANIUM: Tema = {
+  paper: "#f1f5f9",
+  paper2: "#ffffff",
+  ink: "#0f172a",
+  inkSoft: "#475569",
+  rule: "#cbd5e1",
+  volt: "#047857",
+  voltInk: "#ffffff",
+  fuente: "amigable",
+  estiloVisual: "clasico",
+  escalaFuente: 1,
+  radiosBordes: "normal",
+  espaciado: "normal",
+  navegacionMovil: "bottom",
+  navegacionDesktop: "sidebar",
+  densidad: "comfortable",
+  reposoCheckin: DEFAULT_REPOSO_CHECKIN,
+};
+
+export const TEMA_CRIMSON: Tema = {
+  paper: "#141214",
+  paper2: "#1f1b20",
+  ink: "#fcf8f6",
+  inkSoft: "#a89da3",
+  rule: "#383038",
+  volt: "#ff4438",
+  voltInk: "#1a0402",
+  fuente: "condensado",
+  estiloVisual: "concreto",
+  escalaFuente: 1,
+  radiosBordes: "tight",
+  espaciado: "compact",
+  navegacionMovil: "bottom",
+  navegacionDesktop: "sidebar",
+  densidad: "compact",
+  reposoCheckin: DEFAULT_REPOSO_CHECKIN,
+};
+
 export type PresetTema = {
   key: string;
   label: string;
   hint: string;
   colores: ColoresTema;
+  temaCompleto?: Tema;
 };
 
 /**
@@ -200,6 +261,51 @@ export type PresetTema = {
  * listo: el dueño no necesita entender de color. Mantienen tipografía y layout.
  */
 export const PRESETS_TEMA: PresetTema[] = [
+  {
+    key: "obsidian",
+    label: "Obsidian",
+    hint: "Oscuro · Alto Rendimiento",
+    colores: {
+      paper: TEMA_OBSIDIAN.paper,
+      paper2: TEMA_OBSIDIAN.paper2,
+      ink: TEMA_OBSIDIAN.ink,
+      inkSoft: TEMA_OBSIDIAN.inkSoft,
+      rule: TEMA_OBSIDIAN.rule,
+      volt: TEMA_OBSIDIAN.volt,
+      voltInk: TEMA_OBSIDIAN.voltInk,
+    },
+    temaCompleto: TEMA_OBSIDIAN,
+  },
+  {
+    key: "titanium",
+    label: "Titanium",
+    hint: "Claro · Luminoso Deportivo",
+    colores: {
+      paper: TEMA_TITANIUM.paper,
+      paper2: TEMA_TITANIUM.paper2,
+      ink: TEMA_TITANIUM.ink,
+      inkSoft: TEMA_TITANIUM.inkSoft,
+      rule: TEMA_TITANIUM.rule,
+      volt: TEMA_TITANIUM.volt,
+      voltInk: TEMA_TITANIUM.voltInk,
+    },
+    temaCompleto: TEMA_TITANIUM,
+  },
+  {
+    key: "crimson",
+    label: "Crimson",
+    hint: "Brutalismo · Magma y Fuerza",
+    colores: {
+      paper: TEMA_CRIMSON.paper,
+      paper2: TEMA_CRIMSON.paper2,
+      ink: TEMA_CRIMSON.ink,
+      inkSoft: TEMA_CRIMSON.inkSoft,
+      rule: TEMA_CRIMSON.rule,
+      volt: TEMA_CRIMSON.volt,
+      voltInk: TEMA_CRIMSON.voltInk,
+    },
+    temaCompleto: TEMA_CRIMSON,
+  },
   {
     key: "papel",
     label: "Papel",
