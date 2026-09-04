@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireDueno, claveInicial } from "@/lib/auth";
-import { Panel, linkClasses } from "@/components/ui";
+import { Panel, linkClasses, pillClasses } from "@/components/ui";
+import { ChevronLeft } from "lucide-react";
 import { AccesoSocio } from "./acceso-socio";
 import { EditarDatos } from "./editar-datos";
 import { diasRestantes, estadoDesdeDias, ESTADO_LABEL } from "@/lib/cuota";
@@ -115,11 +116,9 @@ export default async function ClienteDetallePage({
   return (
     <div className="space-y-8">
       <div>
-        <Link
-          href="/panel/clientes"
-          className={`text-sm ${linkClasses.accion}`}
-        >
-          ← Clientes
+        <Link href="/panel/clientes" className={pillClasses.neutra}>
+          <ChevronLeft aria-hidden strokeWidth={2} className="size-4" />
+          Clientes
         </Link>
         <h1 className="text-2xl mt-2">{c.profile?.nombre}</h1>
         <p className="text-sm text-ink-soft">

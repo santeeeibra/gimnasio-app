@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { linkClasses } from "@/components/ui";
+import { pillClasses } from "@/components/ui";
+import { ChevronLeft } from "lucide-react";
 import { requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { MarkRead } from "../mark-read";
@@ -52,11 +53,9 @@ export default async function MiHiloPage({
   return (
     <main className="stagger max-w-md mx-auto p-6 space-y-6">
       <MarkRead mensajeId={m.id} />
-      <Link
-        href="/mi/mensajes"
-        className={`text-xs ${linkClasses.accion}`}
-      >
-        ← Mensajes
+      <Link href="/mi/mensajes" className={pillClasses.neutra}>
+        <ChevronLeft aria-hidden strokeWidth={2} className="size-4" />
+        Mensajes
       </Link>
 
       <div className="card-cut card-cut-lg border border-rule bg-paper-2 p-5">

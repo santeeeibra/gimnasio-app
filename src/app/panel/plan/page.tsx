@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireDueno } from "@/lib/auth";
-import { linkClasses } from "@/components/ui";
+import { pillClasses } from "@/components/ui";
+import { ChevronLeft } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { cupoSocios } from "@/lib/plataforma/cupo";
 import { DATOS_TRANSFERENCIA } from "@/lib/pagos/manual";
@@ -67,11 +68,9 @@ export default async function PanelPlanPage() {
   return (
     <div className="stagger max-w-lg space-y-6">
       <div>
-        <Link
-          href="/panel"
-          className={`text-sm ${linkClasses.accion}`}
-        >
-          ← Resumen
+        <Link href="/panel" className={pillClasses.neutra}>
+          <ChevronLeft aria-hidden strokeWidth={2} className="size-4" />
+          Resumen
         </Link>
         <h1 className="mt-2 text-2xl">Tu plan</h1>
       </div>

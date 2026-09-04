@@ -6,7 +6,8 @@ import { diasRestantes, estadoDesdeDias, ESTADO_LABEL } from "@/lib/cuota";
 import { ActivarNotificaciones } from "./activar-notificaciones";
 import { VerTutorialDeNuevo } from "@/components/tutorial/tutorial";
 import { AnilloProgreso } from "@/components/anillo-progreso";
-import { linkClasses } from "@/components/ui";
+import { pillClasses } from "@/components/ui";
+import { ChevronRight, CreditCard, Dumbbell, MessageSquare } from "lucide-react";
 import { RachaConstancia } from "@/components/mi/racha-constancia";
 import { DatosTransferencia } from "@/components/mi/datos-transferencia";
 import { CacheAlVuelo } from "@/components/offline/cache-al-vuelo";
@@ -96,12 +97,14 @@ export default async function MiPage() {
         </div>
       )}
 
-      <div className="flex items-baseline justify-between">
-        <h1 className="text-2xl">Hola, {profile.nombre.split(" ")[0]}</h1>
-        <div className="-mr-2 flex shrink-0 items-baseline gap-5">
-          <VerTutorialDeNuevo className={`text-xs px-2 py-2 ${linkClasses.accion}`} />
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="min-w-0 truncate text-2xl">
+          Hola, {profile.nombre.split(" ")[0]}
+        </h1>
+        <div className="flex shrink-0 items-center gap-2">
+          <VerTutorialDeNuevo className={pillClasses.neutra} label="Tutorial" />
           <form action={logout}>
-            <button className={`text-xs px-2 py-2 ${linkClasses.accion}`}>Salir</button>
+            <button className={pillClasses.destructiva}>Salir</button>
           </form>
         </div>
       </div>
@@ -179,20 +182,7 @@ export default async function MiPage() {
             href="/mi/mensajes"
             className="group flex items-center gap-3 px-4 py-4 transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper active:bg-paper active:scale-[0.985]"
           >
-            <svg
-              viewBox="0 0 24 24"
-              width="18"
-              height="18"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden
-              className="shrink-0 text-ink-soft transition-colors duration-150 [transition-timing-function:var(--ease-out)] group-active:text-ink"
-            >
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-            </svg>
+            <MessageSquare aria-hidden strokeWidth={2} className="size-[18px] shrink-0 text-ink-soft transition-colors duration-150 [transition-timing-function:var(--ease-out)] group-active:text-ink" />
             <span className="min-w-0 flex-1 text-sm font-medium">
               Mensajes del gimnasio
             </span>
@@ -201,9 +191,11 @@ export default async function MiPage() {
                 {noLeidos} sin leer
               </span>
             ) : (
-              <span className="shrink-0 text-base text-ink-soft transition-transform duration-150 [transition-timing-function:var(--ease-out)] group-active:translate-x-[3px]" aria-hidden="true">
-                ›
-              </span>
+              <ChevronRight
+                aria-hidden
+                strokeWidth={2}
+                className="size-4 shrink-0 text-ink-soft transition-transform duration-150 [transition-timing-function:var(--ease-out)] group-active:translate-x-[3px]"
+              />
             )}
           </Link>
         </li>
@@ -212,25 +204,13 @@ export default async function MiPage() {
             href="/mi/rutina"
             className="group flex items-center gap-3 px-4 py-4 transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper active:bg-paper active:scale-[0.985]"
           >
-            <svg
-              viewBox="0 0 24 24"
-              width="18"
-              height="18"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden
-              className="shrink-0 text-ink-soft transition-colors duration-150 [transition-timing-function:var(--ease-out)] group-active:text-ink"
-            >
-              <path d="M6.5 6.5h11v11h-11z" />
-              <path d="M2 9v6M22 9v6M4.5 8v8M19.5 8v8" />
-            </svg>
+            <Dumbbell aria-hidden strokeWidth={2} className="size-[18px] shrink-0 text-ink-soft transition-colors duration-150 [transition-timing-function:var(--ease-out)] group-active:text-ink" />
             <span className="min-w-0 flex-1 text-sm font-medium">Tu rutina</span>
-            <span className="shrink-0 text-base text-ink-soft transition-transform duration-150 [transition-timing-function:var(--ease-out)] group-active:translate-x-[3px]" aria-hidden="true">
-              ›
-            </span>
+            <ChevronRight
+              aria-hidden
+              strokeWidth={2}
+              className="size-4 shrink-0 text-ink-soft transition-transform duration-150 [transition-timing-function:var(--ease-out)] group-active:translate-x-[3px]"
+            />
           </Link>
         </li>
         <li>
@@ -238,25 +218,13 @@ export default async function MiPage() {
             href="/mi/pagos"
             className="group flex items-center gap-3 px-4 py-4 transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper active:bg-paper active:scale-[0.985]"
           >
-            <svg
-              viewBox="0 0 24 24"
-              width="18"
-              height="18"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden
-              className="shrink-0 text-ink-soft transition-colors duration-150 [transition-timing-function:var(--ease-out)] group-active:text-ink"
-            >
-              <rect x="2" y="5" width="20" height="14" rx="2" />
-              <path d="M2 10h20" />
-            </svg>
+            <CreditCard aria-hidden strokeWidth={2} className="size-[18px] shrink-0 text-ink-soft transition-colors duration-150 [transition-timing-function:var(--ease-out)] group-active:text-ink" />
             <span className="min-w-0 flex-1 text-sm font-medium">Mis pagos</span>
-            <span className="shrink-0 text-base text-ink-soft transition-transform duration-150 [transition-timing-function:var(--ease-out)] group-active:translate-x-[3px]" aria-hidden="true">
-              ›
-            </span>
+            <ChevronRight
+              aria-hidden
+              strokeWidth={2}
+              className="size-4 shrink-0 text-ink-soft transition-transform duration-150 [transition-timing-function:var(--ease-out)] group-active:translate-x-[3px]"
+            />
           </Link>
         </li>
       </ul>

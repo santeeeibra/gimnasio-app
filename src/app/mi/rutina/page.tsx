@@ -19,7 +19,8 @@ type Prefs = {
   enfasis?: Enfasis[];
   zonasDolor?: Molestia[];
 } | null;
-import { linkClasses } from "@/components/ui";
+import { linkClasses, pillClasses } from "@/components/ui";
+import { ChevronLeft } from "lucide-react";
 import { generarMiRutina } from "./actions";
 import { GenerarRutinaForm } from "./generar-form";
 import { RutinaEditor, type DiaEditable } from "./rutina-editor";
@@ -164,8 +165,9 @@ export default async function MiRutinaPage() {
   return (
     <main className="stagger max-w-md mx-auto px-5 pt-6 pb-64 space-y-6">
       <div>
-        <Link href="/mi" className={`text-sm ${linkClasses.accion}`}>
-          ← Volver
+        <Link href="/mi" className={pillClasses.neutra}>
+          <ChevronLeft aria-hidden strokeWidth={2} className="size-4" />
+          Volver
         </Link>
         {/* §6: acción secundaria de la sección va en la fila del encabezado
             (justify-between), nunca como hijo suelto del stack con ml-auto. */}

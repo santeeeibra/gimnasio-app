@@ -3,18 +3,36 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logout } from "@/app/actions";
-import { linkClasses } from "@/components/ui";
+import { pillClasses } from "@/components/ui";
+import {
+  CreditCard,
+  LayoutDashboard,
+  LifeBuoy,
+  MessageSquare,
+  Settings,
+  Tags,
+  Users,
+  Wallet,
+  type LucideIcon,
+} from "lucide-react";
 
-type NavItem = { href: string; label: string; soloDesktop?: boolean };
+type NavItem = {
+  href: string;
+  label: string;
+  corto?: string;
+  soloDesktop?: boolean;
+  Icono: LucideIcon;
+};
 
+// Íconos: SIEMPRE de lucide-react (REGLAS_UI_EMIL.md §14). Nunca SVG a mano.
 const NAV: NavItem[] = [
-  { href: "/panel", label: "Resumen" },
-  { href: "/panel/clientes", label: "Clientes" },
-  { href: "/panel/planes", label: "Planes de socios" },
-  { href: "/panel/mensajes", label: "Mensajes" },
-  { href: "/panel/ingresos", label: "Ingresos" },
-  { href: "/panel/plan", label: "Mi plan", soloDesktop: true },
-  { href: "/panel/ajustes", label: "Ajustes" },
+  { href: "/panel", label: "Resumen", Icono: LayoutDashboard },
+  { href: "/panel/clientes", label: "Clientes", Icono: Users },
+  { href: "/panel/planes", label: "Planes de socios", corto: "Planes", Icono: Tags },
+  { href: "/panel/mensajes", label: "Mensajes", Icono: MessageSquare },
+  { href: "/panel/ingresos", label: "Ingresos", Icono: Wallet },
+  { href: "/panel/plan", label: "Mi plan", soloDesktop: true, Icono: CreditCard },
+  { href: "/panel/ajustes", label: "Ajustes", Icono: Settings },
 ];
 
 const NAV_MOBILE = NAV.filter((i) => !i.soloDesktop);
@@ -94,8 +112,9 @@ export function PanelSidebar({
                 active
                   ? "bg-ink text-paper"
                   : "text-ink-soft hover:bg-paper-2 hover:text-ink"
-              }`}
+              } inline-flex items-center gap-2.5`}
             >
+              <item.Icono aria-hidden strokeWidth={1.8} className="size-4 shrink-0" />
               {item.label}
             </Link>
           );
@@ -117,12 +136,13 @@ export function PanelSidebar({
           Reportar un problema
         </a>
         {esSuper ? (
-          <Link href="/admin" className={`text-xs ${linkClasses.accion}`}>
+          <Link href="/admin" className={pillClasses.neutra}>
+            <LifeBuoy aria-hidden strokeWidth={2} className="size-4" />
             Soporte (dev)
           </Link>
         ) : null}
         <form action={logout}>
-          <button className={`text-xs ${linkClasses.accion}`}>Salir</button>
+          <button className={`w-full ${pillClasses.destructiva}`}>Salir</button>
         </form>
       </div>
     </aside>
@@ -145,22 +165,24 @@ export function PanelTopbar({
         <LogoMark logo={logo} size="size-7" />
         <p className="font-display text-base leading-tight truncate">{nombre}</p>
       </div>
-      <div className="flex shrink-0 items-center gap-3">
+      <div className="flex shrink-0 items-center gap-2">
         <a
           href={whatsappReporteUrl(nombre)}
           target="_blank"
           rel="noopener noreferrer"
-          className={`text-xs ${linkClasses.accion}`}
+          className={`px-2.5 text-xs ${pillClasses.neutra}`}
         >
           Reportar
         </a>
         {esSuper ? (
-          <Link href="/admin" className={`text-xs ${linkClasses.accion}`}>
+          <Link href="/admin" className={`px-2.5 text-xs ${pillClasses.neutra}`}>
             Soporte
           </Link>
         ) : null}
         <form action={logout}>
-          <button className={`text-xs ${linkClasses.accion}`}>Salir</button>
+          <button className={`px-2.5 text-xs ${pillClasses.destructiva}`}>
+            Salir
+          </button>
         </form>
       </div>
     </header>
@@ -180,7 +202,9 @@ export function PanelBottomNav() {
             key={item.href}
             href={item.href}
             aria-current={active ? "page" : undefined}
-            className="relative flex-1 flex flex-col items-center gap-1 py-2.5 text-[11px] tracking-tight touch-manipulation active:scale-95 transition-transform duration-150 [transition-timing-function:var(--ease-out)]"
+            className={`relative flex-1 flex min-h-14 flex-col items-center justify-center gap-1 py-2 text-[11px] tracking-tight touch-manipulation active:scale-95 transition-[transform,color] duration-150 [transition-timing-function:var(--ease-out)] ${
+              active ? "text-ink" : "text-ink-soft"
+            }`}
           >
             <span
               aria-hidden
@@ -188,8 +212,13 @@ export function PanelBottomNav() {
                 active ? "bg-volt" : "bg-transparent"
               }`}
             />
-            <span className={active ? "text-ink font-medium" : "text-ink-soft"}>
-              {item.label}
+            <item.Icono
+              aria-hidden
+              strokeWidth={active ? 2.2 : 1.8}
+              className="size-5"
+            />
+            <span className={active ? "font-medium" : undefined}>
+              {item.corto ?? item.label}
             </span>
           </Link>
         );

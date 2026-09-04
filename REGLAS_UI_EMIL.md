@@ -121,7 +121,17 @@ min-w-[3.5rem] (56px)   → botón toggle o pestañas principales
 ```
 **Regla crítica:** Todo elemento tocable frecuente (como tildar series en el gimnasio o elegir el tiempo de descanso) **debe tener al menos 44px de alto y ancho efectivo** para permitir interacción precisa con dedos sudorosos o en movimiento, sin desbordar pantallas de 375px. Nada interactivo por debajo de 32px de alto absoluto. Un link de texto suelto NO es un target: envolverlo en un `<button>`/`<Link>` con padding táctil.
 
-**Links de texto**: el estilo lo define `linkClasses` en `src/components/ui.tsx` (`linkClasses.inline` para prosa, `linkClasses.accion` para acciones). Ningún interactivo textual arma su clase a mano sin padding.
+**Links de texto**: el estilo lo define `linkClasses` en `src/components/ui.tsx` (`linkClasses.inline` para prosa, `linkClasses.accion` para acciones inline dentro de un bloque de texto). Ningún interactivo textual arma su clase a mano sin padding. `linkClasses.accion` lleva `min-h-11`: nunca le bajes el alto.
+
+**Acciones de cabecera** ("Salir", "← Volver", "Ver tutorial de nuevo", "Cambiar PIN", "Desactivar"): NO son links en prosa, son controles. Van con `pillClasses` (`src/components/ui.tsx`), que garantiza `min-h-11` (44px reales) + superficie propia (borde + `bg-paper-2`). Prohibido dejarlas como texto suelto subrayado.
+```jsx
+import { pillClasses } from "@/components/ui";
+
+<Link href="/mi" className={pillClasses.neutra}>← Volver</Link>
+<button className={pillClasses.destructiva}>Salir</button>
+```
+- `pillClasses.neutra` → acción reversible (volver, ver tutorial, cambiar PIN).
+- `pillClasses.destructiva` → cierra sesión o desactiva algo. **Siempre** distinta de la neutra: `--danger` en texto y borde, relleno al presionar. "Salir" nunca se ve igual que "Tutorial".
 
 ### Padding y gap
 ```
@@ -313,6 +323,44 @@ z-50   → overlays, modales, toasts
   ))}
 </nav>
 ```
+
+---
+
+## 14. Íconos (lucide-react — NO dibujar SVG a mano)
+
+**Regla:** todos los íconos de la app salen de `lucide-react`. Está prohibido
+escribir `<svg>` inline nuevo con `<path d="…">` dibujado a ojo — ese fue el
+origen de íconos rotos (la "mancuerna" de `/mi` dibujaba un cuadrado con
+rayitas sueltas) y de trazos/tamaños inconsistentes entre pantallas.
+
+```jsx
+import { Dumbbell, ChevronLeft } from "lucide-react";
+
+<Dumbbell aria-hidden strokeWidth={2} className="size-[18px] shrink-0 text-ink-soft" />
+```
+
+### Convenciones
+```
+size-4  (16px)   → ícono dentro de un pill / botón / chevron de fila
+size-[18px]      → ícono guía de fila de lista
+size-5  (20px)   → ícono de bottom nav
+size-[26px]+     → ilustración de estado vacío
+strokeWidth={2}       → uso general (coincide con el trazo histórico de la app)
+strokeWidth={1.8}     → nav inactiva / ilustración
+strokeWidth={2.2}     → nav activa (el peso del trazo marca el estado)
+```
+- Color por token (`text-ink-soft`, `text-ink`, `currentColor`) — nunca hex.
+- Siempre `aria-hidden` cuando hay texto al lado; si el ícono va solo, el
+  control necesita `aria-label`.
+- `shrink-0` en filas flex, para que el ícono no se aplaste (§7).
+- Importar **por nombre** (`import { Dumbbell } from "lucide-react"`), nunca el
+  paquete entero: así el tree-shaking deja sólo los íconos usados.
+
+### Excepción única
+El chevron del `<Select>` en `src/components/ui.tsx` sigue siendo un `<path>`
+inline porque va posicionado en absoluto dentro del label. No agregar más
+excepciones.
+
 
 ---
 

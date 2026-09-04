@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Spinner, linkClasses } from "@/components/ui";
+import { Spinner, pillClasses } from "@/components/ui";
+import { KeyRound } from "lucide-react";
 
 type Pago = {
   id: string;
@@ -119,8 +120,9 @@ export function ListadoIngresos() {
         </div>
         <Link
           href="/panel/ingresos/configurar-pin"
-          className={`text-sm ${linkClasses.accion}`}
+          className={pillClasses.neutra}
         >
+          <KeyRound aria-hidden strokeWidth={2} className="size-4" />
           Cambiar PIN
         </Link>
       </div>

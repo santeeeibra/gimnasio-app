@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { linkClasses } from "@/components/ui";
+import { pillClasses } from "@/components/ui";
+import { GraduationCap } from "lucide-react";
 import { Overlay } from "./overlay";
 import { pasosDueno } from "./pasos-dueno";
 import { pasosCliente } from "./pasos-cliente";
@@ -54,14 +55,22 @@ export function Tutorial({ rol }: { rol: "dueno" | "cliente" }) {
 }
 
 /** Botón "Ver tutorial de nuevo" para relanzarlo desde el perfil / ajustes. */
-export function VerTutorialDeNuevo({ className }: { className?: string }) {
+export function VerTutorialDeNuevo({
+  className,
+  label = "Ver tutorial de nuevo",
+}: {
+  className?: string;
+  /** Cabeceras angostas (p. ej. `/mi`) pasan "Tutorial" para no romper el h1. */
+  label?: string;
+}) {
   return (
     <button
       type="button"
       onClick={() => window.dispatchEvent(new Event(EVENTO_ABRIR_TUTORIAL))}
-      className={className ?? `text-xs ${linkClasses.accion}`}
+      className={className ?? pillClasses.neutra}
     >
-      Ver tutorial de nuevo
+      <GraduationCap aria-hidden strokeWidth={2} className="size-4 shrink-0" />
+      {label}
     </button>
   );
 }

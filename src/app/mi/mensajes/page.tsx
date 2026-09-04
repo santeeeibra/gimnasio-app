@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireProfile } from "@/lib/auth";
-import { linkClasses } from "@/components/ui";
+import { pillClasses } from "@/components/ui";
+import { ChevronLeft, MessageSquare } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function MiBandejaPage() {
@@ -39,13 +40,11 @@ export default async function MiBandejaPage() {
 
   return (
     <main className="stagger max-w-md mx-auto min-h-full p-6 pb-24 space-y-6">
-      <div className="flex items-baseline justify-between">
+      <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl">Mensajes</h1>
-        <Link
-          href="/mi"
-          className={`text-xs px-2 py-2 -mr-2 ${linkClasses.accion}`}
-        >
-          ← Inicio
+        <Link href="/mi" className={pillClasses.neutra}>
+          <ChevronLeft aria-hidden strokeWidth={2} className="size-4" />
+          Inicio
         </Link>
       </div>
 
@@ -55,18 +54,7 @@ export default async function MiBandejaPage() {
             aria-hidden
             className="animate-float-soft grid size-16 place-items-center rounded-full border border-rule bg-paper text-ink-soft"
           >
-            <svg
-              viewBox="0 0 24 24"
-              width="26"
-              height="26"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.7"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-            </svg>
+            <MessageSquare aria-hidden strokeWidth={1.7} className="size-[26px]" />
           </span>
           <p className="text-sm text-ink-soft">
             No tenés mensajes todavía.

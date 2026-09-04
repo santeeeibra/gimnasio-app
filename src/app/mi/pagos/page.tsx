@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireProfile } from "@/lib/auth";
-import { linkClasses } from "@/components/ui";
+import { pillClasses } from "@/components/ui";
+import { ChevronLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { DatosTransferencia } from "@/components/mi/datos-transferencia";
 
@@ -46,12 +47,10 @@ export default async function MisPagosPage() {
 
   return (
     <main className="stagger max-w-md mx-auto p-6 space-y-6">
-      <div className="flex items-baseline justify-between">
+      <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl">Mis pagos</h1>
-        <Link
-          href="/mi"
-          className={`text-xs ${linkClasses.accion}`}
-        >
+        <Link href="/mi" className={pillClasses.neutra}>
+          <ChevronLeft aria-hidden strokeWidth={2} className="size-4" />
           Volver
         </Link>
       </div>

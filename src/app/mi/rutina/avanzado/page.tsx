@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireProfile } from "@/lib/auth";
-import { linkClasses } from "@/components/ui";
+import { pillClasses } from "@/components/ui";
+import { ChevronLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import type {
   Enfasis,
@@ -51,11 +52,9 @@ export default async function RutinaAvanzadaPage() {
   return (
     <main className="stagger max-w-md mx-auto px-5 py-6 space-y-6">
       <div>
-        <Link
-          href="/mi/rutina"
-          className={`text-sm ${linkClasses.accion}`}
-        >
-          ← Volver a tu rutina
+        <Link href="/mi/rutina" className={pillClasses.neutra}>
+          <ChevronLeft aria-hidden strokeWidth={2} className="size-4" />
+          Volver a tu rutina
         </Link>
         <h1 className="mt-2 text-2xl">Modo avanzado</h1>
         <p className="mt-1 text-sm text-ink-soft">

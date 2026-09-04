@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { linkClasses } from "@/components/ui";
+import { pillClasses } from "@/components/ui";
+import { ChevronLeft } from "lucide-react";
 import { requireDueno } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { ReplyForm } from "./reply-form";
@@ -48,11 +49,9 @@ export default async function MensajeHiloPage({
 
   return (
     <div className="stagger space-y-6 max-w-2xl">
-      <Link
-        href="/panel/mensajes"
-        className={`text-xs ${linkClasses.accion}`}
-      >
-        ← Mensajes
+      <Link href="/panel/mensajes" className={pillClasses.neutra}>
+        <ChevronLeft aria-hidden strokeWidth={2} className="size-4" />
+        Mensajes
       </Link>
 
       <div className="card-cut card-cut-lg border border-rule bg-paper-2 p-5">

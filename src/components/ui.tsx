@@ -60,9 +60,27 @@ export const linkClasses = {
   inline:
     "underline decoration-rule underline-offset-[3px] transition-[color,text-decoration-color] duration-150 [transition-timing-function:var(--ease-out)] hover:decoration-ink focus-visible:outline-none focus-visible:rounded-[3px] focus-visible:ring-2 focus-visible:ring-ink/20",
   accion:
-    "inline-flex items-center gap-1 -mx-1 px-1 py-0.5 text-sm text-ink-soft underline decoration-transparent underline-offset-[3px] transition-[color,text-decoration-color,transform] duration-150 [transition-timing-function:var(--ease-out)] hover:text-ink hover:decoration-rule active:scale-95 focus-visible:outline-none focus-visible:rounded-[4px] focus-visible:ring-2 focus-visible:ring-ink/20",
+    "inline-flex min-h-11 items-center gap-1 -mx-2 px-2 text-sm text-ink-soft underline decoration-transparent underline-offset-[3px] transition-[color,text-decoration-color,transform] duration-150 [transition-timing-function:var(--ease-out)] hover:text-ink hover:decoration-rule active:scale-95 focus-visible:outline-none focus-visible:rounded-[4px] focus-visible:ring-2 focus-visible:ring-ink/20",
   plano:
     "text-ink-soft underline decoration-transparent underline-offset-[3px] transition-[color,text-decoration-color] duration-150 [transition-timing-function:var(--ease-out)] hover:text-ink hover:decoration-rule focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20",
+} as const;
+
+/**
+ * Acciones de cabecera ("Tutorial", "Salir", "← Volver", "Cambiar PIN"): NO son
+ * links de navegación en prosa, son controles. Por eso llevan superficie propia
+ * (borde + fondo sutil) y target táctil real de 44px (`min-h-11`, §3 de
+ * REGLAS_UI_EMIL.md). Nunca texto suelto subrayado.
+ *
+ * - `neutra`: acción reversible (volver, ver tutorial, cambiar PIN).
+ * - `destructiva`: cierra sesión o descarta datos. Se lee distinto de `neutra`
+ *   a propósito: texto/borde en `--danger`, relleno al presionar.
+ */
+const pillBase =
+  "inline-flex min-h-11 items-center justify-center gap-1.5 rounded-[6px] border px-3 text-sm font-medium select-none touch-manipulation transition-[background-color,border-color,color,transform] duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20";
+
+export const pillClasses = {
+  neutra: `${pillBase} border-rule bg-paper-2 text-ink-soft hover:bg-paper hover:text-ink`,
+  destructiva: `${pillBase} border-danger/40 bg-transparent text-danger hover:bg-danger hover:text-paper hover:border-danger`,
 } as const;
 
 export function LinkButton({

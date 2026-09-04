@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Dumbbell, House, MessageSquare } from "lucide-react";
 
+// Íconos: SIEMPRE de lucide-react (REGLAS_UI_EMIL.md §14). Nunca SVG a mano.
 const NAV = [
-  { href: "/mi", label: "Inicio" },
-  { href: "/mi/rutina", label: "Rutina" },
-  { href: "/mi/mensajes", label: "Mensajes" },
+  { href: "/mi", label: "Inicio", Icono: House },
+  { href: "/mi/rutina", label: "Rutina", Icono: Dumbbell },
+  { href: "/mi/mensajes", label: "Mensajes", Icono: MessageSquare },
 ];
 
 function isActive(pathname: string, href: string) {
@@ -45,11 +47,16 @@ export function MiBottomNav() {
               key={item.href}
               href={item.href}
               aria-current={active ? "page" : undefined}
-              className="relative flex-1 flex flex-col items-center gap-1 py-2.5 text-[11px] tracking-tight touch-manipulation active:scale-95 transition-transform duration-150 [transition-timing-function:var(--ease-out)]"
+              className={`relative flex-1 flex min-h-14 flex-col items-center justify-center gap-1 py-2 text-[11px] tracking-tight touch-manipulation active:scale-95 transition-[transform,color] duration-150 [transition-timing-function:var(--ease-out)] ${
+                active ? "text-ink" : "text-ink-soft"
+              }`}
             >
-              <span
-                className={active ? "text-ink font-medium" : "text-ink-soft"}
-              >
+              <item.Icono
+                aria-hidden
+                strokeWidth={active ? 2.2 : 1.8}
+                className="size-5"
+              />
+              <span className={active ? "font-medium" : undefined}>
                 {item.label}
               </span>
             </Link>

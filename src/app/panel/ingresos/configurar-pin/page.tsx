@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { requireDueno } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { Panel, linkClasses } from "@/components/ui";
+import { Panel, pillClasses } from "@/components/ui";
+import { ChevronLeft } from "lucide-react";
 import { ConfigurarPinForm } from "../configurar-pin-form";
 import { RecuperarPinForm } from "../recuperar-pin-form";
 
@@ -19,11 +20,9 @@ export default async function ConfigurarPinPage() {
 
   return (
     <div>
-      <Link
-        href="/panel/ingresos"
-        className={`text-sm ${linkClasses.accion}`}
-      >
-        ← Volver a Ingresos
+      <Link href="/panel/ingresos" className={pillClasses.neutra}>
+        <ChevronLeft aria-hidden strokeWidth={2} className="size-4" />
+        Volver a Ingresos
       </Link>
       <h1 className="text-2xl mt-2 mb-6">
         {tienePinActual ? "Cambiar PIN de Ingresos" : "Configurar PIN de Ingresos"}

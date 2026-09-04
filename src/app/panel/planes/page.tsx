@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireDueno } from "@/lib/auth";
-import { linkClasses } from "@/components/ui";
+import { linkClasses, pillClasses } from "@/components/ui";
 import { PlanForm } from "./plan-form";
 import { alternarPlan } from "./actions";
 
@@ -65,7 +65,11 @@ export default async function PlanesPage() {
               <form action={alternarPlan}>
                 <input type="hidden" name="id" value={p.id} />
                 <input type="hidden" name="activo" value={String(p.activo)} />
-                <button className={`text-xs ${linkClasses.accion}`}>
+                <button
+                  className={
+                    p.activo ? pillClasses.destructiva : pillClasses.neutra
+                  }
+                >
                   {p.activo ? "Desactivar" : "Reactivar"}
                 </button>
               </form>
