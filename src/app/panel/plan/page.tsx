@@ -12,6 +12,9 @@ import {
   diasRestantesPrueba,
   enVentanaEarlyBird,
 } from "@/lib/plataforma/precios";
+import { estadoCobroAutomatico } from "@/lib/pagos/cobro-socio";
+import { connectConfigurado } from "@/lib/pagos/mercadopago-connect";
+import { MpConnectCard } from "./mp-connect-card";
 import { SolicitarForm } from "./solicitar-form";
 import { PagoForm } from "./pago-form";
 import { TourDueno } from "./tour-dueno";
@@ -30,9 +33,15 @@ const ESTADO_LABEL: Record<string, string> = {
   solo_lectura: "Solo lectura",
 };
 
-export default async function PanelPlanPage() {
+export default async function PanelPlanPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ mp?: string }>;
+}) {
   const dueno = await requireDueno();
   const db = createAdminClient();
+  const { mp: avisoMp } = await searchParams;
+  const cobroAuto = await estadoCobroAutomatico(db, dueno.gimnasio_id);
 
   const [{ data: gym }, cupo, { data: pagosData }, { data: planesData }] =
     await Promise.all([
@@ -268,6 +277,16 @@ export default async function PanelPlanPage() {
           estadoPorTipo={estadoPorTipo}
         />
       </div>
+
+      {cobroAuto.elite ? (
+        <MpConnectCard
+          vinculado={cobroAuto.vinculado}
+          vinculadoAt={cobroAuto.vinculadoAt}
+          collectorId={cobroAuto.collectorId}
+          configurado={connectConfigurado()}
+          aviso={avisoMp ?? null}
+        />
+      ) : null}
 
       {pagos.length > 0 ? (
         <div className="card-cut border border-rule bg-paper-2 p-5">

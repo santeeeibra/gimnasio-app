@@ -7,6 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { generarYGuardar } from "@/lib/rutina/generar";
 import { cupoSocios } from "@/lib/plataforma/cupo";
 import { registrarError } from "@/lib/admin/errores";
+import { aplicarCuotaAlDia, calcularCubreHasta } from "@/lib/pagos/cobro-socio";
 import {
   ENFASIS,
   MAX_ENFASIS,
@@ -37,12 +38,6 @@ export type AltaState = {
     bloqueado: boolean;
   };
 };
-
-function sumarDias(fecha: Date, dias: number): string {
-  const d = new Date(fecha);
-  d.setDate(d.getDate() + dias);
-  return d.toISOString().slice(0, 10);
-}
 
 export async function altaCliente(
   _prev: AltaState,
@@ -204,19 +199,15 @@ async function registrarPagoInterno(
     .single();
   if (!plan) return { error: "Plan inválido." };
 
-  const { data: cli } = await admin
-    .from("clientes")
-    .select("fecha_vencimiento")
-    .eq("id", clienteId)
-    .single();
-
   // Si eligió fecha manual, se respeta tal cual. Si no: si todavía tiene
-  // días, se suma sobre el vencimiento; si no, desde hoy.
-  const base =
-    cli?.fecha_vencimiento && new Date(cli.fecha_vencimiento) > new Date()
-      ? new Date(cli.fecha_vencimiento)
-      : new Date();
-  const cubreHasta = fechaManual || sumarDias(base, plan.duracion_dias);
+  // días, se suma sobre el vencimiento; si no, desde hoy. Misma lógica que
+  // usa el webhook del cobro automático (src/lib/pagos/cobro-socio.ts).
+  const cubreHasta = await calcularCubreHasta(
+    admin,
+    clienteId,
+    plan.duracion_dias,
+    fechaManual,
+  );
 
   const { error: pagoErr } = await admin.from("pagos").insert({
     gimnasio_id: dueno.gimnasio_id,
@@ -231,19 +222,9 @@ async function registrarPagoInterno(
     await registrarError(dueno.gimnasio_id, "pago", pagoErr);
   }
 
-  const { error: updErr } = await admin
-    .from("clientes")
-    .update({
-      plan_id: planId,
-      fecha_vencimiento: cubreHasta,
-      estado_cuota: "al_dia",
-      acceso_habilitado: true,
-      en_prueba: false,
-      ultimo_aviso_morosidad_enviado_en: null,
-    })
-    .eq("id", clienteId);
-  if (updErr) {
-    await registrarError(dueno.gimnasio_id, "pago", updErr);
+  const upd = await aplicarCuotaAlDia(admin, clienteId, planId, cubreHasta);
+  if (!upd.ok) {
+    await registrarError(dueno.gimnasio_id, "pago", upd.msg);
   }
 
   revalidatePath(`/panel/clientes/${clienteId}`);

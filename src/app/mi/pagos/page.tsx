@@ -4,6 +4,9 @@ import { pillClasses } from "@/components/ui";
 import { ChevronLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { DatosTransferencia } from "@/components/mi/datos-transferencia";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { estadoCobroAutomatico } from "@/lib/pagos/cobro-socio";
+import { PagarMpButton } from "./pagar-mp-button";
 
 export const dynamic = "force-dynamic";
 
@@ -29,16 +32,30 @@ export default async function MisPagosPage() {
       .single(),
     supabase
       .from("clientes")
-      .select("id, fecha_vencimiento")
+      .select("id, fecha_vencimiento, plan:planes(nombre, precio)")
       .eq("profile_id", profile.id)
       .maybeSingle(),
   ]);
+
+  // El gate del cobro automático lee columnas sensibles (token de MP), así que
+  // va con service_role y nunca baja al cliente: sólo el booleano.
+  const cobroAuto = await estadoCobroAutomatico(
+    createAdminClient(),
+    profile.gimnasio_id,
+  );
+  const planSocio = (cli as any)?.plan as
+    | { nombre: string; precio: number | string }
+    | null
+    | undefined;
+  const montoCuota = Number(planSocio?.precio ?? 0);
+  const puedePagarOnline = cobroAuto.activo && Boolean(planSocio) && montoCuota > 0;
 
   const { data: pagosData } = cli
     ? await supabase
         .from("pagos")
         .select("id, monto, fecha_pago, cubre_hasta, plan:planes(nombre)")
         .eq("cliente_id", cli.id)
+        .eq("estado", "confirmado")
         .order("fecha_pago", { ascending: false })
     : { data: [] as any[] };
 
@@ -60,6 +77,10 @@ export default async function MisPagosPage() {
           <p className="text-xs font-semibold uppercase tracking-wider text-ink-soft">Tu cuota está paga hasta</p>
           <p className="font-display text-2xl font-extrabold text-ink mt-1">{fecha(cubiertoHasta)}</p>
         </div>
+      ) : null}
+
+      {puedePagarOnline ? (
+        <PagarMpButton monto={montoCuota} plan={planSocio!.nombre} />
       ) : null}
 
       <DatosTransferencia

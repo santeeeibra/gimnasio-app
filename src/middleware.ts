@@ -10,6 +10,9 @@ const PUBLIC_PATHS = [
   "/favicon.ico",
   "/api/auth",
   "/api/cron",
+  // Webhooks de la pasarela: los llama Mercado Pago, sin sesión.
+  "/api/pagos/webhook",
+  "/api/pagos-socio/webhook",
   "/sw.js",
   "/manifest.webmanifest",
   "/icon-",
