@@ -286,6 +286,11 @@ const PATRON_ENFASIS: Record<string, string | undefined> = {
 // Fase 2 se mantiene idéntico. Mujer sin zona elegida → glúteos por defecto,
 // también por trueque. Hasta 2 trueques por día: 2 si hay una sola zona, 1 por
 // zona si hay dos.
+//
+// Afinidad de día: en un split DIVIDIDO (upper/lower, PPL, torso/pierna) sólo se
+// refuerza la zona en los días que ya la entrenan — así el énfasis de pecho no
+// se cuela en el día de pierna. En FULL BODY se aplica siempre (no hay día
+// dedicado a un grupo puntual).
 function elegirDonante(out: Ranura[], gruposEnfasis: Set<string>): number {
   const cand = out
     .map((r, i) => ({ r, i }))
@@ -304,21 +309,28 @@ function intercambiarPorEnfasis(
   ranuras: Ranura[],
   enfasis: Enfasis[],
   sexo: Sexo,
+  esFullBody: boolean,
 ): Ranura[] {
   const zonas: Enfasis[] =
     enfasis.length > 0 ? enfasis : sexo === "mujer" ? ["gluteos"] : [];
   if (zonas.length === 0) return ranuras;
 
   const out = [...ranuras];
+  const gruposBase = new Set(ranuras.map((r) => r.grupo));
   const gruposEnfasis = new Set(zonas.flatMap((z) => ENFASIS_GRUPOS[z]));
   const trueques = zonas.length === 1 ? 2 : 1;
 
   for (const zona of zonas) {
-    const grupoObjetivo = ENFASIS_GRUPOS[zona][0];
+    const gruposZona = ENFASIS_GRUPOS[zona];
+    // Afinidad de día: en split dividido, sólo si el día ya entrena la zona.
+    if (!esFullBody && !gruposZona.some((g) => gruposBase.has(g))) continue;
+    // Apuntar a un grupo real de la zona que el día ya toque; si no, el primero.
+    const grupoObjetivo =
+      gruposZona.find((g) => gruposBase.has(g)) ?? gruposZona[0];
+    const patron = PATRON_ENFASIS[grupoObjetivo];
     for (let t = 0; t < trueques; t++) {
       const donante = elegirDonante(out, gruposEnfasis);
       if (donante === -1) break;
-      const patron = PATRON_ENFASIS[grupoObjetivo];
       out[donante] = {
         grupo: grupoObjetivo,
         patron,
@@ -387,13 +399,15 @@ const ESQUEMA: Record<Objetivo, EsquemaObj> = {
     aislamiento: { series: 3, reps: "8–10" },
     descanso: "Descanso 2–3 min",
   },
-  // Hipertrofia = volumen a intensidad media, no fuerza. El primario pesa 3 en
-  // el reparto de series (peso de rol, Fase 4) y 8–10 reps: un rango productivo
-  // para el básico sin caer en el 5×5 de fuerza. Descanso 90–120 s:
-  // suficiente para sostener la carga entre series (Schoenfeld et al. 2016, "Longer
-  // inter-set rest periods enhance muscle strength and hypertrophy").
+  // Hipertrofia = volumen a intensidad media, no fuerza. El primario pesa 4 y
+  // secundario/aislamiento 3 en el reparto de series (peso de rol, Fase 4): así
+  // el día no sale todo con el mismo número de series y el básico se lleva algo
+  // más de trabajo. Reps 8–10: un rango productivo para el compuesto sin caer
+  // en el 5×5 de fuerza. Descanso 90–120 s: suficiente para sostener la carga
+  // entre series (Schoenfeld et al. 2016, "Longer inter-set rest periods enhance
+  // muscle strength and hypertrophy").
   hipertrofia: {
-    primario: { series: 3, reps: "8–10" },
+    primario: { series: 4, reps: "8–10" },
     secundario: { series: 3, reps: "10–12" },
     aislamiento: { series: 3, reps: "12–15" },
     descanso: "Descanso 90–120 s",
@@ -812,6 +826,7 @@ export function generarPlan(
     const items: ItemGenerado[] = [];
     const rolItems: Rol[] = [];
     const esquema = resolverEsquema(objetivo, avanzado, di);
+    const esFullBody = bloque.titulo.startsWith("Cuerpo completo");
 
     // ── Fase 1 · Esqueleto: qué músculos entrena el día, sin series todavía. ──
     const esqueleto = moldearPorObjetivo(bloque.ranuras, objetivo);
@@ -828,7 +843,7 @@ export function generarPlan(
     // ── Fase 3 · Trueque por énfasis: redirige ranuras secundarias a la zona
     //    enfatizada, SIN agregar ni quitar ranuras (presupuesto intacto). ──
     let ranuras = priorizarEnfasis(
-      intercambiarPorEnfasis(esqueleto, enfasis, sexo),
+      intercambiarPorEnfasis(esqueleto, enfasis, sexo, esFullBody),
       enfasis,
     );
     if (avanzado?.orden === "prefatiga_zona") {

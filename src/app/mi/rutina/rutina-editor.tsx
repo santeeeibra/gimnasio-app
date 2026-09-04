@@ -78,7 +78,7 @@ function ImagenAnimada({
   }, [activo, alt]);
 
   return (
-    <>
+    <div className="relative h-full w-full">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={url}
@@ -98,7 +98,7 @@ function ImagenAnimada({
           className={`${className} absolute inset-0 transition-opacity duration-500 ${mostrarAlt ? "opacity-100" : "opacity-0"}`}
         />
       )}
-    </>
+    </div>
   );
 }
 
