@@ -37,10 +37,11 @@ function ConfirmarBtn({
   tipo: TipoPago;
 }) {
   const [state, action, pending] = useActionState(confirmarPagoPlataforma, null);
+  const [fechaManual, setFechaManual] = useState(false);
   return (
     <form
       action={action}
-      className="flex items-center gap-2"
+      className="flex flex-wrap items-center gap-2"
       onSubmit={(e) => {
         const montoFmt = monto.toLocaleString("es-AR", {
           style: "currency",
@@ -48,7 +49,7 @@ function ConfirmarBtn({
         });
         const efecto =
           tipo === "plan_mensual"
-            ? `Esto renueva el plan del gimnasio por 30 días y lo deja en estado "activo".`
+            ? `Esto renueva el plan del gimnasio por 30 días (o hasta la fecha que elegiste) y lo deja en estado "activo".`
             : `Es un cargo único (${TIPO_PAGO_LABEL[tipo]}): NO renueva el plan ni cambia el estado del gimnasio.`;
         if (
           !window.confirm(
@@ -60,6 +61,24 @@ function ConfirmarBtn({
       }}
     >
       <input type="hidden" name="pago_id" value={pagoId} />
+      {tipo === "plan_mensual" ? (
+        <label className="flex items-center gap-1.5 text-[11px] text-ink-soft">
+          <input
+            type="checkbox"
+            checked={fechaManual}
+            onChange={(e) => setFechaManual(e.target.checked)}
+            className="size-3.5 accent-ink"
+          />
+          Fecha manual
+        </label>
+      ) : null}
+      {fechaManual ? (
+        <input
+          type="date"
+          name="fecha_vencimiento_manual"
+          className="h-8 rounded-[5px] border border-rule bg-paper px-2 text-xs outline-none focus:border-ink"
+        />
+      ) : null}
       <Button type="submit" variant="ghost" loading={pending}>
         {pending ? "…" : "Confirmar"}
       </Button>

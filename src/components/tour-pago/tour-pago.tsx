@@ -62,9 +62,29 @@ export function TourPago({
     });
   }, [abierto, paso?.selector]);
 
-  // Manejar cambio de paso y scroll hacia el elemento
+  // Bloquear el scroll de fondo mientras el tour está abierto, para que el
+  // resaltado nunca quede desfasado de lo que se ve en pantalla (bug: al
+  // scrollear dentro de un bloque resaltado grande, el recuadro quedaba
+  // "pegado" en la posición vieja y terminaba cortando otras cards).
+  useEffect(() => {
+    if (!abierto) {
+      document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
+      return;
+    }
+    return () => {
+      document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
+    };
+  }, [abierto]);
+
+  // Manejar cambio de paso: desbloquear, hacer scroll al elemento, y volver
+  // a bloquear el fondo una vez que el scroll terminó.
   useEffect(() => {
     if (!abierto) return;
+
+    document.documentElement.style.overflow = "";
+    document.body.style.overflow = "";
 
     if (paso?.selector) {
       const el = document.querySelector(paso.selector);
@@ -77,22 +97,23 @@ export function TourPago({
       }
     }
 
-    // Pequeño timeout para dar tiempo a que termine el smooth scroll
+    // Tiempo suficiente para que termine el smooth scroll antes de medir
+    // el elemento y volver a bloquear el scroll de fondo.
     const timer = setTimeout(() => {
       actualizarRect();
-    }, 150);
+      document.documentElement.style.overflow = "hidden";
+      document.body.style.overflow = "hidden";
+    }, 250);
 
-    const onScrollResize = () => {
+    const onResize = () => {
       actualizarRect();
     };
 
-    window.addEventListener("scroll", onScrollResize, { passive: true });
-    window.addEventListener("resize", onScrollResize, { passive: true });
+    window.addEventListener("resize", onResize, { passive: true });
 
     return () => {
       clearTimeout(timer);
-      window.removeEventListener("scroll", onScrollResize);
-      window.removeEventListener("resize", onScrollResize);
+      window.removeEventListener("resize", onResize);
     };
   }, [abierto, pasoActual, paso?.selector, actualizarRect]);
 

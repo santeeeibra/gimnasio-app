@@ -168,9 +168,11 @@ export async function confirmarPagoPlataforma(
   const admin = await requireSuperadmin();
   const pagoId = String(formData.get("pago_id") ?? "");
   if (!pagoId) return { ok: false, msg: "Falta el pago." };
+  const fechaManual =
+    String(formData.get("fecha_vencimiento_manual") ?? "").trim() || null;
 
   const db = createAdminClient();
-  const r = await aprobarPagoPlataforma(db, pagoId);
+  const r = await aprobarPagoPlataforma(db, pagoId, undefined, fechaManual);
   if (!r.ok) return { ok: false, msg: r.msg };
 
   await registrarAccionAdmin(

@@ -23,6 +23,7 @@ export async function aprobarPagoPlataforma(
   db: SupabaseClient,
   pagoId: string,
   proveedorRef?: string | null,
+  fechaVenceManual?: string | null,
 ): Promise<ResultadoAprobacion> {
   const { data: pago } = await db
     .from("pagos_plataforma")
@@ -85,13 +86,18 @@ export async function aprobarPagoPlataforma(
     .eq("id", pago.gimnasio_id)
     .single();
 
-  const hoy = new Date();
-  const vigente = gym?.plan_plataforma_vence_el
-    ? new Date(gym.plan_plataforma_vence_el)
-    : null;
-  const base = vigente && vigente > hoy ? vigente : hoy;
-  base.setDate(base.getDate() + (pago.dias ?? 30));
-  const venceEl = base.toISOString().slice(0, 10);
+  let venceEl: string;
+  if (fechaVenceManual && /^\d{4}-\d{2}-\d{2}$/.test(fechaVenceManual)) {
+    venceEl = fechaVenceManual;
+  } else {
+    const hoy = new Date();
+    const vigente = gym?.plan_plataforma_vence_el
+      ? new Date(gym.plan_plataforma_vence_el)
+      : null;
+    const base = vigente && vigente > hoy ? vigente : hoy;
+    base.setDate(base.getDate() + (pago.dias ?? 30));
+    venceEl = base.toISOString().slice(0, 10);
+  }
 
   // Update guardado por estado: si otro proceso lo aprobó en el medio,
   // afecta 0 filas y cortamos sin renovar dos veces.

@@ -187,7 +187,12 @@ async function registrarPagoInterno(
   const clienteId = String(formData.get("cliente_id") ?? "");
   const monto = Number(formData.get("monto") ?? 0);
   const planId = String(formData.get("plan_id") ?? "") || null;
+  const fechaManual =
+    String(formData.get("fecha_vencimiento_manual") ?? "").trim() || null;
   if (!clienteId || !planId) return { error: "Elegí el plan que pagó." };
+  if (fechaManual && !/^\d{4}-\d{2}-\d{2}$/.test(fechaManual)) {
+    return { error: "La fecha de vencimiento no es válida." };
+  }
 
   const admin = createAdminClient();
   const { data: plan } = await admin
@@ -203,12 +208,13 @@ async function registrarPagoInterno(
     .eq("id", clienteId)
     .single();
 
-  // Si todavía tiene días, se suma sobre el vencimiento; si no, desde hoy.
+  // Si eligió fecha manual, se respeta tal cual. Si no: si todavía tiene
+  // días, se suma sobre el vencimiento; si no, desde hoy.
   const base =
     cli?.fecha_vencimiento && new Date(cli.fecha_vencimiento) > new Date()
       ? new Date(cli.fecha_vencimiento)
       : new Date();
-  const cubreHasta = sumarDias(base, plan.duracion_dias);
+  const cubreHasta = fechaManual || sumarDias(base, plan.duracion_dias);
 
   const { error: pagoErr } = await admin.from("pagos").insert({
     gimnasio_id: dueno.gimnasio_id,
