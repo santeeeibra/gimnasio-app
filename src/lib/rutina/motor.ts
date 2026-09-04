@@ -548,6 +548,16 @@ const FACTOR_VOLUMEN: Record<string, number> = {
   mav: 1.15,
 };
 
+// "Esfuerzo" (RIR) también escala el presupuesto: entrenar suave (2–3 reps en
+// reserva) implica menos volumen efectivo, así que RESTA series; cuanto más
+// cerca del fallo, más volumen se sostiene. Sin avanzado → "2-3" no aplica
+// (factor 1) porque el flujo simple no expone este control.
+const FACTOR_ESFUERZO: Record<string, number> = {
+  "2-3": 0.75, // Suave → resta volumen (queda por debajo del techo por rol)
+  "1-2": 1, // Exigente → volumen pleno
+  "0-1": 1, // Al límite → volumen pleno
+};
+
 // Fase 2 · ajustarPorSexo: la clienta mujer baja 1 serie por ranura (compuestos
 // y aislamientos). Se aplica sobre el TOTAL del día, no ranura por ranura, para
 // que el techo quede cerrado antes de repartir. Piso: 2 series por ranura.
@@ -556,32 +566,40 @@ function ajustarPorSexo(total: number, sexo: Sexo, nRanuras: number): number {
   return Math.max(2 * nRanuras, t);
 }
 
-// Fase 4 · Reparte un total FIJO de series entre las ranuras del día, en
-// proporción al peso de cada rol (primario > secundario > aislamiento), con
-// piso 2 y techo 5 por ranura. La suma resultante es exactamente `presupuesto`
-// (recortado a [2·n, 5·n]). No depende de `seed`: el desempate es por orden de
-// ranura, así que sin seed la salida sigue siendo determinista.
+// Fase 4 · Reparte el presupuesto de series entre las ranuras del día en
+// proporción al peso de cada rol (primario > secundario > aislamiento), con piso
+// 2 y un TECHO DURO POR ROL (`maxPorRol`, que sale de ESQUEMA: p. ej. hipertrofia
+// primario 4 / secundario 3). Ese techo es inquebrantable e independiente del
+// nivel: ningún primario de hipertrofia pasa de 4 ni un secundario de 3, aunque
+// el presupuesto del día alcance para más (el sobrante se descarta). La suma
+// resultante es min(presupuesto, Σ techos), recortada al piso 2·n. No depende de
+// `seed`: el desempate es por orden de ranura → salida determinista sin seed.
 function repartirSeries(
   roles: Rol[],
   presupuesto: number,
-  peso: Record<Rol, number>,
+  maxPorRol: Record<Rol, number>,
 ): number[] {
   const n = roles.length;
   if (n === 0) return [];
   const MIN = 2;
-  const MAX = 5;
-  const objetivo = Math.max(MIN * n, Math.min(MAX * n, presupuesto));
-  const sumaPeso = roles.reduce((s, r) => s + (peso[r] || 1), 0);
-  const series = roles.map((r) =>
+  // Techo por ranura = el valor de ESQUEMA para ese rol (nunca menor al piso).
+  const cap = roles.map((r) => Math.max(MIN, maxPorRol[r] || MIN));
+  const techoTotal = cap.reduce((a, b) => a + b, 0);
+  // El objetivo nunca supera la suma de los techos duros: si el presupuesto es
+  // mayor, se recorta acá (así el +volumen del nivel no rompe el tope por rol).
+  const objetivo = Math.max(MIN * n, Math.min(techoTotal, presupuesto));
+  const sumaPeso = roles.reduce((s, r) => s + (maxPorRol[r] || 1), 0);
+  const series = roles.map((r, i) =>
     Math.max(
       MIN,
-      Math.min(MAX, Math.round(((peso[r] || 1) / sumaPeso) * objetivo)),
+      Math.min(cap[i], Math.round(((maxPorRol[r] || 1) / sumaPeso) * objetivo)),
     ),
   );
   // Ajuste fino: sumar/restar de a 1 hasta cuadrar con `objetivo`, tocando
-  // primero los roles más pesados al sumar y los más livianos al restar.
+  // primero los roles más pesados al sumar y los más livianos al restar, sin
+  // exceder nunca el techo por ranura ni bajar del piso.
   const porPesoDesc = [...series.keys()].sort(
-    (a, b) => (peso[roles[b]] || 1) - (peso[roles[a]] || 1) || a - b,
+    (a, b) => (maxPorRol[roles[b]] || 1) - (maxPorRol[roles[a]] || 1) || a - b,
   );
   let diff = objetivo - series.reduce((a, b) => a + b, 0);
   let guarda = 0;
@@ -589,7 +607,7 @@ function repartirSeries(
     const orden = diff > 0 ? porPesoDesc : [...porPesoDesc].reverse();
     let movido = false;
     for (const i of orden) {
-      if (diff > 0 && series[i] < MAX) {
+      if (diff > 0 && series[i] < cap[i]) {
         series[i]++;
         diff--;
         movido = true;
@@ -948,6 +966,8 @@ export function generarPlan(
   // Fase 2: factor de volumen (solo avanzado) que escala el presupuesto cerrado
   // de series por día. Sin avanzado → 1.
   const factorVol = FACTOR_VOLUMEN[avanzado?.volumen ?? "estandar"] ?? 1;
+  // Fase 2: "Esfuerzo" (RIR) suave resta volumen; solo aplica en modo avanzado.
+  const factorEsf = avanzado ? FACTOR_ESFUERZO[avanzado.rir] ?? 1 : 1;
 
   // Split: explícito si el avanzado lo pidió y la combinación cierra; si no,
   // el automático de siempre.
@@ -974,7 +994,7 @@ export function generarPlan(
     //    volumen, con ajustarPorSexo). Inamovible: el trueque de Fase 3 no
     //    cambia la cantidad de ranuras y la Fase 4 sólo reparte dentro. ──
     const presupuesto = ajustarPorSexo(
-      Math.round(PRESUPUESTO_DIA[entrada.nivel] * factorVol),
+      Math.round(PRESUPUESTO_DIA[entrada.nivel] * factorVol * factorEsf),
       sexo,
       esqueleto.length,
     );
