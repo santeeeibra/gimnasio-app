@@ -81,6 +81,14 @@ export function LoginForm({ paramG }: { paramG: string | null }) {
       <section className="flex-1 px-6 py-8 md:py-12">
         <form
           action={formAction}
+          onSubmit={() => {
+            // El login exitoso redirige (la action no vuelve con el slug), así
+            // que recordamos acá lo que tipeó para precargar el próximo ingreso.
+            const slug = gimnasio.trim();
+            if (slug) {
+              localStorage.setItem(STORAGE_KEY, JSON.stringify({ slug }));
+            }
+          }}
           className="max-w-md mx-auto space-y-5 animate-fade-in"
         >
           {/* Header */}
