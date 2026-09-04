@@ -1,0 +1,1569 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SysGym — Mejora Pantalla Rutina Semanal (Estilo Emil Kowalski)</title>
+
+  <!-- Fuentes exactas según REGLAS_UI_EMIL.md §2 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Inter:wght@400;500;600&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+
+  <style>
+    /* ============================================================
+       TOKENS REALES DE REGLAS_UI_EMIL.md — TEMA DEFAULT (PAPEL)
+       Y VARIANTE TEMA NOCHE PARA VALIDACIÓN PRESET §21
+       ============================================================ */
+    :root {
+      --paper: #faf9f6;
+      --paper-2: #f2efe7;
+      --paper-3: #e8e4d8;
+      --ink: #16181d;
+      --ink-soft: #5b5f68;
+      --rule: #e3ddcf;
+      --volt: #cde94a;
+      --volt-ink: #1c2205;
+      --danger: #c1362f;
+      --warn: #b9791a;
+      --ok: #2f7d4f;
+      --scrim: rgba(22, 24, 29, 0.6);
+
+      --font-display: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
+      --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+      --font-hero: 'Orbitron', ui-sans-serif, system-ui, sans-serif;
+
+      --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+      --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+    }
+
+    /* Preset Oscuro (Noche) — Re-deriva tokens según REGLAS §1 y §20 */
+    body[data-theme="noche"] {
+      --paper: #121417;
+      --paper-2: #1a1d23;
+      --paper-3: #232730;
+      --ink: #f4f4f5;
+      --ink-soft: #94a3b8;
+      --rule: #272b35;
+      --volt: #cde94a;
+      --volt-ink: #1c2205;
+      --danger: #f87171;
+      --warn: #fbbf24;
+      --ok: #4ade80;
+      --scrim: rgba(0, 0, 0, 0.75);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #e6e3da;
+      font-family: var(--font-sans);
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+      padding: 36px 20px 80px;
+      transition: background-color 0.25s var(--ease-out);
+    }
+
+    body[data-theme="noche"] {
+      background: #090a0c;
+    }
+
+    /* ---------- Barra superior del showcase ---------- */
+    .showcase-header {
+      max-width: 980px;
+      margin: 0 auto 28px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+    }
+    body[data-theme="noche"] .showcase-header {
+      border-bottom-color: rgba(255, 255, 255, 0.12);
+    }
+
+    .showcase-title h1 {
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .showcase-title p {
+      font-size: 13px;
+      color: var(--ink-soft);
+      margin-top: 4px;
+    }
+
+    .theme-toggle-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--paper-2);
+      border: 1px solid var(--rule);
+      padding: 4px;
+      border-radius: 999px;
+    }
+
+    .theme-btn {
+      background: none;
+      border: none;
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink-soft);
+      border-radius: 999px;
+      cursor: pointer;
+      font-family: var(--font-sans);
+      transition: all 0.15s var(--ease-out);
+    }
+
+    .theme-btn.active {
+      background: var(--paper);
+      color: var(--ink);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+    }
+
+    /* ---------- Contenedor del teléfono y notas ---------- */
+    .stage {
+      position: relative;
+      max-width: 1040px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 36px;
+    }
+
+    /* Chasis del teléfono */
+    .phone {
+      position: relative;
+      width: 375px;
+      height: 812px;
+      background: #111;
+      border-radius: 46px;
+      padding: 11px;
+      box-shadow: 0 40px 80px rgba(0,0,0,.28), 0 0 0 1px rgba(0,0,0,.35);
+      flex-shrink: 0;
+    }
+
+    .phone::before {
+      content: '';
+      position: absolute;
+      top: 11px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 122px;
+      height: 26px;
+      background: #111;
+      border-radius: 0 0 16px 16px;
+      z-index: 45;
+    }
+
+    .screen {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: var(--paper);
+      border-radius: 36px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      color: var(--ink);
+    }
+
+    .home-ind {
+      position: absolute;
+      bottom: 7px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 5px;
+      border-radius: 999px;
+      background: var(--ink-soft);
+      opacity: 0.3;
+      z-index: 45;
+      pointer-events: none;
+    }
+
+    .statusbar {
+      height: 44px;
+      flex: 0 0 44px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 0 24px 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink);
+      z-index: 40;
+    }
+
+    .statusbar .dots {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+    .statusbar .dots b {
+      width: 16px;
+      height: 9px;
+      border-radius: 2px;
+      background: var(--ink);
+      display: block;
+    }
+    .statusbar .dots b:nth-child(2) { width: 14px; }
+    .statusbar .dots b:nth-child(3) { width: 22px; border-radius: 3px; }
+
+    .viewport {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .content {
+      position: absolute;
+      inset: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 10px 20px 104px; /* pb generoso para convivir con timer y bottom nav */
+    }
+    .content::-webkit-scrollbar { display: none; }
+
+    /* Bottom Nav Bar (REGLAS §13) */
+    .botnav {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 40;
+      display: flex;
+      border-top: 1px solid var(--rule);
+      background: color-mix(in srgb, var(--paper) 96%, transparent);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      height: 60px;
+      padding-bottom: 8px;
+    }
+
+    .botnav a {
+      position: relative;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      font-size: 11px;
+      letter-spacing: -0.01em;
+      color: var(--ink-soft);
+      text-decoration: none;
+      transition: transform 0.15s var(--ease-out), color 0.15s var(--ease-out);
+    }
+    .botnav a:active { transform: scale(0.95); }
+    .botnav a.on { color: var(--ink); font-weight: 600; }
+    .botnav a svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+    .botnav .slider {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 33.333%;
+      height: 2px;
+      display: flex;
+      justify-content: center;
+      transform: translateX(100%); /* Rutina activa */
+      transition: transform 0.28s var(--ease-in-out);
+    }
+    .botnav .slider i {
+      width: 32px;
+      height: 2px;
+      border-radius: 999px;
+      background: var(--volt);
+    }
+
+    /* ------------------------------------------------------------
+       FIRMA VISUAL: .card-cut (REGLAS §4)
+       ------------------------------------------------------------ */
+    .card-cut {
+      --cut: 18px;
+      clip-path: polygon(0 0, calc(100% - var(--cut)) 0, 100% var(--cut), 100% 100%, 0 100%);
+    }
+
+    /* ------------------------------------------------------------
+       PATRÓN FUTURISTA (§17)
+       ------------------------------------------------------------ */
+    .futurista-fondo {
+      position: relative;
+    }
+    .futurista-fondo > * {
+      position: relative;
+      z-index: 1;
+    }
+    .futurista-fondo::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+      opacity: 0.35;
+      background-image:
+        repeating-linear-gradient(0deg, color-mix(in srgb, var(--rule) 55%, transparent) 0 1px, transparent 1px 40px),
+        repeating-linear-gradient(90deg, color-mix(in srgb, var(--rule) 55%, transparent) 0 1px, transparent 1px 40px);
+      background-size: 40px 40px;
+      animation: fut-scan 40s linear infinite;
+    }
+    @keyframes fut-scan {
+      to { background-position: 40px 40px, 40px 40px; }
+    }
+
+    .futurista-anillo-glow {
+      filter: drop-shadow(0 0 4px color-mix(in srgb, var(--volt) 55%, transparent));
+      animation: anillo-glow-pulse 6s var(--ease-in-out) infinite;
+    }
+    @keyframes anillo-glow-pulse {
+      0%, 100% { filter: drop-shadow(0 0 2px color-mix(in srgb, var(--volt) 30%, transparent)); }
+      50% { filter: drop-shadow(0 0 8px color-mix(in srgb, var(--volt) 70%, transparent)); }
+    }
+
+    /* ------------------------------------------------------------
+       ELEMENTOS DE LA PANTALLA DE RUTINA SEMANAL
+       ------------------------------------------------------------ */
+    .link-accion {
+      font-size: 13px;
+      color: var(--ink-soft);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      cursor: pointer;
+      display: inline-block;
+      transition: color 0.15s var(--ease-out);
+    }
+    .link-accion:hover { color: var(--ink); }
+
+    .header-fila {
+      margin-top: 8px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    h1.title {
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+    }
+
+    .sub-meta {
+      font-size: 13px;
+      color: var(--ink-soft);
+      margin-top: 2px;
+    }
+
+    /* Botón / Details Regenerar */
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 36px;
+      padding: 0 12px;
+      border-radius: 5px;
+      border: 1px solid var(--rule);
+      background: var(--paper-2);
+      color: var(--ink-soft);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: transform 0.15s var(--ease-out), background-color 0.15s var(--ease-out);
+    }
+    .btn-secondary:active { transform: scale(0.95); background: var(--paper); }
+    .btn-secondary svg { width: 14px; height: 14px; }
+
+    /* Banner Motivacional que respira (crossfade 16s) */
+    .banner-mot {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--rule);
+      background: var(--paper-2);
+      padding: 12px 14px;
+      border-left: 3px solid var(--volt);
+      min-height: 52px;
+      margin-top: 14px;
+      border-radius: 6px;
+    }
+    .banner-mot p {
+      position: absolute;
+      inset: 12px 14px;
+      font-size: 12.5px;
+      line-height: 1.4;
+      opacity: 0;
+      animation: phrase-cross 16s linear infinite;
+    }
+    .banner-mot p:nth-child(2) { animation-delay: 8s; }
+    @keyframes phrase-cross {
+      0% { opacity: 0; }
+      4% { opacity: 1; }
+      46% { opacity: 1; }
+      50% { opacity: 0; }
+      100% { opacity: 0; }
+    }
+
+    /* Pestañas de Días con .pill deslizante */
+    .daytabs-wrap {
+      margin-top: 14px;
+      position: relative;
+      display: flex;
+      border: 1px solid var(--rule);
+      border-radius: 5px;
+      background: var(--paper-2);
+      padding: 3px;
+    }
+    .daytabs-wrap .pill {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: calc((100% - 6px) / 3);
+      height: calc(100% - 6px);
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      border-radius: 4px;
+      transition: transform 0.26s var(--ease-in-out);
+      z-index: 0;
+    }
+    .daytabs-wrap button {
+      position: relative;
+      z-index: 1;
+      flex: 1;
+      border: 0;
+      background: transparent;
+      font-family: var(--font-sans);
+      cursor: pointer;
+      padding: 8px 0;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--ink-soft);
+      transition: color 0.15s var(--ease-out);
+      text-align: center;
+    }
+    .daytabs-wrap button.on {
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    /* ============================================================
+       NUEVA CARD: RESUMEN DEL DÍA & PROGRESO DE SESIÓN
+       (Alineada a REGLAS §4 card-cut y §17 Patrón Futurista)
+       ============================================================ */
+    .day-summary-card {
+      margin-top: 14px;
+      border: 1px solid var(--rule);
+      background: var(--paper-2);
+      padding: 16px;
+      position: relative;
+    }
+
+    .summary-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .summary-titles h2 {
+      font-family: var(--font-display);
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      line-height: 1.25;
+    }
+
+    .kicker-sub {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      margin-top: 2px;
+      display: block;
+    }
+
+    /* Anillo de progreso compacto del día (§17) */
+    .mini-ring {
+      position: relative;
+      width: 58px;
+      height: 58px;
+      flex-shrink: 0;
+    }
+    .mini-ring svg {
+      transform: rotate(-90deg);
+      width: 100%;
+      height: 100%;
+    }
+    .mini-ring circle.track {
+      stroke: var(--rule);
+      stroke-width: 5;
+      fill: none;
+    }
+    .mini-ring circle.bar {
+      stroke: var(--volt);
+      stroke-width: 5;
+      fill: none;
+      stroke-linecap: round;
+      stroke-dasharray: 157; /* 2 * PI * 25 */
+      stroke-dashoffset: 102; /* ~35% completado */
+      transition: stroke-dashoffset 0.4s var(--ease-out);
+    }
+    .mini-ring .ring-label {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+    .mini-ring .ring-label b {
+      font-family: var(--font-hero);
+      font-size: 12.5px;
+      font-weight: 700;
+      line-height: 1;
+      color: var(--ink);
+    }
+
+    /* Fila de métricas del día (números en --font-hero) */
+    .metrics-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--rule);
+    }
+
+    .metric-box {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .metric-box .num {
+      font-family: var(--font-hero);
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--ink);
+      line-height: 1.15;
+    }
+
+    .metric-box .lbl {
+      font-size: 10px;
+      color: var(--ink-soft);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-top: 3px;
+    }
+
+    /* Barra de progreso interactiva de la sesión */
+    .session-bar-wrap {
+      margin-top: 14px;
+    }
+
+    .session-bar-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--ink-soft);
+      margin-bottom: 6px;
+    }
+
+    .session-bar-head b {
+      font-family: var(--font-hero);
+      color: var(--ink);
+      font-size: 11px;
+    }
+
+    .session-track {
+      width: 100%;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      overflow: hidden;
+    }
+
+    .session-fill {
+      height: 100%;
+      background: var(--volt);
+      border-radius: 999px;
+      width: 33%;
+      transition: width 0.35s var(--ease-out);
+    }
+
+    /* ------------------------------------------------------------
+       LISTA DE EJERCICIOS (REGLAS §12 y §17)
+       ------------------------------------------------------------ */
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      margin: 18px 0 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    ul.exlist {
+      list-style: none;
+      border: 1px solid var(--rule);
+      background: var(--paper-2);
+      overflow: hidden;
+    }
+    ul.exlist > li {
+      padding: 14px 16px;
+      border-top: 1px solid var(--rule);
+      transition: background-color 0.15s var(--ease-out);
+    }
+    ul.exlist > li:first-child { border-top: 0; }
+
+    .ex-top-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    /* Miniatura con fallback y crossfade §5 */
+    .exthumb {
+      width: 68px;
+      height: 68px;
+      flex-shrink: 0;
+      border-radius: 8px;
+      border: 1px solid var(--rule);
+      background: var(--paper);
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+      position: relative;
+      cursor: pointer;
+      transition: transform 0.15s var(--ease-out);
+    }
+    .exthumb:active { transform: scale(0.95); }
+    .exthumb svg { width: 24px; height: 24px; stroke: var(--ink-soft); fill: none; stroke-width: 1.75; }
+
+    .ex-main-info {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .ex-title-row {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+
+    .ex-num {
+      font-family: var(--font-hero);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--ink-soft);
+      flex-shrink: 0;
+    }
+
+    .ex-name {
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.25;
+      color: var(--ink);
+    }
+
+    .muscle-pill {
+      display: inline-block;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      margin-top: 3px;
+    }
+
+    /* Chips de prescripción (REGLAS §12 y §17: Orbitron para números) */
+    .chips-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--rule);
+      background: var(--paper);
+      font-size: 11px;
+      color: var(--ink-soft);
+    }
+    .chip b {
+      font-family: var(--font-hero);
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    /* ------------------------------------------------------------
+       TRACKER DE SERIES TÁCTIL (INCORPORACIÓN SOLICITADA)
+       ------------------------------------------------------------ */
+    .sets-tracker {
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      border-radius: 6px;
+      padding: 6px 10px;
+      justify-content: space-between;
+    }
+
+    .sets-tracker .label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--ink-soft);
+    }
+
+    .set-nodes-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .set-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 5px;
+      border: 1px solid var(--rule);
+      background: var(--paper-2);
+      color: var(--ink-soft);
+      font-family: var(--font-hero);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      transition: all 0.15s var(--ease-out);
+    }
+    .set-btn:active { transform: scale(0.92); }
+
+    .set-btn.done {
+      background: var(--volt);
+      border-color: var(--volt);
+      color: var(--volt-ink);
+      box-shadow: 0 1px 6px color-mix(in srgb, var(--volt) 50%, transparent);
+    }
+
+    /* Acciones secundarias en la fila del ejercicio (REGLAS §6 y §11) */
+    .ex-footer-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px dashed var(--rule);
+    }
+
+    .action-btn-text {
+      background: none;
+      border: none;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--ink-soft);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 6px;
+      border-radius: 4px;
+      transition: background 0.15s var(--ease-out), color 0.15s;
+    }
+    .action-btn-text:hover { color: var(--ink); background: var(--paper); }
+    .action-btn-text svg { width: 13px; height: 13px; }
+
+    /* ============================================================
+       TIMER DE DESCANSO FLOTANTE INTEGRADO (REGLAS §13 / §17)
+       ============================================================ */
+    .floating-timer-dock {
+      position: absolute;
+      bottom: 74px; /* sobre la bottom nav */
+      left: 16px;
+      right: 16px;
+      z-index: 35;
+      transition: all 0.25s var(--ease-out);
+    }
+
+    /* Estado colapsado: pastilla táctil en esquina */
+    .timer-collapsed-pill {
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.14);
+      border-radius: 999px;
+      padding: 8px 16px 8px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: transform 0.15s var(--ease-out);
+    }
+    .timer-collapsed-pill:active { transform: scale(0.97); }
+
+    .timer-pill-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .timer-pill-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--paper-2);
+      border: 1px solid var(--rule);
+      display: grid;
+      place-items: center;
+      color: var(--ink);
+    }
+    .timer-collapsed-pill.running .timer-pill-icon {
+      background: var(--volt);
+      color: var(--volt-ink);
+      border-color: var(--volt);
+    }
+
+    .timer-pill-clock {
+      font-family: var(--font-hero);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .timer-pill-status {
+      font-size: 10.5px;
+      color: var(--ink-soft);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .timer-pill-btn {
+      height: 28px;
+      padding: 0 12px;
+      border-radius: 999px;
+      background: var(--volt);
+      color: var(--volt-ink);
+      border: none;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    /* Estado expandido: panel completo con presets y controles */
+    .timer-expanded-panel {
+      display: none;
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      border-radius: 14px;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.22);
+      padding: 14px 16px;
+      animation: timer-rise 0.2s var(--ease-out) both;
+    }
+    @keyframes timer-rise {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .timer-panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .timer-panel-head h4 {
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .timer-close-btn {
+      width: 26px;
+      height: 26px;
+      border-radius: 5px;
+      border: 1px solid var(--rule);
+      background: var(--paper-2);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      color: var(--ink-soft);
+    }
+
+    .timer-big-display {
+      font-family: var(--font-hero);
+      font-size: 40px;
+      font-weight: 700;
+      text-align: center;
+      letter-spacing: -0.02em;
+      line-height: 1;
+      margin: 8px 0 12px;
+      color: var(--ink);
+    }
+
+    .timer-presets {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .preset-btn {
+      height: 32px;
+      border-radius: 5px;
+      border: 1px solid var(--rule);
+      background: var(--paper-2);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink-soft);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .preset-btn.active {
+      background: var(--volt);
+      border-color: var(--volt);
+      color: var(--volt-ink);
+    }
+
+    .timer-main-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .timer-action-btn {
+      flex: 1;
+      height: 40px;
+      border-radius: 5px;
+      border: 1px solid var(--rule);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s var(--ease-out);
+    }
+    .timer-action-btn:active { transform: scale(0.97); }
+    .timer-action-btn.primary {
+      background: var(--volt);
+      color: var(--volt-ink);
+      border-color: var(--volt);
+    }
+    .timer-action-btn.secondary {
+      background: var(--paper-2);
+      color: var(--ink);
+    }
+
+    /* ------------------------------------------------------------
+       ANOTACIONES LATERALES (CALLOUT NOTES) COMO vista-cliente-con-vida
+       ------------------------------------------------------------ */
+    .annotations-sidebar {
+      width: 320px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+
+    .callout-card {
+      background: var(--paper-2);
+      border: 1px solid var(--rule);
+      border-radius: 6px;
+      padding: 14px 16px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      font-size: 12.5px;
+      line-height: 1.5;
+    }
+
+    .callout-card b {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 600;
+      display: block;
+      color: var(--ink);
+      margin-bottom: 4px;
+    }
+
+    .callout-card code {
+      font-family: monospace;
+      font-size: 11.5px;
+      padding: 1px 4px;
+      border-radius: 3px;
+      background: var(--paper);
+      border: 1px solid var(--rule);
+    }
+
+    .badge-tag {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: var(--volt);
+      color: var(--volt-ink);
+      margin-bottom: 6px;
+    }
+
+    @media (max-width: 900px) {
+      .stage {
+        flex-direction: column;
+        align-items: center;
+      }
+      .annotations-sidebar {
+        width: 100%;
+        max-width: 375px;
+      }
+    }
+  </style>
+</head>
+<body data-theme="papel">
+
+  <!-- ENCABEZADO SHOWCASE -->
+  <header class="showcase-header">
+    <div class="showcase-title">
+      <h1>Rutina Semanal — Mejora de UI</h1>
+      <p>100% alineado con <strong>REGLAS_UI_EMIL.md</strong> (tokens, radios estándar, <code>.card-cut</code> y Orbitron).</p>
+    </div>
+
+    <div class="theme-toggle-wrap">
+      <button class="theme-btn active" onclick="setTheme('papel')">☀️ Papel (Claro)</button>
+      <button class="theme-btn" onclick="setTheme('noche')">🌙 Noche (Oscuro)</button>
+    </div>
+  </header>
+
+  <!-- ESCENARIO PRINCIPAL -->
+  <main class="stage">
+
+    <!-- TELÉFONO CHASSIS -->
+    <div class="phone">
+      <div class="screen">
+        
+        <!-- STATUS BAR -->
+        <div class="statusbar">
+          <span>9:41</span>
+          <span class="dots"><b></b><b></b><b></b></span>
+        </div>
+
+        <!-- VIEWPORT DE PANTALLA -->
+        <div class="viewport">
+          <div class="content">
+
+            <!-- Link Volver (§11 linkClasses) -->
+            <span class="link-accion">← Volver</span>
+
+            <!-- Encabezado de Rutina + Regenerar (§6 justify-between) -->
+            <div class="header-fila">
+              <div>
+                <h1 class="title">Tu rutina</h1>
+                <p class="sub-meta">Hipertrofia · Intermedio · 3 días</p>
+              </div>
+              <button class="btn-secondary" onclick="alert('Despliega modal o formulario para regenerar objetivo, días o nivel')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <path d="M23 4v6h-6M1 20v-6h6"/>
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                </svg>
+                Regenerar
+              </button>
+            </div>
+
+            <!-- Banner Motivacional que respira (§16 / mockup previo) -->
+            <div class="banner-mot">
+              <p>"El progreso no se negocia: es la suma de los días que apareciste."</p>
+              <p>"Hoy pesado o liviano, pero hoy. Mañana no entrena por vos."</p>
+            </div>
+
+            <!-- Pestañas de Días con Pill Deslizante -->
+            <div class="daytabs-wrap">
+              <span class="pill" id="tabs-pill" style="transform: translateX(0);"></span>
+              <button class="on" id="tab-btn-1" onclick="cambiarDia(0, 'Día 1: Empuje & Pectoral', 15, '3.2 t', 45)">Día 1</button>
+              <button id="tab-btn-2" onclick="cambiarDia(1, 'Día 2: Tirón & Espalda', 16, '3.6 t', 50)">Día 2</button>
+              <button id="tab-btn-3" onclick="cambiarDia(2, 'Día 3: Pierna & Core', 18, '4.1 t', 55)">Día 3</button>
+            </div>
+
+            <!-- ===================================================
+                 NUEVO: RESUMEN DEL DÍA & SESIÓN (CARD-CUT + FUTURISTA §17)
+                 =================================================== -->
+            <div class="day-summary-card card-cut futurista-fondo">
+              <div class="summary-head">
+                <div class="summary-titles">
+                  <span class="kicker-sub" id="summary-kicker">HOY · DÍA 1</span>
+                  <h2 id="summary-title">Empuje & Deltoides</h2>
+                </div>
+
+                <!-- Anillo compacto con progreso de series §17 -->
+                <div class="mini-ring">
+                  <svg viewBox="0 0 58 58">
+                    <circle class="track" cx="29" cy="29" r="23"/>
+                    <circle class="bar futurista-anillo-glow" id="summary-ring-bar" cx="29" cy="29" r="23"/>
+                  </svg>
+                  <div class="ring-label">
+                    <b id="summary-ring-pct">33%</b>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Métricas con números en Orbitron (--font-hero) -->
+              <div class="metrics-row">
+                <div class="metric-box">
+                  <span class="num" id="summary-sets-text">5 / 15</span>
+                  <span class="lbl">Series listas</span>
+                </div>
+                <div class="metric-box">
+                  <span class="num" id="summary-vol-text">3.2 t</span>
+                  <span class="lbl">Volumen est.</span>
+                </div>
+                <div class="metric-box">
+                  <span class="num" id="summary-time-text">~45 m</span>
+                  <span class="lbl">Duración</span>
+                </div>
+              </div>
+
+              <!-- Barra de progreso de sesión activa -->
+              <div class="session-bar-wrap">
+                <div class="session-bar-head">
+                  <span>Cumplimiento de la sesión</span>
+                  <b id="session-counter-label">5 de 15 series</b>
+                </div>
+                <div class="session-track">
+                  <div class="session-fill" id="session-fill-bar" style="width: 33%;"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ===================================================
+                 LISTA DE EJERCICIOS CON TRACKER TÁCTIL DE SERIES
+                 =================================================== -->
+            <div class="section-label">
+              <span>Ejercicios del día</span>
+              <span>4 ejercicios</span>
+            </div>
+
+            <ul class="exlist card-cut" id="exercise-list">
+              
+              <!-- Ejercicio 1 -->
+              <li id="ex-item-1">
+                <div class="ex-top-row">
+                  <div class="exthumb" title="Tocar para ver técnica en grande">
+                    <svg viewBox="0 0 24 24"><path d="M4 12h16M7 8v8M17 8v8"/></svg>
+                  </div>
+                  <div class="ex-main-info">
+                    <div class="ex-title-row">
+                      <span class="ex-num">01</span>
+                      <h3 class="ex-name">Press de Banca con Barra</h3>
+                    </div>
+                    <span class="muscle-pill">Pectoral Mayor · RIR 1-2</span>
+
+                    <div class="chips-row">
+                      <span class="chip"><b>4</b> series</span>
+                      <span class="chip"><b>6–8</b> reps</span>
+                      <span class="chip"><b>80</b> kg</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Tracker táctil de series de hoy -->
+                <div class="sets-tracker">
+                  <span class="label">Completar series:</span>
+                  <div class="set-nodes-row">
+                    <button class="set-btn done" onclick="toggleSet(this, 1)">1</button>
+                    <button class="set-btn done" onclick="toggleSet(this, 1)">2</button>
+                    <button class="set-btn done" onclick="toggleSet(this, 1)">3</button>
+                    <button class="set-btn" onclick="toggleSet(this, 1)">4</button>
+                  </div>
+                </div>
+
+                <div class="ex-footer-actions">
+                  <button class="action-btn-text" onclick="alert('Abriendo selector de series y reps')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+                    Ajustar
+                  </button>
+                  <button class="action-btn-text" style="color: var(--warn);" onclick="alert('Sustituir por molestia en hombro / codo')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    ¿Molestia? Sustituir
+                  </button>
+                </div>
+              </li>
+
+              <!-- Ejercicio 2 -->
+              <li id="ex-item-2">
+                <div class="ex-top-row">
+                  <div class="exthumb" title="Tocar para ver técnica en grande">
+                    <svg viewBox="0 0 24 24"><path d="M12 3v18M6 8l6-5 6 5"/></svg>
+                  </div>
+                  <div class="ex-main-info">
+                    <div class="ex-title-row">
+                      <span class="ex-num">02</span>
+                      <h3 class="ex-name">Press Inclinado Mancuernas</h3>
+                    </div>
+                    <span class="muscle-pill">Pectoral Clavicular</span>
+
+                    <div class="chips-row">
+                      <span class="chip"><b>4</b> series</span>
+                      <span class="chip"><b>8–10</b> reps</span>
+                      <span class="chip"><b>26</b> kg</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="sets-tracker">
+                  <span class="label">Completar series:</span>
+                  <div class="set-nodes-row">
+                    <button class="set-btn done" onclick="toggleSet(this, 2)">1</button>
+                    <button class="set-btn done" onclick="toggleSet(this, 2)">2</button>
+                    <button class="set-btn" onclick="toggleSet(this, 2)">3</button>
+                    <button class="set-btn" onclick="toggleSet(this, 2)">4</button>
+                  </div>
+                </div>
+
+                <div class="ex-footer-actions">
+                  <button class="action-btn-text" onclick="alert('Abriendo selector de series y reps')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+                    Ajustar
+                  </button>
+                  <button class="action-btn-text" style="color: var(--warn);" onclick="alert('Sustituir por molestia en hombro / codo')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    ¿Molestia? Sustituir
+                  </button>
+                </div>
+              </li>
+
+              <!-- Ejercicio 3 -->
+              <li id="ex-item-3">
+                <div class="ex-top-row">
+                  <div class="exthumb">
+                    <svg viewBox="0 0 24 24"><path d="M4 18L20 6M8 6h12v12"/></svg>
+                  </div>
+                  <div class="ex-main-info">
+                    <div class="ex-title-row">
+                      <span class="ex-num">03</span>
+                      <h3 class="ex-name">Elevaciones Laterales en Polea</h3>
+                    </div>
+                    <span class="muscle-pill">Deltoides Lateral</span>
+
+                    <div class="chips-row">
+                      <span class="chip"><b>3</b> series</span>
+                      <span class="chip"><b>12–15</b> reps</span>
+                      <span class="chip"><b>7.5</b> kg</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="sets-tracker">
+                  <span class="label">Completar series:</span>
+                  <div class="set-nodes-row">
+                    <button class="set-btn" onclick="toggleSet(this, 3)">1</button>
+                    <button class="set-btn" onclick="toggleSet(this, 3)">2</button>
+                    <button class="set-btn" onclick="toggleSet(this, 3)">3</button>
+                  </div>
+                </div>
+
+                <div class="ex-footer-actions">
+                  <button class="action-btn-text" onclick="alert('Abriendo selector de series y reps')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+                    Ajustar
+                  </button>
+                  <button class="action-btn-text" style="color: var(--warn);" onclick="alert('Sustituir por molestia en hombro / codo')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    ¿Molestia? Sustituir
+                  </button>
+                </div>
+              </li>
+
+              <!-- Ejercicio 4 -->
+              <li id="ex-item-4">
+                <div class="ex-top-row">
+                  <div class="exthumb">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v8"/></svg>
+                  </div>
+                  <div class="ex-main-info">
+                    <div class="ex-title-row">
+                      <span class="ex-num">04</span>
+                      <h3 class="ex-name">Extensiones en Polea Alta</h3>
+                    </div>
+                    <span class="muscle-pill">Tríceps Braquial</span>
+
+                    <div class="chips-row">
+                      <span class="chip"><b>4</b> series</span>
+                      <span class="chip"><b>10–12</b> reps</span>
+                      <span class="chip"><b>20</b> kg</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="sets-tracker">
+                  <span class="label">Completar series:</span>
+                  <div class="set-nodes-row">
+                    <button class="set-btn" onclick="toggleSet(this, 4)">1</button>
+                    <button class="set-btn" onclick="toggleSet(this, 4)">2</button>
+                    <button class="set-btn" onclick="toggleSet(this, 4)">3</button>
+                    <button class="set-btn" onclick="toggleSet(this, 4)">4</button>
+                  </div>
+                </div>
+
+                <div class="ex-footer-actions">
+                  <button class="action-btn-text" onclick="alert('Abriendo selector de series y reps')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+                    Ajustar
+                  </button>
+                  <button class="action-btn-text" style="color: var(--warn);" onclick="alert('Sustituir por molestia en codo')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    ¿Molestia? Sustituir
+                  </button>
+                </div>
+              </li>
+
+            </ul>
+
+          </div>
+
+          <!-- ===================================================
+               TIMER DE DESCANSO FLOTANTE (REGLAS §13 / §17)
+               Convive armónicamente sobre la Bottom Nav en bottom-20
+               =================================================== -->
+          <div class="floating-timer-dock" id="timer-dock">
+            
+            <!-- Modo Colapsado (Píldora rápida) -->
+            <div class="timer-collapsed-pill running" id="timer-pill" onclick="toggleExpandTimer()">
+              <div class="timer-pill-info">
+                <div class="timer-pill-icon">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                </div>
+                <div>
+                  <div class="timer-pill-clock" id="pill-clock-display">01:18</div>
+                  <div class="timer-pill-status">Descanso entre series</div>
+                </div>
+              </div>
+              <button class="timer-pill-btn" onclick="event.stopPropagation(); toggleTimerPlay()">Pausa</button>
+            </div>
+
+            <!-- Modo Expandido (Panel con presets) -->
+            <div class="timer-expanded-panel" id="timer-expanded">
+              <div class="timer-panel-head">
+                <h4>Descanso entre series</h4>
+                <button class="timer-close-btn" onclick="toggleExpandTimer()" aria-label="Cerrar panel">✕</button>
+              </div>
+
+              <div class="timer-big-display" id="expanded-clock-display">01:18</div>
+
+              <div class="timer-presets">
+                <button class="preset-btn" onclick="setTimerPreset(30)">30s</button>
+                <button class="preset-btn" onclick="setTimerPreset(60)">60s</button>
+                <button class="preset-btn active" onclick="setTimerPreset(90)">90s</button>
+                <button class="preset-btn" onclick="setTimerPreset(120)">2min</button>
+              </div>
+
+              <div class="timer-main-actions">
+                <button class="timer-action-btn primary" id="btn-timer-primary" onclick="toggleTimerPlay()">Pausar</button>
+                <button class="timer-action-btn secondary" onclick="resetTimer()">Reset</button>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- BOTTOM NAVIGATION BAR (§13) -->
+          <nav class="botnav">
+            <span class="slider"><i></i></span>
+            <a>
+              <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+              Inicio
+            </a>
+            <a class="on">
+              <svg viewBox="0 0 24 24"><path d="M6.5 6.5h11v11h-11z"/><path d="M2 9v6M22 9v6"/></svg>
+              Rutina
+            </a>
+            <a>
+              <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              Mensajes
+            </a>
+          </nav>
+
+        </div>
+
+        <div class="home-ind"></div>
+      </div>
+    </div>
+
+    <!-- ANOTACIONES Y FUNDAMENTOS DE DISEÑO (§21) -->
+    <aside class="annotations-sidebar">
+      
+      <div class="callout-card">
+        <span class="badge-tag">REGLAS §17</span>
+        <b>1. Resumen del Día + Orbitron</b>
+        Tarjeta con corte asimétrico <code>.card-cut</code> y fondo técnico <code>.futurista-fondo</code>. Muestra series totales, volumen estimado en toneladas y duración con números en <code>--font-hero</code> (Orbitron 700).
+      </div>
+
+      <div class="callout-card">
+        <span class="badge-tag">SOLICITADO</span>
+        <b>2. Barra de Progreso de Sesión</b>
+        El cliente marca series directamente con los botones táctiles numerados (<code>1, 2, 3...</code>). Al presionar una serie, se tiñe de <code>--volt</code>, actualiza la barra de progreso y dispara automáticamente el descanso.
+      </div>
+
+      <div class="callout-card">
+        <span class="badge-tag">REGLAS §13</span>
+        <b>3. Timer Flotante Armónico</b>
+        Se ubica en <code>bottom: 74px</code> flotando con z-index seguro sobre la bottom nav. Colapsa en una pastilla compacta con el tiempo en vivo y se expande para cambiar presets de 30s/60s/90s/120s sin tapar el último ejercicio.
+      </div>
+
+      <div class="callout-card">
+        <span class="badge-tag">REGLAS §4 & §12</span>
+        <b>4. Cero Paleta Nueva</b>
+        Se respetan escrupulosamente los tokens base: <code>--paper</code>, <code>--paper-2</code>, <code>--rule</code>, <code>--ink</code> y <code>--volt</code>. Probá el switch superior a <strong>Noche (Oscuro)</strong> para verificar que ningún hex fue inventado.
+      </div>
+
+    </aside>
+
+  </main>
+
+  <!-- JAVASCRIPT VANILLA INTERACTIVO -->
+  <script>
+    // Estado de la sesión
+    let totalSeries = 15;
+    let completedSeries = 5;
+    let timerSeconds = 78;
+    let timerRunning = true;
+    let timerInterval = null;
+    let expandedTimer = false;
+
+    // Cambiar tema claro/oscuro para validar §21
+    function setTheme(theme) {
+      document.body.setAttribute('data-theme', theme);
+      document.querySelectorAll('.theme-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.textContent.toLowerCase().includes(theme === 'papel' ? 'claro' : 'oscuro'));
+      });
+    }
+
+    // Pestañas de días con pill deslizante
+    function cambiarDia(idx, title, sets, vol, dur) {
+      const pill = document.getElementById('tabs-pill');
+      pill.style.transform = `translateX(${idx * 100}%)`;
+
+      document.querySelectorAll('.daytabs-wrap button').forEach((b, i) => {
+        b.classList.toggle('on', i === idx);
+      });
+
+      // Actualizar tarjeta resumen
+      document.getElementById('summary-kicker').textContent = `DÍA ${idx + 1}`;
+      document.getElementById('summary-title').textContent = title.split(':')[1] || title;
+      totalSeries = sets;
+      completedSeries = idx === 0 ? 5 : 0;
+      
+      document.getElementById('summary-vol-text').textContent = vol;
+      document.getElementById('summary-time-text').textContent = `~${dur} m`;
+      updateProgress();
+    }
+
+    // Tildar serie completada
+    function toggleSet(btn, exerciseId) {
+      const isDone = btn.classList.toggle('done');
+      if (isDone) {
+        completedSeries = Math.min(totalSeries, completedSeries + 1);
+        // Reiniciar timer a 90s al completar una serie
+        setTimerPreset(90);
+        startTimer();
+      } else {
+        completedSeries = Math.max(0, completedSeries - 1);
+      }
+      updateProgress();
+    }
+
+    function updateProgress() {
+      const pct = Math.round((completedSeries / totalSeries) * 100);
+      document.getElementById('summary-sets-text').textContent = `${completedSeries} / ${totalSeries}`;
+      document.getElementById('session-counter-label').textContent = `${completedSeries} de ${totalSeries} series`;
+      document.getElementById('session-fill-bar').style.width = `${pct}%`;
+      document.getElementById('summary-ring-pct').textContent = `${pct}%`;
+
+      // Mini ring dashoffset (157 es circunferencia r=25)
+      const ringBar = document.getElementById('summary-ring-bar');
+      const offset = 157 - (pct / 100) * 157;
+      ringBar.style.strokeDashoffset = Math.max(0, offset);
+    }
+
+    // Timer logic
+    function startTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+      timerRunning = true;
+      document.getElementById('timer-pill').classList.add('running');
+      const btnPrimary = document.getElementById('btn-timer-primary');
+      if (btnPrimary) btnPrimary.textContent = 'Pausar';
+
+      timerInterval = setInterval(() => {
+        if (timerSeconds > 0) {
+          timerSeconds--;
+          renderTimerDisplay();
+        } else {
+          clearInterval(timerInterval);
+          timerRunning = false;
+          document.getElementById('timer-pill').classList.remove('running');
+          renderTimerDisplay();
+        }
+      }, 1000);
+    }
+
+    function toggleTimerPlay() {
+      const btnPrimary = document.getElementById('btn-timer-primary');
+      if (timerRunning) {
+        clearInterval(timerInterval);
+        timerRunning = false;
+        document.getElementById('timer-pill').classList.remove('running');
+        if (btnPrimary) btnPrimary.textContent = 'Reanudar';
+      } else {
+        startTimer();
+      }
+    }
+
+    function resetTimer() {
+      timerSeconds = 90;
+      renderTimerDisplay();
+      if (!timerRunning) startTimer();
+    }
+
+    function setTimerPreset(sec) {
+      timerSeconds = sec;
+      document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.textContent.includes(sec === 120 ? '2min' : `${sec}s`));
+      });
+      renderTimerDisplay();
+      if (!timerRunning) startTimer();
+    }
+
+    function renderTimerDisplay() {
+      const mins = Math.floor(timerSeconds / 60);
+      const secs = timerSeconds % 60;
+      const fmt = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+      document.getElementById('pill-clock-display').textContent = fmt;
+      document.getElementById('expanded-clock-display').textContent = fmt;
+    }
+
+    function toggleExpandTimer() {
+      expandedTimer = !expandedTimer;
+      document.getElementById('timer-pill').style.display = expandedTimer ? 'none' : 'flex';
+      document.getElementById('timer-expanded').style.display = expandedTimer ? 'block' : 'none';
+    }
+
+    // Inicialización
+    window.addEventListener('DOMContentLoaded', () => {
+      startTimer();
+      updateProgress();
+    });
+  </script>
+</body>
+</html>

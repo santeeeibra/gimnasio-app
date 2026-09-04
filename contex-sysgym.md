@@ -539,6 +539,22 @@ SECURITY DEFINER (`soy_destinatario`, `mensaje_gimnasio`, `mensaje_remitente`,
   entregable 4). Si siguen sin gustar, la alternativa es GIFs reales vía
   ExerciseDB (RapidAPI, con API key y límite en el free tier).
 
+## Mockups visuales en `design/` (fuera de la app)
+
+Carpeta `design/` = HTML sueltos de exploración visual, **no** se importan
+desde `src/` ni se deployan. Se trabajan en paralelo con otras herramientas
+(Gravity), así que **no tocarlos** salvo pedido explícito.
+
+- `mockup-rutina-obsidian.html` — identidad "Obsidian High-Performance" para
+  la rutina semanal.
+- `propuesta-rutina-emil.html` — misma pantalla en clave Emil Kowalski.
+- `propuesta-cliente-rutina-peso.html` — vista del cliente: rutina semanal +
+  registro de peso.
+- `sysgym-10-pantallas.html`, `vista-cliente-con-vida.html` — pases previos.
+
+Lo que de ahí se decide adoptar se escribe primero en `REGLAS_UI_EMIL.md`
+(reescrito 2026-09-04) y recién después se lleva a `src/`.
+
 ## Cómo seguir (próxima sesión)
 
 Ya hecho (2026-09-03):

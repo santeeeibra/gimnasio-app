@@ -1,0 +1,1715 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SysGym — Nueva Identidad "Obsidian High-Performance" (Rutina Semanal)</title>
+
+  <!-- Google Fonts: Plus Jakarta Sans + JetBrains Mono (REGLAS_UI_EMIL.md §2) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    /* ============================================================
+       TOKENS ACTUALIZADOS: OBSIDIAN HIGH-PERFORMANCE (REGLAS §1)
+       Preset Oscuro (Default) y Preset Claro Coherente (Titanium)
+       ============================================================ */
+    :root {
+      /* Modo Oscuro (Default - Obsidian Core) */
+      --paper: #090d14;
+      --paper-2: #121722;
+      --paper-3: #1b2232;
+      --ink: #f8fafc;
+      --ink-soft: #94a3b8;
+      --rule: rgba(255, 255, 255, 0.08);
+
+      --accent: #10e7a0;
+      --accent-ink: #042417;
+      --accent-glow: rgba(16, 231, 160, 0.25);
+      --accent-secondary: #ff5252;
+      --accent-secondary-glow: rgba(255, 82, 82, 0.25);
+
+      --danger: #ef4444;
+      --warn: #f59e0b;
+      --ok: #10b981;
+      --scrim: rgba(4, 7, 12, 0.78);
+
+      /* Tipografía §2 */
+      --font-display: 'Plus Jakarta Sans', system-ui, sans-serif;
+      --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+      --font-hero: 'JetBrains Mono', monospace;
+
+      /* Radios ergonómicos fluidos §3 */
+      --radius-input: 10px;
+      --radius-btn: 12px;
+      --radius-card: 14px;
+      --radius-hero: 16px;
+      --radius-modal: 22px;
+      --radius-full: 9999px;
+
+      /* Timing §8 */
+      --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+      --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+    }
+
+    /* Preset Claro Coherente (Titanium Daylight) */
+    body[data-theme="light"] {
+      --paper: #f8fafc;
+      --paper-2: #ffffff;
+      --paper-3: #f1f5f9;
+      --ink: #090d14;
+      --ink-soft: #64748b;
+      --rule: #e2e8f0;
+
+      --accent: #059669;
+      --accent-ink: #ffffff;
+      --accent-glow: rgba(5, 150, 105, 0.20);
+      --accent-secondary: #ef4444;
+      --accent-secondary-glow: rgba(239, 68, 68, 0.20);
+
+      --danger: #dc2626;
+      --warn: #d97706;
+      --ok: #059669;
+      --scrim: rgba(15, 23, 42, 0.60);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: #04060a;
+      font-family: var(--font-sans);
+      color: var(--ink);
+      min-height: 100vh;
+      padding: 36px 20px 80px;
+      -webkit-font-smoothing: antialiased;
+      transition: background-color 0.25s var(--ease-out);
+    }
+
+    body[data-theme="light"] {
+      background: #e9edf2;
+    }
+
+    /* ---------- Header del Showcase Evaluativo ---------- */
+    .showcase-header {
+      max-width: 1060px;
+      margin: 0 auto 30px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .brand-group h1 {
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-pill {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 3px 10px;
+      border-radius: var(--radius-full);
+      background: var(--accent);
+      color: var(--accent-ink);
+    }
+
+    .brand-group p {
+      font-size: 13px;
+      color: var(--ink-soft);
+      margin-top: 4px;
+    }
+
+    .theme-switch {
+      display: flex;
+      align-items: center;
+      background: var(--paper-2);
+      border: 1px solid var(--rule);
+      padding: 4px;
+      border-radius: var(--radius-full);
+      gap: 4px;
+    }
+
+    .theme-switch-btn {
+      background: none;
+      border: none;
+      padding: 7px 16px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ink-soft);
+      border-radius: var(--radius-full);
+      cursor: pointer;
+      font-family: var(--font-sans);
+      transition: all 0.15s var(--ease-out);
+    }
+
+    .theme-switch-btn.active {
+      background: var(--paper);
+      color: var(--ink);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    }
+
+    /* ---------- Escenario: Teléfono + Anotaciones de Tokens ---------- */
+    .stage {
+      max-width: 1060px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 40px;
+    }
+
+    /* Chasis Smartphone (375px exacto para testear desbordes §7) */
+    .phone-mockup {
+      width: 375px;
+      height: 812px;
+      background: #000;
+      border-radius: 48px;
+      padding: 12px;
+      box-shadow: 0 32px 80px -16px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.14);
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .phone-screen {
+      width: 100%;
+      height: 100%;
+      background: var(--paper);
+      border-radius: 38px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      transition: background-color 0.25s var(--ease-out);
+    }
+
+    /* Dynamic Island & Status Bar */
+    .status-bar {
+      height: 44px;
+      flex: 0 0 44px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 0 24px 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ink);
+      z-index: 40;
+    }
+
+    .dynamic-island {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 110px;
+      height: 26px;
+      background: #000;
+      border-radius: 20px;
+      z-index: 50;
+    }
+
+    .status-icons {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+    }
+
+    .home-bar {
+      position: absolute;
+      bottom: 7px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 124px;
+      height: 4px;
+      border-radius: 999px;
+      background: var(--ink);
+      opacity: 0.25;
+      z-index: 45;
+      pointer-events: none;
+    }
+
+    /* Viewport Desplazable de Contenido */
+    .viewport {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .content-scroll {
+      position: absolute;
+      inset: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 10px 20px 110px; /* pb generoso para el timer flotante + bottom nav */
+    }
+    .content-scroll::-webkit-scrollbar { display: none; }
+
+    /* ------------------------------------------------------------
+       ESTRUCTURA DE PANTALLA DE RUTINA
+       ------------------------------------------------------------ */
+    .link-volver {
+      font-size: 13px;
+      color: var(--ink-soft);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-block;
+      transition: color 0.15s;
+    }
+    .link-volver:hover { color: var(--ink); }
+
+    .header-row {
+      margin-top: 8px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    h1.page-title {
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      line-height: 1.15;
+    }
+
+    .meta-subtitle {
+      font-size: 12.5px;
+      color: var(--ink-soft);
+      margin-top: 3px;
+      font-weight: 500;
+    }
+
+    .btn-regenerar {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 36px;
+      padding: 0 12px;
+      border-radius: var(--radius-input);
+      border: 1px solid var(--rule);
+      background: var(--paper-2);
+      color: var(--ink-soft);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s var(--ease-out), background-color 0.15s;
+    }
+    .btn-regenerar:active { transform: scale(0.95); background: var(--paper-3); }
+
+    /* Banner Motivacional */
+    .banner-quote {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--rule);
+      background: var(--paper-2);
+      padding: 12px 14px;
+      border-left: 3px solid var(--accent);
+      min-height: 52px;
+      margin-top: 14px;
+      border-radius: var(--radius-card);
+    }
+    .banner-quote p {
+      position: absolute;
+      inset: 12px 14px;
+      font-size: 12.5px;
+      line-height: 1.45;
+      font-weight: 500;
+      opacity: 0;
+      animation: quote-flow 16s linear infinite;
+    }
+    .banner-quote p:nth-child(2) { animation-delay: 8s; }
+    @keyframes quote-flow {
+      0% { opacity: 0; }
+      4% { opacity: 1; }
+      46% { opacity: 1; }
+      50% { opacity: 0; }
+      100% { opacity: 0; }
+    }
+
+    /* Pestañas de Días con Slider Fluido */
+    .day-tabs {
+      margin-top: 14px;
+      position: relative;
+      display: flex;
+      border: 1px solid var(--rule);
+      border-radius: var(--radius-btn);
+      background: var(--paper-2);
+      padding: 3px;
+    }
+    .day-tabs .pill-slider {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: calc((100% - 6px) / 3);
+      height: calc(100% - 6px);
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      border-radius: 9px;
+      transition: transform 0.25s var(--ease-in-out);
+      z-index: 0;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    }
+    .day-tabs button {
+      position: relative;
+      z-index: 1;
+      flex: 1;
+      border: 0;
+      background: transparent;
+      font-family: var(--font-sans);
+      cursor: pointer;
+      padding: 8px 0;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink-soft);
+      text-align: center;
+      transition: color 0.15s;
+    }
+    .day-tabs button.active {
+      color: var(--ink);
+      font-weight: 700;
+    }
+
+    /* ============================================================
+       NUEVA HERO CARD: RESUMEN DEL DÍA & PROGRESO DE SESIÓN
+       (Obsidian High-Performance con JetBrains Mono)
+       ============================================================ */
+    .day-summary-card {
+      margin-top: 14px;
+      border: 1px solid var(--rule);
+      background: var(--paper-2);
+      border-radius: var(--radius-hero);
+      padding: 16px 18px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 4px 20px -6px rgba(0, 0, 0, 0.35);
+    }
+
+    /* Halo sutil de fondo */
+    .day-summary-card::before {
+      content: '';
+      position: absolute;
+      top: -30px;
+      right: -30px;
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: var(--accent-glow);
+      filter: blur(30px);
+      pointer-events: none;
+    }
+
+    .summary-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .summary-badge-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+
+    .kicker-tag {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 2px 7px;
+      border-radius: 5px;
+      background: var(--accent-glow);
+      color: var(--accent);
+    }
+
+    .summary-header h2 {
+      font-family: var(--font-display);
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -0.015em;
+    }
+
+    /* Anillo compacto de progreso SVG */
+    .ring-box {
+      position: relative;
+      width: 54px;
+      height: 54px;
+      flex-shrink: 0;
+    }
+    .ring-box svg {
+      transform: rotate(-90deg);
+      width: 100%;
+      height: 100%;
+    }
+    .ring-box circle.track {
+      stroke: var(--rule);
+      stroke-width: 5;
+      fill: none;
+    }
+    .ring-box circle.bar {
+      stroke: var(--accent);
+      stroke-width: 5;
+      fill: none;
+      stroke-linecap: round;
+      stroke-dasharray: 144; /* 2 * PI * 23 */
+      stroke-dashoffset: 96; /* 33% */
+      filter: drop-shadow(0 0 3px var(--accent-glow));
+      transition: stroke-dashoffset 0.4s var(--ease-out);
+    }
+    .ring-box .ring-pct {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-hero);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    /* Grilla de Métricas Técnicas */
+    .summary-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--rule);
+    }
+
+    .metric-col {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .metric-col .val {
+      font-family: var(--font-hero);
+      font-size: 14.5px;
+      font-weight: 700;
+      color: var(--ink);
+      line-height: 1.2;
+    }
+
+    .metric-col .lbl {
+      font-size: 9.5px;
+      font-weight: 600;
+      color: var(--ink-soft);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    /* Barra de Progreso de Sesión */
+    .session-progress-wrap {
+      margin-top: 14px;
+    }
+
+    .session-progress-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--ink-soft);
+      margin-bottom: 6px;
+    }
+
+    .session-progress-head b {
+      font-family: var(--font-hero);
+      color: var(--ink);
+      font-size: 11px;
+    }
+
+    .session-progress-bar {
+      width: 100%;
+      height: 6px;
+      border-radius: var(--radius-full);
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      overflow: hidden;
+    }
+
+    .session-progress-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: var(--radius-full);
+      width: 33%;
+      box-shadow: 0 0 8px var(--accent-glow);
+      transition: width 0.35s var(--ease-out);
+    }
+
+    /* ------------------------------------------------------------
+       LISTA DE EJERCICIOS CON TRACKER TÁCTIL
+       ------------------------------------------------------------ */
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      margin: 20px 0 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    ul.exercise-list {
+      list-style: none;
+      border: 1px solid var(--rule);
+      background: var(--paper-2);
+      border-radius: var(--radius-card);
+      overflow: hidden;
+    }
+
+    ul.exercise-list > li {
+      padding: 14px 16px;
+      border-top: 1px solid var(--rule);
+      transition: background-color 0.15s;
+    }
+    ul.exercise-list > li:first-child { border-top: 0; }
+
+    .ex-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    /* Miniatura con tamaño fijo §5 */
+    .ex-thumb {
+      width: 68px;
+      height: 68px;
+      flex-shrink: 0;
+      border-radius: 10px;
+      border: 1px solid var(--rule);
+      background: var(--paper);
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      transition: transform 0.15s var(--ease-out);
+    }
+    .ex-thumb:active { transform: scale(0.95); }
+    .ex-thumb svg { width: 24px; height: 24px; stroke: var(--ink-soft); fill: none; stroke-width: 1.75; }
+
+    .ex-content {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .ex-title-row {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+
+    .ex-index-tag {
+      font-family: var(--font-hero);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .ex-name-text {
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.25;
+      color: var(--ink);
+    }
+
+    .muscle-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      margin-top: 2px;
+      display: block;
+    }
+
+    /* Chips de prescripción con JetBrains Mono */
+    .chips-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .chip-item {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--rule);
+      background: var(--paper);
+      font-size: 11px;
+      color: var(--ink-soft);
+    }
+    .chip-item b {
+      font-family: var(--font-hero);
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    /* Tracker táctil de series de hoy (mínimo 44px táctil §3 WCAG) */
+    .set-checkpoints {
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      border-radius: var(--radius-input);
+      padding: 6px 8px;
+    }
+
+    .set-checkpoints .title {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--ink-soft);
+      white-space: nowrap;
+    }
+
+    .set-buttons-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-set-node {
+      min-width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      border: 1px solid var(--rule);
+      background: var(--paper-2);
+      color: var(--ink-soft);
+      font-family: var(--font-hero);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      transition: all 0.15s var(--ease-out);
+    }
+    .btn-set-node:active { transform: scale(0.94); }
+
+    .btn-set-node.completed {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--accent-ink);
+      box-shadow: 0 1px 8px var(--accent-glow);
+    }
+
+    /* Acciones inferiores de ejercicio */
+    .ex-actions-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px dashed var(--rule);
+    }
+
+    .btn-action-ghost {
+      background: none;
+      border: none;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--ink-soft);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 6px;
+      border-radius: 6px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .btn-action-ghost:hover { color: var(--ink); background: var(--paper); }
+    .btn-action-ghost svg { width: 13px; height: 13px; }
+
+    /* ============================================================
+       TIMER DE DESCANSO FLOTANTE ARRASTRABLE (TOUCH DRAGGABLE)
+       ============================================================ */
+    .floating-timer-container {
+      position: absolute;
+      z-index: 35;
+      touch-action: none; /* Permite arrastre táctil sin scroll nativo */
+      user-select: none;
+    }
+
+    /* Estado arrastrándose: elevación con halo */
+    .floating-timer-container.dragging {
+      cursor: grabbing !important;
+      opacity: 0.95;
+      transition: none !important;
+      z-index: 50;
+    }
+
+    /* Animación de snapping al soltar */
+    .floating-timer-container.snapping {
+      transition: transform 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.2) !important;
+    }
+
+    /* Modo Colapsado: Píldora / Burbuja compacta ergonómica (mínimo 44px) */
+    .timer-pill {
+      min-width: 48px;
+      height: 48px;
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.05);
+      border-radius: var(--radius-full);
+      padding: 6px 14px 6px 8px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      cursor: grab;
+      backdrop-filter: blur(12px);
+      transition: transform 0.15s var(--ease-out), box-shadow 0.15s, border-color 0.15s;
+    }
+    .timer-pill:active { cursor: grabbing; }
+
+    .timer-badge-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--paper-2);
+      border: 1px solid var(--rule);
+      display: grid;
+      place-items: center;
+      color: var(--ink);
+      flex-shrink: 0;
+      transition: background 0.15s, color 0.15s;
+    }
+    .timer-pill.running .timer-badge-icon {
+      background: var(--accent);
+      color: var(--accent-ink);
+      border-color: var(--accent);
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
+
+    .timer-pill-info {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.15;
+    }
+
+    .timer-clock-text {
+      font-family: var(--font-hero);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--ink);
+      letter-spacing: -0.01em;
+    }
+
+    .timer-sub-text {
+      font-size: 9.5px;
+      color: var(--ink-soft);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 700;
+    }
+
+    /* Modo Expandido: Panel in-situ con presets y controles */
+    .timer-expanded-card {
+      display: none;
+      width: 290px;
+      max-width: calc(375px - 24px);
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      border-radius: var(--radius-card);
+      box-shadow: 0 24px 48px -8px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.08);
+      padding: 16px;
+      backdrop-filter: blur(16px);
+      animation: rise-panel 0.2s var(--ease-out) both;
+    }
+    @keyframes rise-panel {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .timer-card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .timer-card-head h4 {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+    .timer-close-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      border: 1px solid var(--rule);
+      background: var(--paper-2);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      color: var(--ink-soft);
+      transition: background 0.15s, color 0.15s;
+    }
+    .timer-close-icon:active { transform: scale(0.92); }
+    .timer-close-icon:hover { color: var(--ink); }
+
+    .timer-digits-big {
+      font-family: var(--font-hero);
+      font-size: 42px;
+      font-weight: 700;
+      text-align: center;
+      letter-spacing: -0.02em;
+      line-height: 1;
+      margin: 8px 0 14px;
+      color: var(--ink);
+    }
+
+    .timer-presets-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .btn-preset {
+      height: 44px;
+      border-radius: var(--radius-input);
+      border: 1px solid var(--rule);
+      background: var(--paper-2);
+      font-size: 13px;
+      font-weight: 700;
+      font-family: var(--font-hero);
+      color: var(--ink-soft);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-preset.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--accent-ink);
+    }
+
+    .timer-action-buttons {
+      display: flex;
+      gap: 8px;
+    }
+    .btn-timer-ctrl {
+      flex: 1;
+      height: 44px;
+      border-radius: var(--radius-btn);
+      border: 1px solid var(--rule);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.15s var(--ease-out);
+    }
+    .btn-timer-ctrl:active { transform: scale(0.97); }
+    .btn-timer-ctrl.primary {
+      background: var(--accent);
+      color: var(--accent-ink);
+      border-color: var(--accent);
+    }
+    .btn-timer-ctrl.secondary {
+      background: var(--paper-2);
+      color: var(--ink);
+    }
+
+    /* ------------------------------------------------------------
+       BOTTOM NAVIGATION BAR
+       ------------------------------------------------------------ */
+    .bottom-nav {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 40;
+      display: flex;
+      border-top: 1px solid var(--rule);
+      background: color-mix(in srgb, var(--paper) 95%, transparent);
+      backdrop-filter: blur(12px);
+      height: 62px;
+      padding-bottom: 8px;
+    }
+
+    .bottom-nav a {
+      position: relative;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--ink-soft);
+      text-decoration: none;
+      transition: transform 0.15s, color 0.15s;
+    }
+    .bottom-nav a:active { transform: scale(0.95); }
+    .bottom-nav a.active { color: var(--ink); }
+    .bottom-nav a svg { width: 19px; height: 19px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+    .nav-active-indicator {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 33.333%;
+      height: 2px;
+      display: flex;
+      justify-content: center;
+      transform: translateX(100%); /* Rutina activa */
+    }
+    .nav-active-indicator i {
+      width: 30px;
+      height: 2px;
+      border-radius: var(--radius-full);
+      background: var(--accent);
+      box-shadow: 0 0 6px var(--accent-glow);
+    }
+
+    /* ------------------------------------------------------------
+       SIDEBAR DE ANOTACIONES Y CUMPLIMIENTO DE REGLAS
+       ------------------------------------------------------------ */
+    .notes-column {
+      width: 340px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+
+    .note-card {
+      background: var(--paper-2);
+      border: 1px solid var(--rule);
+      border-radius: var(--radius-card);
+      padding: 16px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+      font-size: 12.5px;
+      line-height: 1.55;
+    }
+
+    .note-badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: var(--accent);
+      color: var(--accent-ink);
+      margin-bottom: 6px;
+    }
+
+    .note-card h4 {
+      font-family: var(--font-display);
+      font-size: 14.5px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 4px;
+    }
+
+    .note-card code {
+      font-family: var(--font-hero);
+      font-size: 11px;
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      color: var(--accent);
+    }
+
+    @media (max-width: 920px) {
+      .stage {
+        flex-direction: column;
+        align-items: center;
+      }
+      .notes-column {
+        width: 100%;
+        max-width: 375px;
+      }
+    }
+  </style>
+</head>
+<body data-theme="dark">
+
+  <!-- BARRA SUPERIOR DEL SHOWCASE -->
+  <header class="showcase-header">
+    <div class="brand-group">
+      <h1>
+        SysGym
+        <span class="brand-pill">Obsidian High-Performance</span>
+      </h1>
+      <p>Mockup oficial con los tokens actualizados de <code>REGLAS_UI_EMIL.md</code></p>
+    </div>
+
+    <div class="theme-switch">
+      <button class="theme-switch-btn active" onclick="setAppTheme('dark')">🌙 Obsidian (Oscuro)</button>
+      <button class="theme-switch-btn" onclick="setAppTheme('light')">☀️ Titanium (Claro)</button>
+    </div>
+  </header>
+
+  <!-- ESCENARIO -->
+  <main class="stage">
+
+    <!-- TELÉFONO CHASSIS (375px exacto para verificar WCAG y responsive) -->
+    <div class="phone-mockup">
+      <div class="phone-screen">
+        
+        <!-- STATUS BAR & ISLAND -->
+        <div class="status-bar">
+          <span>09:41</span>
+          <div class="dynamic-island"></div>
+          <div class="status-icons">
+            <span>5G</span>
+            <svg width="18" height="12" viewBox="0 0 24 14" fill="currentColor">
+              <rect x="1" y="1" width="18" height="12" rx="3" fill="none" stroke="currentColor" stroke-width="2"/>
+              <rect x="3" y="3" width="12" height="8" rx="1.5" fill="currentColor"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- VIEWPORT CON SCROLL -->
+        <div class="viewport">
+          <div class="content-scroll">
+
+            <!-- Link Volver (§11 linkClasses) -->
+            <span class="link-volver">← Volver</span>
+
+            <!-- Encabezado de Rutina (§6) -->
+            <div class="header-row">
+              <div>
+                <h1 class="page-title">Tu rutina</h1>
+                <p class="meta-subtitle">Hipertrofia · Intermedio · 3 días</p>
+              </div>
+              <button class="btn-regenerar" onclick="alert('Abre selector de preferencias de rutina')">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <path d="M23 4v6h-6M1 20v-6h6"/>
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                </svg>
+                Regenerar
+              </button>
+            </div>
+
+            <!-- Banner Motivacional Lento -->
+            <div class="banner-quote">
+              <p>"El progreso no se negocia: es la suma de los días que apareciste."</p>
+              <p>"Hoy pesado o liviano, pero hoy. Mañana no entrena por vos."</p>
+            </div>
+
+            <!-- Pestañas de Días con Slider -->
+            <div class="day-tabs">
+              <span class="pill-slider" id="pill-slider" style="transform: translateX(0);"></span>
+              <button class="active" id="btn-tab-1" onclick="selectDay(0, 'Día 1: Empuje & Pectoral', 15, '3.2 t', 45)">Día 1</button>
+              <button id="btn-tab-2" onclick="selectDay(1, 'Día 2: Tirón & Espalda', 16, '3.6 t', 50)">Día 2</button>
+              <button id="btn-tab-3" onclick="selectDay(2, 'Día 3: Pierna & Core', 18, '4.1 t', 55)">Día 3</button>
+            </div>
+
+            <!-- ===================================================
+                 NUEVA HERO CARD: RESUMEN DEL DÍA & SESIÓN (§17)
+                 =================================================== -->
+            <div class="day-summary-card">
+              <div class="summary-header">
+                <div>
+                  <div class="summary-badge-row">
+                    <span class="kicker-tag" id="day-badge-kicker">HOY · DÍA 1</span>
+                    <span style="font-size: 11px; color: var(--ink-soft); font-weight: 600;">PECHO & HOMBRO</span>
+                  </div>
+                  <h2 id="day-hero-title">Empuje & Deltoides</h2>
+                </div>
+
+                <!-- Anillo de progreso compacto §17 -->
+                <div class="ring-box">
+                  <svg viewBox="0 0 54 54">
+                    <circle class="track" cx="27" cy="27" r="23"/>
+                    <circle class="bar" id="hero-ring-fill" cx="27" cy="27" r="23"/>
+                  </svg>
+                  <div class="ring-pct" id="hero-ring-text">33%</div>
+                </div>
+              </div>
+
+              <!-- Grilla de Métricas Técnicas en JetBrains Mono -->
+              <div class="summary-metrics">
+                <div class="metric-col">
+                  <span class="val" id="summary-metric-sets">5 / 15</span>
+                  <span class="lbl">Series listas</span>
+                </div>
+                <div class="metric-col">
+                  <span class="val" id="summary-metric-vol">3.2 t</span>
+                  <span class="lbl">Volumen est.</span>
+                </div>
+                <div class="metric-col">
+                  <span class="val" id="summary-metric-dur">~45 m</span>
+                  <span class="lbl">Duración</span>
+                </div>
+              </div>
+
+              <!-- Barra de progreso de cumplimiento de sesión -->
+              <div class="session-progress-wrap">
+                <div class="session-progress-head">
+                  <span>Cumplimiento de la sesión</span>
+                  <b id="session-progress-label">5 de 15 series</b>
+                </div>
+                <div class="session-progress-bar">
+                  <div class="session-progress-fill" id="session-progress-fill-bar" style="width: 33%;"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ===================================================
+                 LISTA DE EJERCICIOS CON TRACKER TÁCTIL
+                 =================================================== -->
+            <div class="section-label">
+              <span>Ejercicios del día</span>
+              <span style="color: var(--ink-soft); font-weight: 500;">4 ejercicios</span>
+            </div>
+
+            <ul class="exercise-list">
+              
+              <!-- Ejercicio 1 -->
+              <li>
+                <div class="ex-row">
+                  <div class="ex-thumb" title="Técnica del ejercicio">
+                    <svg viewBox="0 0 24 24"><path d="M4 12h16M7 8v8M17 8v8"/></svg>
+                  </div>
+                  <div class="ex-content">
+                    <div class="ex-title-row">
+                      <span class="ex-index-tag">01</span>
+                      <h3 class="ex-name-text">Press de Banca con Barra</h3>
+                    </div>
+                    <span class="muscle-label">Pectoral Mayor · RIR 1-2</span>
+
+                    <div class="chips-row">
+                      <span class="chip-item"><b>4</b> series</span>
+                      <span class="chip-item"><b>6–8</b> reps</span>
+                      <span class="chip-item"><b>80</b> kg</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Tracker de series de hoy con feedback táctil §8 -->
+                <div class="set-checkpoints">
+                  <span class="title">Completar series:</span>
+                  <div class="set-buttons-group">
+                    <button class="btn-set-node completed" onclick="toggleSetCheck(this)">1</button>
+                    <button class="btn-set-node completed" onclick="toggleSetCheck(this)">2</button>
+                    <button class="btn-set-node completed" onclick="toggleSetCheck(this)">3</button>
+                    <button class="btn-set-node" onclick="toggleSetCheck(this)">4</button>
+                  </div>
+                </div>
+
+                <div class="ex-actions-bar">
+                  <button class="btn-action-ghost" onclick="alert('Ajustar series y repeticiones')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+                    Ajustar
+                  </button>
+                  <button class="btn-action-ghost" style="color: var(--warn);" onclick="alert('Sustituir por molestia articular')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    ¿Molestia? Sustituir
+                  </button>
+                </div>
+              </li>
+
+              <!-- Ejercicio 2 -->
+              <li>
+                <div class="ex-row">
+                  <div class="ex-thumb">
+                    <svg viewBox="0 0 24 24"><path d="M12 3v18M6 8l6-5 6 5"/></svg>
+                  </div>
+                  <div class="ex-content">
+                    <div class="ex-title-row">
+                      <span class="ex-index-tag">02</span>
+                      <h3 class="ex-name-text">Press Inclinado Mancuernas</h3>
+                    </div>
+                    <span class="muscle-label">Pectoral Clavicular</span>
+
+                    <div class="chips-row">
+                      <span class="chip-item"><b>4</b> series</span>
+                      <span class="chip-item"><b>8–10</b> reps</span>
+                      <span class="chip-item"><b>26</b> kg</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="set-checkpoints">
+                  <span class="title">Completar series:</span>
+                  <div class="set-buttons-group">
+                    <button class="btn-set-node completed" onclick="toggleSetCheck(this)">1</button>
+                    <button class="btn-set-node completed" onclick="toggleSetCheck(this)">2</button>
+                    <button class="btn-set-node" onclick="toggleSetCheck(this)">3</button>
+                    <button class="btn-set-node" onclick="toggleSetCheck(this)">4</button>
+                  </div>
+                </div>
+
+                <div class="ex-actions-bar">
+                  <button class="btn-action-ghost" onclick="alert('Ajustar series y repeticiones')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+                    Ajustar
+                  </button>
+                  <button class="btn-action-ghost" style="color: var(--warn);" onclick="alert('Sustituir por molestia')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    ¿Molestia? Sustituir
+                  </button>
+                </div>
+              </li>
+
+              <!-- Ejercicio 3 -->
+              <li>
+                <div class="ex-row">
+                  <div class="ex-thumb">
+                    <svg viewBox="0 0 24 24"><path d="M4 18L20 6M8 6h12v12"/></svg>
+                  </div>
+                  <div class="ex-content">
+                    <div class="ex-title-row">
+                      <span class="ex-index-tag">03</span>
+                      <h3 class="ex-name-text">Elevaciones Laterales Polea</h3>
+                    </div>
+                    <span class="muscle-label">Deltoides Lateral</span>
+
+                    <div class="chips-row">
+                      <span class="chip-item"><b>3</b> series</span>
+                      <span class="chip-item"><b>12–15</b> reps</span>
+                      <span class="chip-item"><b>7.5</b> kg</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="set-checkpoints">
+                  <span class="title">Completar series:</span>
+                  <div class="set-buttons-group">
+                    <button class="btn-set-node" onclick="toggleSetCheck(this)">1</button>
+                    <button class="btn-set-node" onclick="toggleSetCheck(this)">2</button>
+                    <button class="btn-set-node" onclick="toggleSetCheck(this)">3</button>
+                  </div>
+                </div>
+
+                <div class="ex-actions-bar">
+                  <button class="btn-action-ghost" onclick="alert('Ajustar')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+                    Ajustar
+                  </button>
+                  <button class="btn-action-ghost" style="color: var(--warn);" onclick="alert('Sustituir')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    ¿Molestia? Sustituir
+                  </button>
+                </div>
+              </li>
+
+            </ul>
+
+          </div>
+
+          <!-- ===================================================
+               TIMER DE DESCANSO FLOTANTE ARRASTRABLE
+               =================================================== -->
+          <div class="floating-timer-container" id="floating-timer-container">
+            
+            <!-- Modo Colapsado (Píldora ergonómica arrastrable >= 44px) -->
+            <div class="timer-pill running" id="timer-pill-widget">
+              <div class="timer-badge-icon">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                </svg>
+              </div>
+              <div class="timer-pill-info">
+                <div class="timer-clock-text" id="pill-digits">01:15</div>
+                <div class="timer-sub-text">Descanso</div>
+              </div>
+            </div>
+
+            <!-- Modo Expandido In-Situ -->
+            <div class="timer-expanded-card" id="timer-expanded-panel">
+              <div class="timer-card-head">
+                <h4>Descanso entre series</h4>
+                <div class="timer-close-icon" onclick="toggleTimerView()">✕</div>
+              </div>
+
+              <div class="timer-digits-big" id="expanded-digits">01:15</div>
+
+              <div class="timer-presets-grid">
+                <button class="btn-preset" onclick="selectPreset(30)">30s</button>
+                <button class="btn-preset" onclick="selectPreset(60)">60s</button>
+                <button class="btn-preset active" onclick="selectPreset(90)">90s</button>
+                <button class="btn-preset" onclick="selectPreset(120)">2m</button>
+              </div>
+
+              <div class="timer-action-buttons">
+                <button class="btn-timer-ctrl primary" id="btn-timer-ctrl-primary" onclick="toggleTimerState()">Pausar</button>
+                <button class="btn-timer-ctrl secondary" onclick="resetTimerCountdown()">Reset</button>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- BOTTOM NAVIGATION BAR -->
+          <nav class="bottom-nav">
+            <span class="nav-active-indicator"><i></i></span>
+            <a>
+              <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+              Inicio
+            </a>
+            <a class="active">
+              <svg viewBox="0 0 24 24"><path d="M6.5 6.5h11v11h-11z"/><path d="M2 9v6M22 9v6"/></svg>
+              Rutina
+            </a>
+            <a>
+              <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              Mensajes
+            </a>
+          </nav>
+
+        </div>
+
+        <div class="home-bar"></div>
+      </div>
+    </div>
+
+    <!-- ANOTACIONES LATERALES DE LA NUEVA IDENTIDAD -->
+    <aside class="notes-column">
+      
+      <div class="note-card">
+        <span class="note-badge">REGLAS §1</span>
+        <h4>Obsidian Core & Emerald Glow</h4>
+        <p>Paleta profunda en carbón satinado (<code>#090d14</code> / <code>#121722</code>) con acento Hyper-Mint (<code>#10e7a0</code>). Máximo contraste, cero fatiga visual en salas oscuras y toque Coral secundario para alertas.</p>
+      </div>
+
+      <div class="note-card">
+        <span class="note-badge">REGLAS §2</span>
+        <h4>Plus Jakarta Sans + JetBrains Mono</h4>
+        <p>Se reemplazó <em>Bricolage Grotesque</em> y <em>Orbitron</em> por <strong>Plus Jakarta Sans</strong> (geometría limpia y moderna) y <strong>JetBrains Mono</strong> para todos los datos numéricos tabulares (series, reps, kg, tiempos).</p>
+      </div>
+
+      <div class="note-card">
+        <span class="note-badge">REGLAS §3 & §4</span>
+        <h4>Radios Ergonómicos 10–16px</h4>
+        <p>Se descartó el corte asimétrico (<code>.card-cut</code>) en favor de bordes de 1px de alta precisión con radios fluidos de <strong>14px a 16px</strong>, diseñados para la ergonomía natural del agarre móvil.</p>
+      </div>
+
+      <div class="note-card">
+        <span class="note-badge">USABILIDAD §7 & §10</span>
+        <h4>100% Usabilidad Intacta</h4>
+        <p>Mantiene intactas todas las reglas no negociables: targets táctiles de 44px, cero scroll horizontal en 375px, imágenes fijas con <code>shrink-0</code>, y contraste re-derivado en Modo Claro y Oscuro.</p>
+      </div>
+
+      <div class="note-card">
+        <span class="note-badge">INTERACCIÓN FLOTANTE</span>
+        <h4>Timer Draggable con Edge-Snapping</h4>
+        <p>El timer se puede arrastrar libremente por el viewport móvil. Al soltarlo, se pega magnéticamente al lateral más cercano (como en Messenger), preservando su posición en la sesión. Un tap estático lo expande in situ con presets y controles sin cambiar de lugar y respetando el margen de la bottom nav.</p>
+      </div>
+
+    </aside>
+
+  </main>
+
+  <!-- JAVASCRIPT VANILLA INTERACTIVO -->
+  <script>
+    let totalSets = 15;
+    let completedSets = 5;
+    let timerSeconds = 75;
+    let timerRunning = true;
+    let timerInterval = null;
+    let timerExpanded = false;
+
+    // Cambiar tema evaluativo (Obsidian vs Titanium)
+    function setAppTheme(theme) {
+      document.body.setAttribute('data-theme', theme);
+      document.querySelectorAll('.theme-switch-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.textContent.toLowerCase().includes(theme === 'dark' ? 'obsidian' : 'titanium'));
+      });
+    }
+
+    // Selector de Días
+    function selectDay(index, title, sets, vol, dur) {
+      const pill = document.getElementById('pill-slider');
+      pill.style.transform = `translateX(${index * 100}%)`;
+
+      document.querySelectorAll('.day-tabs button').forEach((b, i) => {
+        b.classList.toggle('active', i === index);
+      });
+
+      document.getElementById('day-badge-kicker').textContent = `DÍA ${index + 1}`;
+      document.getElementById('day-hero-title').textContent = title.split(':')[1] || title;
+      totalSets = sets;
+      completedSets = index === 0 ? 5 : 0;
+      document.getElementById('summary-metric-vol').textContent = vol;
+      document.getElementById('summary-metric-dur').textContent = `~${dur} m`;
+      updateSetProgress();
+    }
+
+    // Checkpoint de Series
+    function toggleSetCheck(btn) {
+      const isDone = btn.classList.toggle('completed');
+      if (isDone) {
+        completedSets = Math.min(totalSets, completedSets + 1);
+        selectPreset(90);
+        runTimer();
+      } else {
+        completedSets = Math.max(0, completedSets - 1);
+      }
+      updateSetProgress();
+    }
+
+    function updateSetProgress() {
+      const pct = Math.round((completedSets / totalSets) * 100);
+      document.getElementById('summary-metric-sets').textContent = `${completedSets} / ${totalSets}`;
+      document.getElementById('session-progress-label').textContent = `${completedSets} de ${totalSets} series`;
+      document.getElementById('session-progress-fill-bar').style.width = `${pct}%`;
+      document.getElementById('hero-ring-text').textContent = `${pct}%`;
+
+      const ringBar = document.getElementById('hero-ring-fill');
+      const offset = 144 - (pct / 100) * 144;
+      ringBar.style.strokeDashoffset = Math.max(0, offset);
+    }
+
+    // Temporizador
+    function runTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+      timerRunning = true;
+      document.getElementById('timer-pill-widget').classList.add('running');
+      const btnCtrl = document.getElementById('btn-timer-ctrl-primary');
+      if (btnCtrl) btnCtrl.textContent = 'Pausar';
+
+      timerInterval = setInterval(() => {
+        if (timerSeconds > 0) {
+          timerSeconds--;
+          renderTimerDigits();
+        } else {
+          clearInterval(timerInterval);
+          timerRunning = false;
+          document.getElementById('timer-pill-widget').classList.remove('running');
+          renderTimerDigits();
+        }
+      }, 1000);
+    }
+
+    function toggleTimerState() {
+      const btnCtrl = document.getElementById('btn-timer-ctrl-primary');
+      if (timerRunning) {
+        clearInterval(timerInterval);
+        timerRunning = false;
+        document.getElementById('timer-pill-widget').classList.remove('running');
+        if (btnCtrl) btnCtrl.textContent = 'Reanudar';
+      } else {
+        runTimer();
+      }
+    }
+
+    function resetTimerCountdown() {
+      timerSeconds = 90;
+      renderTimerDigits();
+      if (!timerRunning) runTimer();
+    }
+
+    function selectPreset(sec) {
+      timerSeconds = sec;
+      document.querySelectorAll('.btn-preset').forEach(btn => {
+        btn.classList.toggle('active', btn.textContent.includes(sec === 120 ? '2m' : `${sec}s`));
+      });
+      renderTimerDigits();
+      if (!timerRunning) runTimer();
+    }
+
+    function renderTimerDigits() {
+      const mins = Math.floor(timerSeconds / 60);
+      const secs = timerSeconds % 60;
+      const fmt = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+      document.getElementById('pill-digits').textContent = fmt;
+      document.getElementById('expanded-digits').textContent = fmt;
+    }
+
+    function toggleTimerView() {
+      timerExpanded = !timerExpanded;
+      const pill = document.getElementById('timer-pill-widget');
+      const panel = document.getElementById('timer-expanded-panel');
+      const container = document.getElementById('floating-timer-container');
+      
+      if (timerExpanded) {
+        pill.style.display = 'none';
+        panel.style.display = 'block';
+      } else {
+        panel.style.display = 'none';
+        pill.style.display = 'flex';
+      }
+      
+      // Ajustar límites in-situ para no desbordar el viewport al expandirse
+      clampToViewport(container, timerExpanded);
+    }
+
+    /* ------------------------------------------------------------
+       LÓGICA TOUCH DRAG & EDGE-SNAPPING (TIPO MESSENGER CHAT HEADS)
+       ------------------------------------------------------------ */
+    const timerContainer = document.getElementById('floating-timer-container');
+    const timerPill = document.getElementById('timer-pill-widget');
+    const viewport = document.querySelector('.viewport');
+
+    // Estado persistente dentro de la sesión
+    let currentX = 16;
+    let currentY = 480; // Posición inicial sobre la bottom nav
+    let isDragging = false;
+    let hasMoved = false;
+    let startPointerX = 0;
+    let startPointerY = 0;
+    let startElemX = 0;
+    let startElemY = 0;
+
+    function applyPosition(x, y, animate = false) {
+      if (animate) {
+        timerContainer.classList.add('snapping');
+        setTimeout(() => timerContainer.classList.remove('snapping'), 300);
+      } else {
+        timerContainer.classList.remove('snapping');
+      }
+      timerContainer.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+      currentX = x;
+      currentY = y;
+    }
+
+    function clampToViewport(elem, isPanel = false) {
+      const vRect = viewport.getBoundingClientRect();
+      const eRect = elem.getBoundingClientRect();
+      const margin = 12;
+      const bottomNavHeight = 66; // Altura de la bottom nav
+      const topSafeMargin = 8;
+
+      const maxX = vRect.width - (isPanel ? 290 : eRect.width) - margin;
+      const minX = margin;
+      const maxY = vRect.height - bottomNavHeight - (isPanel ? 200 : eRect.height) - margin;
+      const minY = topSafeMargin;
+
+      let clampedX = Math.max(minX, Math.min(maxX, currentX));
+      let clampedY = Math.max(minY, Math.min(maxY, currentY));
+      applyPosition(clampedX, clampedY, false);
+    }
+
+    function snapToClosestEdge() {
+      const vRect = viewport.getBoundingClientRect();
+      const eWidth = timerContainer.offsetWidth || 140;
+      const eHeight = timerContainer.offsetHeight || 48;
+      const margin = 12;
+      const bottomNavHeight = 66;
+      const topSafeMargin = 8;
+
+      const minX = margin;
+      const maxX = vRect.width - eWidth - margin;
+      const minY = topSafeMargin;
+      const maxY = vRect.height - bottomNavHeight - eHeight - margin;
+
+      // Pegar al borde izquierdo o derecho más cercano
+      const midPointX = vRect.width / 2;
+      const targetX = (currentX + eWidth / 2) < midPointX ? minX : maxX;
+      const targetY = Math.max(minY, Math.min(maxY, currentY));
+
+      applyPosition(targetX, targetY, true);
+    }
+
+    function onPointerDown(e) {
+      // Ignorar clicks secundarios o sobre botones internos si estuviera expandido
+      if (e.button !== undefined && e.button !== 0) return;
+      if (e.target.closest('button') || e.target.closest('.timer-close-icon')) return;
+
+      isDragging = true;
+      hasMoved = false;
+      timerContainer.classList.add('dragging');
+
+      startPointerX = e.clientX;
+      startPointerY = e.clientY;
+      startElemX = currentX;
+      startElemY = currentY;
+
+      window.addEventListener('pointermove', onPointerMove, { passive: false });
+      window.addEventListener('pointerup', onPointerUp);
+      window.addEventListener('pointercancel', onPointerUp);
+    }
+
+    function onPointerMove(e) {
+      if (!isDragging) return;
+      e.preventDefault();
+
+      const dx = e.clientX - startPointerX;
+      const dy = e.clientY - startPointerY;
+
+      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
+        hasMoved = true;
+      }
+
+      const vRect = viewport.getBoundingClientRect();
+      const eWidth = timerContainer.offsetWidth || 140;
+      const eHeight = timerContainer.offsetHeight || 48;
+      const margin = 8;
+      const bottomNavHeight = 62;
+      const topMargin = 8;
+
+      let nextX = startElemX + dx;
+      let nextY = startElemY + dy;
+
+      // Delimitación al viewport visible sin tapar la bottom nav
+      nextX = Math.max(margin, Math.min(vRect.width - eWidth - margin, nextX));
+      nextY = Math.max(topMargin, Math.min(vRect.height - bottomNavHeight - eHeight - margin, nextY));
+
+      applyPosition(nextX, nextY, false);
+    }
+
+    function onPointerUp(e) {
+      if (!isDragging) return;
+      isDragging = false;
+      timerContainer.classList.remove('dragging');
+
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+      window.removeEventListener('pointercancel', onPointerUp);
+
+      if (hasMoved) {
+        // Si fue un arrastre genuino, se pega al borde más cercano
+        if (!timerExpanded) {
+          snapToClosestEdge();
+        }
+      } else {
+        // Si fue sólo tap/click sin arrastre, expandir o colapsar in situ
+        toggleTimerView();
+      }
+    }
+
+    // Enganchar eventos pointer al contenedor flotante
+    timerContainer.addEventListener('pointerdown', onPointerDown);
+
+    window.addEventListener('DOMContentLoaded', () => {
+      runTimer();
+      updateSetProgress();
+
+      // Posicionar inicialmente el timer flotante pegado abajo a la derecha
+      setTimeout(() => {
+        const vRect = viewport.getBoundingClientRect();
+        const eWidth = timerPill.offsetWidth || 140;
+        const eHeight = 48;
+        const initX = vRect.width - eWidth - 14;
+        const initY = vRect.height - 66 - eHeight - 12;
+        applyPosition(initX, initY, false);
+      }, 50);
+    });
+  </script>
+</body>
+</html>
