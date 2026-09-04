@@ -115,9 +115,13 @@ const PUSH: Ranura[] = [
   A("triceps"),
   A("triceps"),
 ];
+// Un solo primario de espalda (el jalón/dominada pesado de arranque) + dos
+// compuestos de apoyo. Antes tenía dos P("espalda") seguidos, que con el +1 de
+// avanzado se iban a 5+5 series de espalda antes de los accesorios — volumen
+// excesivo para una sola sesión, sobre todo en PPL de 6 días (frecuencia 2).
 const PULL: Ranura[] = [
   P("espalda", "traccion_vertical"),
-  P("espalda", "traccion_horizontal"),
+  S("espalda", "traccion_horizontal"),
   S("espalda", "traccion_horizontal"),
   A("hombros"),
   A("biceps"),
@@ -498,7 +502,11 @@ function notaRir(rir: OpcionesAvanzadas["rir"], rol: Rol): string {
 function ajustarSeries(base: number, rol: Rol, nivel: Nivel, sexo: Sexo): number {
   let s = base;
   if (nivel === "principiante") s -= 1;
-  if (nivel === "avanzado" && rol === "primario") s += 1;
+  // El +1 de avanzado solo levanta esquemas livianos (estándar hipertrofia
+  // arranca en 3 series): nunca empuja a 5 un primario que ya venía en 4 —
+  // eso daba 5×8–10 en dos compuestos seguidos, demasiado. El 5×5 queda para
+  // fuerza y el día pesado de la ondulante, que ya salen en 5 de base.
+  if (nivel === "avanzado" && rol === "primario" && base <= 3) s += 1;
   if (sexo === "mujer" && rol !== "aislamiento") s -= 1;
   const min = rol === "aislamiento" ? 2 : 3;
   return Math.max(min, Math.min(5, s));

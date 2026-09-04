@@ -515,6 +515,20 @@ SECURITY DEFINER (`soy_destinatario`, `mensaje_gimnasio`, `mensaje_remitente`,
 ## Cómo seguir (próxima sesión)
 
 Ya hecho (2026-09-03):
+- **Motor de rutinas — volumen excesivo en primarios (avanzado)**
+  (`src/lib/rutina/motor.ts`). Reporte del dueño: "5 series" en compuestos de
+  arranque, y dos de 5 seguidos. Dos causas: (1) `ajustarSeries` sumaba `+1` al
+  primario de todo plan **avanzado**, incluso sobre esquemas de rango que ya
+  arrancan en 4 (`ESQUEMA_RANGO.hipertrofia` / `fuerza_hipertrofia`) → 5×.
+  Ahora el `+1` solo aplica si `base <= 3` (levanta el estándar 3→4, nunca
+  empuja 4→5). El `5×5` real queda para `fuerza` y el día pesado de la
+  ondulante, que ya salen en 5 de base. (2) El bloque `PULL` tenía **dos**
+  `P("espalda")` seguidos → con el `+1` daban 5+5 series de espalda antes de
+  los accesorios; el 2º pasó a `S` (1 primario + 2 compuestos de apoyo).
+  Verificado en browser regenerando el plan del socio de prueba: Día Tracción
+  pasó de 5+5+3 = 13 sets de espalda a 4+3+3 = 10. `tsc --noEmit` limpio.
+  **Las rutinas ya guardadas no se recalculan solas**: el socio debe tocar
+  "Regenerar rutina".
 - **Timer de descanso — persistencia entre pantallas**
   (`src/components/rutinas/timer-descanso.tsx`). Antes vivía dentro de
   `RutinaEditor` (solo `/mi/rutina`): al cambiar de apartado se desmontaba y el
