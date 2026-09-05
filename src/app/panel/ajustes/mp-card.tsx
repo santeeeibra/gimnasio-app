@@ -63,7 +63,7 @@ export function MercadoPagoAjustesCard({
 
       {avisoInicial ? (
         <p
-          className={mb-4 text-sm }
+          className={`mb-4 text-sm ${avisoInicial.error ? "text-danger" : "text-ok"}`}
         >
           {avisoInicial.texto}
         </p>

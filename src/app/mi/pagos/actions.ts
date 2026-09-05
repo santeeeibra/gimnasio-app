@@ -211,7 +211,7 @@ export async function crearSuscripcionMP(
     return { url: res.initPoint };
   } catch (err: any) {
     console.error("[mi/pagos] crear suscripcion MP:", err);
-    await registrarError(profile.gimnasio_id, "suscripcion_mp", err);
+    await registrarError(profile.gimnasio_id, "pago", err);
     return {
       error:
         "No pudimos iniciar el cobro automático de Mercado Pago. Podés pagar por transferencia con los datos de abajo.",

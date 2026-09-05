@@ -283,6 +283,8 @@ export async function fetchMP(
     accessToken: nuevos.accessToken,
     refreshToken: nuevos.refreshToken ?? cuenta.refreshToken,
     collectorId: nuevos.collectorId ?? cuenta.collectorId,
+    userId: nuevos.userId ?? cuenta.userId ?? cuenta.collectorId,
+    expiresIn: nuevos.expiresIn,
   };
   await guardarTokens(db, gimnasioId, merge);
   cuenta.accessToken = merge.accessToken;

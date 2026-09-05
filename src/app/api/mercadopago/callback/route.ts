@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
   const code = url.searchParams.get("code");
   const state = url.searchParams.get("state");
   const destino = (q: string) =>
-    NextResponse.redirect(new URL(/panel/ajustes?mp=, req.url));
+    NextResponse.redirect(new URL(`/panel/ajustes?mp=${q}`, req.url));
 
   if (!code || !state) return destino("error");
 

@@ -54,7 +54,7 @@ export default async function AjustesPage({
         .eq("id", profile.id)
         .single(),
       estadoCobroAutomatico(db, profile.gimnasio_id),
-      searchParams ?? Promise.resolve({}),
+      (searchParams ?? Promise.resolve({})) as Promise<{ mp?: string }>,
     ]);
 
   const estado = gym?.estado ?? "prueba";

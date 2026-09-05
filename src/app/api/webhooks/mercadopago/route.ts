@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
           if (dueno?.id) {
             await enviarPush([dueno.id], {
               title: "Suscripción cancelada",
-              body: ${cli.nombre} canceló el cobro automático en Mercado Pago.,
+              body: `${cli.nombre} canceló el cobro automático en Mercado Pago.`,
             });
           }
         }
@@ -127,8 +127,8 @@ export async function POST(req: NextRequest) {
     for (const g of gimnasios ?? []) {
       try {
         const token = await asegurarTokenValido(db, g.id);
-        const res = await fetch(https://api.mercadopago.com/v1/payments/, {
-          headers: { Authorization: Bearer  },
+        const res = await fetch(`https://api.mercadopago.com/v1/payments/${strId}`, {
+          headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
           paymentData = await res.json();
