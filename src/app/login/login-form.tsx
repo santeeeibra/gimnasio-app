@@ -106,37 +106,35 @@ export function LoginForm({
       {/* ── Encabezado / Hero Unificado ── */}
       <header className="relative z-10 shrink-0 pt-10 pb-4 px-6 md:pt-14 md:pb-8">
         <div className="max-w-md mx-auto">
-          {/* Badge píldora glassmorphism */}
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.06] border border-white/10 backdrop-blur-md text-[11px] font-semibold tracking-widest uppercase text-volt/90 mb-4 shadow-[0_2px_10px_rgba(0,0,0,0.2)]">
+          {/* Badge píldora */}
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 backdrop-blur-md text-[11px] font-bold tracking-widest uppercase text-volt mb-4 shadow-[0_2px_10px_rgba(0,0,0,0.4)]">
             <span className="size-1.5 rounded-full bg-volt animate-pulse" />
             Gestión de gimnasio
           </div>
 
-          <h1 className="font-display tracking-tight leading-[0.93] text-white text-[clamp(2.1rem,7.5vw,3.2rem)] font-extrabold">
-            Tu cuota,
-            <br />
-            <span className="text-volt drop-shadow-[0_0_24px_rgba(205,233,74,0.35)]">
+          <h1 className="font-display tracking-tight leading-[0.95] text-[clamp(2.2rem,7.5vw,3.2rem)] font-black">
+            <span className="text-white block">Tu cuota,</span>
+            <span className="text-volt block drop-shadow-[0_0_24px_rgba(205,233,74,0.4)]">
               tu rutina,
             </span>
-            <br />
-            tus avisos.
+            <span className="text-white block">tus avisos.</span>
           </h1>
 
-          <p className="mt-3 text-white/65 text-[14px] sm:text-[15px] leading-relaxed max-w-sm">
+          <p className="mt-3 text-slate-300 text-[14px] sm:text-[15px] leading-relaxed max-w-sm">
             Todo lo de tu gimnasio en un lugar. Sin planillas de papel ni grupos
             de WhatsApp perdidos.
           </p>
         </div>
       </header>
 
-      {/* ── Módulo de Entrada (Liquid Glass Card) ── */}
+      {/* ── Módulo de Entrada (Card Sólido de Alto Contraste) ── */}
       <section className="relative z-10 flex-1 px-4 sm:px-6 pb-8 flex items-center">
         <div className="w-full max-w-md mx-auto">
-          <div className="liquid-glass relative overflow-hidden rounded-[26px] border border-white/[0.12] bg-[#14161f]/85 backdrop-blur-2xl shadow-[0_24px_70px_rgba(0,0,0,0.65)] p-6 sm:p-7">
+          <div className="relative overflow-hidden rounded-[28px] border border-white/[0.16] bg-[#161922] shadow-[0_24px_70px_rgba(0,0,0,0.85)] p-6 sm:p-8">
             {/* Specular hairline superior */}
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent"
+              className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/40 to-transparent"
             />
 
             <form
@@ -150,33 +148,33 @@ export function LoginForm({
                   );
                 }
               }}
-              className="space-y-4.5"
+              className="space-y-5"
             >
               {/* Encabezado interno del card */}
-              <div className="pb-1">
-                <h2 className="text-xl font-bold text-white tracking-tight">
+              <div>
+                <h2 className="text-2xl font-bold text-white tracking-tight">
                   Entrar
                 </h2>
-                <p className="mt-1 text-[13px] text-white/55 leading-relaxed">
+                <p className="mt-1 text-[13px] text-slate-300 leading-relaxed">
                   Primera vez: la contraseña es la que te dieron en recepción.
                 </p>
               </div>
 
               {/* Gimnasio: Credencial estilo Apple Wallet Pass o Selector editable */}
               {tieneGimnasioFijado ? (
-                <div className="relative group rounded-2xl p-3.5 bg-white/[0.04] border border-white/[0.08] hover:border-white/15 transition-all duration-200 flex items-center justify-between gap-3">
+                <div className="relative rounded-2xl p-3.5 bg-[#1d212d] border border-white/15 flex items-center justify-between gap-3 shadow-inner">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="size-10 rounded-xl bg-volt/10 border border-volt/20 flex items-center justify-center shrink-0 shadow-[0_0_12px_rgba(205,233,74,0.15)]">
+                    <div className="size-10 rounded-xl bg-volt/15 border border-volt/30 flex items-center justify-center shrink-0 shadow-[0_0_12px_rgba(205,233,74,0.2)]">
                       <Building2 className="size-5 text-volt" />
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5 mb-0.5">
                         <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-                        <span className="text-[10px] uppercase tracking-wider text-white/45 font-semibold">
+                        <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">
                           Gimnasio
                         </span>
                       </div>
-                      <span className="block text-[15px] font-semibold text-white truncate">
+                      <span className="block text-[15px] font-bold text-white truncate">
                         {gimnasioNombre || gimnasio}
                       </span>
                     </div>
@@ -194,7 +192,7 @@ export function LoginForm({
                           ?.focus();
                       }, 50);
                     }}
-                    className="h-8 px-3 rounded-full text-xs font-medium text-white/75 hover:text-white bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 active:scale-95 transition-all touch-manipulation flex items-center shrink-0"
+                    className="h-8.5 px-3.5 rounded-full text-xs font-semibold text-white bg-white/10 hover:bg-white/20 border border-white/20 active:scale-95 transition-all touch-manipulation flex items-center shrink-0"
                   >
                     Cambiar
                   </button>
@@ -205,7 +203,7 @@ export function LoginForm({
                   <div className="flex items-center justify-between">
                     <label
                       htmlFor="gimnasio-input"
-                      className="text-[12px] font-medium text-white/70 uppercase tracking-wider"
+                      className="text-[12px] font-bold text-slate-200 uppercase tracking-wider"
                     >
                       Gimnasio
                     </label>
@@ -216,14 +214,14 @@ export function LoginForm({
                           hapticoImpactoSuave();
                           setCambiandoGimnasio(false);
                         }}
-                        className="text-xs text-volt hover:underline font-medium transition-colors"
+                        className="text-xs text-volt hover:underline font-bold transition-colors"
                       >
                         Volver al anterior
                       </button>
                     ) : null}
                   </div>
                   <div className="relative">
-                    <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-white/40 pointer-events-none" />
+                    <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4.5 text-slate-400 pointer-events-none" />
                     <input
                       id="gimnasio-input"
                       name="gimnasio"
@@ -232,7 +230,7 @@ export function LoginForm({
                       value={gimnasio}
                       onChange={(e) => setGimnasio(e.target.value)}
                       required
-                      className="w-full h-12 pl-10 pr-4 rounded-xl border border-white/10 bg-white/[0.04] text-white text-[15px] placeholder:text-white/30 outline-none transition-[border-color,box-shadow,background-color] duration-200 focus:border-volt/70 focus:bg-white/[0.06] focus:ring-2 focus:ring-volt/25"
+                      className="w-full h-12.5 pl-10.5 pr-4 rounded-xl border border-white/20 bg-[#1d212d] text-white text-[15px] placeholder:text-slate-400 font-medium outline-none transition-[border-color,box-shadow,background-color] duration-150 focus:border-volt focus:bg-[#222736] focus:ring-2 focus:ring-volt/30"
                     />
                   </div>
                 </div>
@@ -242,12 +240,12 @@ export function LoginForm({
               <div className="space-y-1.5">
                 <label
                   htmlFor="dni-input"
-                  className="block text-[12px] font-medium text-white/70 uppercase tracking-wider"
+                  className="block text-[12px] font-bold text-slate-200 uppercase tracking-wider"
                 >
                   DNI
                 </label>
                 <div className="relative">
-                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-white/40 pointer-events-none" />
+                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4.5 text-slate-400 pointer-events-none" />
                   <input
                     id="dni-input"
                     name="dni"
@@ -258,7 +256,7 @@ export function LoginForm({
                     value={dni}
                     onChange={handleDniChange}
                     required
-                    className="w-full h-12 pl-10 pr-4 rounded-xl border border-white/10 bg-white/[0.04] text-white text-[16px] placeholder:text-white/30 outline-none transition-[border-color,box-shadow,background-color] duration-200 focus:border-volt/70 focus:bg-white/[0.06] focus:ring-2 focus:ring-volt/25 font-mono tracking-wider tabular-nums"
+                    className="w-full h-12.5 pl-10.5 pr-4 rounded-xl border border-white/20 bg-[#1d212d] text-white text-[16px] placeholder:text-slate-400 font-mono tracking-wider tabular-nums outline-none transition-[border-color,box-shadow,background-color] duration-150 focus:border-volt focus:bg-[#222736] focus:ring-2 focus:ring-volt/30"
                   />
                 </div>
               </div>
@@ -267,19 +265,19 @@ export function LoginForm({
               <div className="space-y-1.5">
                 <label
                   htmlFor="clave-input"
-                  className="block text-[12px] font-medium text-white/70 uppercase tracking-wider"
+                  className="block text-[12px] font-bold text-slate-200 uppercase tracking-wider"
                 >
                   Contraseña
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-white/40 pointer-events-none" />
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4.5 text-slate-400 pointer-events-none" />
                   <input
                     id="clave-input"
                     name="clave"
                     type={showPass ? "text" : "password"}
                     autoComplete="current-password"
                     required
-                    className="w-full h-12 pl-10 pr-12 rounded-xl border border-white/10 bg-white/[0.04] text-white text-[16px] outline-none transition-[border-color,box-shadow,background-color] duration-200 focus:border-volt/70 focus:bg-white/[0.06] focus:ring-2 focus:ring-volt/25"
+                    className="w-full h-12.5 pl-10.5 pr-12 rounded-xl border border-white/20 bg-[#1d212d] text-white text-[16px] outline-none transition-[border-color,box-shadow,background-color] duration-150 focus:border-volt focus:bg-[#222736] focus:ring-2 focus:ring-volt/30"
                   />
                   <button
                     type="button"
@@ -288,22 +286,22 @@ export function LoginForm({
                     aria-label={
                       showPass ? "Ocultar contraseña" : "Mostrar contraseña"
                     }
-                    className="absolute right-1 top-1/2 -translate-y-1/2 size-10 flex items-center justify-center text-white/50 hover:text-white active:scale-90 transition-all rounded-lg touch-manipulation"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 size-10.5 flex items-center justify-center text-slate-300 hover:text-white active:scale-90 transition-all rounded-lg touch-manipulation cursor-pointer"
                   >
                     {showPass ? (
-                      <EyeOff className="size-4.5" />
+                      <EyeOff className="size-5" />
                     ) : (
-                      <Eye className="size-4.5" />
+                      <Eye className="size-5" />
                     )}
                   </button>
                 </div>
               </div>
 
-              {/* Mensaje de Error con animación Shake y diseño glass rojizo */}
+              {/* Mensaje de Error */}
               {state.error ? (
                 <div
                   role="alert"
-                  className="px-4 py-3 rounded-xl bg-rose-500/10 border border-rose-500/25 text-rose-300 text-[13px] font-medium flex items-center gap-2.5 animate-shake shadow-[0_0_20px_rgba(244,63,94,0.15)]"
+                  className="px-4 py-3 rounded-xl bg-rose-500/15 border border-rose-500/35 text-rose-200 text-[13px] font-medium flex items-center gap-2.5 animate-shake shadow-[0_0_20px_rgba(244,63,94,0.25)]"
                 >
                   <span className="size-2 rounded-full bg-rose-400 shrink-0" />
                   <p>{state.error}</p>
@@ -316,7 +314,7 @@ export function LoginForm({
                   type="submit"
                   disabled={pending}
                   onClick={() => hapticoImpactoMedio()}
-                  className="relative group w-full h-12.5 rounded-xl font-bold text-[15px] tracking-wide text-volt-ink bg-volt hover:brightness-105 active:scale-[0.98] transition-all duration-150 shadow-[0_4px_20px_rgba(205,233,74,0.35)] hover:shadow-[0_6px_28px_rgba(205,233,74,0.5)] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 overflow-hidden cursor-pointer touch-manipulation"
+                  className="relative group w-full h-13 rounded-xl font-bold text-[16px] tracking-wide text-volt-ink bg-volt hover:brightness-105 active:scale-[0.98] transition-all duration-150 shadow-[0_4px_24px_rgba(205,233,74,0.4)] hover:shadow-[0_6px_32px_rgba(205,233,74,0.55)] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 overflow-hidden cursor-pointer touch-manipulation"
                 >
                   {/* Destello sweep */}
                   <span
@@ -351,16 +349,16 @@ export function LoginForm({
                   ) : (
                     <>
                       <span>Entrar</span>
-                      <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+                      <ArrowRight className="size-4.5 transition-transform group-hover:translate-x-0.5" />
                     </>
                   )}
                 </button>
               </div>
 
               {/* Micro-credencial de Seguridad y Links Auxiliares */}
-              <div className="pt-2 text-center space-y-2">
-                <div className="inline-flex items-center justify-center gap-1.5 text-[11px] text-white/40">
-                  <ShieldCheck className="size-3.5 text-emerald-400/80" />
+              <div className="pt-2 text-center space-y-2.5">
+                <div className="inline-flex items-center justify-center gap-1.5 text-xs text-slate-300">
+                  <ShieldCheck className="size-4 text-emerald-400" />
                   <span>Acceso seguro cifrado con tu DNI</span>
                 </div>
 
@@ -368,7 +366,7 @@ export function LoginForm({
                   <Link
                     href="/login/olvide-clave"
                     onClick={() => hapticoImpactoSuave()}
-                    className="inline-flex items-center justify-center min-h-[44px] px-3 text-[13px] text-white/55 hover:text-white transition-colors"
+                    className="inline-flex items-center justify-center min-h-[44px] px-3 text-[14px] text-slate-300 hover:text-white font-medium transition-colors"
                   >
                     Olvidé mi contraseña
                   </Link>
@@ -380,7 +378,7 @@ export function LoginForm({
       </section>
 
       {/* ── Pie de página sutil ── */}
-      <footer className="relative z-10 shrink-0 pb-6 pt-2 text-center text-[11px] text-white/25">
+      <footer className="relative z-10 shrink-0 pb-6 pt-2 text-center text-xs text-slate-400">
         SysGym • Plataforma integral de gestión deportiva
       </footer>
     </main>

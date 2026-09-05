@@ -44,37 +44,36 @@ export default function OlvideClavePage() {
       {/* Encabezado */}
       <header className="relative z-10 shrink-0 pt-10 pb-4 px-6 md:pt-14 md:pb-8">
         <div className="max-w-md mx-auto">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.06] border border-white/10 backdrop-blur-md text-[11px] font-semibold tracking-widest uppercase text-volt/90 mb-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 backdrop-blur-md text-[11px] font-bold tracking-widest uppercase text-volt mb-4">
             <span className="size-1.5 rounded-full bg-volt animate-pulse" />
             Recuperar acceso
           </div>
 
-          <h1 className="font-display tracking-tight leading-[0.93] text-white text-[clamp(2rem,7.5vw,3rem)] font-extrabold">
-            Olvidé mi
-            <br />
-            <span className="text-volt drop-shadow-[0_0_24px_rgba(205,233,74,0.35)]">
+          <h1 className="font-display tracking-tight leading-[0.95] text-[clamp(2.1rem,7.5vw,3rem)] font-black">
+            <span className="text-white block">Olvidé mi</span>
+            <span className="text-volt block drop-shadow-[0_0_24px_rgba(205,233,74,0.4)]">
               contraseña.
             </span>
           </h1>
 
-          <p className="mt-3 text-white/65 text-[14px] leading-relaxed max-w-sm">
+          <p className="mt-3 text-slate-300 text-[14px] leading-relaxed max-w-sm">
             Ingresá tu gimnasio y tu DNI. Te ayudamos a restablecer tu cuenta
             rápidamente.
           </p>
         </div>
       </header>
 
-      {/* Tarjeta Liquid Glass */}
+      {/* Tarjeta Sólida de Alto Contraste */}
       <section className="relative z-10 flex-1 px-4 sm:px-6 pb-8 flex items-center">
         <div className="w-full max-w-md mx-auto">
-          <div className="liquid-glass relative overflow-hidden rounded-[26px] border border-white/[0.12] bg-[#14161f]/85 backdrop-blur-2xl shadow-[0_24px_70px_rgba(0,0,0,0.65)] p-6 sm:p-7">
+          <div className="relative overflow-hidden rounded-[28px] border border-white/[0.16] bg-[#161922] shadow-[0_24px_70px_rgba(0,0,0,0.85)] p-6 sm:p-8">
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent"
+              className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/40 to-transparent"
             />
 
-            <form action={formAction} className="space-y-4.5">
-              <p className="text-[13px] text-white/60 leading-relaxed">
+            <form action={formAction} className="space-y-5">
+              <p className="text-[13px] text-slate-300 leading-relaxed">
                 Si sos socio, avisamos a tu gimnasio para que te reasignen la
                 contraseña en recepción. Si sos el dueño, avisamos a soporte.
               </p>
@@ -83,19 +82,19 @@ export default function OlvideClavePage() {
               <div className="space-y-1.5">
                 <label
                   htmlFor="recuperar-gimnasio"
-                  className="block text-[12px] font-medium text-white/70 uppercase tracking-wider"
+                  className="block text-[12px] font-bold text-slate-200 uppercase tracking-wider"
                 >
                   Gimnasio
                 </label>
                 <div className="relative">
-                  <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-white/40 pointer-events-none" />
+                  <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4.5 text-slate-400 pointer-events-none" />
                   <input
                     id="recuperar-gimnasio"
                     name="gimnasio"
                     autoComplete="organization"
                     placeholder="Nombre o código de tu gimnasio"
                     required
-                    className="w-full h-12 pl-10 pr-4 rounded-xl border border-white/10 bg-white/[0.04] text-white text-[15px] placeholder:text-white/30 outline-none transition-[border-color,box-shadow,background-color] duration-200 focus:border-volt/70 focus:bg-white/[0.06] focus:ring-2 focus:ring-volt/25"
+                    className="w-full h-12.5 pl-10.5 pr-4 rounded-xl border border-white/20 bg-[#1d212d] text-white text-[15px] placeholder:text-slate-400 font-medium outline-none transition-[border-color,box-shadow,background-color] duration-150 focus:border-volt focus:bg-[#222736] focus:ring-2 focus:ring-volt/30"
                   />
                 </div>
               </div>
@@ -104,12 +103,12 @@ export default function OlvideClavePage() {
               <div className="space-y-1.5">
                 <label
                   htmlFor="recuperar-dni"
-                  className="block text-[12px] font-medium text-white/70 uppercase tracking-wider"
+                  className="block text-[12px] font-bold text-slate-200 uppercase tracking-wider"
                 >
                   DNI
                 </label>
                 <div className="relative">
-                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-white/40 pointer-events-none" />
+                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4.5 text-slate-400 pointer-events-none" />
                   <input
                     id="recuperar-dni"
                     name="dni"
@@ -117,7 +116,7 @@ export default function OlvideClavePage() {
                     placeholder="12345678"
                     onChange={() => hapticoDial(35)}
                     required
-                    className="w-full h-12 pl-10 pr-4 rounded-xl border border-white/10 bg-white/[0.04] text-white text-[16px] placeholder:text-white/30 outline-none transition-[border-color,box-shadow,background-color] duration-200 focus:border-volt/70 focus:bg-white/[0.06] focus:ring-2 focus:ring-volt/25 font-mono tabular-nums"
+                    className="w-full h-12.5 pl-10.5 pr-4 rounded-xl border border-white/20 bg-[#1d212d] text-white text-[16px] placeholder:text-slate-400 font-mono tabular-nums outline-none transition-[border-color,box-shadow,background-color] duration-150 focus:border-volt focus:bg-[#222736] focus:ring-2 focus:ring-volt/30"
                   />
                 </div>
               </div>
@@ -126,20 +125,20 @@ export default function OlvideClavePage() {
               <div className="space-y-1.5">
                 <label
                   htmlFor="recuperar-email"
-                  className="block text-[12px] font-medium text-white/70 uppercase tracking-wider"
+                  className="block text-[12px] font-bold text-slate-200 uppercase tracking-wider"
                 >
                   Email de contacto{" "}
-                  <span className="text-white/40 normal-case">(opcional)</span>
+                  <span className="text-slate-400 normal-case">(opcional)</span>
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-white/40 pointer-events-none" />
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4.5 text-slate-400 pointer-events-none" />
                   <input
                     id="recuperar-email"
                     name="email"
                     type="email"
                     autoComplete="email"
                     placeholder="vos@ejemplo.com"
-                    className="w-full h-12 pl-10 pr-4 rounded-xl border border-white/10 bg-white/[0.04] text-white text-[15px] placeholder:text-white/30 outline-none transition-[border-color,box-shadow,background-color] duration-200 focus:border-volt/70 focus:bg-white/[0.06] focus:ring-2 focus:ring-volt/25"
+                    className="w-full h-12.5 pl-10.5 pr-4 rounded-xl border border-white/20 bg-[#1d212d] text-white text-[15px] placeholder:text-slate-400 font-medium outline-none transition-[border-color,box-shadow,background-color] duration-150 focus:border-volt focus:bg-[#222736] focus:ring-2 focus:ring-volt/30"
                   />
                 </div>
               </div>
@@ -148,7 +147,7 @@ export default function OlvideClavePage() {
               {state.error ? (
                 <div
                   role="alert"
-                  className="px-4 py-3 rounded-xl bg-rose-500/10 border border-rose-500/25 text-rose-300 text-[13px] font-medium flex items-center gap-2.5 animate-shake shadow-[0_0_20px_rgba(244,63,94,0.15)]"
+                  className="px-4 py-3 rounded-xl bg-rose-500/15 border border-rose-500/35 text-rose-200 text-[13px] font-medium flex items-center gap-2.5 animate-shake shadow-[0_0_20px_rgba(244,63,94,0.25)]"
                 >
                   <ShieldAlert className="size-4 shrink-0 text-rose-400" />
                   <p>{state.error}</p>
@@ -159,7 +158,7 @@ export default function OlvideClavePage() {
               {state.ok ? (
                 <div
                   role="status"
-                  className="px-4 py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-[13px] font-medium flex items-center gap-2.5 shadow-[0_0_20px_rgba(16,185,129,0.15)]"
+                  className="px-4 py-3 rounded-xl bg-emerald-500/15 border border-emerald-500/35 text-emerald-200 text-[13px] font-medium flex items-center gap-2.5 shadow-[0_0_20px_rgba(16,185,129,0.25)]"
                 >
                   <CheckCircle2 className="size-4 shrink-0 text-emerald-400" />
                   <p>{state.ok}</p>
@@ -172,7 +171,7 @@ export default function OlvideClavePage() {
                   type="submit"
                   disabled={pending}
                   onClick={() => hapticoImpactoMedio()}
-                  className="relative group w-full h-12.5 rounded-xl font-bold text-[15px] tracking-wide text-volt-ink bg-volt hover:brightness-105 active:scale-[0.98] transition-all duration-150 shadow-[0_4px_20px_rgba(205,233,74,0.35)] hover:shadow-[0_6px_28px_rgba(205,233,74,0.5)] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 overflow-hidden cursor-pointer touch-manipulation"
+                  className="relative group w-full h-13 rounded-xl font-bold text-[16px] tracking-wide text-volt-ink bg-volt hover:brightness-105 active:scale-[0.98] transition-all duration-150 shadow-[0_4px_24px_rgba(205,233,74,0.4)] hover:shadow-[0_6px_32px_rgba(205,233,74,0.55)] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 overflow-hidden cursor-pointer touch-manipulation"
                 >
                   <span
                     aria-hidden="true"
@@ -187,9 +186,9 @@ export default function OlvideClavePage() {
                 <Link
                   href="/login"
                   onClick={() => hapticoImpactoSuave()}
-                  className="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-3 text-[13px] text-white/60 hover:text-white transition-colors"
+                  className="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-3 text-[14px] text-slate-300 hover:text-white font-medium transition-colors"
                 >
-                  <ArrowLeft className="size-3.5" />
+                  <ArrowLeft className="size-4" />
                   <span>Volver a entrar</span>
                 </Link>
               </div>

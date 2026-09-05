@@ -98,25 +98,27 @@ body {
   margin: 0;
 }
 
-body {
-  background: var(--paper);
-  color: var(--ink);
-  font-family: var(--app-font-sans);
-  -webkit-font-smoothing: antialiased;
-  font-feature-settings: "cv11", "ss01";
-}
+@layer base {
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--app-font-sans);
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: "cv11", "ss01";
+  }
 
-h1,
-h2,
-h3 {
-  font-family: var(--app-font-display);
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  margin: 0;
-  /* Sin esto, un heading sin clase `text-*` hereda el `color` calculado del
+  h1,
+  h2,
+  h3 {
+    font-family: var(--app-font-display);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin: 0;
+    /* Sin esto, un heading sin clase `text-*` hereda el `color` calculado del
      body (--ink de :root, casi negro) y queda invisible en temas oscuros:
      el --ink del tema vive en el div de temaToVars(), no en el body. */
-  color: var(--ink);
+    color: var(--ink);
+  }
 }
 
 /* Gentle one-shot entrance for occasional screens (login, cambiar-clave). */
