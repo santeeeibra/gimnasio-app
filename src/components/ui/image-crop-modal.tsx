@@ -50,7 +50,7 @@ export function ImageCropModal({
   const rotationRef = useRef(rotation);
   rotationRef.current = rotation;
 
-  // Función de contención (clamp) para que la imagen nunca deje huecos vacíos en el recorte
+  // Función de contención (clamp) con holgura para permitir encuadrar cualquier rostro o ángulo con los dedos
   const getClampedPan = useCallback(
     (px: number, py: number, currentZoom: number, currentRot: number) => {
       const source = imageRef.current;
@@ -69,8 +69,12 @@ export function ImageCropModal({
       const renderedW = ew * scale;
       const renderedH = eh * scale;
 
-      const maxPanX = Math.max(0, (renderedW - CROP_SIZE) / 2);
-      const maxPanY = Math.max(0, (renderedH - CROP_SIZE) / 2);
+      // Permitir margen generoso (holgura) en ambos ejes para que el usuario pueda
+      // deslizar con los dedos y encuadrar libremente (selfies, fotos verticales u horizontales),
+      // evitando que el eje menor quede bloqueado rígidamente en 0 en el centro.
+      const flexMargin = CROP_SIZE * 0.45;
+      const maxPanX = Math.max(flexMargin, (renderedW - CROP_SIZE) / 2 + flexMargin * 0.2);
+      const maxPanY = Math.max(flexMargin, (renderedH - CROP_SIZE) / 2 + flexMargin * 0.2);
 
       const safeX = Number.isFinite(px) ? px : 0;
       const safeY = Number.isFinite(py) ? py : 0;
@@ -527,6 +531,9 @@ export function ImageCropModal({
 
     outCtx.imageSmoothingEnabled = true;
     outCtx.imageSmoothingQuality = "high";
+
+    outCtx.fillStyle = "#0b0f19";
+    outCtx.fillRect(0, 0, outputSize, outputSize);
 
     const factor = outputSize / CROP_SIZE;
 

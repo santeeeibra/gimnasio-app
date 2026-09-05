@@ -2,58 +2,61 @@
 
 import { useActionState, useEffect, useState } from "react";
 import Link from "next/link";
+import { Building2 } from "lucide-react";
 import { login, type LoginState } from "./actions";
 import { Button, linkClasses } from "@/components/ui";
 
 const STORAGE_KEY = "gym.ultimo_slug";
 
-export function LoginForm({ paramG }: { paramG: string | null }) {
+interface LoginFormProps {
+  initialGymSlug?: string | null;
+  initialGymNombre?: string | null;
+}
+
+export function LoginForm({
+  initialGymSlug = null,
+  initialGymNombre = null,
+}: LoginFormProps) {
   const [state, formAction, pending] = useActionState<LoginState, FormData>(
     login,
     {},
   );
   const [showPass, setShowPass] = useState(false);
-  const [gimnasio, setGimnasio] = useState("");
-  const [gimnasioNombre, setGimnasioNombre] = useState<string | null>(null);
-  const [mostrarCambiar, setMostrarCambiar] = useState(false);
+  const [gimnasio, setGimnasio] = useState(initialGymSlug ?? "");
+  const [gimnasioNombre, setGimnasioNombre] = useState<string | null>(
+    initialGymNombre ?? null,
+  );
+  const [cambiandoGimnasio, setCambiandoGimnasio] = useState(false);
+  const [dni, setDni] = useState("");
 
-  // Cargar gimnasio recordado o desde query param
+  // Cargar gimnasio recordado desde localStorage si no vino precargado por SSR
   useEffect(() => {
-    if (paramG) {
-      setGimnasio(paramG);
-      setMostrarCambiar(true);
+    if (initialGymSlug) {
+      setGimnasio(initialGymSlug);
+      if (initialGymNombre) setGimnasioNombre(initialGymNombre);
       return;
     }
     const recordado = localStorage.getItem(STORAGE_KEY);
     if (recordado) {
       try {
         const data = JSON.parse(recordado);
-        setGimnasio(data.slug ?? "");
-        setGimnasioNombre(data.nombre);
-        setMostrarCambiar(true);
+        if (data.slug) {
+          setGimnasio(data.slug);
+          setGimnasioNombre(data.nombre || data.slug);
+        }
       } catch {
         localStorage.removeItem(STORAGE_KEY);
       }
     }
-  }, [paramG]);
+  }, [initialGymSlug, initialGymNombre]);
 
-  // Guardar slug en localStorage al loguear exitosamente
-  useEffect(() => {
-    if (state.slug && state.nombre) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ slug: state.slug, nombre: state.nombre }));
-    }
-  }, [state.slug, state.nombre]);
-
-  const limpiarGimnasio = () => {
-    localStorage.removeItem(STORAGE_KEY);
-    setGimnasio("");
-    setGimnasioNombre(null);
-    setMostrarCambiar(false);
-    // Enfocar el campo gimnasio
-    document
-      .querySelector<HTMLInputElement>('input[name="gimnasio"]')
-      ?.focus();
+  // Sanitización en tiempo real: DNI puramente numérico
+  const handleDniChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const soloNumeros = e.target.value.replace(/\D/g, "");
+    setDni(soloNumeros);
   };
+
+  const tieneGimnasioFijado = Boolean(gimnasio && !cambiandoGimnasio);
 
   return (
     <main className="min-h-screen flex flex-col bg-paper">
@@ -77,16 +80,17 @@ export function LoginForm({ paramG }: { paramG: string | null }) {
         </div>
       </section>
 
-      {/* Form */}
+      {/* Formulario */}
       <section className="flex-1 px-6 py-8 md:py-12">
         <form
           action={formAction}
           onSubmit={() => {
-            // El login exitoso redirige (la action no vuelve con el slug), así
-            // que recordamos acá lo que tipeó para precargar el próximo ingreso.
             const slug = gimnasio.trim();
             if (slug) {
-              localStorage.setItem(STORAGE_KEY, JSON.stringify({ slug }));
+              localStorage.setItem(
+                STORAGE_KEY,
+                JSON.stringify({ slug, nombre: gimnasioNombre || slug }),
+              );
             }
           }}
           className="max-w-md mx-auto space-y-5 animate-fade-in"
@@ -99,33 +103,71 @@ export function LoginForm({ paramG }: { paramG: string | null }) {
             </p>
           </div>
 
-          {/* Gimnasio */}
-          <label
-            className="block animate-slide-up"
-            style={{ animationDelay: "100ms" }}
-          >
-            <span className="block text-[13px] font-medium text-ink-soft mb-2">
-              Gimnasio
-            </span>
-            <input
-              name="gimnasio"
-              autoComplete="organization"
-              placeholder="nombre o código"
-              value={gimnasio}
-              onChange={(e) => setGimnasio(e.target.value)}
-              required
-              className="w-full h-12 px-4 rounded-lg border border-rule bg-paper-2 text-[16px] placeholder:text-ink-soft/40 outline-none transition-[border-color,box-shadow] duration-200 ease-out focus:border-ink focus:shadow-[0_0_0_3px_var(--ink)]/8 focus:bg-paper"
-            />
-            {mostrarCambiar && gimnasioNombre ? (
+          {/* Gimnasio: Tarjeta de gimnasio recordado O Campo de texto */}
+          {tieneGimnasioFijado ? (
+            <div
+              className="p-3.5 rounded-xl border border-rule bg-paper-2 flex items-center justify-between gap-3 animate-slide-up"
+              style={{ animationDelay: "100ms" }}
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="size-9 rounded-lg bg-ink/5 border border-rule flex items-center justify-center shrink-0">
+                  <Building2 className="size-4 text-ink-soft" />
+                </div>
+                <div className="min-w-0">
+                  <span className="block text-[10px] uppercase tracking-wider text-ink-soft/70 font-semibold">
+                    Gimnasio
+                  </span>
+                  <span className="block text-sm font-semibold text-ink truncate">
+                    {gimnasioNombre || gimnasio}
+                  </span>
+                </div>
+              </div>
               <button
                 type="button"
-                onClick={limpiarGimnasio}
-                className="mt-2 text-xs text-ink-soft hover:text-ink transition-colors underline underline-offset-2"
+                onClick={() => {
+                  setCambiandoGimnasio(true);
+                  setTimeout(() => {
+                    document
+                      .querySelector<HTMLInputElement>('input[name="gimnasio"]')
+                      ?.focus();
+                  }, 50);
+                }}
+                className="text-xs text-ink-soft hover:text-ink font-medium px-2.5 py-1.5 rounded-md hover:bg-rule/50 transition-colors shrink-0"
               >
-                ¿No sos socio/dueño de {gimnasioNombre}? Ingresá con otro gimnasio
+                Cambiar
               </button>
-            ) : null}
-          </label>
+              <input type="hidden" name="gimnasio" value={gimnasio} />
+            </div>
+          ) : (
+            <label
+              className="block animate-slide-up"
+              style={{ animationDelay: "100ms" }}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[13px] font-medium text-ink-soft">
+                  Gimnasio
+                </span>
+                {gimnasio ? (
+                  <button
+                    type="button"
+                    onClick={() => setCambiandoGimnasio(false)}
+                    className="text-xs text-ink-soft hover:text-ink transition-colors"
+                  >
+                    Volver al anterior
+                  </button>
+                ) : null}
+              </div>
+              <input
+                name="gimnasio"
+                autoComplete="organization"
+                placeholder="Nombre o código de tu gimnasio"
+                value={gimnasio}
+                onChange={(e) => setGimnasio(e.target.value)}
+                required
+                className="w-full h-12 px-4 rounded-lg border border-rule bg-paper-2 text-[16px] placeholder:text-ink-soft/40 outline-none transition-[border-color,box-shadow] duration-200 ease-out focus:border-ink focus:shadow-[0_0_0_3px_var(--ink)]/8 focus:bg-paper"
+              />
+            </label>
+          )}
 
           {/* DNI */}
           <label
@@ -138,10 +180,13 @@ export function LoginForm({ paramG }: { paramG: string | null }) {
             <input
               name="dni"
               inputMode="numeric"
+              pattern="[0-9]*"
               autoComplete="username"
-              placeholder="12345678"
+              placeholder="12345678 (sin puntos)"
+              value={dni}
+              onChange={handleDniChange}
               required
-              className="w-full h-12 px-4 rounded-lg border border-rule bg-paper-2 text-[16px] placeholder:text-ink-soft/40 outline-none transition-[border-color,box-shadow] duration-200 ease-out focus:border-ink focus:shadow-[0_0_0_3px_var(--ink)]/8 focus:bg-paper"
+              className="w-full h-12 px-4 rounded-lg border border-rule bg-paper-2 text-[16px] placeholder:text-ink-soft/40 outline-none transition-[border-color,box-shadow] duration-200 ease-out focus:border-ink focus:shadow-[0_0_0_3px_var(--ink)]/8 focus:bg-paper font-mono"
             />
           </label>
 
@@ -206,7 +251,7 @@ export function LoginForm({ paramG }: { paramG: string | null }) {
             className="text-center text-[11px] text-ink-soft/60 animate-fade-in"
             style={{ animationDelay: "300ms" }}
           >
-            Entrás con el DNI que cargó tu gimnasio
+            Entrás con el DNI registrado en tu gimnasio
           </p>
 
           <p
