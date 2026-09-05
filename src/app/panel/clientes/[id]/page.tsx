@@ -68,13 +68,23 @@ export default async function ClienteDetallePage({
     .eq("cliente_id", id);
   const pruebaVencida = !!(cliente as any).en_prueba && (ingresosCount ?? 0) > 0;
 
-  const [{ data: planesData }, { data: pagosData }, { data: rutinaData }] =
+  const [planesResult, { data: pagosData }, { data: rutinaData }] =
     await Promise.all([
       supabase
         .from("planes")
-        .select("id, nombre, precio")
+        .select("id, nombre, precio, duracion_dias, descuentos")
         .eq("activo", true)
-        .order("nombre"),
+        .order("nombre")
+        .then(async (res) => {
+          if (res.error) {
+            return await supabase
+              .from("planes")
+              .select("id, nombre, precio, duracion_dias")
+              .eq("activo", true)
+              .order("nombre");
+          }
+          return res;
+        }),
       supabase
         .from("pagos")
         .select("id, monto, fecha_pago, cubre_hasta, comprobante_ref, plan:planes(nombre)")
@@ -89,15 +99,13 @@ export default async function ClienteDetallePage({
         .maybeSingle(),
     ]);
 
+  const planesData = planesResult.data;
+
   const c = cliente as any;
   const dias = diasRestantes(c.fecha_vencimiento);
   const estado = estadoDesdeDias(dias);
   const bloqueado = c.acceso_habilitado === false;
-  const planes = (planesData ?? []) as {
-    id: string;
-    nombre: string;
-    precio: number;
-  }[];
+  const planes = (planesData ?? []) as any[];
   const pagos = (pagosData ?? []) as any[];
   const rutina = rutinaData as any;
   const esManual = rutina?.origen === "manual";

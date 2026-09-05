@@ -1,0 +1,1405 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SysGym — Prototipo Onboarding Dueño & Planes con Descuentos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --paper: #090d14;
+      --paper-2: #121722;
+      --paper-3: #1b2232;
+      --ink: #f8fafc;
+      --ink-soft: #94a3b8;
+      --ink-muted: #64748b;
+      --rule: rgba(255, 255, 255, 0.08);
+      --rule-strong: rgba(255, 255, 255, 0.16);
+      --accent: #10e7a0;
+      --accent-ink: #042417;
+      --accent-soft: rgba(16, 231, 160, 0.12);
+      --accent-glow: rgba(16, 231, 160, 0.35);
+      --accent-secondary: #ff5252;
+      --danger: #ef4444;
+      --danger-soft: rgba(239, 68, 68, 0.12);
+      --warn: #f59e0b;
+      --warn-soft: rgba(245, 158, 11, 0.12);
+      --ok: #10b981;
+      --ok-soft: rgba(16, 185, 129, 0.12);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-pill: 9999px;
+      --font-main: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--paper);
+      color: var(--ink);
+      font-family: var(--font-main);
+      min-height: 100vh;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Layout */
+    .app-container {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 20px 16px 80px 16px;
+    }
+
+    /* Top Banner / Prototype Header */
+    .proto-badge-banner {
+      background: linear-gradient(90deg, rgba(16, 231, 160, 0.15), rgba(59, 130, 246, 0.15));
+      border: 1px solid rgba(16, 231, 160, 0.3);
+      border-radius: var(--radius-md);
+      padding: 12px 18px;
+      margin-bottom: 24px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .proto-badge-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--accent);
+    }
+
+    .proto-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Navigation / Tabs */
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 8px;
+      margin-bottom: 24px;
+      overflow-x: auto;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--ink-soft);
+      padding: 8px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .tab-btn:hover {
+      color: var(--ink);
+      background: var(--paper-2);
+    }
+
+    .tab-btn.active {
+      color: var(--accent-ink);
+      background: var(--accent);
+      box-shadow: 0 0 14px var(--accent-glow);
+    }
+
+    /* Cards */
+    .card {
+      background-color: var(--paper-2);
+      border: 1px solid var(--rule);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      position: relative;
+    }
+
+    .card-highlight {
+      border-color: rgba(16, 231, 160, 0.35);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Quick Actions Bar */
+    .quick-actions-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .quick-action-card {
+      background: var(--paper-2);
+      border: 1px solid var(--rule);
+      border-radius: var(--radius-md);
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      cursor: pointer;
+      transition: transform 0.15s, border-color 0.15s, background-color 0.15s;
+    }
+
+    .quick-action-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+      background: var(--paper-3);
+    }
+
+    .quick-action-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-sm);
+      display: grid;
+      place-items: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .icon-cobrar {
+      background: var(--ok-soft);
+      color: var(--ok);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .icon-alumno {
+      background: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid rgba(16, 231, 160, 0.2);
+    }
+
+    .icon-checkin {
+      background: rgba(59, 130, 246, 0.12);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+
+    /* Onboarding Checklist */
+    .onboarding-card {
+      background: linear-gradient(145deg, var(--paper-2) 0%, rgba(18, 23, 34, 0.95) 100%);
+      border: 1px solid var(--rule-strong);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin-bottom: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .onboarding-card::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 200px;
+      height: 100%;
+      background: radial-gradient(circle at 100% 0%, rgba(16, 231, 160, 0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .onboarding-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .progress-bar-container {
+      width: 100%;
+      height: 6px;
+      background: var(--paper-3);
+      border-radius: var(--radius-pill);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 10px var(--accent-glow);
+      transition: width 0.3s ease;
+    }
+
+    .steps-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .step-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      border-radius: var(--radius-sm);
+      transition: border-color 0.15s;
+    }
+
+    .step-item.completed {
+      opacity: 0.7;
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+
+    .step-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .step-checkbox {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      border: 2px solid var(--rule-strong);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      background: transparent;
+      transition: all 0.2s;
+    }
+
+    .step-checkbox.checked {
+      background: var(--ok);
+      border-color: var(--ok);
+      color: #042417;
+    }
+
+    .step-title {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .step-desc {
+      font-size: 12px;
+      color: var(--ink-soft);
+    }
+
+    /* Buttons & Badges */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s ease;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: var(--accent-ink);
+      font-weight: 700;
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 0 16px var(--accent-glow);
+      filter: brightness(1.05);
+    }
+
+    .btn-secondary {
+      background: var(--paper-3);
+      color: var(--ink);
+      border: 1px solid var(--rule);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--rule-strong);
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .badge-ok {
+      background: var(--ok-soft);
+      color: var(--ok);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .badge-warn {
+      background: var(--warn-soft);
+      color: var(--warn);
+      border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+
+    .badge-accent {
+      background: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid rgba(16, 231, 160, 0.2);
+    }
+
+    /* Form Fields */
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink-soft);
+      margin-bottom: 6px;
+    }
+
+    .form-input, .form-select {
+      width: 100%;
+      background: var(--paper);
+      border: 1px solid var(--rule-strong);
+      color: var(--ink);
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-input:focus, .form-select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(16, 231, 160, 0.15);
+    }
+
+    /* Discount Pills */
+    .discount-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .discount-card {
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+    }
+
+    .discount-card.active-discount {
+      border-color: var(--accent);
+      background: rgba(16, 231, 160, 0.03);
+    }
+
+    .discount-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .discount-name {
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .discount-tag {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      background: var(--paper-3);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--accent);
+    }
+
+    /* Tooltip helper */
+    .helper-tip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--paper-3);
+      color: var(--ink-soft);
+      font-size: 11px;
+      cursor: help;
+      margin-left: 6px;
+      position: relative;
+    }
+
+    .helper-tip:hover {
+      color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    /* Simulator pill */
+    .live-calc-box {
+      background: var(--paper-3);
+      border: 1px solid var(--rule-strong);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      margin-top: 16px;
+    }
+
+    /* Switch Component */
+    .switch-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .switch-ui {
+      width: 40px;
+      height: 22px;
+      background: var(--paper-3);
+      border: 1px solid var(--rule-strong);
+      border-radius: var(--radius-pill);
+      position: relative;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .switch-ui::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 16px;
+      height: 16px;
+      background: var(--ink-soft);
+      border-radius: 50%;
+      transition: transform 0.2s, background 0.2s;
+    }
+
+    .switch-wrap.active .switch-ui {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .switch-wrap.active .switch-ui::after {
+      transform: translateX(18px);
+      background: var(--accent-ink);
+    }
+
+    /* Modal / Drawer */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(4, 7, 12, 0.85);
+      backdrop-filter: blur(4px);
+      display: none;
+      place-items: center;
+      z-index: 999;
+      padding: 16px;
+    }
+
+    .modal-overlay.open {
+      display: grid;
+    }
+
+    .modal-content {
+      background: var(--paper-2);
+      border: 1px solid var(--rule-strong);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 520px;
+      padding: 24px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 640px) {
+      .onboarding-header {
+        flex-direction: column;
+      }
+      .quick-actions-bar {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-container">
+
+  <!-- Prototype Top Info Banner -->
+  <aside class="proto-badge-banner" aria-label="Aviso de prototipo interactivo">
+    <div class="proto-badge-title">
+      <span style="font-size: 18px;">⚡</span>
+      <span>Prototipo de Referencia: Onboarding del Dueño & Planes con Descuento</span>
+    </div>
+    <div class="proto-controls">
+      <div class="switch-wrap" id="toggleDemoSwitch" onclick="toggleDemoMode()">
+        <span class="switch-ui"></span>
+        <span style="font-size: 12px; font-weight: 600;" id="demoModeLabel">Modo Práctica (Datos Ficticios)</span>
+      </div>
+      <span class="badge badge-accent">No altera tu base de datos</span>
+    </div>
+  </aside>
+
+  <!-- View Switcher & Title -->
+  <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; flex-wrap: wrap; gap: 14px;">
+    <div>
+      <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-soft); font-weight: 700;">
+        Gimnasio IronCore · Panel de Control
+      </div>
+      <h1 style="font-size: 26px; font-weight: 800; letter-spacing: -0.02em; margin-top: 4px;">
+        Buenos días, Santiago 👋
+      </h1>
+    </div>
+
+    <!-- Toggle Vista Simple vs Avanzada -->
+    <div style="background: var(--paper-2); border: 1px solid var(--rule); border-radius: var(--radius-pill); padding: 4px; display: flex; gap: 4px;">
+      <button class="btn btn-sm btn-primary" id="btnViewSimple" onclick="setViewMode('simple')">
+        Mostrador Rápido (80/20)
+      </button>
+      <button class="btn btn-sm btn-secondary" id="btnViewAdvanced" onclick="setViewMode('advanced')">
+        Analítica Completa
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Navigation Tabs -->
+  <nav class="nav-tabs" aria-label="Navegación de pestañas">
+    <button class="tab-btn active" onclick="switchTab('dashboard')">
+      <span>📊</span> Dashboard
+    </button>
+    <button class="tab-btn" onclick="switchTab('planes')">
+      <span>🏷️</span> Planes y Descuentos
+      <span style="background: var(--accent); color: var(--accent-ink); font-size: 10px; padding: 2px 6px; border-radius: 9999px; font-weight: 800;">NUEVO</span>
+    </button>
+    <button class="tab-btn" onclick="switchTab('alumnos')">
+      <span>👥</span> Alumnos (28)
+    </button>
+    <button class="tab-btn" onclick="switchTab('caja')">
+      <span>💰</span> Caja & Cobros
+    </button>
+  </nav>
+
+  <!-- TAB 1: DASHBOARD CON ONBOARDING -->
+  <section id="tab-dashboard" class="tab-content">
+
+    <!-- 1. CHECKLIST DE PRIMEROS PASOS (ONBOARDING PROGRESSIVO) -->
+    <div class="onboarding-card" id="onboardingSection">
+      <div class="onboarding-header">
+        <div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 20px;">🚀</span>
+            <h2 style="font-size: 18px; font-weight: 700;">Guía rápida: Tu gimnasio en marcha</h2>
+            <span class="badge badge-accent" id="progressCount">2 de 4 listos</span>
+          </div>
+          <p style="font-size: 13px; color: var(--ink-soft); margin-top: 4px;">
+            Completá estos 4 pasos para empezar a operar tu gimnasio hoy mismo.
+          </p>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="dismissOnboarding()" title="Ocultar esta guía">
+          ✕ Ocultar guía
+        </button>
+      </div>
+
+      <!-- Barra de progreso -->
+      <div class="progress-bar-container">
+        <div class="progress-bar-fill" id="progressBar" style="width: 50%;"></div>
+      </div>
+
+      <!-- Pasos -->
+      <div class="steps-list">
+        <!-- Paso 1: Planes -->
+        <div class="step-item completed">
+          <div class="step-left">
+            <div class="step-checkbox checked" onclick="toggleStep(this)">✓</div>
+            <div>
+              <div class="step-title" style="text-decoration: line-through; color: var(--ink-soft);">
+                1. Plan mensual por defecto (30 días) configurado
+              </div>
+              <div class="step-desc">
+                Ya dejamos seteado tu plan base de $25.000 con descuentos para estudiantes.
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="switchTab('planes')">Editar plan</button>
+        </div>
+
+        <!-- Paso 2: Primer Alumno -->
+        <div class="step-item completed">
+          <div class="step-left">
+            <div class="step-checkbox checked" onclick="toggleStep(this)">✓</div>
+            <div>
+              <div class="step-title" style="text-decoration: line-through; color: var(--ink-soft);">
+                2. Registrar tu primer alumno
+              </div>
+              <div class="step-desc">
+                Cargaste a Martín Gómez con DNI y teléfono.
+              </div>
+            </div>
+          </div>
+          <span class="badge badge-ok">Completado</span>
+        </div>
+
+        <!-- Paso 3: Cobrar primera cuota -->
+        <div class="step-item" style="border-color: rgba(16, 231, 160, 0.4);">
+          <div class="step-left">
+            <div class="step-checkbox" onclick="toggleStep(this)"></div>
+            <div>
+              <div class="step-title" style="color: var(--ink);">
+                3. Cobrar la primera cuota o registrar un pago
+              </div>
+              <div class="step-desc">
+                Genera el comprobante y deja al alumno en estado "Al día".
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openQuickPayModal()">Cobrar ahora →</button>
+        </div>
+
+        <!-- Paso 4: Check-in en mostrador -->
+        <div class="step-item">
+          <div class="step-left">
+            <div class="step-checkbox" onclick="toggleStep(this)"></div>
+            <div>
+              <div class="step-title">
+                4. Probar la pantalla de ingreso (Check-in con DNI)
+              </div>
+              <div class="step-desc">
+                La pantalla que dejas en recepción o en una tablet para que los alumnos ingresen.
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="alert('Abriendo pantalla limpia de Check-in en modo tablet...')">Ver pantalla</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. ACCIONES RÁPIDAS (EL 80/20 DEL MOSTRADOR) -->
+    <div style="margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+      <span style="font-size: 12px; text-transform: uppercase; font-weight: 700; color: var(--ink-soft); letter-spacing: 0.05em;">
+        Acciones Rápidas del Día
+      </span>
+      <span style="font-size: 12px; color: var(--ink-muted);">Lo que más usás en recepción</span>
+    </div>
+
+    <div class="quick-actions-bar">
+      <!-- Cobro Express -->
+      <div class="quick-action-card" onclick="openQuickPayModal()">
+        <div class="quick-action-icon icon-cobrar">💳</div>
+        <div>
+          <div style="font-weight: 700; font-size: 15px;">Cobrar Cuota</div>
+          <div style="font-size: 12px; color: var(--ink-soft);">Registrar pago en 2 toques</div>
+        </div>
+      </div>
+
+      <!-- Nuevo Alumno -->
+      <div class="quick-action-card" onclick="openNewStudentModal()">
+        <div class="quick-action-icon icon-alumno">👤</div>
+        <div>
+          <div style="font-weight: 700; font-size: 15px;">Nuevo Alumno</div>
+          <div style="font-size: 12px; color: var(--ink-soft);">Alta express con DNI</div>
+        </div>
+      </div>
+
+      <!-- Check-in Recepción -->
+      <div class="quick-action-card" onclick="alert('Simulación: abriendo terminal de ingreso /checkin')">
+        <div class="quick-action-icon icon-checkin">📲</div>
+        <div>
+          <div style="font-weight: 700; font-size: 15px;">Modo Check-in</div>
+          <div style="font-size: 12px; color: var(--ink-soft);">Pantalla para tablet/DNI</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. RESUMEN DEL DÍA (LO URGENTE PRIMERO) -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-bottom: 24px;">
+      <!-- Hero Stat Card -->
+      <div class="card card-highlight">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+          <span style="font-size: 12px; text-transform: uppercase; font-weight: 700; color: var(--ink-soft);">
+            Urgencias de Hoy
+          </span>
+          <span class="badge badge-warn">Atención</span>
+        </div>
+        <div style="margin-top: 14px;">
+          <div style="font-family: var(--font-main); font-size: 64px; font-weight: 800; line-height: 0.9; color: var(--warn);" id="statVencidas">
+            3
+          </div>
+          <div style="font-size: 16px; font-weight: 600; margin-top: 8px;">
+            Cuotas vencidas esta semana
+          </div>
+          <div style="font-size: 13px; color: var(--ink-soft); margin-top: 6px;">
+            Martín, Lucía y Juan tienen su pase expirado.
+          </div>
+        </div>
+        <div style="margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--rule); display: flex; gap: 8px;">
+          <button class="btn btn-primary btn-sm" onclick="alert('Avisos enviados por WhatsApp')">
+            Enviar recordatorio WhatsApp
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="switchTab('alumnos')">
+            Ver quiénes son
+          </button>
+        </div>
+      </div>
+
+      <!-- Caja del Día -->
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+          <span style="font-size: 12px; text-transform: uppercase; font-weight: 700; color: var(--ink-soft);">
+            Caja Cobrada Hoy
+          </span>
+          <span class="badge badge-ok">En vivo</span>
+        </div>
+        <div style="margin-top: 14px;">
+          <div style="font-family: var(--font-mono); font-size: 42px; font-weight: 700; color: var(--accent);">
+            $148.500
+          </div>
+          <div style="font-size: 14px; color: var(--ink-soft); margin-top: 4px;">
+            6 pagos registrados hoy (Efectivo & Transferencia)
+          </div>
+        </div>
+        <div style="margin-top: 24px; display: flex; align-items: center; justify-content: space-between;">
+          <span style="font-size: 13px; color: var(--ink-soft);">Socios activos: <strong style="color: var(--ink);">25 / 28</strong></span>
+          <button class="btn btn-secondary btn-sm" onclick="switchTab('caja')">Ver detalle de caja →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECCIÓN AVANZADA (Se oculta en modo mostrador simple para no agobiar al dueño nuevo) -->
+    <div id="advancedMetricsSection" style="display: none;">
+      <div style="margin-bottom: 14px; border-top: 1px dashed var(--rule-strong); padding-top: 20px;">
+        <h3 style="font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+          <span>📈</span> Métricas Avanzadas y Retención
+          <span class="helper-tip" title="Estas métricas te ayudan a medir la salud financiera de tu negocio a mediano plazo.">?</span>
+        </h3>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 24px;">
+        <div class="card">
+          <div style="font-size: 12px; color: var(--ink-soft);">Tasa de Retención</div>
+          <div style="font-size: 24px; font-weight: 700; color: var(--ok); margin-top: 4px;">88.4%</div>
+          <div style="font-size: 11px; color: var(--ink-muted); margin-top: 4px;">+2.1% respecto al mes pasado</div>
+        </div>
+        <div class="card">
+          <div style="font-size: 12px; color: var(--ink-soft);">Ticket Promedio</div>
+          <div style="font-size: 24px; font-weight: 700; color: var(--ink); margin-top: 4px;">$23.800</div>
+          <div style="font-size: 11px; color: var(--ink-muted); margin-top: 4px;">Con descuentos incluidos</div>
+        </div>
+        <div class="card">
+          <div style="font-size: 12px; color: var(--ink-soft);">Horario Pico de Asistencia</div>
+          <div style="font-size: 24px; font-weight: 700; color: var(--warn); margin-top: 4px;">19:00 - 21:00</div>
+          <div style="font-size: 11px; color: var(--ink-muted); margin-top: 4px;">Capacidad al 85%</div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- TAB 2: PLANES Y DESCUENTOS (SOLUCIÓN ESPECÍFICA PEDIDA) -->
+  <section id="tab-planes" class="tab-content" style="display: none;">
+    <div style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 14px;">
+      <div>
+        <h2 style="font-size: 22px; font-weight: 800;">Planes de Mensualidad y Descuentos</h2>
+        <p style="font-size: 14px; color: var(--ink-soft); margin-top: 4px;">
+          Configurá los planes que les cobrás a tus socios. Dejamos un plan mensual de 30 días listo para que sólo le pongas tu precio.
+        </p>
+      </div>
+      <button class="btn btn-primary" onclick="openNewPlanModal()">
+        + Crear otro plan
+      </button>
+    </div>
+
+    <!-- PLAN POR DEFAULT: MENSUALIDAD 30 DÍAS -->
+    <div class="card card-highlight" style="margin-bottom: 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 44px; height: 44px; border-radius: 10px; background: var(--accent-soft); border: 1px solid rgba(16, 231, 160, 0.3); display: grid; place-items: center; font-size: 22px;">
+            ⭐
+          </div>
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <h3 style="font-size: 18px; font-weight: 800;" id="currentPlanName">Mensualidad Estándar</h3>
+              <span class="badge badge-accent">Plan por Defecto</span>
+              <span class="badge badge-ok">Activo</span>
+            </div>
+            <div style="font-size: 13px; color: var(--ink-soft); margin-top: 2px;">
+              Duración: <strong style="color: var(--ink);">30 días corridos</strong> desde el día de pago
+              <span class="helper-tip" title="Se calcula exactamente a 30 días corridos desde la fecha en que el alumno abona.">?</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="text-align: right;">
+          <div style="font-size: 11px; text-transform: uppercase; color: var(--ink-soft); font-weight: 700;">Precio Base General</div>
+          <div style="font-family: var(--font-mono); font-size: 28px; font-weight: 800; color: var(--accent);" id="currentPlanPrice">
+            $25.000
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--rule); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <span style="font-size: 13px; color: var(--ink-soft);">
+          Utilizado por el <strong style="color: var(--ink);">92%</strong> de tus alumnos activos.
+        </span>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-secondary btn-sm" onclick="openEditDefaultPlanModal()">
+            ✏️ Modificar Precio o Nombre
+          </button>
+        </div>
+      </div>
+
+      <!-- SUB-SECCIÓN: DESCUENTOS CONFIGURABLES PARA ESTE PLAN -->
+      <div style="margin-top: 20px; background: var(--paper); border: 1px solid var(--rule); border-radius: var(--radius-md); padding: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+          <div>
+            <span style="font-size: 13px; font-weight: 700;">
+              🏷️ Descuentos y Categorías Especiales
+            </span>
+            <p style="font-size: 12px; color: var(--ink-soft);">
+              Permite cobrar automáticamente tarifas diferenciadas a estudiantes, jubilados o familiares.
+            </p>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="openAddDiscountModal()">
+            + Nuevo Descuento
+          </button>
+        </div>
+
+        <!-- Tarjetas de descuentos -->
+        <div class="discount-grid" id="discountsList">
+          <!-- Descuento Estudiante -->
+          <div class="discount-card active-discount">
+            <div class="discount-header">
+              <span class="discount-name">🎓 Estudiante</span>
+              <span class="discount-tag">-20% OFF</span>
+            </div>
+            <div style="font-size: 12px; color: var(--ink-soft);">
+              Aplica presentando libreta / certificado
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px; padding-top: 6px; border-top: 1px dashed var(--rule);">
+              <span style="font-size: 11px; color: var(--ink-muted);">Precio final:</span>
+              <span style="font-family: var(--font-mono); font-weight: 700; color: var(--ok); font-size: 14px;" id="priceEstudiante">$20.000</span>
+            </div>
+          </div>
+
+          <!-- Descuento Jubilado -->
+          <div class="discount-card active-discount">
+            <div class="discount-header">
+              <span class="discount-name">👴 Jubilados</span>
+              <span class="discount-tag">-25% OFF</span>
+            </div>
+            <div style="font-size: 12px; color: var(--ink-soft);">
+              Horario matutino / pase senior
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px; padding-top: 6px; border-top: 1px dashed var(--rule);">
+              <span style="font-size: 11px; color: var(--ink-muted);">Precio final:</span>
+              <span style="font-family: var(--font-mono); font-weight: 700; color: var(--ok); font-size: 14px;" id="priceJubilado">$18.750</span>
+            </div>
+          </div>
+
+          <!-- Descuento Familiar -->
+          <div class="discount-card active-discount">
+            <div class="discount-header">
+              <span class="discount-name">👨‍👩‍👧 Plan Familiar</span>
+              <span class="discount-tag">-$5.000 Fijo</span>
+            </div>
+            <div style="font-size: 12px; color: var(--ink-soft);">
+              2do integrante del grupo familiar
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px; padding-top: 6px; border-top: 1px dashed var(--rule);">
+              <span style="font-size: 11px; color: var(--ink-muted);">Precio final:</span>
+              <span style="font-family: var(--font-mono); font-weight: 700; color: var(--ok); font-size: 14px;" id="priceFamiliar">$20.000</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- SIMULADOR EN VIVO PARA EL DUEÑO -->
+        <div class="live-calc-box">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+            <span style="font-size: 14px;">⚡</span>
+            <span style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--accent);">
+              Simulador de cobro al socio:
+            </span>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 14px;">
+            <div style="flex: 1; min-width: 180px;">
+              <label for="simDiscount" style="font-size: 11px; color: var(--ink-soft); display: block; margin-bottom: 4px;">Tipo de alumno a cobrar:</label>
+              <select id="simDiscount" class="form-select" onchange="recalculateSim()">
+                <option value="none">General / Sin descuento (100%)</option>
+                <option value="estudiante">Estudiante (-20%)</option>
+                <option value="jubilado">Jubilado (-25%)</option>
+                <option value="familiar">Familiar (-$5.000)</option>
+              </select>
+            </div>
+            <div style="background: var(--paper-2); border: 1px solid var(--rule); border-radius: var(--radius-sm); padding: 8px 16px; text-align: center;">
+              <div style="font-size: 11px; color: var(--ink-soft);">Monto final a cobrar</div>
+              <div style="font-family: var(--font-mono); font-size: 22px; font-weight: 800; color: var(--accent);" id="simFinalPrice">
+                $25.000
+              </div>
+            </div>
+            <div style="font-size: 12px; color: var(--ink-soft); max-width: 320px;">
+              💡 <em>Al registrar al socio o cobrarle en el mostrador, elegís la categoría y el sistema calcula la fecha exacta (+30 días) y el importe exacto.</em>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Otros Planes Creados -->
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 16px; font-weight: 700;">Otros Planes Secundarios</h3>
+        <span style="font-size: 12px; color: var(--ink-soft);">Pase diario, trimestral, etc.</span>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--paper); border-radius: var(--radius-sm); border: 1px solid var(--rule);">
+          <div>
+            <div style="font-weight: 600; font-size: 14px;">Pase Diario / Clase Suelta</div>
+            <div style="font-size: 12px; color: var(--ink-soft);">1 día de acceso</div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 14px;">
+            <span style="font-family: var(--font-mono); font-weight: 700;">$3.500</span>
+            <button class="btn btn-secondary btn-sm" onclick="alert('Editar pase diario')">Editar</button>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--paper); border-radius: var(--radius-sm); border: 1px solid var(--rule);">
+          <div>
+            <div style="font-weight: 600; font-size: 14px;">Trimestre Adelantado</div>
+            <div style="font-size: 12px; color: var(--ink-soft);">90 días corridos (bonificado)</div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 14px;">
+            <span style="font-family: var(--font-mono); font-weight: 700;">$65.000</span>
+            <button class="btn btn-secondary btn-sm" onclick="alert('Editar trimestre')">Editar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB 3: ALUMNOS (MUESTRA DE EJEMPLO) -->
+  <section id="tab-alumnos" class="tab-content" style="display: none;">
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+        <div>
+          <h2 style="font-size: 18px; font-weight: 700;">Listado de Alumnos</h2>
+          <div style="font-size: 13px; color: var(--ink-soft);">28 alumnos activos · Mostrando filtro rápido</div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openNewStudentModal()">+ Registrar Alumno</button>
+      </div>
+
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--rule); color: var(--ink-soft);">
+              <th style="padding: 10px 8px;">Alumno</th>
+              <th style="padding: 10px 8px;">Plan / Categoría</th>
+              <th style="padding: 10px 8px;">Vencimiento</th>
+              <th style="padding: 10px 8px;">Estado</th>
+              <th style="padding: 10px 8px; text-align: right;">Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom: 1px solid var(--rule);">
+              <td style="padding: 12px 8px; font-weight: 600;">Martín Gómez (DNI 40.231.554)</td>
+              <td style="padding: 12px 8px;"><span class="discount-tag">Estudiante (-20%)</span></td>
+              <td style="padding: 12px 8px; color: var(--danger); font-weight: 600;">Venció hace 2 días</td>
+              <td style="padding: 12px 8px;"><span class="badge" style="background: var(--danger-soft); color: var(--danger);">Vencido</span></td>
+              <td style="padding: 12px 8px; text-align: right;">
+                <button class="btn btn-primary btn-sm" onclick="openQuickPayModal('Martín Gómez', 20000)">Cobrar $20.000</button>
+              </td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--rule);">
+              <td style="padding: 12px 8px; font-weight: 600;">Camila Rossi (DNI 38.991.120)</td>
+              <td style="padding: 12px 8px;">Mensualidad Estándar</td>
+              <td style="padding: 12px 8px; color: var(--ok);">Vence en 24 días</td>
+              <td style="padding: 12px 8px;"><span class="badge badge-ok">Al día</span></td>
+              <td style="padding: 12px 8px; text-align: right;">
+                <button class="btn btn-secondary btn-sm">Ver ficha</button>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 12px 8px; font-weight: 600;">Carlos Méndez (DNI 14.102.304)</td>
+              <td style="padding: 12px 8px;"><span class="discount-tag">Jubilados (-25%)</span></td>
+              <td style="padding: 12px 8px; color: var(--warn); font-weight: 600;">Vence mañana</td>
+              <td style="padding: 12px 8px;"><span class="badge badge-warn">Por vencer</span></td>
+              <td style="padding: 12px 8px; text-align: right;">
+                <button class="btn btn-primary btn-sm" onclick="openQuickPayModal('Carlos Méndez', 18750)">Cobrar $18.750</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB 4: CAJA (RESUMEN SIMPLE) -->
+  <section id="tab-caja" class="tab-content" style="display: none;">
+    <div class="card">
+      <h2 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Caja & Movimientos de Hoy</h2>
+      <p style="font-size: 13px; color: var(--ink-soft); margin-bottom: 18px;">
+        Resumen de ingresos para el cierre del turno.
+      </p>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px;">
+        <div style="background: var(--paper); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--rule);">
+          <div style="font-size: 11px; color: var(--ink-soft);">Efectivo en mostrador</div>
+          <div style="font-family: var(--font-mono); font-size: 20px; font-weight: 700; color: var(--ok);">$65.000</div>
+        </div>
+        <div style="background: var(--paper); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--rule);">
+          <div style="font-size: 11px; color: var(--ink-soft);">Transferencias / MercadoPago</div>
+          <div style="font-family: var(--font-mono); font-size: 20px; font-weight: 700; color: var(--accent);">$83.500</div>
+        </div>
+        <div style="background: var(--paper); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--rule);">
+          <div style="font-size: 11px; color: var(--ink-soft);">Total recaudado hoy</div>
+          <div style="font-family: var(--font-mono); font-size: 20px; font-weight: 700; color: var(--ink);">$148.500</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- MODAL: EDITAR PLAN BASE (30 DÍAS POR DEFAULT) -->
+<div class="modal-overlay" id="editPlanModal">
+  <div class="modal-content">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <h3 style="font-size: 18px; font-weight: 800;">Editar Plan Mensual Base</h3>
+      <button onclick="closeModal('editPlanModal')" style="background: none; border: none; color: var(--ink-soft); font-size: 18px; cursor: pointer;">✕</button>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="editPlanNameInput">Nombre del Plan</label>
+      <input type="text" id="editPlanNameInput" class="form-input" value="Mensualidad Estándar">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="editPlanPriceInput">
+        <span>Precio General ($ ARS)</span>
+        <span style="font-size: 11px; color: var(--accent);">Sin descuentos aplicados</span>
+      </label>
+      <input type="number" id="editPlanPriceInput" class="form-input" value="25000" step="500">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="planDurationInput">
+        <span>Duración</span>
+        <span style="font-size: 11px; color: var(--ok);">Recomendado: 30 días corridos</span>
+      </label>
+      <input type="text" id="planDurationInput" class="form-input" value="30 días corridos (1 mes)" disabled style="opacity: 0.8; cursor: not-allowed; background: var(--paper-3);">
+      <span style="font-size: 11px; color: var(--ink-muted); margin-top: 4px; display: block;">
+        Por defecto para simplificar el cobro mensual exacto.
+      </span>
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 24px;">
+      <button class="btn btn-secondary" onclick="closeModal('editPlanModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveDefaultPlanChanges()">Guardar Cambios</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: CREAR NUEVO DESCUENTO -->
+<div class="modal-overlay" id="addDiscountModal">
+  <div class="modal-content">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <h3 style="font-size: 18px; font-weight: 800;">Nuevo Descuento / Tarifa Especial</h3>
+      <button onclick="closeModal('addDiscountModal')" style="background: none; border: none; color: var(--ink-soft); font-size: 18px; cursor: pointer;">✕</button>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="newDiscName">Nombre de la categoría</label>
+      <input type="text" id="newDiscName" class="form-input" placeholder="Ej: Docentes, Convenio Empresa, Policía...">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="newDiscType">Tipo de Descuento</label>
+      <select id="newDiscType" class="form-select">
+        <option value="percent">Porcentaje de descuento (%)</option>
+        <option value="fixed">Monto fijo en pesos ($ ARS)</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="newDiscValue">Valor del descuento</label>
+      <input type="number" id="newDiscValue" class="form-input" placeholder="Ej: 15 para 15% o 3000 para $3000">
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 24px;">
+      <button class="btn btn-secondary" onclick="closeModal('addDiscountModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="addNewDiscount()">Crear Descuento</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: COBRO RÁPIDO EXPRESS -->
+<div class="modal-overlay" id="quickPayModal">
+  <div class="modal-content">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <h3 style="font-size: 18px; font-weight: 800;">💳 Cobro Rápido en Mostrador</h3>
+      <button onclick="closeModal('quickPayModal')" style="background: none; border: none; color: var(--ink-soft); font-size: 18px; cursor: pointer;">✕</button>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="payStudentName">Alumno a cobrar</label>
+      <input type="text" id="payStudentName" class="form-input" value="Martín Gómez">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="payCategorySelect">Categoría / Plan</label>
+      <select id="payCategorySelect" class="form-select" onchange="updatePayModalAmount()">
+        <option value="25000">Mensualidad General ($25.000)</option>
+        <option value="20000" selected>Estudiante -20% ($20.000)</option>
+        <option value="18750">Jubilado -25% ($18.750)</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="payMethodSelect">Método de pago</label>
+      <select id="payMethodSelect" class="form-select">
+        <option>Efectivo</option>
+        <option>Transferencia bancaria / Alias</option>
+        <option>Mercado Pago QR</option>
+        <option>Tarjeta Débito</option>
+      </select>
+    </div>
+
+    <div style="background: var(--paper); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--rule); margin: 16px 0; display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <div style="font-size: 12px; color: var(--ink-soft);">Total a cobrar</div>
+        <div style="font-size: 11px; color: var(--ok);">Extiende 30 días corridos</div>
+      </div>
+      <div style="font-family: var(--font-mono); font-size: 26px; font-weight: 800; color: var(--accent);" id="payTotalDisplay">
+        $20.000
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; gap: 8px;">
+      <button class="btn btn-secondary" onclick="closeModal('quickPayModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmPayment()">Confirmar Cobro e Imprimir/Enviar Recibo</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let basePrice = 25000;
+  let isDemoMode = true;
+
+  // Toggle Tab
+  function switchTab(tabId) {
+    document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+    const activeTab = document.getElementById('tab-' + tabId);
+    if (activeTab) activeTab.style.display = 'block';
+
+    const btns = Array.from(document.querySelectorAll('.tab-btn'));
+    const matched = btns.find(b => b.getAttribute('onclick')?.includes(tabId));
+    if (matched) matched.classList.add('active');
+  }
+
+  // Toggle Simple vs Advanced
+  function setViewMode(mode) {
+    const btnSimple = document.getElementById('btnViewSimple');
+    const btnAdv = document.getElementById('btnViewAdvanced');
+    const advSection = document.getElementById('advancedMetricsSection');
+
+    if (mode === 'simple') {
+      btnSimple.className = 'btn btn-sm btn-primary';
+      btnAdv.className = 'btn btn-sm btn-secondary';
+      advSection.style.display = 'none';
+    } else {
+      btnSimple.className = 'btn btn-sm btn-secondary';
+      btnAdv.className = 'btn btn-sm btn-primary';
+      advSection.style.display = 'block';
+    }
+  }
+
+  // Onboarding Step Checkbox Toggle
+  function toggleStep(el) {
+    el.classList.toggle('checked');
+    const stepItem = el.closest('.step-item');
+    const stepTitle = stepItem.querySelector('.step-title');
+
+    if (el.classList.contains('checked')) {
+      el.textContent = '✓';
+      stepItem.classList.add('completed');
+      stepTitle.style.textDecoration = 'line-through';
+      stepTitle.style.color = 'var(--ink-soft)';
+    } else {
+      el.textContent = '';
+      stepItem.classList.remove('completed');
+      stepTitle.style.textDecoration = 'none';
+      stepTitle.style.color = 'var(--ink)';
+    }
+    updateProgress();
+  }
+
+  function updateProgress() {
+    const total = document.querySelectorAll('.step-checkbox').length;
+    const checked = document.querySelectorAll('.step-checkbox.checked').length;
+    const percent = Math.round((checked / total) * 100);
+
+    document.getElementById('progressBar').style.width = percent + '%';
+    document.getElementById('progressCount').textContent = checked + ' de ' + total + ' listos';
+  }
+
+  function dismissOnboarding() {
+    document.getElementById('onboardingSection').style.display = 'none';
+  }
+
+  // Modals
+  function openModal(id) {
+    document.getElementById(id).classList.add('open');
+  }
+
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+  }
+
+  function openEditDefaultPlanModal() {
+    document.getElementById('editPlanPriceInput').value = basePrice;
+    openModal('editPlanModal');
+  }
+
+  function saveDefaultPlanChanges() {
+    const newName = document.getElementById('editPlanNameInput').value;
+    const newPrice = parseInt(document.getElementById('editPlanPriceInput').value, 10) || 25000;
+    basePrice = newPrice;
+
+    document.getElementById('currentPlanName').textContent = newName;
+    document.getElementById('currentPlanPrice').textContent = '$' + newPrice.toLocaleString('es-AR');
+
+    // Update discounts calculations
+    document.getElementById('priceEstudiante').textContent = '$' + Math.round(newPrice * 0.8).toLocaleString('es-AR');
+    document.getElementById('priceJubilado').textContent = '$' + Math.round(newPrice * 0.75).toLocaleString('es-AR');
+    document.getElementById('priceFamiliar').textContent = '$' + Math.max(0, newPrice - 5000).toLocaleString('es-AR');
+
+    recalculateSim();
+    closeModal('editPlanModal');
+  }
+
+  function recalculateSim() {
+    const type = document.getElementById('simDiscount').value;
+    let finalAmount = basePrice;
+
+    if (type === 'estudiante') finalAmount = Math.round(basePrice * 0.8);
+    else if (type === 'jubilado') finalAmount = Math.round(basePrice * 0.75);
+    else if (type === 'familiar') finalAmount = Math.max(0, basePrice - 5000);
+
+    document.getElementById('simFinalPrice').textContent = '$' + finalAmount.toLocaleString('es-AR');
+  }
+
+  function openAddDiscountModal() {
+    openModal('addDiscountModal');
+  }
+
+  function addNewDiscount() {
+    const name = document.getElementById('newDiscName').value;
+    const type = document.getElementById('newDiscType').value;
+    const val = parseFloat(document.getElementById('newDiscValue').value) || 0;
+
+    if (!name) return alert('Por favor ingresa un nombre para el descuento');
+
+    let finalPrice = basePrice;
+    let tag = '';
+    if (type === 'percent') {
+      tag = '-' + val + '% OFF';
+      finalPrice = Math.round(basePrice * (1 - (val / 100)));
+    } else {
+      tag = '-$' + val.toLocaleString('es-AR') + ' Fijo';
+      finalPrice = Math.max(0, basePrice - val);
+    }
+
+    const card = document.createElement('div');
+    card.className = 'discount-card active-discount';
+    card.innerHTML = `
+      <div class="discount-header">
+        <span class="discount-name">🏷️ ${name}</span>
+        <span class="discount-tag">${tag}</span>
+      </div>
+      <div style="font-size: 12px; color: var(--ink-soft);">
+        Descuento personalizado creado por vos
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px; padding-top: 6px; border-top: 1px dashed var(--rule);">
+        <span style="font-size: 11px; color: var(--ink-muted);">Precio final:</span>
+        <span style="font-family: var(--font-mono); font-weight: 700; color: var(--ok); font-size: 14px;">$${finalPrice.toLocaleString('es-AR')}</span>
+      </div>
+    `;
+
+    document.getElementById('discountsList').appendChild(card);
+    closeModal('addDiscountModal');
+  }
+
+  function openQuickPayModal(studentName = 'Martín Gómez', amount = 20000) {
+    document.getElementById('payStudentName').value = studentName;
+    document.getElementById('payTotalDisplay').textContent = '$' + amount.toLocaleString('es-AR');
+    openModal('quickPayModal');
+  }
+
+  function updatePayModalAmount() {
+    const val = parseInt(document.getElementById('payCategorySelect').value, 10);
+    document.getElementById('payTotalDisplay').textContent = '$' + val.toLocaleString('es-AR');
+  }
+
+  function confirmPayment() {
+    alert('¡Cobro registrado exitosamente! La cuota se extendió por 30 días corridos y se actualizó la caja.');
+    closeModal('quickPayModal');
+  }
+
+  function toggleDemoMode() {
+    isDemoMode = !isDemoMode;
+    const sw = document.getElementById('toggleDemoSwitch');
+    const label = document.getElementById('demoModeLabel');
+    sw.classList.toggle('active');
+
+    if (isDemoMode) {
+      label.textContent = 'Modo Práctica (Datos Ficticios)';
+      document.getElementById('statVencidas').textContent = '3';
+    } else {
+      label.textContent = 'Modo Real (Tu Base de Datos)';
+      document.getElementById('statVencidas').textContent = '0';
+    }
+  }
+
+  function openNewStudentModal() {
+    alert('Formulario de Alta Rápida de Alumno: DNI, Nombre, Teléfono y Plan asignado.');
+  }
+
+  function openNewPlanModal() {
+    alert('Formulario para agregar un plan adicional (ej: pase por 10 clases, abono semestral, etc.)');
+  }
+</script>
+
+</body>
+</html>

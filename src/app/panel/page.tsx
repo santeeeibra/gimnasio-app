@@ -6,13 +6,14 @@ import { requireDueno } from "@/lib/auth";
 import { diasRestantes } from "@/lib/cuota";
 import { cupoSocios } from "@/lib/plataforma/cupo";
 import { ClienteRow, type ClienteVista } from "./clientes/cliente-row";
+import { OnboardingDueno } from "./onboarding-dueno";
 
 export default async function ResumenPage() {
   const dueno = await requireDueno();
   const supabase = await createClient();
 
   const adminDb = createAdminClient();
-  const [{ data: gym }, cupo, { data }] = await Promise.all([
+  const [{ data: gym }, cupo, { data }, { count: planesCount }] = await Promise.all([
     supabase
       .from("gimnasios")
       .select("estado")
@@ -25,6 +26,10 @@ export default async function ResumenPage() {
         "id, estado_cuota, fecha_vencimiento, plan_id, profile:profiles(nombre, dni, telefono), plan:planes(nombre)",
       )
       .order("fecha_vencimiento", { ascending: true, nullsFirst: true }),
+    supabase
+      .from("planes")
+      .select("id", { count: "exact", head: true })
+      .eq("gimnasio_id", dueno.gimnasio_id),
   ]);
 
   const estadoGimnasio = gym?.estado ?? "prueba";
@@ -110,9 +115,68 @@ export default async function ResumenPage() {
         </div>
       )}
 
+      {/* GUÍA DE PRIMEROS PASOS / ONBOARDING PROGRESIVO */}
+      <OnboardingDueno
+        tienePlanes={(planesCount ?? 0) > 0}
+        tieneSocios={total > 0}
+      />
+
+      {/* ACCIONES RÁPIDAS DEL DÍA A DÍA (80/20) */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-[11px] uppercase tracking-[0.08em] text-ink-soft font-semibold">
+            Acciones Rápidas
+          </span>
+          <span className="text-xs text-ink-soft/70">
+            Operativa de recepción
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <Link
+            href="/panel/clientes"
+            className="flex items-center gap-3 p-3.5 rounded-[6px] border border-rule bg-paper-2 hover:bg-paper-3 hover:border-ink transition-colors group"
+          >
+            <div className="size-9 rounded-[5px] bg-ok/15 text-ok border border-ok/25 grid place-items-center text-base shrink-0 group-hover:scale-105 transition-transform">
+              💳
+            </div>
+            <div className="min-w-0">
+              <span className="block text-sm font-semibold text-ink">Cobrar cuota</span>
+              <span className="block text-xs text-ink-soft truncate">Buscar socio y registrar pago</span>
+            </div>
+          </Link>
+
+          <Link
+            href="/panel/clientes"
+            className="flex items-center gap-3 p-3.5 rounded-[6px] border border-rule bg-paper-2 hover:bg-paper-3 hover:border-ink transition-colors group"
+          >
+            <div className="size-9 rounded-[5px] bg-accent/15 text-accent border border-accent/25 grid place-items-center text-base shrink-0 group-hover:scale-105 transition-transform">
+              👤
+            </div>
+            <div className="min-w-0">
+              <span className="block text-sm font-semibold text-ink">Nuevo socio</span>
+              <span className="block text-xs text-ink-soft truncate">Alta rápida con DNI</span>
+            </div>
+          </Link>
+
+          <Link
+            href="/checkin"
+            className="flex items-center gap-3 p-3.5 rounded-[6px] border border-rule bg-paper-2 hover:bg-paper-3 hover:border-ink transition-colors group"
+          >
+            <div className="size-9 rounded-[5px] bg-blue-500/15 text-blue-400 border border-blue-500/25 grid place-items-center text-base shrink-0 group-hover:scale-105 transition-transform">
+              📲
+            </div>
+            <div className="min-w-0">
+              <span className="block text-sm font-semibold text-ink">Modo Check-in</span>
+              <span className="block text-xs text-ink-soft truncate">Pantalla de ingreso recepción</span>
+            </div>
+          </Link>
+        </div>
+      </div>
+
       <div className="mb-8 flex items-baseline justify-between">
         <span className="text-[11px] uppercase tracking-[0.08em] text-ink-soft">
-          Resumen
+          Resumen de socios
         </span>
         <Link
           href="/panel/clientes"
@@ -150,21 +214,6 @@ export default async function ResumenPage() {
           </span>
         </p>
       </div>
-
-      <Link
-        href="/checkin"
-        className="mb-10 flex items-center justify-between gap-3 rounded-[6px] border border-rule bg-paper-2 px-4 py-3.5 transition-colors duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper active:scale-[0.99] md:hidden"
-      >
-        <span className="min-w-0">
-          <span className="block text-[15px] font-medium">Modo check-in</span>
-          <span className="mt-0.5 block text-xs text-ink-soft">
-            Pantalla de ingreso por DNI para el mostrador
-          </span>
-        </span>
-        <span aria-hidden className="shrink-0 text-ink-soft">
-          →
-        </span>
-      </Link>
 
       <section>
         <h2 className="mb-3 text-lg">Atención esta semana</h2>

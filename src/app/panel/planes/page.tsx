@@ -1,82 +1,48 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireDueno } from "@/lib/auth";
-import { linkClasses, pillClasses } from "@/components/ui";
-import { PlanForm } from "./plan-form";
-import { alternarPlan } from "./actions";
+import { linkClasses } from "@/components/ui";
+import { PlanesManager, type PlanItem } from "./planes-manager";
 
 export default async function PlanesPage() {
   await requireDueno();
   const supabase = await createClient();
-  const { data } = await supabase
+
+  // Intenta leer con columna descuentos (migración 0032). Si falla porque aún no fue corrida,
+  // hace fallback seguro a las columnas base.
+  let planesRaw: any[] | null = null;
+  const resConDescuentos = await supabase
     .from("planes")
-    .select("id, nombre, precio, duracion_dias, activo")
+    .select("id, nombre, precio, duracion_dias, activo, descuentos")
     .order("creado_at");
 
-  const planes = (data ?? []) as {
-    id: string;
-    nombre: string;
-    precio: number;
-    duracion_dias: number;
-    activo: boolean;
-  }[];
+  if (resConDescuentos.error) {
+    const res = await supabase
+      .from("planes")
+      .select("id, nombre, precio, duracion_dias, activo")
+      .order("creado_at");
+    planesRaw = res.data;
+  } else {
+    planesRaw = resConDescuentos.data;
+  }
+
+  const planes = (planesRaw ?? []) as unknown as PlanItem[];
 
   return (
     <div className="stagger space-y-8">
       <div>
-        <h1 className="text-2xl">Planes de socios</h1>
+        <h1 className="text-2xl font-bold">Planes de socios</h1>
         <p className="mt-1 text-sm text-ink-soft">
-          Los planes de membresía que les cobrás a tus socios. Para tu propio
-          plan de la plataforma, andá a{" "}
-          <a
-            href="/panel/plan"
-            className={linkClasses.inline}
-          >
+          Los planes de membresía que les cobrás a tus socios. Por defecto están seteados a{" "}
+          <strong className="text-ink font-medium">30 días corridos</strong> con descuentos
+          configurables (estudiantes, jubilados, etc.). Para tu propio plan de la plataforma, andá a{" "}
+          <a href="/panel/plan" className={linkClasses.inline}>
             Mi plan
           </a>
           .
         </p>
       </div>
 
-      <div className="card-cut card-cut-lg border border-rule bg-paper-2 p-5">
-        <h2 className="text-lg mb-4">Nuevo plan</h2>
-        <PlanForm />
-      </div>
-
-      {planes.length === 0 ? (
-        <p className="text-sm text-ink-soft">Todavía no cargaste ningún plan.</p>
-      ) : (
-        <ul className="card-cut overflow-hidden border border-rule divide-y divide-rule">
-          {planes.map((p) => (
-            <li
-              key={p.id}
-              className="px-4 py-3 flex items-center justify-between gap-4"
-            >
-              <div>
-                <p className="text-sm font-medium">
-                  {p.nombre}{" "}
-                  {!p.activo ? (
-                    <span className="text-xs text-ink-soft">(inactivo)</span>
-                  ) : null}
-                </p>
-                <p className="text-xs text-ink-soft">
-                  ${p.precio} · {p.duracion_dias} días
-                </p>
-              </div>
-              <form action={alternarPlan}>
-                <input type="hidden" name="id" value={p.id} />
-                <input type="hidden" name="activo" value={String(p.activo)} />
-                <button
-                  className={
-                    p.activo ? pillClasses.destructiva : pillClasses.neutra
-                  }
-                >
-                  {p.activo ? "Desactivar" : "Reactivar"}
-                </button>
-              </form>
-            </li>
-          ))}
-        </ul>
-      )}
+      <PlanesManager planes={planes} />
     </div>
   );
 }
