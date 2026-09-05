@@ -19,34 +19,36 @@ funcionalidades futuras que manejen valores numéricos o selecciones rápidas.
 
 ---
 
-## 1. Drum Roll Picker (estilo iOS "Nueva Alarma")
+## 1. Ruler Dial Horizontal (estilo iOS Dynamic Island Timer / Calibrador)
 
 ### Cuándo usarlo
-- Input de valor numérico donde el rango es acotado y predecible (peso, altura,
-  reps, series, minutos de descanso, edad, etc.).
-- En móvil siempre que un `<input type="number">` sea el candidato natural.
-- Siempre en dos columnas ("slices") cuando hay parte entera y decimal.
+- Input de valor numérico continuo con decimales (peso corporal, carga de discos, porcentajes, etc.).
+- Cuando se busca un look deportivo, táctil y de alta precisión tipo calibrador analógico o reloj inteligente.
+- Interacción horizontal: se arrastra con el pulgar hacia la izquierda o derecha.
 
 ### Anatomía del componente
 
 ```
-┌─────────────────────────────────────┐
-│  72        ← arriba fade out         │
-│  73        ← arriba fade out         │
-│ [74 . 5]   ← SELECCIONADO (banda)   │
-│  75        ← abajo fade out          │
-│  76        ← abajo fade out          │
-└─────────────────────────────────────┘
-  kg col  dec col
+      68        69        70        71        72
+   |||||||||||||||||||||||||||||||||||||||||||||||||
+                          ▲
+   [ Guardar peso ]                         70.5 kg
 ```
 
-- **Container**: `overflow-y: scroll` + `scroll-snap-type: y mandatory`
-- **Cada ítem**: `scroll-snap-align: center`, alto fijo `ITEM_H = 48px`
-- **Perspectiva 3D**: `perspective: 300px` en el wrapper + `rotateX()` en cada
-  ítem proporcional a su distancia al centro (calculado en `onScroll`)
-- **Fade**: `background: linear-gradient(to bottom, paper 0%, transparent 28%, …)`
-  como overlay — **compositor-only** (solo opacity/background, no layout)
-- **Banda de selección**: `position: absolute` centrado, no se anima, tamaño fijo
+- **Ruler Canvas**: Canvas retina-sharp (`devicePixelRatio`) que dibuja solo las marcas visibles (~30 marcas en pantalla). 0 layout thrashing, 60fps/120fps sostenidos.
+- **Marcas**:
+  - Mayor (cada 1.0 kg): 28px alto, color ámbar/orange `#ff9f0a`, número en negrita arriba.
+  - Media (cada 0.5 kg): 20px alto, color ámbar translúcido (65%).
+  - Menor (cada 0.1 kg): 14px alto, color ámbar sutil (35%).
+- **Puntero central**: Triángulo naranja (`▲`) apuntando hacia arriba en el centro exacto.
+- **Desvanecido lateral**: Máscara CSS `mask-image: linear-gradient(to right, transparent 0%, black 18%, black 82%, transparent 100%)`. Funciona en fondo oscuro y claro sin crear bloques opacos.
+- **Fila de acción inferior**:
+  - A la izquierda: Botón tipo píldora estilo iOS (`rounded-full`, borde y texto ámbar con fondo sutil `#ff9f0a/15`).
+  - A la derecha: Número digital grande en fuente mono/hero con resplandor cálido (`text-[#ff9f0a]` con `drop-shadow`).
+- **Física e Inercia**: `pointerdown`, `pointermove`, `pointerup` con inercia de desaceleración y snapping magnético automático al 0.1 más cercano.
+- **Feedback Sensorial**:
+  - `playTick()` con Web Audio API en cada cruce de marca.
+  - `vibrate(3)` con Vibration API en dispositivos compatibles.
 
 ### Código base — `DrumColumn`
 
