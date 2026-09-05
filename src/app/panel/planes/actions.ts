@@ -148,3 +148,17 @@ export async function alternarPlan(formData: FormData) {
   revalidatePath("/panel/planes");
 }
 
+export async function eliminarPlan(formData: FormData) {
+  const dueno = await requireDueno();
+  const id = String(formData.get("id") ?? "").trim();
+  if (!id) return;
+  const supabase = await createClient();
+  await supabase
+    .from("planes")
+    .delete()
+    .eq("id", id)
+    .eq("gimnasio_id", dueno.gimnasio_id);
+  revalidatePath("/panel/planes");
+  revalidatePath("/panel");
+}
+

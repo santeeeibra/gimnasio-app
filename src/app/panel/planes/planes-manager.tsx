@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { pillClasses } from "@/components/ui";
 import { PlanForm } from "./plan-form";
-import { alternarPlan, type DescuentoPlan } from "./actions";
+import { alternarPlan, eliminarPlan, type DescuentoPlan } from "./actions";
 
 export interface PlanItem {
   id: string;
@@ -199,6 +199,28 @@ export function PlanesManager({ planes }: PlanesManagerProps) {
                       }
                     >
                       {p.activo ? "Desactivar" : "Reactivar"}
+                    </button>
+                  </form>
+
+                  <form
+                    action={eliminarPlan}
+                    onSubmit={(e) => {
+                      if (
+                        !confirm(
+                          `¿Seguro que querés eliminar el plan "${p.nombre}"? Esta acción no se puede deshacer.`,
+                        )
+                      ) {
+                        e.preventDefault();
+                      }
+                    }}
+                  >
+                    <input type="hidden" name="id" value={p.id} />
+                    <button
+                      type="submit"
+                      className="h-8 px-2.5 rounded-[5px] border border-rule bg-paper text-xs font-medium text-ink-soft hover:text-danger hover:border-danger/40 transition-colors"
+                      title="Eliminar este plan permanentemente"
+                    >
+                      🗑️ Borrar
                     </button>
                   </form>
                 </div>
