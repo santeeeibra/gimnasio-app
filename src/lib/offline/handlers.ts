@@ -34,6 +34,7 @@ export type PayloadAlta = {
   email?: string | null;
   sexo?: string | null;
   plan_id?: string | null;
+  foto_url?: string | null;
   modo: "completa" | "prueba";
 };
 
@@ -58,6 +59,7 @@ const alta_cliente: Handler<PayloadAlta> = async (p) => {
   if (p.email) fd.set("email", p.email);
   if (p.sexo) fd.set("sexo", p.sexo);
   if (p.plan_id) fd.set("plan_id", p.plan_id);
+  if (p.foto_url) fd.set("foto_url", p.foto_url);
   fd.set("modo", p.modo);
 
   const r = await conTimeout(() => altaCliente({}, fd));

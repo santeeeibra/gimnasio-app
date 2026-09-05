@@ -62,6 +62,7 @@ async function altaClienteInterno(
   const telefono = String(formData.get("telefono") ?? "").trim() || null;
   const email =
     String(formData.get("email") ?? "").trim().toLowerCase() || null;
+  const fotoUrl = String(formData.get("foto_url") ?? "").trim() || null;
   const enPrueba = String(formData.get("modo") ?? "") === "prueba";
   const planId = enPrueba
     ? null
@@ -123,12 +124,13 @@ async function altaClienteInterno(
   // El alta no registra pago: el socio queda con el plan asignado (si se
   // eligió), cuota vencida y sin fechas hasta que el dueño registre el primer
   // pago desde la ficha del socio. El acceso a la app queda habilitado igual.
-  const { error: cliErr } = await admin.from("clientes").insert({
+  const insertData: Record<string, any> = {
     gimnasio_id: dueno.gimnasio_id,
     profile_id: created.user.id,
     plan_id: planId,
     sexo,
     email,
+    foto_url: fotoUrl,
     fecha_inicio: null,
     fecha_vencimiento: null,
     estado_cuota: "vencido",
@@ -137,7 +139,14 @@ async function altaClienteInterno(
     prueba_iniciada_en: enPrueba
       ? new Date().toISOString().slice(0, 10)
       : null,
-  });
+  };
+
+  let { error: cliErr } = await admin.from("clientes").insert(insertData);
+  if (cliErr && cliErr.message?.includes("foto_url")) {
+    delete insertData.foto_url;
+    const res = await admin.from("clientes").insert(insertData);
+    cliErr = res.error;
+  }
   if (cliErr) {
     await registrarError(dueno.gimnasio_id, "alta_cliente", cliErr);
   }

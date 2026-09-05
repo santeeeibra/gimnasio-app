@@ -68,18 +68,22 @@ export function FotoSocioUploader({
         calidadInicial: 0.85,
       });
 
+      const contentType = blob.type || "image/jpeg";
+      const ext = contentType.includes("webp") ? "webp" : "jpg";
+      const filePath = `${gimnasioId}/${clienteId}.${ext}`;
+
       const supabase = createClient();
       const { error: upErr } = await supabase.storage
         .from(BUCKET)
-        .upload(path, blob, {
+        .upload(filePath, blob, {
           upsert: true,
-          contentType: "image/webp",
+          contentType,
           cacheControl: "3600",
         });
 
       if (upErr) throw new Error(upErr.message);
 
-      const publicUrl = supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+      const publicUrl = supabase.storage.from(BUCKET).getPublicUrl(filePath).data.publicUrl;
 
       const res = await guardarFotoSocio(clienteId, publicUrl);
       if (res.error) throw new Error(res.error);
@@ -100,7 +104,10 @@ export function FotoSocioUploader({
     setPending(true);
     try {
       const supabase = createClient();
-      await supabase.storage.from(BUCKET).remove([path]);
+      await supabase.storage.from(BUCKET).remove([
+        `${gimnasioId}/${clienteId}.webp`,
+        `${gimnasioId}/${clienteId}.jpg`,
+      ]);
       const res = await guardarFotoSocio(clienteId, null);
       if (res.error) throw new Error(res.error);
 

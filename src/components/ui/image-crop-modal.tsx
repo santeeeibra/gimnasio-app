@@ -13,8 +13,8 @@ export interface ImageCropModalProps {
 
 type CropShape = "circle" | "square";
 
-const CANVAS_SIZE = 280; // Tamaño de render en CSS px para móvil/desktop
-const CROP_SIZE = 240;   // Tamaño de la zona de recorte en CSS px
+const CANVAS_SIZE = 280; // Tamaño del canvas en pantalla (CSS px)
+const CROP_SIZE = 240;   // Diámetro / ancho de la zona de recorte (CSS px)
 
 export function ImageCropModal({
   isOpen,
@@ -33,20 +33,49 @@ export function ImageCropModal({
   const [rotation, setRotation] = useState(0);
   const [isInteracting, setIsInteracting] = useState(false);
 
-  // Pointers para tracking táctil / pinch-to-zoom
-  const pointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
-  const dragStartRef = useRef<{ x: number; y: number; panX: number; panY: number }>({
-    x: 0,
-    y: 0,
-    panX: 0,
-    panY: 0,
-  });
-  const pinchStartRef = useRef<{ dist: number; zoom: number }>({
-    dist: 0,
-    zoom: 1,
-  });
+  // Referencias mutables para cálculo táctil y mouse fluido sin saltos
+  const panRef = useRef(pan);
+  panRef.current = pan;
+  const zoomRef = useRef(zoom);
+  zoomRef.current = zoom;
+  const rotationRef = useRef(rotation);
+  rotationRef.current = rotation;
 
-  // Bloquear scroll del body mientras el modal está abierto (§9 REGLAS_UI_EMIL.md)
+  // Función de contención (clamp) para que la imagen nunca deje huecos vacíos en el recorte
+  const getClampedPan = useCallback(
+    (px: number, py: number, currentZoom: number, currentRot: number) => {
+      const img = imageRef.current;
+      if (!img || !img.naturalWidth || !img.naturalHeight) {
+        return { x: 0, y: 0 };
+      }
+
+      const isSideways = currentRot % 180 !== 0;
+      const ew = isSideways ? img.naturalHeight : img.naturalWidth;
+      const eh = isSideways ? img.naturalWidth : img.naturalHeight;
+
+      if (!ew || !eh) return { x: 0, y: 0 };
+
+      const baseScale = Math.max(CROP_SIZE / ew, CROP_SIZE / eh);
+      const scale = baseScale * currentZoom;
+
+      const renderedW = ew * scale;
+      const renderedH = eh * scale;
+
+      const maxPanX = Math.max(0, (renderedW - CROP_SIZE) / 2);
+      const maxPanY = Math.max(0, (renderedH - CROP_SIZE) / 2);
+
+      const safeX = Number.isFinite(px) ? px : 0;
+      const safeY = Number.isFinite(py) ? py : 0;
+
+      return {
+        x: Math.max(-maxPanX, Math.min(maxPanX, safeX)),
+        y: Math.max(-maxPanY, Math.min(maxPanY, safeY)),
+      };
+    },
+    [],
+  );
+
+  // Bloquear scroll del body mientras el modal está abierto
   useEffect(() => {
     if (!isOpen) return;
     const prevOverflow = document.body.style.overflow;
@@ -56,19 +85,17 @@ export function ImageCropModal({
     };
   }, [isOpen]);
 
-  // Cerrar con tecla Escape
+  // Cerrar con Escape
   useEffect(() => {
     if (!isOpen) return;
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") {
-        onCancel();
-      }
+      if (e.key === "Escape") onCancel();
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onCancel]);
 
-  // Cargar imagen desde el objeto File
+  // Cargar imagen desde el File
   useEffect(() => {
     if (!isOpen || !file) {
       setImageLoaded(false);
@@ -93,7 +120,7 @@ export function ImageCropModal({
     };
 
     img.onerror = () => {
-      setLoadError("No se pudo cargar la imagen. Probá con otro archivo.");
+      setLoadError("No se pudo cargar la imagen. Probá con otra foto.");
       setImageLoaded(false);
     };
 
@@ -104,7 +131,7 @@ export function ImageCropModal({
     };
   }, [isOpen, file]);
 
-  // Cálculo de límites y dibujo en el canvas
+  // Dibujar en el canvas de previsualización
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
     const img = imageRef.current;
@@ -126,33 +153,27 @@ export function ImageCropModal({
     ctx.scale(dpr, dpr);
     ctx.clearRect(0, 0, width, height);
 
-    const isRotatedSideways = rotation % 180 !== 0;
-    const effectiveW = isRotatedSideways ? img.naturalHeight : img.naturalWidth;
-    const effectiveH = isRotatedSideways ? img.naturalWidth : img.naturalHeight;
+    const isSideways = rotation % 180 !== 0;
+    const ew = isSideways ? img.naturalHeight : img.naturalWidth;
+    const eh = isSideways ? img.naturalWidth : img.naturalHeight;
 
-    const baseScale = Math.max(CROP_SIZE / effectiveW, CROP_SIZE / effectiveH);
-    const currentScale = baseScale * zoom;
+    const baseScale = Math.max(CROP_SIZE / ew, CROP_SIZE / eh);
+    const scale = baseScale * zoom;
 
-    const renderedW = effectiveW * currentScale;
-    const renderedH = effectiveH * currentScale;
-    const maxPanX = Math.max(0, (renderedW - CROP_SIZE) / 2);
-    const maxPanY = Math.max(0, (renderedH - CROP_SIZE) / 2);
-
-    const clampedX = Math.max(-maxPanX, Math.min(maxPanX, pan.x));
-    const clampedY = Math.max(-maxPanY, Math.min(maxPanY, pan.y));
+    const clamped = getClampedPan(pan.x, pan.y, zoom, rotation);
 
     const cx = width / 2;
     const cy = height / 2;
 
-    // 1. Dibujar imagen con posición, rotación y escala
+    // 1. Dibujar imagen trasladada y rotada
     ctx.save();
-    ctx.translate(cx + clampedX, cy + clampedY);
+    ctx.translate(cx + clamped.x, cy + clamped.y);
     ctx.rotate((rotation * Math.PI) / 180);
-    ctx.scale(currentScale, currentScale);
+    ctx.scale(scale, scale);
     ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
     ctx.restore();
 
-    // 2. Máscara oscura con cutout central
+    // 2. Máscara oscura con ventana de visualización nítida
     ctx.save();
     ctx.fillStyle = "rgba(4, 7, 12, 0.72)";
     ctx.beginPath();
@@ -165,7 +186,6 @@ export function ImageCropModal({
     if (cropShape === "circle") {
       ctx.arc(cx, cy, cropRadius, 0, Math.PI * 2, true);
     } else {
-      // Cuadrado con esquinas suaves
       const r = 14;
       ctx.moveTo(cropLeft + r, cropTop);
       ctx.lineTo(cropLeft + CROP_SIZE - r, cropTop);
@@ -180,8 +200,8 @@ export function ImageCropModal({
     }
     ctx.fill("evenodd");
 
-    // 3. Borde nítido en la zona activa de recorte
-    ctx.strokeStyle = "rgba(16, 231, 160, 0.9)"; // Hyper-Mint / Accent
+    // 3. Borde acentuado alrededor del recorte
+    ctx.strokeStyle = "rgba(16, 231, 160, 0.95)";
     ctx.lineWidth = 2;
     ctx.beginPath();
     if (cropShape === "circle") {
@@ -201,7 +221,7 @@ export function ImageCropModal({
     }
     ctx.stroke();
 
-    // 4. Guía de regla de tercios al mover/interactuar
+    // 4. Guía de tercios al arrastrar o hacer zoom
     if (isInteracting) {
       ctx.save();
       ctx.beginPath();
@@ -212,7 +232,7 @@ export function ImageCropModal({
       }
       ctx.clip();
 
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
       ctx.lineWidth = 1;
       ctx.setLineDash([4, 4]);
 
@@ -232,122 +252,159 @@ export function ImageCropModal({
     }
 
     ctx.restore();
-  }, [imageLoaded, cropShape, zoom, pan, rotation, isInteracting]);
+  }, [imageLoaded, cropShape, zoom, pan, rotation, isInteracting, getClampedPan]);
 
   useEffect(() => {
     draw();
   }, [draw]);
 
-  // Soporte de rueda de ratón (wheel zoom) sin pasividad bloqueante
+  // Manejo de eventos nativos Touch y Wheel con preventDefault para evitar rebotes/zoom de Safari iOS
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const handleWheel = (e: WheelEvent) => {
+    let touchStartPoints: { x: number; y: number }[] = [];
+    let lastPinchDistance = 0;
+
+    const onTouchStart = (e: TouchEvent) => {
       e.preventDefault();
-      const zoomDelta = -e.deltaY * 0.0015;
-      setZoom((prev) => Math.max(1, Math.min(3, +(prev + zoomDelta).toFixed(2))));
+      setIsInteracting(true);
+      if (e.touches.length === 1) {
+        touchStartPoints = [{ x: e.touches[0].clientX, y: e.touches[0].clientY }];
+      } else if (e.touches.length >= 2) {
+        touchStartPoints = [
+          { x: e.touches[0].clientX, y: e.touches[0].clientY },
+          { x: e.touches[1].clientX, y: e.touches[1].clientY },
+        ];
+        lastPinchDistance = Math.hypot(
+          touchStartPoints[0].x - touchStartPoints[1].x,
+          touchStartPoints[0].y - touchStartPoints[1].y,
+        );
+      }
     };
 
-    canvas.addEventListener("wheel", handleWheel, { passive: false });
-    return () => canvas.removeEventListener("wheel", handleWheel);
-  }, []);
+    const onTouchMove = (e: TouchEvent) => {
+      e.preventDefault();
+      if (e.touches.length === 1 && touchStartPoints.length >= 1) {
+        const currentX = e.touches[0].clientX;
+        const currentY = e.touches[0].clientY;
+        const dx = currentX - touchStartPoints[0].x;
+        const dy = currentY - touchStartPoints[0].y;
+        touchStartPoints = [{ x: currentX, y: currentY }];
 
-  // Manejo de eventos táctiles y puntero (Touch / Mouse drag + Pinch to zoom)
-  const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    const target = e.currentTarget;
-    try {
-      target.setPointerCapture(e.pointerId);
-    } catch {
-      // ignore
-    }
-    pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    setIsInteracting(true);
-
-    if (pointersRef.current.size === 1) {
-      dragStartRef.current = {
-        x: e.clientX,
-        y: e.clientY,
-        panX: pan.x,
-        panY: pan.y,
-      };
-    } else if (pointersRef.current.size === 2) {
-      const pts = Array.from(pointersRef.current.values());
-      const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
-      pinchStartRef.current = {
-        dist: dist > 0 ? dist : 1,
-        zoom,
-      };
-    }
-  };
-
-  const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    if (!pointersRef.current.has(e.pointerId)) return;
-    pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
-
-    if (pointersRef.current.size === 1) {
-      const dx = e.clientX - dragStartRef.current.x;
-      const dy = e.clientY - dragStartRef.current.y;
-      setPan({
-        x: dragStartRef.current.panX + dx,
-        y: dragStartRef.current.panY + dy,
-      });
-    } else if (pointersRef.current.size === 2) {
-      const pts = Array.from(pointersRef.current.values());
-      const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
-      const scaleFactor = dist / pinchStartRef.current.dist;
-      const newZoom = Math.max(1, Math.min(3, +(pinchStartRef.current.zoom * scaleFactor).toFixed(2)));
-      setZoom(newZoom);
-    }
-  };
-
-  const handlePointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    try {
-      if (e.currentTarget.hasPointerCapture(e.pointerId)) {
-        e.currentTarget.releasePointerCapture(e.pointerId);
+        setPan((prev) =>
+          getClampedPan(prev.x + dx, prev.y + dy, zoomRef.current, rotationRef.current),
+        );
+      } else if (e.touches.length >= 2 && lastPinchDistance > 0) {
+        const currentDist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY,
+        );
+        if (currentDist > 0) {
+          const ratio = currentDist / lastPinchDistance;
+          lastPinchDistance = currentDist;
+          setZoom((prev) => {
+            const nextZoom = Math.max(1, Math.min(4, +(prev * ratio).toFixed(2)));
+            setPan((currPan) =>
+              getClampedPan(currPan.x, currPan.y, nextZoom, rotationRef.current),
+            );
+            return nextZoom;
+          });
+        }
       }
-    } catch {
-      // ignore
-    }
-    pointersRef.current.delete(e.pointerId);
+    };
 
-    if (pointersRef.current.size === 0) {
+    const onTouchEnd = (e: TouchEvent) => {
+      if (e.touches.length === 0) {
+        setIsInteracting(false);
+        touchStartPoints = [];
+        lastPinchDistance = 0;
+      } else if (e.touches.length === 1) {
+        touchStartPoints = [{ x: e.touches[0].clientX, y: e.touches[0].clientY }];
+        lastPinchDistance = 0;
+      }
+    };
+
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const delta = -e.deltaY * 0.002;
+      setZoom((prev) => {
+        const nextZoom = Math.max(1, Math.min(4, +(prev + delta).toFixed(2)));
+        setPan((currPan) =>
+          getClampedPan(currPan.x, currPan.y, nextZoom, rotationRef.current),
+        );
+        return nextZoom;
+      });
+    };
+
+    canvas.addEventListener("touchstart", onTouchStart, { passive: false });
+    canvas.addEventListener("touchmove", onTouchMove, { passive: false });
+    canvas.addEventListener("touchend", onTouchEnd, { passive: false });
+    canvas.addEventListener("touchcancel", onTouchEnd, { passive: false });
+    canvas.addEventListener("wheel", onWheel, { passive: false });
+
+    return () => {
+      canvas.removeEventListener("touchstart", onTouchStart);
+      canvas.removeEventListener("touchmove", onTouchMove);
+      canvas.removeEventListener("touchend", onTouchEnd);
+      canvas.removeEventListener("touchcancel", onTouchEnd);
+      canvas.removeEventListener("wheel", onWheel);
+    };
+  }, [getClampedPan]);
+
+  // Manejo de ratón (desktop)
+  const isMouseDownRef = useRef(false);
+  const lastMousePos = useRef({ x: 0, y: 0 });
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    isMouseDownRef.current = true;
+    lastMousePos.current = { x: e.clientX, y: e.clientY };
+    setIsInteracting(true);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!isMouseDownRef.current) return;
+    const dx = e.clientX - lastMousePos.current.x;
+    const dy = e.clientY - lastMousePos.current.y;
+    lastMousePos.current = { x: e.clientX, y: e.clientY };
+
+    setPan((prev) =>
+      getClampedPan(prev.x + dx, prev.y + dy, zoomRef.current, rotationRef.current),
+    );
+  };
+
+  const handleMouseUp = () => {
+    if (isMouseDownRef.current) {
+      isMouseDownRef.current = false;
       setIsInteracting(false);
-    } else if (pointersRef.current.size === 1) {
-      const remaining = Array.from(pointersRef.current.values())[0];
-      dragStartRef.current = {
-        x: remaining.x,
-        y: remaining.y,
-        panX: pan.x,
-        panY: pan.y,
-      };
     }
   };
 
-  // Confirmar y generar el canvas recortado en alta fidelidad
+  // Cambio de zoom seguro vía slider o botones
+  const handleZoomChange = (nextZoom: number) => {
+    const sanitized = Math.max(1, Math.min(4, Number.isFinite(nextZoom) ? nextZoom : 1));
+    setZoom(sanitized);
+    setPan((currPan) =>
+      getClampedPan(currPan.x, currPan.y, sanitized, rotationRef.current),
+    );
+  };
+
+  // Confirmar y generar el canvas cuadrado en alta fidelidad (512x512)
   const handleConfirm = () => {
     const img = imageRef.current;
-    if (!img) return;
+    if (!img || !img.naturalWidth || !img.naturalHeight) return;
 
-    const isRotatedSideways = rotation % 180 !== 0;
-    const effectiveW = isRotatedSideways ? img.naturalHeight : img.naturalWidth;
-    const effectiveH = isRotatedSideways ? img.naturalWidth : img.naturalHeight;
+    const isSideways = rotation % 180 !== 0;
+    const ew = isSideways ? img.naturalHeight : img.naturalWidth;
+    const eh = isSideways ? img.naturalWidth : img.naturalHeight;
 
-    const baseScale = Math.max(CROP_SIZE / effectiveW, CROP_SIZE / effectiveH);
-    const currentScale = baseScale * zoom;
+    const baseScale = Math.max(CROP_SIZE / ew, CROP_SIZE / eh);
+    const scale = baseScale * zoom;
 
-    const renderedW = effectiveW * currentScale;
-    const renderedH = effectiveH * currentScale;
-    const maxPanX = Math.max(0, (renderedW - CROP_SIZE) / 2);
-    const maxPanY = Math.max(0, (renderedH - CROP_SIZE) / 2);
+    const clamped = getClampedPan(pan.x, pan.y, zoom, rotation);
 
-    const clampedX = Math.max(-maxPanX, Math.min(maxPanX, pan.x));
-    const clampedY = Math.max(-maxPanY, Math.min(maxPanY, pan.y));
-
-    // Resolución de exportación: cuadrada de alto contraste (512px a 1024px)
-    const naturalCropSize = CROP_SIZE / currentScale;
-    const outputSize = Math.max(512, Math.min(1024, Math.round(naturalCropSize)));
-
+    // Salida fija de 512x512 para máxima nitidez y rendimiento predecible
+    const outputSize = 512;
     const outputCanvas = document.createElement("canvas");
     outputCanvas.width = outputSize;
     outputCanvas.height = outputSize;
@@ -361,10 +418,10 @@ export function ImageCropModal({
     const factor = outputSize / CROP_SIZE;
 
     outCtx.save();
-    outCtx.translate(outputSize / 2, outputSize / 2);
-    outCtx.translate(clampedX * factor, clampedY * factor);
+    // Centrar en el canvas de salida
+    outCtx.translate(outputSize / 2 + clamped.x * factor, outputSize / 2 + clamped.y * factor);
     outCtx.rotate((rotation * Math.PI) / 180);
-    outCtx.scale(currentScale * factor, currentScale * factor);
+    outCtx.scale(scale * factor, scale * factor);
     outCtx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
     outCtx.restore();
 
@@ -395,10 +452,10 @@ export function ImageCropModal({
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <h2 className="text-base sm:text-lg font-semibold text-ink leading-tight">
-              Ajustar encuadre
+              Ajustar foto de perfil
             </h2>
             <p className="text-xs text-ink-soft mt-0.5">
-              Arrastrá para mover y hacé zoom con los controles o dedos.
+              Arrastrá para encuadrar y ajustá el zoom con el slider o los dedos.
             </p>
           </div>
 
@@ -412,10 +469,10 @@ export function ImageCropModal({
           </button>
         </div>
 
-        {/* Selector de forma (Círculo vs Cuadrado) */}
+        {/* Selector de forma */}
         <div className="flex items-center justify-between gap-2 border-b border-rule pb-2">
           <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-soft">
-            Vista previa
+            Forma de vista previa
           </span>
 
           <div className="flex items-center gap-1 p-0.5 rounded-[10px] bg-paper-2 border border-rule">
@@ -424,7 +481,7 @@ export function ImageCropModal({
               onClick={() => setCropShape("circle")}
               className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-[8px] transition-colors ${
                 cropShape === "circle"
-                  ? "bg-paper text-ink shadow-sm"
+                  ? "bg-paper text-ink shadow-sm font-semibold"
                   : "text-ink-soft hover:text-ink"
               }`}
             >
@@ -436,7 +493,7 @@ export function ImageCropModal({
               onClick={() => setCropShape("square")}
               className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-[8px] transition-colors ${
                 cropShape === "square"
-                  ? "bg-paper text-ink shadow-sm"
+                  ? "bg-paper text-ink shadow-sm font-semibold"
                   : "text-ink-soft hover:text-ink"
               }`}
             >
@@ -446,12 +503,12 @@ export function ImageCropModal({
           </div>
         </div>
 
-        {/* Área del Canvas interactivo */}
-        <div className="relative flex items-center justify-center rounded-[16px] border border-rule bg-paper-2 overflow-hidden select-none touch-none aspect-square w-full max-w-[280px] mx-auto shadow-inner">
+        {/* Área interactiva del Canvas */}
+        <div className="relative flex items-center justify-center rounded-[16px] border border-rule bg-paper-2 overflow-hidden select-none aspect-square w-full max-w-[280px] mx-auto shadow-inner">
           {!imageLoaded && !loadError && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-ink-soft text-xs">
               <Spinner className="size-5" />
-              <span>Cargando imagen...</span>
+              <span>Cargando foto...</span>
             </div>
           )}
 
@@ -465,11 +522,12 @@ export function ImageCropModal({
             ref={canvasRef}
             width={CANVAS_SIZE}
             height={CANVAS_SIZE}
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            onPointerCancel={handlePointerUp}
-            className={`touch-none block w-[280px] h-[280px] ${
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            style={{ touchAction: "none" }}
+            className={`block w-[280px] h-[280px] ${
               imageLoaded ? "cursor-grab active:cursor-grabbing" : "opacity-0"
             }`}
           />
@@ -480,9 +538,9 @@ export function ImageCropModal({
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() => setZoom((z) => Math.max(1, +(z - 0.2).toFixed(2)))}
+              onClick={() => handleZoomChange(+(zoom - 0.2).toFixed(2))}
               disabled={!imageLoaded || zoom <= 1}
-              aria-label="Reducir zoom"
+              aria-label="Alejar imagen"
               className="size-9 shrink-0 inline-flex items-center justify-center rounded-[10px] border border-rule bg-paper-2 text-ink hover:bg-paper active:scale-95 disabled:opacity-40 disabled:pointer-events-none transition-all"
             >
               <ZoomOut className="size-4" />
@@ -493,20 +551,20 @@ export function ImageCropModal({
               <input
                 type="range"
                 min="1"
-                max="3"
+                max="4"
                 step="0.02"
                 value={zoom}
                 disabled={!imageLoaded}
-                onChange={(e) => setZoom(parseFloat(e.target.value))}
+                onChange={(e) => handleZoomChange(parseFloat(e.target.value))}
                 className="w-full h-2 rounded-full bg-paper-3 accent-accent cursor-pointer disabled:opacity-40"
               />
             </label>
 
             <button
               type="button"
-              onClick={() => setZoom((z) => Math.min(3, +(z + 0.2).toFixed(2)))}
-              disabled={!imageLoaded || zoom >= 3}
-              aria-label="Aumentar zoom"
+              onClick={() => handleZoomChange(+(zoom + 0.2).toFixed(2))}
+              disabled={!imageLoaded || zoom >= 4}
+              aria-label="Acercar imagen"
               className="size-9 shrink-0 inline-flex items-center justify-center rounded-[10px] border border-rule bg-paper-2 text-ink hover:bg-paper active:scale-95 disabled:opacity-40 disabled:pointer-events-none transition-all"
             >
               <ZoomIn className="size-4" />
@@ -520,7 +578,11 @@ export function ImageCropModal({
           <div className="flex items-center justify-between gap-2 pt-0.5">
             <button
               type="button"
-              onClick={() => setRotation((r) => (r + 90) % 360)}
+              onClick={() => {
+                const nextRot = (rotation + 90) % 360;
+                setRotation(nextRot);
+                setPan((currPan) => getClampedPan(currPan.x, currPan.y, zoom, nextRot));
+              }}
               disabled={!imageLoaded}
               className="inline-flex items-center gap-1.5 h-9 px-3 rounded-[10px] border border-rule bg-paper-2 text-xs font-medium text-ink hover:bg-paper active:scale-95 transition-all disabled:opacity-40 disabled:pointer-events-none"
             >
@@ -540,7 +602,7 @@ export function ImageCropModal({
           </div>
         </div>
 
-        {/* Botones de acción principales */}
+        {/* Botones de acción */}
         <div className="flex items-center gap-3 pt-1 border-t border-rule">
           <button
             type="button"

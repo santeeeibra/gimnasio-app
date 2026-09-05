@@ -80,7 +80,11 @@ export default async function ClientesPage() {
             Primero creá al menos un plan en la sección Planes.
           </p>
         ) : (
-          <AltaForm planes={planes} full={!cupo.ok} />
+          <AltaForm
+            planes={planes}
+            full={!cupo.ok}
+            gimnasioId={dueno.gimnasio_id}
+          />
         )}
       </div>
 
