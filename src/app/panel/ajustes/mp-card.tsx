@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui";
 import { desconectarMercadoPago } from "./mp-actions";
 import { BloqueoEliteGate, BadgeElite } from "@/components/ui/bloqueo-elite-gate";
+import { MercadoPagoLogo } from "@/components/ui/mercadopago-logo";
 
 type Props = {
   elite: boolean;
@@ -54,7 +55,10 @@ export function MercadoPagoAjustesCard({
   return (
     <div className="card-cut card-cut-lg mt-6 border border-rule bg-paper-2 p-6">
       <div className="flex items-center justify-between gap-3 mb-1">
-        <h2 className="text-lg">Cobro automático con Mercado Pago</h2>
+        <h2 className="text-lg flex items-center gap-2">
+          Cobro automático con
+          <MercadoPagoLogo className="h-5 w-auto shrink-0" />
+        </h2>
         <BadgeElite />
       </div>
       <p className="text-sm text-ink-soft mb-4">
@@ -154,7 +158,8 @@ export function MercadoPagoAjustesCard({
                 href="/api/mercadopago/iniciar"
                 className="inline-flex h-11 items-center justify-center gap-2 rounded-[10px] bg-ink px-5 text-sm font-medium text-paper transition-[transform,filter] duration-150 hover:brightness-125 active:scale-[0.97]"
               >
-                Conectar Mercado Pago
+                Conectar
+                <MercadoPagoLogo className="h-4 w-auto shrink-0" />
               </a>
             </div>
           )}

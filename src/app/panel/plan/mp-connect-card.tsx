@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui";
 import { desvincularMercadoPago } from "./mp-connect-actions";
+import { MercadoPagoLogo } from "@/components/ui/mercadopago-logo";
 
 // Card "Cobros automáticos con Mercado Pago" en /panel/plan. Sólo se renderiza
 // si el gimnasio está en Elite (el gate lo calcula la page con
@@ -53,7 +54,10 @@ export function MpConnectCard({
 
   return (
     <div className="card-cut border border-rule bg-paper-2 p-5">
-      <h2 className="mb-1 text-lg">Cobros automáticos con Mercado Pago</h2>
+      <h2 className="mb-1 text-lg flex items-center gap-2">
+        Cobros automáticos con
+        <MercadoPagoLogo className="h-5 w-auto shrink-0" />
+      </h2>
       <p className="mb-4 text-sm text-ink-soft">
         Vinculá tu cuenta de Mercado Pago y tus socios van a poder pagar la
         cuota desde la app. La plata entra directo a tu cuenta y la cuota se
@@ -130,7 +134,8 @@ export function MpConnectCard({
           href="/api/mp-connect/iniciar"
           className="inline-flex h-11 items-center justify-center gap-2 rounded-[5px] bg-ink px-4 text-sm font-medium text-paper transition-[transform,filter] duration-150 [transition-timing-function:var(--ease-out)] hover:brightness-125 active:scale-[0.97]"
         >
-          Vincular Mercado Pago
+          Vincular
+          <MercadoPagoLogo className="h-4 w-auto shrink-0" />
         </a>
       )}
     </div>

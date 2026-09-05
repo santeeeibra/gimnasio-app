@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui";
 import { crearSuscripcionMP } from "./actions";
+import { MercadoPagoLogo } from "@/components/ui/mercadopago-logo";
 
 type Props = {
   monto: number;
@@ -41,8 +42,9 @@ export function PagarMpButton({
 
   return (
     <div className="rounded-[14px] border border-rule bg-paper-2 p-5 shadow-sm">
-      <p className="text-xs font-semibold uppercase tracking-wider text-ink-soft">
-        Cobro automático con Mercado Pago
+      <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-ink-soft">
+        Cobro automático con
+        <MercadoPagoLogo className="h-4 w-auto shrink-0" />
       </p>
       <p className="mt-1 font-display text-2xl font-extrabold text-ink">
         {monto.toLocaleString("es-AR", {
@@ -92,7 +94,10 @@ export function PagarMpButton({
           })
         }
       >
-        Pagar con Mercado Pago
+        <span className="inline-flex items-center gap-2">
+          Pagar con
+          <MercadoPagoLogo className="h-4 w-auto shrink-0" />
+        </span>
       </Button>
 
       {error ? <p className="mt-3 text-sm text-danger">{error}</p> : null}
