@@ -36,6 +36,10 @@ type Prefs = {
 import { PagoForm } from "./pago-form";
 import { RutinaPanelDueno } from "./rutina-panel";
 import { FotoSocioUploader } from "./foto-socio-uploader";
+import { CardPeso } from "@/components/peso/card-peso";
+import { guardarPesoSocio, obtenerPesosSocio } from "@/lib/peso/actions";
+import { DescargarRutinaPdf } from "@/components/pdf/descargar-rutina-pdf";
+import type { DiaEditable } from "@/app/mi/rutina/rutina-editor";
 
 export default async function ClienteDetallePage({
   params,
@@ -68,7 +72,7 @@ export default async function ClienteDetallePage({
       }),
     supabase
       .from("gimnasios")
-      .select("slug, nombre")
+      .select("slug, nombre, logo_url")
       .eq("id", dueno.gimnasio_id)
       .single(),
   ]);
@@ -132,6 +136,23 @@ export default async function ClienteDetallePage({
     const tec = it.tecnica as Tecnica | null;
     arr.push(tec ? `${it.ejercicio.nombre} · ${TECNICA_LABEL[tec]}` : it.ejercicio.nombre);
     rutinaPorDia.set(it.dia, arr);
+  }
+
+  function agruparPorDia(items: any[], titulos: string[] | null): DiaEditable[] {
+    const porDia = new Map<number, DiaEditable>();
+    for (const it of items) {
+      const n = it.dia as number;
+      if (!porDia.has(n)) porDia.set(n, { numero: n, titulo: titulos?.[n - 1] ?? `Día ${n}`, items: [] });
+      porDia.get(n)!.items.push({
+        id: it.id ?? String(n),
+        series: it.series ?? 3,
+        repeticiones: it.repeticiones ?? "10",
+        nota: it.nota ?? "",
+        tecnica: it.tecnica ?? null,
+        ejercicio: it.ejercicio ?? null,
+      });
+    }
+    return [...porDia.values()].sort((a, b) => a.numero - b.numero);
   }
 
   return (
@@ -265,6 +286,15 @@ export default async function ClienteDetallePage({
               {rutina.dias_por_semana ? ` · ${rutina.dias_por_semana} días` : ""}
             </span>
           ) : null}
+          {rutina && (
+            <DescargarRutinaPdf
+              clienteNombre={c.profile?.nombre ?? ""}
+              gimnasioNombre={gym?.nombre ?? ""}
+              rutinaNombre={`${esManual ? "Manual" : (OBJETIVO_LABEL[rutina.objetivo as Objetivo] ?? rutina.objetivo)}${rutina.nivel ? ` · ${NIVEL_LABEL[rutina.nivel as Nivel] ?? rutina.nivel}` : ""}${rutina.dias_por_semana ? ` · ${rutina.dias_por_semana} días` : ""}`}
+              dias={agruparPorDia(rutinaItems, rutina.dias_titulos as string[] | null)}
+              logoUrl={gym?.logo_url ?? null}
+            />
+          )}
         </div>
 
         {rutina && !esManual && (rutina.preferencias as Prefs)?.avanzado ? (
@@ -350,6 +380,16 @@ export default async function ClienteDetallePage({
                 }
               : undefined
           }
+        />
+      </Panel>
+
+      <Panel className="p-5">
+        <h2 className="text-lg mb-4">Peso corporal</h2>
+        <CardPeso
+          clienteId={c.id}
+          creadoPor="dueno"
+          action={guardarPesoSocio.bind(null, c.id)}
+          fetchRegistros={() => obtenerPesosSocio(c.id)}
         />
       </Panel>
 

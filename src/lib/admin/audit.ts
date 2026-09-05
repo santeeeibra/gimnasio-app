@@ -27,7 +27,8 @@ type AccionAdmin =
   | "confirmar_pago_plataforma"
   | "rechazar_pago_plataforma"
   | "forzar_estado_socio"
-  | "activar_gimnasio_disponible";
+  | "activar_gimnasio_disponible"
+  | "importar_socios";
 
 // Traduce (action, meta) a un texto legible para la notificación al
 // superadmin. El audit log (arriba) sigue guardando el JSON completo — esto
@@ -69,6 +70,10 @@ function formatearAccionAdmin(
       return `Activaron el gimnasio disponible ${gym}`;
     case "forzar_estado_socio":
       return `Forzaron el estado de un socio de ${gym}`;
+    case "importar_socios": {
+      const exitosos = meta.exitosos ?? meta.creados ?? 0;
+      return `Importación masiva en ${gym}: ${exitosos} socios creados`;
+    }
     case "push_prueba":
       return "Push de prueba enviado";
     case "listar_gyms":

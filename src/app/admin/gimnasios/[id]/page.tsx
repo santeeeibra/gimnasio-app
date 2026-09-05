@@ -4,7 +4,7 @@ import { requireSuperadmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { registrarAccionAdmin } from "@/lib/admin/audit";
 import { entrarComoAction } from "../../impersonar-actions";
-import { Button, linkClasses } from "@/components/ui";
+import { Button, linkClasses, pillClasses } from "@/components/ui";
 import { cupoExcedido, cupoTexto } from "@/lib/plataforma/planes";
 import { EstadoForm } from "./estado-form";
 import { PlanPlataformaForm } from "./plan-plataforma-form";
@@ -212,9 +212,17 @@ export default async function AdminGimnasioDetalle({
         )}
       </div>
 
-      <h2 className="mb-3 text-sm uppercase tracking-[0.14em] text-ink-soft">
-        Socios ({socios.length})
-      </h2>
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-sm uppercase tracking-[0.14em] text-ink-soft">
+          Socios ({socios.length})
+        </h2>
+        <Link
+          href={`/admin/gimnasios/${gym.id}/importar-socios`}
+          className={pillClasses.neutra}
+        >
+          Importar socios
+        </Link>
+      </div>
       {socios.length === 0 ? (
         <p className="mb-8 text-sm text-ink-soft">Sin socios.</p>
       ) : (

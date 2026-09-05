@@ -11,7 +11,7 @@ export default async function IngresosPage() {
 
   const { data: gym } = await supabase
     .from("gimnasios")
-    .select("pin_ingresos")
+    .select("pin_ingresos, logo_url, nombre")
     .eq("id", dueno.gimnasio_id)
     .single();
 
@@ -28,7 +28,10 @@ export default async function IngresosPage() {
       <VerificarPinModal />
       
       {/* Listado de ingresos - solo se renderiza después de verificar el PIN */}
-      <ListadoIngresos />
+      <ListadoIngresos
+        gimnasioNombre={gym?.nombre ?? ''}
+        logoUrl={gym?.logo_url ?? null}
+      />
     </div>
   );
 }

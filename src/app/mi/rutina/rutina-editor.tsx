@@ -24,6 +24,14 @@ import { editarItem, editarTecnica, sustituirEjercicio } from "./actions";
 import { StickyProgresoDia } from "@/components/rutinas/sticky-progreso-dia";
 import { LogroDiaCompletado } from "@/components/rutinas/logro-dia-completado";
 import { BotonPedirAyuda } from "@/components/rutinas/boton-pedir-ayuda";
+import { MiniRegistroProgreso } from "@/components/progreso/mini-registro-progreso";
+import { HistorialEjercicio } from "@/components/progreso/historial-ejercicio";
+import {
+  guardarProgresoCliente,
+  guardarProgresoSocio,
+  obtenerProgresoCliente,
+  obtenerProgresoSocio,
+} from "@/lib/progreso/actions";
 
 export type ItemEditable = {
   id: string;
@@ -252,10 +260,14 @@ export function RutinaEditor({
   dias,
   ejercicios,
   mostrarTecnica = false,
+  clienteId,
+  creadoPor,
 }: {
   dias: DiaEditable[];
   ejercicios: Ejercicio[];
   mostrarTecnica?: boolean;
+  clienteId?: string;
+  creadoPor?: 'cliente' | 'dueno';
 }) {
   const [visor, setVisor] = useState<Ejercicio | null>(null);
   const [activo, setActivo] = useState(dias[0]?.numero ?? 1);
@@ -539,6 +551,8 @@ export function RutinaEditor({
                       onSeriesGuardadas={(n) =>
                         setSeriesGuardadas((p) => ({ ...p, [item.id]: n }))
                       }
+                      clienteId={clienteId}
+                      creadoPor={creadoPor}
                     />
                   ))}
                 </ul>
@@ -600,6 +614,8 @@ function ItemFila({
   onSeriesGuardadas,
   setsCompletados,
   onToggleSet,
+  clienteId,
+  creadoPor,
 }: {
   item: ItemEditable;
   indice: number;
@@ -609,6 +625,8 @@ function ItemFila({
   onSeriesGuardadas: (series: number) => void;
   setsCompletados: number[];
   onToggleSet: (setIndex: number) => void;
+  clienteId?: string;
+  creadoPor?: 'cliente' | 'dueno';
 }) {
   const [series, setSeries] = useState(String(item.series));
   const [reps, setReps] = useState(item.repeticiones);
@@ -890,6 +908,34 @@ function ItemFila({
               ) : null}
             </div>
           </details>
+
+          {/* Solo mostrar si hay clienteId (no en preview del dueño sin contexto) */}
+          {clienteId && item.ejercicio && (
+            <>
+              <MiniRegistroProgreso
+                ejercicioId={item.ejercicio.id}
+                action={
+                  creadoPor === 'dueno'
+                    ? guardarProgresoSocio.bind(null, clienteId)
+                    : guardarProgresoCliente
+                }
+                fetchUltimoPeso={async (eid) => {
+                  const registros = creadoPor === 'dueno'
+                    ? await obtenerProgresoSocio(clienteId, eid, 1)
+                    : await obtenerProgresoCliente(eid, 1);
+                  return registros[0] ? { peso: registros[0].peso, reps: registros[0].reps } : null;
+                }}
+              />
+              <HistorialEjercicio
+                ejercicioNombre={item.ejercicio.nombre ?? 'Ejercicio'}
+                fetchHistorial={async () =>
+                  creadoPor === 'dueno'
+                    ? obtenerProgresoSocio(clienteId, item.ejercicio!.id)
+                    : obtenerProgresoCliente(item.ejercicio!.id)
+                }
+              />
+            </>
+          )}
 
           {mostrarTecnica ? (
             <div className="mt-3">

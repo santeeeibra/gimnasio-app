@@ -26,6 +26,9 @@ import { GenerarRutinaForm } from "./generar-form";
 import { RutinaEditor, type DiaEditable } from "./rutina-editor";
 import { BuilderManual } from "./builder-manual";
 import { BannerMotivacional } from "@/components/rutinas/banner-motivacional";
+import { CardPeso } from "@/components/peso/card-peso";
+import { guardarPesoCliente, obtenerPesosCliente } from "@/lib/peso/actions";
+import { DescargarRutinaPdf } from "@/components/pdf/descargar-rutina-pdf";
 
 export const dynamic = "force-dynamic";
 
@@ -43,11 +46,19 @@ export default async function MiRutinaPage() {
 
   const { data: cliente } = await supabase
     .from("clientes")
-    .select("id, sexo")
+    .select("id, sexo, gimnasio_id")
     .eq("profile_id", profile.id)
     .maybeSingle();
 
   const clienteSexo = (cliente?.sexo as Sexo | null) ?? null;
+
+  const { data: gymData } = cliente
+    ? await supabase
+        .from("gimnasios")
+        .select("nombre, logo_url")
+        .eq("id", cliente.gimnasio_id ?? "")
+        .maybeSingle()
+    : { data: null };
 
   const { data: rutina } = cliente
     ? await supabase
@@ -208,12 +219,32 @@ export default async function MiRutinaPage() {
             ) : null}
           </div>
           {regenerarDetails ? (
-            <div className="shrink-0">{regenerarDetails}</div>
+            <div className="shrink-0 flex items-center gap-2">
+              {rutina && cliente && (
+                <DescargarRutinaPdf
+                  clienteNombre={profile.nombre ?? ""}
+                  gimnasioNombre={gymData?.nombre ?? ""}
+                  rutinaNombre={`${OBJETIVO_LABEL[rutina.objetivo as Objetivo] ?? rutina.objetivo}${rutina.nivel ? ` · ${NIVEL_LABEL[rutina.nivel as Nivel]}` : ""}${rutina.dias_por_semana ? ` · ${rutina.dias_por_semana} días` : ""}`}
+                  dias={agruparPorDia((itemsData ?? []) as any[], (rutina.dias_titulos as string[] | null) ?? null)}
+                  logoUrl={gymData?.logo_url ?? null}
+                />
+              )}
+              {regenerarDetails}
+            </div>
           ) : null}
         </div>
       </div>
 
       <BannerMotivacional />
+
+      {cliente && (
+        <CardPeso
+          clienteId={cliente.id}
+          creadoPor="cliente"
+          action={guardarPesoCliente}
+          fetchRegistros={obtenerPesosCliente}
+        />
+      )}
 
       {!rutina ? (
         <>
@@ -271,6 +302,8 @@ export default async function MiRutinaPage() {
             )}
             ejercicios={ejercicios}
             mostrarTecnica={rutina.origen === "manual"}
+            clienteId={cliente?.id}
+            creadoPor="cliente"
           />
         </>
       )}

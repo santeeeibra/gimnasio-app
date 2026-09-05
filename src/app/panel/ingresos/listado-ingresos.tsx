@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { Spinner, pillClasses } from "@/components/ui";
 import { KeyRound } from "lucide-react";
+import { DescargarIngresosPdf } from "@/components/pdf/descargar-ingresos-pdf";
 
 type Pago = {
   id: string;
@@ -27,11 +28,18 @@ const norm = (s: string) =>
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "");
 
-export function ListadoIngresos() {
+export function ListadoIngresos({
+  gimnasioNombre,
+  logoUrl,
+}: {
+  gimnasioNombre: string;
+  logoUrl: string | null;
+}) {
   const [verificado, setVerificado] = useState(false);
   const [pagos, setPagos] = useState<Pago[]>([]);
   const [cargando, setCargando] = useState(true);
   const [q, setQ] = useState("");
+  const [mesFiltro, setMesFiltro] = useState<string>(""); // 'YYYY-MM' o ''
 
   // Verificar si el PIN fue ingresado
   useEffect(() => {
@@ -79,10 +87,27 @@ export function ListadoIngresos() {
     );
   }
 
+  // Meses disponibles desde los pagos cargados (para el selector)
+  const mesesDisponibles = useMemo(() => {
+    const set = new Set<string>();
+    pagos.forEach((p) => {
+      const [y, m] = p.fecha_pago.split("-");
+      set.add(`${y}-${m}`);
+    });
+    return [...set].sort((a, b) => b.localeCompare(a)); // desc
+  }, [pagos]);
+
   const filtro = norm(q.trim());
-  const pagosFiltrados = filtro
-    ? pagos.filter((p) => norm(p.cliente_nombre).includes(filtro))
+
+  // 1) Filtrar por mes seleccionado
+  const pagosFiltradosPorRango = mesFiltro
+    ? pagos.filter((p) => p.fecha_pago.startsWith(mesFiltro))
     : pagos;
+
+  // 2) Filtrar por nombre sobre el resultado anterior
+  const pagosFiltrados = filtro
+    ? pagosFiltradosPorRango.filter((p) => norm(p.cliente_nombre).includes(filtro))
+    : pagosFiltradosPorRango;
 
   // Agrupar por mes/año
   const pagosPorMes: PagosPorMes = {};
@@ -126,6 +151,29 @@ export function ListadoIngresos() {
           <KeyRound aria-hidden strokeWidth={2} className="size-4" />
           Cambiar PIN
         </Link>
+      </div>
+
+      <div className="flex items-center gap-2 flex-wrap">
+        <label className="flex items-center gap-2 flex-1">
+          <span className="text-[11px] font-bold uppercase tracking-[0.07em] text-ink-soft shrink-0">Período</span>
+          <select
+            value={mesFiltro}
+            onChange={(e) => setMesFiltro(e.target.value)}
+            className="h-11 flex-1 min-w-[160px] rounded-[10px] border border-rule bg-paper text-[16px] px-3 outline-none transition-[border-color] duration-150 focus:border-ink"
+          >
+            <option value="">Todos los meses</option>
+            {mesesDisponibles.map((m) => (
+              <option key={m} value={m}>{formatearMes(m)}</option>
+            ))}
+          </select>
+        </label>
+        <DescargarIngresosPdf
+          pagos={pagos}
+          pagosFiltrados={mesFiltro ? pagosFiltrados : []}
+          gimnasioNombre={gimnasioNombre}
+          logoUrl={logoUrl}
+          rangoLabel={mesFiltro ? formatearMes(mesFiltro) : ''}
+        />
       </div>
 
       <input
