@@ -85,7 +85,15 @@ export const metadata: Metadata = {
   title: "Gestión de gimnasio",
   description: "Cuotas, rutinas y avisos en un solo lugar.",
   manifest: "/manifest.webmanifest",
-  appleWebApp: { capable: true, title: "Mi gimnasio" },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Mi gimnasio",
+  },
+  icons: {
+    icon: "/icon-192.png",
+    apple: "/icon-192.png",
+  },
 };
 
 export const viewport: Viewport = {

@@ -17,6 +17,7 @@ import { LinkAccesoCard } from "./link-acceso-card";
 import { MercadoPagoAjustesCard } from "./mp-card";
 import { estadoCobroAutomatico } from "@/lib/pagos/cobro-socio";
 import { connectConfigurado } from "@/lib/pagos/mercadopago-connect";
+import { BotonInstalarApp } from "@/components/pwa/boton-instalar-app";
 
 const ESTADO_LABEL: Record<string, string> = {
   prueba: "En prueba",
@@ -137,6 +138,10 @@ export default async function AjustesPage({
             lectura.
           </p>
         ) : null}
+      </div>
+
+      <div className="mt-6">
+        <BotonInstalarApp variant="card" />
       </div>
 
       <div className="mt-6">

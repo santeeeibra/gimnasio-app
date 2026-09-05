@@ -11,6 +11,7 @@ import { ChevronRight, CreditCard, Dumbbell, Inbox, MessageSquare, Palette } fro
 import { RachaConstancia } from "@/components/mi/racha-constancia";
 import { DatosTransferencia } from "@/components/mi/datos-transferencia";
 import { CacheAlVuelo } from "@/components/offline/cache-al-vuelo";
+import { BotonInstalarApp } from "@/components/pwa/boton-instalar-app";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -259,6 +260,10 @@ export default async function MiPage() {
           </Link>
         </li>
       </ul>
+ 
+      <div className="mt-4">
+        <BotonInstalarApp variant="card" />
+      </div>
 
       <ActivarNotificaciones />
     </main>

@@ -8,6 +8,7 @@ import { diasRestantes } from "@/lib/cuota";
 import { cupoSocios } from "@/lib/plataforma/cupo";
 import { ClienteRow, type ClienteVista } from "./clientes/cliente-row";
 import { OnboardingDueno } from "./onboarding-dueno";
+import { BotonInstalarApp } from "@/components/pwa/boton-instalar-app";
 
 export default async function ResumenPage() {
   const dueno = await requireDueno();
@@ -132,6 +133,11 @@ export default async function ResumenPage() {
         tienePlanes={(planesCount ?? 0) > 0}
         tieneSocios={total > 0}
       />
+
+      {/* ACCESO A PANTALLA DE INICIO (PWA) */}
+      <div className="mb-8">
+        <BotonInstalarApp variant="card" />
+      </div>
 
       {/* ACCIONES RÁPIDAS DEL DÍA A DÍA */}
       <div className="mb-8">
