@@ -5,6 +5,9 @@
 2. @contex-sysgym.md — contexto completo del proyecto (stack, decisiones, specs).
 3. @REGLAS_DESARROLLO.md — reglas de cómo trabajar (ahorro de tokens, cuándo
    editar directo vs. avisar, cuándo pasar a Cline vs. Claude Code).
+4. **UI & UX (Prioridad Suprema):** Se rige por las 4 skills en `.agents/skills`:
+   1º `sysgym-ux-patterns`, 2º `apple-design-skill`, 3º `60fps-animation`, 4º `ios-ux-prototype`.
+   Toda interacción debe tener feedback táctil/acústico (`src/lib/ui/hapticos.ts`) y 60fps compositor-only.
 
 No repitas ni resumas estos archivos en tu respuesta: ya los tenés cargados.
 Si `MAPA_PROYECTO.md` no cubre lo que buscás, recién ahí buscá en el repo.

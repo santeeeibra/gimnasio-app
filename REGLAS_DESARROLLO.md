@@ -9,13 +9,13 @@
 | Tipo de tarea | Quién / cómo |
 |---|---|
 | Feature nueva que toca varios archivos, refactor grande, diseño de arquitectura | **Claude Code** |
-| Rediseño UI de una pantalla con criterio (skill `emil-design-eng`) | **Claude Code** |
+| Rediseño UI de una pantalla con criterio (skills prioritarias: `sysgym-ux-patterns`, `apple-design-skill`, `60fps-animation`) | **Claude Code / Antigravity** |
 | Fix puntual en 1-2 archivos, ajuste de copy, mover un componente | **Cline** |
 | Cambio trivial (renombrar, un valor, un import, un className) | **PowerShell** o edición manual del humano |
 | Aplicar migraciones SQL, correr seed, cargar `.env`, crear proyecto Supabase | **Humano** (manual, ver `INSTRUCCIONES_TEMA.md`) |
 | Dudas conceptuales / decisiones de producto | Charla corta, sin abrir código |
 
-## Reglas para Claude / Cline
+## Reglas para Claude / Cline / Antigravity
 
 1. **Cambio corto (≤ ~15 líneas, 1 archivo):** NO editar. Decir exactamente qué
    archivo y qué línea cambiar, y que lo hace el humano o un comando PowerShell.
@@ -33,8 +33,11 @@
    NO lo aplican. El humano lo corre en el SQL Editor de Supabase.
 8. **Tokens de contexto:** no pegar el `node_modules`, ni archivos generados
    (`tsconfig.tsbuildinfo`, `next-env.d.ts`), ni dumps largos de la base.
-9. **UI:** pasar por la skill `emil-design-eng` antes de tocar una pantalla;
-   mobile-first siempre (una columna, targets grandes, sin depender de hover).
+9. **UI & UX (PRIORIDAD SUPREMA):** Las 4 skills de diseño tienen prioridad absoluta:
+   1º `sysgym-ux-patterns`, 2º `apple-design-skill`, 3º `60fps-animation`, 4º `ios-ux-prototype`.
+   Toda pantalla e interacción debe cumplir: mobile-first (una columna), targets táctiles ≥44px,
+   animaciones 60fps compositor-only, curvatura continua squircle (`rounded-[10px]`, `rounded-[12px]`)
+   y feedback sensorial con `src/lib/ui/hapticos.ts` (Acoustic Haptics + Taptic Engine + audio sintetizado).
 10. **Commits:** los hace el humano salvo que pida lo contrario. Claude deja el
     árbol listo y dice qué commitear.
 

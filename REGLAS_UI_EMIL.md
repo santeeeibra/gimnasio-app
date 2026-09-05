@@ -1,8 +1,13 @@
 # Reglas de UI - Identidad "Obsidian High-Performance" (Mobile-First)
 
-> **Contexto**: App de gestión de gimnasios (SysGym), principalmente usada en móviles dentro de la sala de pesas.
-> Estas reglas aseguran rendimiento atlético premium, performance táctil instantánea, consistencia visual y cero regresiones.
-> **Antes de tocar UI**: leer este archivo + verificar el checklist de usabilidad (§21 y §10).
+> **JERARQUÍA Y PRIORIDAD SUPREMA**:
+> Las **4 skills activas** del proyecto tienen máxima prioridad sobre cualquier directriz previa:
+> 1. `sysgym-ux-patterns`: Feedback sensorial (Acoustic Haptics, Taptic Engine, Web Audio sintetizado) y selectores (Drum Pickers / Dials).
+> 2. `apple-design-skill`: Estándares Apple HIG, Liquid Glass, navegación gestual y curvatura ergonómica.
+> 3. `60fps-animation`: Regla estricta de animaciones 100% compositor GPU (`transform`/`opacity`), resortes iOS y cero layout thrashing.
+> 4. `ios-ux-prototype`: Prototipos interactivos móviles para validar antes de implementar.
+>
+> Este documento actúa como especificación base de tokens semánticos, contraste accesible y checklist. Ante cualquier divergencia en interacción, estética o motion, **prevalecen las 4 skills**.
 
 ---
 
@@ -225,25 +230,30 @@ rounded-full    → badges, pills de prescripción, avatares
 
 ---
 
-## 8. Animaciones y microinteracciones
+## 8. Animaciones y microinteracciones (Prioridad `60fps-animation` y `sysgym-ux-patterns`)
 
-### Timing (usar SIEMPRE)
+### Timing y Curvas de Resorte (Estándar iOS)
 ```
-[transition-timing-function:var(--ease-out)]
-duration-150   → hover, active, press táctil
-duration-200   → inputs (border/box-shadow)
-duration-350   → apariciones de paneles
+[transition-timing-function:var(--ease-press)]   → press táctil instantáneo (duration-150)
+[transition-timing-function:var(--ease-smooth)]  → apariciones suaves de contenido (duration-220)
+[transition-timing-function:var(--ease-spring)]  → bottom sheets, modales y drawers (duration-300 a 350)
 ```
-- Transicionar **propiedades concretas** (`transition-[transform,background-color,opacity]`), **nunca** `transition-all`.
-- Entrada/salida: `ease-out`. Movimiento continuo en pantalla: `ease-in-out`. Nunca `ease-in` en UI.
+- **Regla Compositor-Only:** Transicionar únicamente `transform` y `opacity`. Queda estrictamente prohibido animar `width`, `height`, `top`, `left`, `margin` o `box-shadow` directamente en transiciones activas.
+- Jamás usar `transition-all`.
 
-### Feedback táctil (OBLIGATORIO)
+### Feedback Táctil y Sensorial Obligatorio
+Todo componente interactivo debe ofrecer respuesta visual y sensorial inmediata:
 ```
 active:scale-95        → botones secundarios, chips, miniaturas, series marcadas
 active:scale-[0.97]    → botones primarios CTA
 active:scale-90        → botón-icono chico
 active:bg-paper        → filas de lista
 ```
+- **Integración Sensorial (`@/lib/ui/hapticos`):**
+  - Botón o selector: `hapticoImpactoSuave()` o `hapticoDial()`
+  - Completar serie: `hapticoSerieCompletada()` (Acoustic thump + chime)
+  - Fin de descanso / Guardado OK: `hapticoTimerFin()` / `hapticoExito()`
+  - Error de formulario: `hapticoError()`
 
 ---
 

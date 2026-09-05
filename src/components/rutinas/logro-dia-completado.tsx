@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import { hapticoRecordPersonal } from "@/lib/ui/hapticos";
 
 interface LogroDiaCompletadoProps {
   abierto: boolean;
@@ -25,7 +26,8 @@ export function LogroDiaCompletado({
   useEffect(() => {
     if (!abierto) return;
 
-    // Háptica victoriosa
+    // Háptica y fanfarria unificada SysGym (iOS Taptic + Android Vibration + Acoustic Haptics)
+    hapticoRecordPersonal();
     if ("vibrate" in navigator) {
       navigator.vibrate([80, 50, 80, 50, 220]);
     }

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ComponentProps } from "react";
+import { hapticoImpactoMedio, hapticoImpactoSuave } from "@/lib/ui/hapticos";
 
 /** Círculo de carga. Hereda el color del texto (`currentColor`), así sirve
  *  sobre cualquier variante de botón o superficie. */
@@ -18,24 +19,35 @@ export function Button({
   loading = false,
   disabled,
   children,
+  onClick,
   ...props
 }: ComponentProps<"button"> & {
   variant?: "primary" | "ghost" | "danger" | "volt";
   loading?: boolean;
 }) {
   const base =
-    "inline-flex items-center justify-center gap-2 h-11 px-4 text-sm font-medium rounded-[5px] select-none touch-manipulation transition-[transform,background-color,border-color,color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] disabled:opacity-50 disabled:pointer-events-none";
+    "inline-flex items-center justify-center gap-2 h-11 px-4 text-sm font-medium rounded-[12px] select-none touch-manipulation transition-[transform,background-color,border-color,color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] disabled:opacity-50 disabled:pointer-events-none";
   const styles = {
-    primary: "bg-ink text-paper hover:brightness-125",
+    primary: "bg-ink text-paper hover:brightness-125 shadow-sm",
     ghost: "border border-rule text-ink hover:bg-paper-2",
     danger: "border border-danger text-danger hover:bg-danger hover:text-paper",
-    volt: "bg-volt text-volt-ink hover:brightness-95",
+    volt: "bg-volt text-volt-ink hover:brightness-95 shadow-sm",
   }[variant];
   return (
     <button
       className={`${base} ${styles} ${className}`}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
+      onClick={(e) => {
+        if (!disabled && !loading) {
+          if (variant === "primary" || variant === "volt") {
+            hapticoImpactoMedio();
+          } else {
+            hapticoImpactoSuave();
+          }
+        }
+        onClick?.(e);
+      }}
       {...props}
     >
       {loading ? <Spinner /> : null}
@@ -76,7 +88,7 @@ export const linkClasses = {
  *   a propósito: texto/borde en `--danger`, relleno al presionar.
  */
 const pillBase =
-  "inline-flex min-h-11 items-center justify-center gap-1.5 rounded-[6px] border px-3 text-sm font-medium select-none touch-manipulation transition-[background-color,border-color,color,transform] duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20";
+  "inline-flex min-h-11 items-center justify-center gap-1.5 rounded-[10px] border px-3 text-sm font-medium select-none touch-manipulation transition-[background-color,border-color,color,transform] duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20";
 
 export const pillClasses = {
   neutra: `${pillBase} border-rule bg-paper-2 text-ink-soft hover:bg-paper hover:text-ink`,
@@ -89,7 +101,7 @@ export function LinkButton({
 }: ComponentProps<typeof Link>) {
   return (
     <Link
-      className={`inline-flex items-center justify-center gap-2 h-10 px-4 text-sm font-medium rounded-[5px] border border-rule text-ink hover:bg-paper-2 transition-colors ${className}`}
+      className={`inline-flex items-center justify-center gap-2 h-10 px-4 text-sm font-medium rounded-[10px] border border-rule text-ink hover:bg-paper-2 transition-colors ${className}`}
       {...props}
     />
   );
@@ -107,7 +119,7 @@ export function Field({
         {label}
       </span>
       <input
-        className={`w-full h-11 px-3 rounded-[5px] border border-rule bg-paper text-[16px] outline-none transition-[border-color,box-shadow] duration-150 [transition-timing-function:var(--ease-out)] focus:border-ink focus:shadow-[0_0_0_3px_rgb(22_24_29_/_0.08)] ${className ?? ""}`}
+        className={`w-full h-11 px-3 rounded-[10px] border border-rule bg-paper text-[16px] outline-none transition-[border-color,box-shadow] duration-150 [transition-timing-function:var(--ease-out)] focus:border-ink focus:shadow-[0_0_0_3px_rgb(22_24_29_/_0.08)] ${className ?? ""}`}
         {...props}
       />
       {hint ? (
@@ -131,7 +143,7 @@ export function Select({
       </span>
       <span className="relative block">
         <select
-          className={`w-full h-11 pl-3 pr-9 rounded-[5px] border border-rule bg-paper text-[16px] appearance-none outline-none transition-[border-color,box-shadow] duration-150 [transition-timing-function:var(--ease-out)] focus:border-ink focus:shadow-[0_0_0_3px_rgb(22_24_29_/_0.08)] ${className ?? ""}`}
+          className={`w-full h-11 pl-3 pr-9 rounded-[10px] border border-rule bg-paper text-[16px] appearance-none outline-none transition-[border-color,box-shadow] duration-150 [transition-timing-function:var(--ease-out)] focus:border-ink focus:shadow-[0_0_0_3px_rgb(22_24_29_/_0.08)] ${className ?? ""}`}
           {...props}
         >
           {children}
@@ -166,7 +178,7 @@ export function Panel({
   className?: string;
 }) {
   return (
-    <div className={`border border-rule rounded-[6px] bg-paper-2 ${className}`}>
+    <div className={`border border-rule rounded-[14px] bg-paper-2 ${className}`}>
       {children}
     </div>
   );

@@ -247,3 +247,183 @@ export function hapticoError() {
   osc.start(now);
   osc.stop(now + 0.09);
 }
+
+/**
+ * Impacto suave estilo iOS UIImpactFeedbackGenerator(style: .light)
+ * Para botones secundarios, badges, cards clickeables y micro-taps.
+ */
+export function hapticoImpactoSuave() {
+  vibrar(6);
+  triggerIosSwitchHaptic();
+  reproducirPulsoAcustico(0.4);
+}
+
+/**
+ * Impacto medio estilo iOS UIImpactFeedbackGenerator(style: .medium)
+ * Para botones primarios CTA, confirmaciones y modales.
+ */
+export function hapticoImpactoMedio() {
+  vibrar(12);
+  triggerIosSwitchHaptic();
+  reproducirPulsoAcustico(0.8);
+}
+
+/**
+ * Impacto fuerte estilo iOS UIImpactFeedbackGenerator(style: .heavy)
+ * Para acciones irreversibles, eliminar o finalizaciones.
+ */
+export function hapticoImpactoFuerte() {
+  vibrar(20);
+  triggerIosSwitchHaptic();
+  reproducirPulsoAcustico(1.2);
+}
+
+/**
+ * Selección de pestaña o segmented control estilo UISelectionFeedbackGenerator
+ */
+export function hapticoSeleccion() {
+  vibrar(8);
+  triggerIosSwitchHaptic();
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  if (ctx.state === "suspended") ctx.resume().catch(() => {});
+
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "sine";
+  osc.frequency.setValueAtTime(750, now);
+  osc.frequency.exponentialRampToValueAtTime(500, now + 0.02);
+  gain.gain.setValueAtTime(0.04, now);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.02);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(now);
+  osc.stop(now + 0.025);
+}
+
+/**
+ * Celebración de serie completada en sala de pesas:
+ * Golpe físico en chasis + chime deportivo estimulante.
+ */
+export function hapticoSerieCompletada() {
+  vibrar([15, 30, 25]);
+  triggerIosSwitchHaptic();
+
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  if (ctx.state === "suspended") ctx.resume().catch(() => {});
+
+  const now = ctx.currentTime;
+
+  // 1. Thump subsónico físico (90Hz -> 50Hz)
+  const oscBass = ctx.createOscillator();
+  const gainBass = ctx.createGain();
+  oscBass.type = "triangle";
+  oscBass.frequency.setValueAtTime(95, now);
+  oscBass.frequency.exponentialRampToValueAtTime(48, now + 0.05);
+  gainBass.gain.setValueAtTime(0.35, now);
+  gainBass.gain.exponentialRampToValueAtTime(0.001, now + 0.055);
+  oscBass.connect(gainBass);
+  gainBass.connect(ctx.destination);
+  oscBass.start(now);
+  oscBass.stop(now + 0.06);
+
+  // 2. Chime brillante de éxito deportivo (C6 -> G6: 1046Hz -> 1567Hz)
+  const playChime = (freq: number, start: number, dur: number) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(freq, start);
+    gain.gain.setValueAtTime(0.07, start);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(start);
+    osc.stop(start + dur);
+  };
+
+  playChime(1046, now + 0.02, 0.09);
+  playChime(1567, now + 0.09, 0.14);
+}
+
+/**
+ * Alerta de finalización de timer de descanso entre series:
+ * Doble campana cristalina clara sin saturar los oídos del atleta.
+ */
+export function hapticoTimerFin() {
+  vibrar([40, 60, 40, 60, 80]);
+  triggerIosSwitchHaptic();
+
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  if (ctx.state === "suspended") ctx.resume().catch(() => {});
+
+  const now = ctx.currentTime;
+  const ding = (freq: number, start: number) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(freq, start);
+    gain.gain.setValueAtTime(0.15, start);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.28);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(start);
+    osc.stop(start + 0.3);
+  };
+
+  ding(1200, now);
+  ding(1600, now + 0.15);
+}
+
+/**
+ * Récord personal alcanzado (PR):
+ * Fanfarria sintética ascendente de 3 notas triunfales.
+ */
+export function hapticoRecordPersonal() {
+  vibrar([15, 40, 20, 40, 40]);
+  triggerIosSwitchHaptic();
+
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  if (ctx.state === "suspended") ctx.resume().catch(() => {});
+
+  const now = ctx.currentTime;
+  const playNote = (freq: number, start: number, dur: number) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(freq, start);
+    gain.gain.setValueAtTime(0.09, start);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(start);
+    osc.stop(start + dur);
+  };
+
+  playNote(784, now, 0.09);         // G5
+  playNote(987, now + 0.08, 0.09);    // B5
+  playNote(1318, now + 0.16, 0.22);   // E6
+}
+
+/**
+ * Hook utilitario para componentes de React
+ */
+export function useHapticos() {
+  return {
+    iniciar: iniciarAudioHaptico,
+    dial: hapticoDial,
+    suave: hapticoImpactoSuave,
+    medio: hapticoImpactoMedio,
+    fuerte: hapticoImpactoFuerte,
+    seleccion: hapticoSeleccion,
+    serie: hapticoSerieCompletada,
+    timer: hapticoTimerFin,
+    exito: hapticoExito,
+    record: hapticoRecordPersonal,
+    error: hapticoError,
+  };
+}
+

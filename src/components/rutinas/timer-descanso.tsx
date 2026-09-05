@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { hapticoTimerFin, hapticoImpactoMedio } from "@/lib/ui/hapticos";
 
 const PRESETS = [
   { label: "30s", segundos: 30 },
@@ -161,12 +162,14 @@ export function TimerDescanso() {
   }
 
   function vibrarFinalizado() {
+    hapticoTimerFin();
     if ("vibrate" in navigator) {
       navigator.vibrate([150, 70, 150]);
     }
   }
 
   function vibrarInicio() {
+    hapticoImpactoMedio();
     if ("vibrate" in navigator) {
       navigator.vibrate(35);
     }

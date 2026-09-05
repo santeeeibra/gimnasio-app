@@ -2,24 +2,66 @@
 name: ios-ux-prototype
 description: |
   Create interactive iOS/mobile app UX flow prototypes as HTML documents with realistic phone mockups.
-  Use when: (1) Visualizing user journeys and navigation flows, (2) Creating mobile app wireframes,
-  (3) Documenting screen-to-screen navigation patterns, (4) Presenting iOS UI designs with annotations,
-  (5) Prototyping app architecture before implementation. Generates self-contained HTML files with
-  iOS-native styling, phone frames, flow arrows, and callout annotations.
+  Prioridad alta en SysGym para validar flujos de usuario, diseño de pantallas móviles,
+  animaciones fluidas, safe areas de iPhone y componentes de entrenamiento físico
+  antes de escribir código de producción.
+version: 2.0.0
 ---
 
-# iOS UX Prototype
+# iOS UX Prototype (SysGym Edition)
 
-Create interactive HTML prototypes showing mobile app user journeys with realistic iPhone mockups.
+Create interactive HTML prototypes showing mobile app user journeys with realistic iPhone mockups,
+incorporating SysGym's Obsidian & Titanium design systems.
 
-## Quick Start
+---
+
+## 1. SysGym Fitness UI Presets
+
+When prototyping for SysGym, inject the official token system into the `<style>` block:
+
+```css
+/* SysGym Obsidian (Dark Mode Default) */
+:root {
+  --sysgym-paper: #090d14;
+  --sysgym-paper-2: #121722;
+  --sysgym-paper-3: #1b2232;
+  --sysgym-ink: #f8fafc;
+  --sysgym-ink-soft: #94a3b8;
+  --sysgym-rule: rgba(255, 255, 255, 0.08);
+  --sysgym-accent: #10e7a0; /* Hyper-Mint */
+  --sysgym-accent-ink: #042417;
+  --sysgym-danger: #ef4444;
+}
+```
+
+### Prototipo de Fila de Serie de Entrenamiento
+```html
+<div class="workout-set-row" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--sysgym-paper-2); border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--sysgym-rule);">
+  <span style="font-family: monospace; font-weight: 600; color: var(--sysgym-ink);">SET 1</span>
+  <span style="color: var(--sysgym-ink-soft); font-size: 14px;">80 kg × 10 reps</span>
+  <button style="width: 44px; height: 44px; border-radius: 10px; background: var(--sysgym-accent); color: var(--sysgym-accent-ink); border: none; font-weight: bold; cursor: pointer;">✓</button>
+</div>
+```
+
+### Prototipo de Timer Flotante Liquid Glass
+```html
+<div class="floating-rest-timer" style="position: sticky; bottom: 20px; margin: 0 auto; width: fit-content; padding: 8px 18px; border-radius: 9999px; background: rgba(18, 23, 34, 0.85); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.12); display: flex; align-items: center; gap: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+  <span style="width: 8px; height: 8px; border-radius: 50%; background: #10e7a0; animation: pulse 1.5s infinite;"></span>
+  <span style="font-family: monospace; font-size: 15px; font-weight: 700; color: #fff;">01:30</span>
+  <span style="font-size: 13px; color: #94a3b8;">Descanso</span>
+</div>
+```
+
+---
+
+## 2. Quick Start
 
 1. Copy CSS from `assets/ios-design-system.css` into a new HTML file
 2. Paste the sprite from `assets/sf-symbols.svg` once near the top of `<body>`
 3. Structure: page header → journey rows → phone frames with content
 4. Add flow arrows between screens and annotations for callouts
 
-## iOS 26 Design (default)
+## 3. iOS 26 Design (default)
 
 Target the current iOS 26 design language — **Liquid Glass** surfaces and
 **SF Symbols**. Apply these by default unless the user asks for an older look:
@@ -66,7 +108,7 @@ Common sprite glyphs: `sf-house`, `sf-globe`, `sf-antenna`, `sf-gear`,
 `sf-link`, `sf-list`, `sf-lock`, `sf-shield`, `sf-bolt`, `sf-power`, `sf-info`,
 `sf-clock`, `sf-chart`, `sf-wifi`, `sf-nosign`, `sf-compass`.
 
-## Page Structure
+## 4. Page Structure
 
 ```html
 <!DOCTYPE html>
@@ -91,7 +133,7 @@ Common sprite glyphs: `sf-house`, `sf-globe`, `sf-antenna`, `sf-gear`,
 </html>
 ```
 
-## Core Components
+## 5. Core Components
 
 ### Journey Step
 ```html
@@ -139,120 +181,7 @@ Common sprite glyphs: `sf-house`, `sf-globe`, `sf-antenna`, `sf-gear`,
 <!-- Positions: right, left, top, bottom (arrow direction) -->
 ```
 
-## Navigation Patterns
-
-### Large Title Nav
-```html
-<div class="nav-large"><h1>My Apps</h1></div>
-```
-
-### Inline Nav with Back
-```html
-<div class="nav-inline">
-  <div class="nav-inline-left">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-      <path d="M15 18l-6-6 6-6"/>
-    </svg>
-    <span>Back</span>
-  </div>
-  <span class="nav-inline-title">Title</span>
-  <span class="nav-inline-right">Edit</span>
-</div>
-```
-
-### Segmented Control (3-5 options)
-```html
-<div class="segmented-control">
-  <div class="segment active">Tab 1</div>
-  <div class="segment">Tab 2</div>
-  <div class="segment">Tab 3</div>
-</div>
-```
-
-### Scrollable Tabs (many options)
-```html
-<div class="scrollable-tabs">
-  <div class="scroll-tab active">iPhone 6.7"</div>
-  <div class="scroll-tab">iPhone 6.5"</div>
-  <div class="scroll-tab">iPad Pro</div>
-</div>
-```
-
-## Content Components
-
-### App List Row
-```html
-<div class="app-row selected">
-  <div class="app-icon blue">A</div>
-  <div class="app-details">
-    <div class="app-name">App Name</div>
-    <div class="app-meta">v1.0.0 · iOS</div>
-  </div>
-  <span class="app-badge review">In Review</span>
-  <span class="chevron">›</span>
-</div>
-```
-
-### Action Card Grid
-```html
-<div class="action-grid">
-  <div class="action-card highlighted">
-    <!-- tinted square: set the glyph color to match the tint -->
-    <div class="action-icon blue" style="color:var(--blue)">
-      <svg class="sf"><use href="#sf-bolt"/></svg>
-    </div>
-    <h3>Feature</h3>
-    <p>Description</p>
-  </div>
-</div>
-```
-
-### List Group
-```html
-<div class="list-group">
-  <div class="list-row">
-    <!-- solid color square: glyph renders white via .list-icon -->
-    <div class="list-icon yellow"><svg><use href="#sf-star"/></svg></div>
-    <span>Setting</span>
-    <span class="chevron"><svg><use href="#sf-chevron"/></svg></span>
-  </div>
-</div>
-```
-
-### Form Card
-```html
-<div class="form-card">
-  <div class="form-row">
-    <div class="form-row-icon">📦</div>
-    <span class="form-row-label">Label</span>
-    <span class="form-row-value">value</span>
-  </div>
-  <div class="form-input">
-    <label>Field Name</label>
-    <input type="text" value="Content">
-  </div>
-</div>
-```
-
-## Color Classes
-
-**Icons**: `.blue`, `.purple`, `.orange`, `.cyan`, `.green`, `.yellow`, `.red`, `.gray`
-
-**Badges**: `.app-badge.review` (orange), `.app-badge.ready` (green), `.app-badge.draft` (purple)
-
-**Highlight**: `.action-card.highlighted` (blue border glow)
-
-## Section Divider (Alternate Flows)
-
-```html
-<div class="section-divider">
-  <div class="section-divider-line"></div>
-  <span class="section-divider-text">Alternative Flow</span>
-  <div class="section-divider-line"></div>
-</div>
-```
-
-## Resources
+## 6. Resources
 
 - `assets/ios-design-system.css` - Complete CSS design system (copy into HTML)
 - `assets/sf-symbols.svg` - SF Symbol sprite sheet (paste once into `<body>`)
