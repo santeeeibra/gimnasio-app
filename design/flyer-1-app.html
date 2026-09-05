@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SysGym – Flyer 1: La App de tu Gimnasio</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 480px;
+      height: 860px;
+      overflow: hidden;
+      background: #050608;
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      color: #fff;
+    }
+
+    .canvas {
+      width: 480px;
+      height: 860px;
+      background: #050608;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 28px 24px 22px;
+    }
+
+    :root {
+      --volt:       #c8ff00;
+      --volt-glow:  rgba(200, 255, 0, 0.28);
+      --ink:        #ffffff;
+      --ink-soft:   #9ca3af;
+      --ok:         #10b981;
+      --blue:       #38bdf8;
+    }
+
+    /* Iluminación Cinematográfica */
+    .spotlight {
+      position: absolute;
+      top: -120px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 500px;
+      height: 380px;
+      background: radial-gradient(ellipse, rgba(200, 255, 0, 0.15) 0%, transparent 68%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .phone-backlight {
+      position: absolute;
+      top: 480px;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 360px;
+      height: 480px;
+      background: radial-gradient(circle, rgba(200, 255, 0, 0.1) 0%, transparent 65%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .ambient-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+      background-size: 36px 36px;
+      pointer-events: none;
+    }
+
+    /* ── Header: Gran Impacto ── */
+    .header {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 8px;
+    }
+
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(200, 255, 0, 0.08);
+      border: 1px solid rgba(200, 255, 0, 0.3);
+      border-radius: 100px;
+      padding: 5px 15px;
+      font-size: 8.5px;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--volt);
+    }
+
+    .badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--volt);
+      box-shadow: 0 0 8px var(--volt);
+    }
+
+    .hero-title {
+      font-size: 26px;
+      font-weight: 900;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      color: #fff;
+      max-width: 440px;
+      margin-top: 2px;
+    }
+
+    .hero-title span {
+      color: var(--volt);
+      text-shadow: 0 0 25px rgba(200, 255, 0, 0.45);
+    }
+
+    .hero-sub {
+      font-size: 11px;
+      color: var(--ink-soft);
+      font-weight: 500;
+      max-width: 390px;
+      line-height: 1.4;
+    }
+
+    /* ── Showcase Central: Teléfono Principal con Badges Flotantes Minimalistas ── */
+    .showcase-stage {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 500px;
+      margin: 4px 0;
+    }
+
+    /* Smartphone Grande y Realista */
+    .device {
+      width: 260px;
+      height: 495px;
+      background: #000;
+      border-radius: 42px;
+      border: 3.5px solid #282f3d;
+      box-shadow:
+        0 0 0 1px #111624,
+        0 30px 70px -15px rgba(0, 0, 0, 0.95),
+        0 0 45px rgba(200, 255, 0, 0.16);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      z-index: 5;
+    }
+
+    .notch {
+      position: absolute;
+      top: 7px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 82px;
+      height: 18px;
+      background: #000;
+      border-radius: 20px;
+      z-index: 20;
+    }
+
+    /* Pantalla Interna de la App */
+    .screen {
+      flex: 1;
+      background: #0b0e16;
+      padding: 30px 14px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .app-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      padding-bottom: 8px;
+    }
+
+    .gym-brand {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .gym-logo-box {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      background: var(--volt);
+      color: #000;
+      font-weight: 900;
+      font-size: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .gym-title {
+      font-size: 11px;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    /* Tarjeta de Rutina en la App */
+    .app-routine-box {
+      background: #141824;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 11px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .routine-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .routine-head-title {
+      font-size: 10px;
+      font-weight: 800;
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .ia-tag {
+      font-size: 7.5px;
+      font-weight: 800;
+      color: var(--volt);
+      background: rgba(200,255,0,0.12);
+      border: 1px solid rgba(200,255,0,0.3);
+      padding: 2px 6px;
+      border-radius: 100px;
+    }
+
+    /* Fila de Ejercicio con Técnica y Cronómetro */
+    .exercise-item {
+      background: rgba(0,0,0,0.35);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 10px;
+      padding: 7px 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .exercise-media {
+      width: 32px;
+      height: 32px;
+      border-radius: 7px;
+      background: #1e2535;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--volt);
+    }
+
+    .exercise-svg {
+      width: 17px;
+      height: 17px;
+    }
+
+    .exercise-text {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .exercise-title {
+      font-size: 9.5px;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .exercise-sub {
+      font-size: 8px;
+      font-weight: 600;
+      color: var(--volt);
+    }
+
+    .timer-badge {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      color: var(--ok);
+      font-size: 8px;
+      font-weight: 800;
+      padding: 3px 6px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .timer-svg {
+      width: 11px;
+      height: 11px;
+    }
+
+    /* Motivación & Técnica */
+    .tip-box {
+      background: linear-gradient(135deg, rgba(56,189,248,0.1) 0%, rgba(15,20,30,0.7) 100%);
+      border: 1px solid rgba(56,189,248,0.25);
+      border-radius: 10px;
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .tip-head {
+      font-size: 8px;
+      font-weight: 800;
+      color: var(--blue);
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .tip-svg {
+      width: 11px;
+      height: 11px;
+    }
+
+    .tip-desc {
+      font-size: 8px;
+      color: #cbd5e1;
+      line-height: 1.35;
+    }
+
+    .app-bottombar {
+      margin-top: auto;
+      display: flex;
+      justify-content: space-around;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding-top: 8px;
+      font-size: 7px;
+      font-weight: 800;
+      color: #64748b;
+      text-transform: uppercase;
+    }
+
+    .app-bottombar .active {
+      color: var(--volt);
+    }
+
+    /* ── BADGES FLOTANTES VECTORIALES (Look Apple / Linear) ── */
+    .feature-chip {
+      position: absolute;
+      background: rgba(12, 16, 24, 0.94);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 100px;
+      padding: 7px 13px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(16px);
+      z-index: 15;
+    }
+
+    .chip-icon-wrap {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .chip-icon-wrap svg {
+      width: 12px;
+      height: 12px;
+    }
+
+    .chip-text {
+      font-size: 9.5px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+    }
+
+    .chip-text em {
+      font-style: normal;
+      color: var(--volt);
+    }
+
+    /* Ubicaciones dinámicas */
+    .chip-top-left {
+      top: 40px;
+      left: 0;
+      border-left: 3px solid var(--volt);
+    }
+    .chip-top-left .chip-icon-wrap {
+      background: rgba(200, 255, 0, 0.15);
+      color: var(--volt);
+    }
+
+    .chip-top-right {
+      top: 140px;
+      right: 0;
+      border-right: 3px solid var(--blue);
+    }
+    .chip-top-right .chip-icon-wrap {
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--blue);
+    }
+
+    .chip-bottom-left {
+      bottom: 120px;
+      left: 0;
+      border-left: 3px solid var(--ok);
+    }
+    .chip-bottom-left .chip-icon-wrap {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--ok);
+    }
+
+    .chip-bottom-right {
+      bottom: 45px;
+      right: 0;
+      border-right: 3px solid var(--volt);
+    }
+    .chip-bottom-right .chip-icon-wrap {
+      background: rgba(200, 255, 0, 0.15);
+      color: var(--volt);
+    }
+
+    /* ── Barra de Cierre ── */
+    .closing-strip {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(135deg, rgba(200,255,0,0.12) 0%, rgba(15,22,0,0.85) 100%);
+      border: 1.5px solid var(--volt);
+      border-radius: 14px;
+      padding: 12px 18px;
+      box-shadow: 0 0 25px rgba(200, 255, 0, 0.18);
+    }
+
+    .closing-content {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .closing-tag {
+      font-size: 8px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--volt);
+    }
+
+    .closing-headline {
+      font-size: 13.5px;
+      font-weight: 900;
+      color: #fff;
+    }
+
+    .closing-note {
+      font-size: 8.5px;
+      color: #ccc;
+    }
+
+    .closing-note strong {
+      color: var(--volt);
+    }
+
+    .cta-button {
+      flex-shrink: 0;
+      background: var(--volt);
+      color: #000;
+      font-weight: 900;
+      font-size: 10.5px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 10px 16px;
+      border-radius: 9px;
+      text-decoration: none;
+      box-shadow: 0 0 18px rgba(200, 255, 0, 0.45);
+    }
+
+    /* Footer */
+    .footer {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 8px;
+      color: #64748b;
+      font-weight: 600;
+      padding: 0 4px;
+    }
+
+    .footer span {
+      color: var(--volt);
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <div class="canvas">
+    <div class="spotlight"></div>
+    <div class="phone-backlight"></div>
+    <div class="ambient-grid"></div>
+
+    <!-- Header -->
+    <header class="header">
+      <div class="badge-pill">
+        <div class="badge-dot"></div>
+        La experiencia móvil de tu gimnasio
+      </div>
+      <h1 class="hero-title">
+        Tu gimnasio en <span>otra liga</span> con su propia app
+      </h1>
+      <p class="hero-sub">
+        Tus alumnos entrenan con rutinas inteligentes, técnica en video y tu marca siempre en su bolsillo.
+      </p>
+    </header>
+
+    <!-- Showcase Central: Teléfono + Badges Vectoriales -->
+    <div class="showcase-stage">
+
+      <!-- Badge 1: Marca Propia (Sparkle Vectorial) -->
+      <div class="feature-chip chip-top-left">
+        <div class="chip-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3Z"/>
+          </svg>
+        </div>
+        <span class="chip-text">100% <em>tu logo y colores</em></span>
+      </div>
+
+      <!-- Badge 2: Rutinas con IA (CPU Circuit Vectorial) -->
+      <div class="feature-chip chip-top-right">
+        <div class="chip-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="16" height="16" x="4" y="4" rx="2"/><rect width="6" height="6" x="9" y="9" rx="1"/>
+            <path d="M15 2v2"/><path d="M15 20v2"/><path d="M2 15h2"/><path d="M2 9h2"/><path d="M20 15h2"/><path d="M20 9h2"/><path d="M9 2v2"/><path d="M9 20v2"/>
+          </svg>
+        </div>
+        <span class="chip-text">Rutinas guiadas <em>con IA</em></span>
+      </div>
+
+      <!-- Badge 3: Filtro Anti-Lesiones (Shield Check Vectorial) -->
+      <div class="feature-chip chip-bottom-left">
+        <div class="chip-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 13c0 5-3.5 7.5-7.7 9a1 1 0 0 1-.6 0C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.2-2.7a1.2 1.2 0 0 1 1.6 0C14.5 3.8 17 5 19 5a1 1 0 0 1 1 1z"/>
+            <path d="m9 12 2 2 4-4"/>
+          </svg>
+        </div>
+        <span class="chip-text">Filtro <em>anti-dolor</em></span>
+      </div>
+
+      <!-- Badge 4: Cronómetro de descanso (Timer Vectorial) -->
+      <div class="feature-chip chip-bottom-right">
+        <div class="chip-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="10" x2="14" y1="2" y2="2"/><line x1="12" x2="15" y1="14" y2="11"/><circle cx="12" cy="14" r="8"/>
+          </svg>
+        </div>
+        <span class="chip-text">Descansos <em>en vivo</em></span>
+      </div>
+
+      <!-- EL TELÉFONO -->
+      <div class="device">
+        <div class="notch"></div>
+        <div class="screen">
+          <!-- Topbar de la App -->
+          <div class="app-topbar">
+            <div class="gym-brand">
+              <div class="gym-logo-box">G</div>
+              <span class="gym-title">POWER GYM</span>
+            </div>
+            <div style="width:16px; height:16px; border-radius:50%; background:#222938;"></div>
+          </div>
+
+          <!-- Rutina del Día -->
+          <div class="app-routine-box">
+            <div class="routine-header-row">
+              <span class="routine-head-title">Rutina de Hoy · Hipertrofia</span>
+              <span class="ia-tag">Generada con IA</span>
+            </div>
+
+            <!-- Ejercicio 1: Press Banca con SVG -->
+            <div class="exercise-item">
+              <div class="exercise-media">
+                <svg class="exercise-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M2 12h20"/><path d="M6 8v8"/><path d="M4 9v6"/><path d="M18 8v8"/><path d="M20 9v6"/>
+                </svg>
+              </div>
+              <div class="exercise-text">
+                <span class="exercise-title">Press Banca Plano</span>
+                <span class="exercise-sub">4 series × 10 reps</span>
+              </div>
+              <div class="timer-badge">
+                <svg class="timer-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="9"/><polyline points="12 6 12 12 16 14"/>
+                </svg>
+                90s
+              </div>
+            </div>
+
+            <!-- Ejercicio 2: Remo Barra con SVG -->
+            <div class="exercise-item">
+              <div class="exercise-media">
+                <svg class="exercise-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m6.5 6.5 11 11"/><path d="m21 21-1-1"/><path d="m3 3 1 1"/><path d="m18 22 4-4"/><path d="m2 6 4-4"/><path d="m3 10 7-7"/><path d="m14 21 7-7"/>
+                </svg>
+              </div>
+              <div class="exercise-text">
+                <span class="exercise-title">Remo con Barra</span>
+                <span class="exercise-sub">3 series × 12 reps</span>
+              </div>
+              <div class="timer-badge">
+                <svg class="timer-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="9"/><polyline points="12 6 12 12 16 14"/>
+                </svg>
+                60s
+              </div>
+            </div>
+          </div>
+
+          <!-- Tip de Entrenamiento con SVG -->
+          <div class="tip-box">
+            <span class="tip-head">
+              <svg class="tip-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/>
+              </svg>
+              Técnica Guiada
+            </span>
+            <p class="tip-desc">Mantené la espalda recta y controlá la fase excéntrica en 2 segundos.</p>
+          </div>
+
+          <!-- Bottom Navigation -->
+          <div class="app-bottombar">
+            <span>Inicio</span>
+            <span class="active">● Rutina</span>
+            <span>Mensajes</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Cierre de Acción Rápida -->
+    <div class="closing-strip">
+      <div class="closing-content">
+        <span class="closing-tag">🔥 Prueba de 14 Días</span>
+        <h4 class="closing-headline">Probalo gratis en tu gimnasio</h4>
+        <p class="closing-note">Te regalamos la carga de socios (<strong>Ahorro de $35.000</strong>).</p>
+      </div>
+      <a href="https://wa.me/5492920605208?text=Hola!%20Quiero%20probar%20SysGym%2014%20dias%20gratis%20en%20mi%20gimnasio" class="cta-button">
+        Pedir Demo
+      </a>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div>✓ Sin contratos &nbsp;·&nbsp; ✓ Setup en el día</div>
+      <div>WhatsApp: <span>2920 605208</span></div>
+    </footer>
+
+  </div>
+</body>
+</html>

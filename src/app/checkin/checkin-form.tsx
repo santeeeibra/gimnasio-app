@@ -6,7 +6,7 @@ import { Button } from "@/components/ui";
 import { SalirModoCheckin } from "./salir-form";
 import { encolar } from "@/lib/offline/cola";
 
-type Tono = "ok" | "prueba_vencida" | "no_encontrado" | "encolado";
+type Tono = "ok" | "prueba_vencida" | "cuota_vencida" | "no_encontrado" | "encolado";
 
 const TONO: Record<Tono, { rail: string; kicker: string; texto: string }> = {
   ok: {
@@ -18,6 +18,11 @@ const TONO: Record<Tono, { rail: string; kicker: string; texto: string }> = {
     rail: "border-l-warn",
     kicker: "text-warn",
     texto: "Ingreso guardado — se sincroniza al volver la conexión",
+  },
+  cuota_vencida: {
+    rail: "border-l-danger",
+    kicker: "text-danger",
+    texto: "Cuota vencida — pasá por recepción a regularizar",
   },
   prueba_vencida: {
     rail: "border-l-danger",

@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SysGym – Flyer 2: Cero Deudores y Control</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 480px;
+      height: 860px;
+      overflow: hidden;
+      background: #060709;
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      color: #fff;
+    }
+
+    .canvas {
+      width: 480px;
+      height: 860px;
+      background: #060709;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 26px 22px 20px;
+    }
+
+    :root {
+      --volt:       #c8ff00;
+      --volt-glow:  rgba(200, 255, 0, 0.28);
+      --ink:        #ffffff;
+      --ink-soft:   #9ca3af;
+      --danger:     #ff4444;
+      --danger-bg:  rgba(255, 68, 68, 0.12);
+      --ok:         #10b981;
+      --gold:       #f5c842;
+      --mp-blue:    #009ee3;
+    }
+
+    /* Iluminación */
+    .glow-top {
+      position: absolute;
+      top: -80px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 440px;
+      height: 240px;
+      background: radial-gradient(ellipse, rgba(255, 68, 68, 0.12) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .glow-center {
+      position: absolute;
+      top: 450px;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 360px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(200, 255, 0, 0.08) 0%, transparent 65%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .bg-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 32px 32px;
+      pointer-events: none;
+    }
+
+    /* Header */
+    .header {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 6px;
+    }
+
+    .tag-danger {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--danger-bg);
+      border: 1px solid rgba(255, 68, 68, 0.4);
+      border-radius: 100px;
+      padding: 4px 14px;
+      font-size: 8.5px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #ff6666;
+    }
+
+    .tag-danger-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--danger);
+      box-shadow: 0 0 8px var(--danger);
+    }
+
+    .logo-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .logo-text {
+      font-family: 'Orbitron', monospace;
+      font-weight: 900;
+      font-size: 26px;
+      color: #fff;
+    }
+
+    .logo-text span {
+      color: var(--volt);
+      text-shadow: 0 0 18px rgba(200, 255, 0, 0.55);
+    }
+
+    .main-title {
+      font-size: 21px;
+      font-weight: 900;
+      color: #fff;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      max-width: 430px;
+      margin-top: 2px;
+    }
+
+    .main-title span {
+      color: var(--volt);
+    }
+
+    .subtitle {
+      font-size: 11px;
+      color: var(--ink-soft);
+      font-weight: 500;
+      max-width: 390px;
+      line-height: 1.35;
+    }
+
+    /* Centro: La Terminal de Acceso + Mercado Pago */
+    .center-stage {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin: 6px 0;
+    }
+
+    /* Card 1: La Tablet de Ingreso (Modo Check-in) */
+    .tablet-mockup {
+      background: linear-gradient(135deg, #10141d 0%, #0a0d14 100%);
+      border: 2px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      padding: 16px 18px;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.8), 0 0 30px rgba(200, 255, 0, 0.08);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .tablet-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      padding-bottom: 8px;
+    }
+
+    .tablet-badge {
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--volt);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tablet-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--volt);
+      box-shadow: 0 0 6px var(--volt);
+    }
+
+    .tablet-clock {
+      font-family: 'Orbitron', monospace;
+      font-size: 11px;
+      color: #888;
+      font-weight: 700;
+    }
+
+    .tablet-body {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .dni-input-box {
+      flex: 1;
+      background: rgba(0,0,0,0.45);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .dni-label {
+      font-size: 8px;
+      color: #888;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .dni-number {
+      font-family: 'Orbitron', monospace;
+      font-size: 16px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: 0.05em;
+    }
+
+    /* Estado de corte en la tablet */
+    .access-result {
+      flex-shrink: 0;
+      border-radius: 10px;
+      padding: 9px 14px;
+      background: var(--danger-bg);
+      border: 1px solid rgba(255, 68, 68, 0.4);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 2px;
+    }
+
+    .result-svg {
+      width: 18px;
+      height: 18px;
+      color: var(--danger);
+    }
+
+    .result-text {
+      font-size: 9.5px;
+      font-weight: 900;
+      color: #ff6666;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .result-sub {
+      font-size: 7.5px;
+      color: #ffaaaa;
+    }
+
+    /* Card 2: Las 2 Features de Dinero (Mercado Pago + PIN) */
+    .money-grid {
+      display: flex;
+      gap: 10px;
+    }
+
+    .money-card {
+      flex: 1;
+      background: rgba(14, 18, 27, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 14px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      backdrop-filter: blur(10px);
+    }
+
+    .money-card.mp {
+      border-color: rgba(0, 158, 227, 0.35);
+      background: linear-gradient(135deg, rgba(0, 158, 227, 0.1) 0%, rgba(14, 18, 27, 0.9) 100%);
+    }
+
+    .money-card.pin {
+      border-color: rgba(245, 200, 66, 0.35);
+      background: linear-gradient(135deg, rgba(245, 200, 66, 0.08) 0%, rgba(14, 18, 27, 0.9) 100%);
+    }
+
+    .card-badge-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-svg-icon {
+      width: 18px;
+      height: 18px;
+    }
+
+    .mp .card-svg-icon { color: var(--mp-blue); }
+    .pin .card-svg-icon { color: var(--gold); }
+
+    .money-badge {
+      font-size: 7.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .mp .money-badge { background: rgba(0, 158, 227, 0.2); color: var(--mp-blue); }
+    .pin .money-badge { background: rgba(245, 200, 66, 0.2); color: var(--gold); }
+
+    .money-title {
+      font-size: 11.5px;
+      font-weight: 900;
+      color: #fff;
+      line-height: 1.2;
+    }
+
+    .money-desc {
+      font-size: 8.5px;
+      color: #9ca3af;
+      line-height: 1.35;
+    }
+
+    .money-desc strong {
+      color: #fff;
+    }
+
+    .zap-svg {
+      width: 14px;
+      height: 14px;
+      color: var(--volt);
+      flex-shrink: 0;
+    }
+
+    /* Barra de Oferta / CTA */
+    .cta-strip {
+      position: relative;
+      z-index: 10;
+      background: linear-gradient(135deg, #172202 0%, #0d1301 100%);
+      border: 1.5px solid var(--volt);
+      border-radius: 14px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      box-shadow: 0 0 24px rgba(200, 255, 0, 0.18);
+    }
+
+    .cta-text-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .cta-badge {
+      font-size: 7.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--volt);
+    }
+
+    .cta-title {
+      font-size: 13px;
+      font-weight: 900;
+      color: #fff;
+      line-height: 1.15;
+    }
+
+    .cta-sub {
+      font-size: 8.5px;
+      color: #ccc;
+    }
+
+    .btn-action {
+      flex-shrink: 0;
+      background: var(--volt);
+      color: #000;
+      font-weight: 900;
+      font-size: 10px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 9px 14px;
+      border-radius: 8px;
+      text-decoration: none;
+      box-shadow: 0 0 16px rgba(200, 255, 0, 0.4);
+    }
+
+    /* Footer */
+    .footer {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 8px;
+      color: #64748b;
+      font-weight: 600;
+      padding: 2px 4px 0;
+    }
+
+    .footer span {
+      color: var(--volt);
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <div class="canvas">
+    <div class="glow-top"></div>
+    <div class="glow-center"></div>
+    <div class="bg-grid"></div>
+
+    <!-- Header -->
+    <header class="header">
+      <div class="tag-danger">
+        <div class="tag-danger-dot"></div>
+        Cero Morosidad & Control Estricto
+      </div>
+      <div class="logo-row">
+        <div class="logo-text">SYS<span>GYM</span></div>
+      </div>
+      <h1 class="main-title">
+        El que no paga, <span>no entra</span>. Cobrá tus cuotas en piloto automático.
+      </h1>
+      <p class="subtitle">
+        Sin molinetes de miles de dólares. Controlá la entrada con cualquier tablet y cobrá por Mercado Pago directo a tu cuenta.
+      </p>
+    </header>
+
+    <!-- Centro: Tablet de Acceso + Dos Bloques de Dinero -->
+    <div class="center-stage">
+
+      <!-- La Tablet de Entrada (Modo Check-in) -->
+      <div class="tablet-mockup">
+        <div class="tablet-header">
+          <div class="tablet-badge">
+            <div class="tablet-dot"></div>
+            MODO CHECK-IN EN PUERTA
+          </div>
+          <div class="tablet-clock">18:42 · POWER GYM</div>
+        </div>
+        <div class="tablet-body">
+          <div class="dni-input-box">
+            <span class="dni-label">Ingreso por DNI del Alumno</span>
+            <span class="dni-number">38.412.905</span>
+          </div>
+          <div class="access-result">
+            <svg class="result-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/>
+            </svg>
+            <span class="result-text">CUOTA VENCIDA</span>
+            <span class="result-sub">Avisá en recepción</span>
+          </div>
+        </div>
+        <div style="font-size:7.5px; color:#888; display:flex; justify-content:space-between; align-items:center;">
+          <span>✓ Funciona en cualquier tablet, notebook o celu</span>
+          <span style="color:var(--volt); font-weight:700;">100% Autónomo</span>
+        </div>
+      </div>
+
+      <!-- Los 2 Bloques de Plata: MP Connect + PIN de Caja -->
+      <div class="money-grid">
+
+        <!-- Mercado Pago -->
+        <div class="money-card mp">
+          <div class="card-badge-row">
+            <svg class="card-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>
+            </svg>
+            <span class="money-badge">Mercado Pago</span>
+          </div>
+          <h3 class="money-title">Cobro Automático</h3>
+          <p class="money-desc">
+            El socio paga con <strong>Mercado Pago</strong> desde el celu. El dinero va a tu cuenta y el sistema <strong>le renueva el acceso al instante</strong> sin que toques una tecla.
+          </p>
+        </div>
+
+        <!-- Caja con PIN -->
+        <div class="money-card pin">
+          <div class="card-badge-row">
+            <svg class="card-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/><circle cx="12" cy="16" r="1"/>
+            </svg>
+            <span class="money-badge">Privacidad</span>
+          </div>
+          <h3 class="money-title">Caja con Clave PIN</h3>
+          <p class="money-desc">
+            Tus profes o recepcionistas atienden el mostrador pero <strong>tu facturación mensual queda bajo clave</strong>. Nadie ve cuánta plata entra en tu gimnasio.
+          </p>
+        </div>
+
+      </div>
+
+      <!-- Feature de Resiliencia: Offline con SVG -->
+      <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07); border-radius:10px; padding:7px 12px; display:flex; align-items:center; gap:8px;">
+        <svg class="zap-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+        </svg>
+        <span style="font-size:8px; color:#aaa;">
+          <strong>Funciona sin internet:</strong> Si se corta el Wi-Fi en el gimnasio, los ingresos se guardan y se sincronizan solas al volver la señal.
+        </span>
+      </div>
+
+    </div>
+
+    <!-- Cierre / Oferta -->
+    <div class="cta-strip">
+      <div class="cta-text-wrap">
+        <span class="cta-badge">🔥 Promo Lanzamiento</span>
+        <h4 class="cta-title">Probá 14 Días Gratis en tu Gym</h4>
+        <p class="cta-sub">Te cargamos tus socios de regalo (<strong>Ahorro de $35.000</strong>).</p>
+      </div>
+      <a href="https://wa.me/5492920605208?text=Hola!%20Quiero%20probar%20SysGym%2014%20dias%20gratis%20en%20mi%20gimnasio" class="btn-action">
+        Pedir Demo
+      </a>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div>✓ Sin contratos &nbsp;·&nbsp; ✓ Setup en el día</div>
+      <div>WhatsApp: <span>2920 605208</span></div>
+    </footer>
+
+  </div>
+</body>
+</html>

@@ -29,22 +29,31 @@ const ars = (n: number) =>
 
 const PLAN_FEATURES: Record<string, string[]> = {
   Básico: [
-    "Hasta 30 socios activos",
-    "Rutinas y biblioteca de ejercicios",
-    "Control de cuotas y transferencias",
-    "Notificaciones push a socios",
+    "Hasta 50 socios activos",
+    "App móvil para tus socios",
+    "Generador de rutinas con IA basado en objetivos y técnicas",
+    "Control de cuotas y cobros",
+    "Ingreso por DNI en mostrador",
   ],
   Pro: [
-    "Hasta 45 socios activos",
+    "Hasta 150 socios activos",
     "Todo lo incluido en Básico",
-    "Control de asistencia y reposo",
-    "Soporte prioritario",
+    "Tu logo y colores en toda la app",
+    "Avisos de cuota al celular",
+    "Comunicados a todo el gym en 1 clic",
+    "Filtro anti-lesiones en rutinas",
+    "Caja protegida con clave PIN",
   ],
   Elite: [
-    "Hasta 300 socios activos",
-    "Capacidad para alta concurrencia",
-    "Métricas y reportes avanzados",
-    "Soporte directo de alta prioridad",
+    "Hasta 350 socios activos",
+    "Todo lo incluido en Pro",
+    "Cobro con Mercado Pago y renovación automática",
+    "Terminal de acceso táctil en recepción",
+    "Avisos automáticos antes de vencer",
+    "Bloqueo y corte a deudores",
+    "Funciona sin internet (offline)",
+    "Buzón anónimo de reclamos",
+    "Soporte prioritario por WhatsApp",
   ],
 };
 

@@ -126,9 +126,12 @@ export function PanelSidebar({
       <div className="flex flex-col gap-3">
         <Link
           href="/checkin"
-          className="inline-flex h-9 items-center justify-center rounded-[5px] border border-rule px-3 text-sm text-ink transition-colors duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper-2 active:scale-[0.98]"
+          className="inline-flex h-9 items-center justify-between rounded-[5px] border border-rule px-3 text-sm text-ink transition-colors duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper-2 active:scale-[0.98]"
         >
-          Modo check-in
+          <span>Modo check-in</span>
+          <span className="rounded-[4px] bg-volt/20 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-ink">
+            Elite
+          </span>
         </Link>
         <a
           href={whatsappReporteUrl(nombre)}

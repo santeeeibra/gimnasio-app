@@ -5,9 +5,10 @@ import { requireDueno, dniAEmail } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { enviarPush } from "@/lib/push/enviar";
 import { registrarError } from "@/lib/admin/errores";
+import { verificarPlanGimnasio } from "@/lib/plataforma/plan-gate";
 
 export type CheckinState = {
-  estado?: "ok" | "prueba_vencida" | "no_encontrado";
+  estado?: "ok" | "prueba_vencida" | "cuota_vencida" | "no_encontrado";
   nombre?: string;
   error?: string;
 };
@@ -41,6 +42,11 @@ async function marcarIngresoInterno(
 ): Promise<CheckinState> {
   const supabase = await createClient();
 
+  const infoPlan = await verificarPlanGimnasio(supabase, dueno.gimnasio_id);
+  if (!infoPlan.permiteCheckin) {
+    return { error: "El modo Check-in requiere Plan Elite activo." };
+  }
+
   const { data: perfil } = await supabase
     .from("profiles")
     .select("id, nombre")
@@ -53,7 +59,7 @@ async function marcarIngresoInterno(
 
   const { data: cliente } = await supabase
     .from("clientes")
-    .select("id, en_prueba, prueba_iniciada_en")
+    .select("id, en_prueba, prueba_iniciada_en, estado_cuota")
     .eq("profile_id", perfil.id)
     .maybeSingle();
 
@@ -87,6 +93,16 @@ async function marcarIngresoInterno(
       tag: `prueba-vencida-${cliente.id}`,
     });
     return { estado: "prueba_vencida", nombre: perfil.nombre };
+  }
+
+  if (cliente.estado_cuota === "vencido") {
+    await enviarPush([dueno.id], {
+      title: "Ingreso con cuota vencida",
+      body: `${perfil.nombre} ingresó al gimnasio con la cuota vencida.`,
+      url: `/panel/clientes/${cliente.id}`,
+      tag: `cuota-vencida-${cliente.id}`,
+    });
+    return { estado: "cuota_vencida", nombre: perfil.nombre };
   }
 
   return { estado: "ok", nombre: perfil.nombre };

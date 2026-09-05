@@ -18,6 +18,7 @@ import { MercadoPagoAjustesCard } from "./mp-card";
 import { estadoCobroAutomatico } from "@/lib/pagos/cobro-socio";
 import { connectConfigurado } from "@/lib/pagos/mercadopago-connect";
 import { BotonInstalarApp } from "@/components/pwa/boton-instalar-app";
+import { verificarPlanGimnasio } from "@/lib/plataforma/plan-gate";
 
 const ESTADO_LABEL: Record<string, string> = {
   prueba: "En prueba",
@@ -34,29 +35,37 @@ export default async function AjustesPage({
   const supabase = await createClient();
   const db = createAdminClient();
 
-  const [{ data: gym }, cupo, { data: planPlat }, { data: miPerfil }, cobroAuto, sp] =
-    await Promise.all([
-      supabase
-        .from("gimnasios")
-        .select(
-          "id, slug, nombre, tema, logo_url, dias_aviso_morosidad, estado, plan_plataforma_vence_el, pago_alias, pago_cbu, pago_titular",
-        )
-        .eq("id", profile.gimnasio_id)
-        .single(),
-      cupoSocios(db, profile.gimnasio_id),
-      db
-        .from("gimnasios")
-        .select("plan:planes_plataforma(nombre)")
-        .eq("id", profile.gimnasio_id)
-        .single(),
-      supabase
-        .from("profiles")
-        .select("email_recuperacion")
-        .eq("id", profile.id)
-        .single(),
-      estadoCobroAutomatico(db, profile.gimnasio_id),
-      (searchParams ?? Promise.resolve({})) as Promise<{ mp?: string }>,
-    ]);
+  const [
+    { data: gym },
+    cupo,
+    { data: planPlat },
+    { data: miPerfil },
+    cobroAuto,
+    sp,
+    planInfo,
+  ] = await Promise.all([
+    supabase
+      .from("gimnasios")
+      .select(
+        "id, slug, nombre, tema, logo_url, dias_aviso_morosidad, estado, plan_plataforma_vence_el, pago_alias, pago_cbu, pago_titular",
+      )
+      .eq("id", profile.gimnasio_id)
+      .single(),
+    cupoSocios(db, profile.gimnasio_id),
+    db
+      .from("gimnasios")
+      .select("plan:planes_plataforma(nombre)")
+      .eq("id", profile.gimnasio_id)
+      .single(),
+    supabase
+      .from("profiles")
+      .select("email_recuperacion")
+      .eq("id", profile.id)
+      .single(),
+    estadoCobroAutomatico(db, profile.gimnasio_id),
+    (searchParams ?? Promise.resolve({})) as Promise<{ mp?: string }>,
+    verificarPlanGimnasio(db, profile.gimnasio_id),
+  ]);
 
   const estado = gym?.estado ?? "prueba";
   const planNombre =
@@ -152,29 +161,57 @@ export default async function AjustesPage({
 
       {gym ? (
         <div className="card-cut card-cut-lg mt-6 border border-rule bg-paper-2 p-6">
-          <h2 className="text-lg mb-1">Aviso de vencimiento</h2>
+          <div className="flex items-center justify-between gap-3 mb-1">
+            <h2 className="text-lg">Aviso de vencimiento</h2>
+            <span className="rounded-[4px] bg-volt/20 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-ink">
+              Plan Elite
+            </span>
+          </div>
           <p className="text-sm text-ink-soft mb-4">
             Mandamos un push automático al socio unos días antes de que se le
             venza la cuota, para que la renueve a tiempo.
           </p>
-          <AvisoMorosidadForm
-            gimnasioId={gym.id}
-            diasAviso={gym.dias_aviso_morosidad ?? 5}
-          />
+          {planInfo.permiteAvisosMorosidad ? (
+            <AvisoMorosidadForm
+              gimnasioId={gym.id}
+              diasAviso={gym.dias_aviso_morosidad ?? 5}
+            />
+          ) : (
+            <div className="rounded-lg border border-rule bg-paper p-4 text-sm text-ink-soft flex items-center justify-between gap-4">
+              <span>Esta función requiere el <strong>Plan Elite</strong>. Notificá a tus socios automáticamente antes de que venza su cuota.</span>
+              <Link href="/panel/plan" className="shrink-0 text-sm font-medium text-ink underline hover:text-ink-soft">
+                Mejorar a Elite →
+              </Link>
+            </div>
+          )}
         </div>
       ) : null}
 
       {gym ? (
         <div className="card-cut card-cut-lg mt-6 border border-rule bg-paper-2 p-6">
-          <h2 className="text-lg mb-1">Pantalla de reposo del check-in</h2>
+          <div className="flex items-center justify-between gap-3 mb-1">
+            <h2 className="text-lg">Pantalla de reposo del check-in</h2>
+            <span className="rounded-[4px] bg-volt/20 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-ink">
+              Plan Elite
+            </span>
+          </div>
           <p className="text-sm text-ink-soft mb-4">
             Cuando nadie toca la pantalla de check-in por un rato, aparece un
             fondo ambiental oscuro con la hora. Cualquier toque vuelve al DNI.
           </p>
-          <ReposoCheckinForm
-            gimnasioId={gym.id}
-            reposo={parseTema(gym.tema).reposoCheckin}
-          />
+          {planInfo.permiteReposoCheckin ? (
+            <ReposoCheckinForm
+              gimnasioId={gym.id}
+              reposo={parseTema(gym.tema).reposoCheckin}
+            />
+          ) : (
+            <div className="rounded-lg border border-rule bg-paper p-4 text-sm text-ink-soft flex items-center justify-between gap-4">
+              <span>La personalización de la terminal de acceso táctil es exclusiva del <strong>Plan Elite</strong>.</span>
+              <Link href="/panel/plan" className="shrink-0 text-sm font-medium text-ink underline hover:text-ink-soft">
+                Mejorar a Elite →
+              </Link>
+            </div>
+          )}
         </div>
       ) : null}
 

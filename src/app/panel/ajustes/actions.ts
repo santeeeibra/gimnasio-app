@@ -16,6 +16,7 @@ import {
   type Tema,
 } from "@/lib/tema";
 import { chequearBloqueos, chequearContraste } from "@/lib/contraste";
+import { verificarPlanGimnasio } from "@/lib/plataforma/plan-gate";
 
 export type AjustesState = { error?: string; ok?: string };
 
@@ -60,12 +61,17 @@ export async function actualizarDiasAvisoMorosidad(
     return { error: "No podés modificar este gimnasio" };
   }
 
+  const supabase = await createClient();
+  const planInfo = await verificarPlanGimnasio(supabase, dueno.gimnasio_id);
+  if (!planInfo.permiteAvisosMorosidad) {
+    return { error: "El aviso de morosidad es una función exclusiva del Plan Elite." };
+  }
+
   const dias = Number(formData.get("dias_aviso_morosidad"));
   if (!Number.isInteger(dias) || dias < 1 || dias > 15) {
     return { error: "Elegí un número de días entre 1 y 15." };
   }
 
-  const supabase = await createClient();
   const { error } = await supabase
     .from("gimnasios")
     .update({ dias_aviso_morosidad: dias })
@@ -191,6 +197,12 @@ export async function actualizarReposoCheckin(
     return { error: "No podés modificar este gimnasio" };
   }
 
+  const supabase = await createClient();
+  const planInfo = await verificarPlanGimnasio(supabase, dueno.gimnasio_id);
+  if (!planInfo.permiteReposoCheckin) {
+    return { error: "La pantalla de reposo es una función exclusiva del Plan Elite." };
+  }
+
   const segundos = Number(formData.get("segundos"));
   if (!Number.isFinite(segundos) || segundos < 15 || segundos > 600) {
     return { error: "El tiempo de reposo va entre 15 y 600 segundos." };
@@ -217,7 +229,6 @@ export async function actualizarReposoCheckin(
     intensidad: intensidad as ReposoCheckin["intensidad"],
   };
 
-  const supabase = await createClient();
   const { data: prevRow } = await supabase
     .from("gimnasios")
     .select("tema")

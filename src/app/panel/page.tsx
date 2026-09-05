@@ -216,9 +216,14 @@ export default async function ResumenPage() {
                 <ScanLine className="size-5" />
               </div>
               <div className="min-w-0">
-                <span className="block text-sm font-bold text-ink leading-tight">
-                  Modo Check-in
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <span className="block text-sm font-bold text-ink leading-tight">
+                    Modo Check-in
+                  </span>
+                  <span className="rounded-[4px] bg-volt/20 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-ink">
+                    Elite
+                  </span>
+                </div>
                 <span className="block text-xs text-ink-soft mt-0.5 truncate">
                   Pantalla ingreso recepción
                 </span>

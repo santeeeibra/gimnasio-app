@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui";
 import { desconectarMercadoPago } from "./mp-actions";
@@ -45,9 +46,28 @@ export function MercadoPagoAjustesCard({
   const [msg, setMsg] = useState<string | null>(null);
   const [confirmar, setConfirmar] = useState(false);
 
-  // Si no es Elite y no tiene cuenta vinculada, no se muestra nada (gating)
+  // Si no es Elite y no tiene cuenta vinculada, muestra estado bloqueado invitando a mejorar
   if (!elite && !vinculado) {
-    return null;
+    return (
+      <div className="card-cut card-cut-lg mt-6 border border-rule bg-paper-2 p-6">
+        <div className="flex items-center justify-between gap-3 mb-1">
+          <h2 className="text-lg">Cobro automático con Mercado Pago</h2>
+          <span className="rounded-[4px] bg-volt/20 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-ink">
+            Plan Elite
+          </span>
+        </div>
+        <p className="text-sm text-ink-soft mb-4">
+          Permite a tus socios adherirse al débito automático mensual de su cuota.
+          La plata entra directo a tu cuenta de Mercado Pago.
+        </p>
+        <div className="rounded-lg border border-rule bg-paper p-4 text-sm text-ink-soft flex items-center justify-between gap-4">
+          <span>Esta función requiere el <strong>Plan Elite</strong>. Conectá tu cuenta de Mercado Pago y automatizá tus cobranzas.</span>
+          <Link href="/panel/plan" className="shrink-0 text-sm font-medium text-ink underline hover:text-ink-soft">
+            Mejorar a Elite →
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   const avisoInicial = aviso ? AVISOS[aviso] : undefined;

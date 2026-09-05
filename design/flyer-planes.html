@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SysGym – Planes para tu gimnasio</title>
   <link
-    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Inter:wght@300;400;500;600;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
     rel="stylesheet"
   />
   <style>
@@ -19,64 +19,54 @@
       width: 450px;
       height: 800px;
       overflow: hidden;
-      background: #0d0d0d;
-      font-family: 'Inter', system-ui, sans-serif;
+      background: #0a0a0a;
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
     }
 
     .canvas {
       width: 450px;
       height: 800px;
-      background: #0d0d0d;
+      background: #0a0a0a;
       position: relative;
       overflow: hidden;
       border-radius: 0;
       display: flex;
       flex-direction: column;
+      justify-content: space-between;
     }
 
     /* ── Tokens ── */
     :root {
-      --volt:      #c8ff00;
-      --volt-dim:  #9ebf00;
-      --ink:       #f0f0f0;
-      --ink-soft:  #8a8a8a;
-      --paper:     #0d0d0d;
-      --paper-2:   #171717;
-      --paper-3:   #1f1f1f;
-      --border:    #2a2a2a;
-      --danger:    #ff4444;
-      --gold:      #f5c842;
+      --volt:       #c8ff00;
+      --volt-glow:  rgba(200,255,0,.22);
+      --ink:        #f5f5f5;
+      --ink-soft:   #8e8e93;
+      --paper:      #0d0d0d;
+      --paper-card: rgba(22, 22, 24, 0.85);
+      --border:     rgba(255, 255, 255, 0.08);
+      --border-lit: rgba(200, 255, 0, 0.35);
+      --gold:       #f5c842;
     }
 
-    /* ── Background mesh ── */
+    /* ── Background visual depth ── */
     .bg-mesh {
       position: absolute;
       inset: 0;
       background:
-        radial-gradient(ellipse 400px 300px at 50% -60px, rgba(200,255,0,.07) 0%, transparent 70%),
-        radial-gradient(ellipse 300px 200px at 100% 50%, rgba(200,255,0,.04) 0%, transparent 60%),
-        radial-gradient(ellipse 250px 180px at 0% 80%, rgba(200,255,0,.035) 0%, transparent 60%);
+        radial-gradient(circle 320px at 50% -40px, rgba(200,255,0,.12) 0%, transparent 70%),
+        radial-gradient(circle 240px at 85% 60%, rgba(200,255,0,.04) 0%, transparent 60%),
+        radial-gradient(circle 220px at 15% 85%, rgba(200,255,0,.03) 0%, transparent 60%);
       pointer-events: none;
     }
 
-    /* Grid lines */
     .bg-grid {
       position: absolute;
       inset: 0;
       background-image:
-        linear-gradient(rgba(200,255,0,.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(200,255,0,.04) 1px, transparent 1px);
-      background-size: 40px 40px;
-      pointer-events: none;
-    }
-
-    /* Horizontal scanline */
-    .scanline {
-      position: absolute;
-      left: 0; right: 0;
-      height: 1px;
-      background: rgba(200,255,0,.15);
-      top: 48%;
+        linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+      background-size: 36px 36px;
       pointer-events: none;
     }
 
@@ -84,27 +74,28 @@
     .header {
       position: relative;
       z-index: 10;
-      padding: 28px 28px 0;
+      padding: 24px 24px 0;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
+      text-align: center;
     }
 
     .badge-top {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      background: rgba(200,255,0,.1);
+      background: rgba(200,255,0,.08);
       border: 1px solid rgba(200,255,0,.25);
       border-radius: 100px;
-      padding: 4px 12px;
-      font-size: 9px;
-      font-weight: 600;
-      letter-spacing: 0.12em;
+      padding: 3.5px 11px;
+      font-size: 8px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
       color: var(--volt);
-      margin-bottom: 4px;
+      margin-bottom: 2px;
     }
 
     .badge-top::before {
@@ -113,13 +104,13 @@
       height: 5px;
       border-radius: 50%;
       background: var(--volt);
-      box-shadow: 0 0 6px var(--volt);
+      box-shadow: 0 0 8px var(--volt);
     }
 
     .logo-text {
       font-family: 'Orbitron', monospace;
       font-weight: 900;
-      font-size: 34px;
+      font-size: 32px;
       letter-spacing: -0.01em;
       color: var(--ink);
       line-height: 1;
@@ -127,108 +118,157 @@
 
     .logo-text span {
       color: var(--volt);
-      text-shadow: 0 0 20px rgba(200,255,0,.5);
+      text-shadow: 0 0 22px rgba(200,255,0,.55);
     }
 
     .tagline {
-      font-size: 11px;
-      font-weight: 400;
+      font-size: 10.5px;
+      font-weight: 500;
       color: var(--ink-soft);
-      letter-spacing: 0.06em;
-      text-align: center;
-      margin-top: 2px;
+      line-height: 1.3;
+      max-width: 380px;
     }
 
-    /* ── Section title ── */
-    .section-label {
+    /* ── Promo banner (Sin mención a costo de setup) ── */
+    .promo-banner {
       position: relative;
       z-index: 10;
-      padding: 18px 28px 10px;
+      margin: 10px 14px 6px;
+      border-radius: 10px;
+      padding: 8px 12px;
       display: flex;
-      flex-direction: column;
       align-items: center;
-      gap: 4px;
+      gap: 10px;
+      background: linear-gradient(100deg, rgba(200,255,0,.12) 0%, rgba(20,28,0,.7) 60%, rgba(12,16,0,.9) 100%);
+      border: 1px solid rgba(200,255,0,.3);
+      box-shadow: 0 4px 20px rgba(0,0,0,.4);
     }
 
-    .section-label h2 {
-      font-family: 'Orbitron', monospace;
-      font-weight: 700;
-      font-size: 13px;
-      color: var(--ink);
-      letter-spacing: 0.08em;
+    .promo-badge {
+      flex-shrink: 0;
+      background: var(--volt);
+      color: #080808;
+      font-weight: 800;
+      font-size: 10px;
+      letter-spacing: 0.04em;
+      padding: 5px 8px;
+      border-radius: 6px;
+      line-height: 1.1;
+      text-align: center;
       text-transform: uppercase;
     }
 
-    .divider-line {
+    .promo-text {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .promo-title {
+      font-size: 10px;
+      font-weight: 700;
+      color: #fff;
       display: flex;
       align-items: center;
-      gap: 8px;
-      width: 100%;
+      gap: 6px;
     }
 
-    .divider-line::before,
-    .divider-line::after {
-      content: '';
+    .promo-title span {
+      background: rgba(200,255,0,.2);
+      color: var(--volt);
+      font-size: 7.5px;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-weight: 800;
+    }
+
+    .promo-sub {
+      font-size: 8.5px;
+      color: #aaa;
+      font-weight: 400;
+      line-height: 1.25;
+    }
+
+    .promo-sub strong {
+      color: var(--volt);
+      font-weight: 600;
+    }
+
+    /* ── Section label ── */
+    .section-label {
+      position: relative;
+      z-index: 10;
+      padding: 4px 24px 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-label h2 {
+      font-size: 9px;
+      font-weight: 800;
+      color: #666;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .divider-line {
       flex: 1;
       height: 1px;
-      background: linear-gradient(90deg, transparent, var(--border), transparent);
-    }
-
-    .divider-dot {
-      width: 4px;
-      height: 4px;
-      border-radius: 50%;
-      background: var(--volt);
-      box-shadow: 0 0 8px var(--volt);
+      background: linear-gradient(90deg, var(--border), transparent);
     }
 
     /* ── Plans grid ── */
     .plans {
       position: relative;
       z-index: 10;
-      flex: 1;
-      padding: 0 14px;
+      padding: 0 12px;
       display: flex;
-      gap: 8px;
+      gap: 7px;
       align-items: stretch;
+      flex: 1;
+      max-height: 480px;
     }
 
     /* ── Individual plan card ── */
     .plan {
       flex: 1;
       border-radius: 12px;
-      padding: 14px 11px;
+      padding: 12px 9px 10px;
       display: flex;
       flex-direction: column;
-      gap: 0;
       position: relative;
-      overflow: hidden;
-      background: var(--paper-2);
+      background: var(--paper-card);
       border: 1px solid var(--border);
+      backdrop-filter: blur(10px);
+      transition: transform .2s ease;
     }
 
+    /* Featured PRO */
     .plan.featured {
-      background: #111800;
+      background: linear-gradient(180deg, #141b02 0%, #0d1201 100%);
       border-color: var(--volt);
       box-shadow:
-        0 0 0 1px rgba(200,255,0,.15),
-        0 4px 32px rgba(200,255,0,.12),
-        inset 0 0 40px rgba(200,255,0,.03);
+        0 0 0 1px rgba(200,255,0,.25),
+        0 8px 30px rgba(0,0,0,.6),
+        0 0 30px rgba(200,255,0,.12);
+      transform: translateY(-3px);
     }
 
     .plan.premium {
-      background: #12100d;
-      border-color: rgba(245,200,66,.35);
+      background: linear-gradient(180deg, rgba(28,24,14,.75) 0%, rgba(18,16,12,.85) 100%);
+      border-color: rgba(245,200,66,.25);
     }
 
-    /* Corner glow for featured */
+    /* Corner glow */
     .plan.featured::before {
       content: '';
       position: absolute;
-      top: -20px; left: -20px;
-      width: 80px; height: 80px;
+      top: -30px; left: -30px;
+      width: 90px; height: 90px;
       border-radius: 50%;
-      background: radial-gradient(circle, rgba(200,255,0,.18) 0%, transparent 70%);
+      background: radial-gradient(circle, rgba(200,255,0,.2) 0%, transparent 70%);
       pointer-events: none;
     }
 
@@ -241,10 +281,10 @@
       color: #0a0a0a;
       font-size: 7.5px;
       font-weight: 800;
-      letter-spacing: 0.14em;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
-      padding: 3px 10px;
-      border-radius: 0 0 8px 8px;
+      padding: 2.5px 9px;
+      border-radius: 0 0 6px 6px;
     }
 
     .plan-badge.gold {
@@ -252,52 +292,66 @@
       color: #1a1200;
     }
 
-    /* ── Plan name ── */
+    /* ── Plan header info ── */
     .plan-name {
-      font-family: 'Orbitron', monospace;
-      font-weight: 700;
-      font-size: 11px;
-      letter-spacing: 0.1em;
+      font-weight: 800;
+      font-size: 13px;
+      letter-spacing: 0.04em;
       text-transform: uppercase;
-      margin-top: 14px;
+      margin-top: 6px;
       margin-bottom: 2px;
     }
 
-    .plan.basic .plan-name  { color: var(--ink-soft); }
+    .plan.basic .plan-name    { color: #bbb; }
     .plan.featured .plan-name { color: var(--volt); }
-    .plan.premium .plan-name { color: var(--gold); }
+    .plan.premium .plan-name  { color: var(--gold); }
+
+    .capacity-tag {
+      display: inline-block;
+      font-size: 7.5px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 100px;
+      margin-bottom: 6px;
+      width: fit-content;
+    }
+
+    .plan.basic .capacity-tag    { background: rgba(255,255,255,.06); color: #999; border: 1px solid rgba(255,255,255,.1); }
+    .plan.featured .capacity-tag { background: rgba(200,255,0,.15); color: var(--volt); border: 1px solid rgba(200,255,0,.35); }
+    .plan.premium .capacity-tag  { background: rgba(245,200,66,.12); color: var(--gold); border: 1px solid rgba(245,200,66,.3); }
 
     /* ── Price ── */
     .price-block {
-      margin: 6px 0 10px;
+      margin: 2px 0 8px;
     }
 
     .price-amount {
-      font-family: 'Orbitron', monospace;
-      font-weight: 900;
+      font-weight: 800;
+      font-size: 22px;
       line-height: 1;
+      letter-spacing: -0.03em;
     }
 
-    .plan.basic .price-amount  { font-size: 22px; color: var(--ink); }
-    .plan.featured .price-amount { font-size: 22px; color: var(--volt); text-shadow: 0 0 16px rgba(200,255,0,.4); }
-    .plan.premium .price-amount { font-size: 22px; color: var(--gold); }
+    .plan.basic .price-amount    { color: var(--ink); }
+    .plan.featured .price-amount { color: var(--volt); text-shadow: 0 0 16px rgba(200,255,0,.45); }
+    .plan.premium .price-amount  { color: var(--gold); }
 
     .price-period {
-      font-size: 9px;
+      font-size: 8.5px;
       color: var(--ink-soft);
-      font-weight: 400;
-      margin-top: 2px;
-      letter-spacing: 0.04em;
+      font-weight: 500;
+      margin-top: 3px;
     }
 
-    /* ── Separator ── */
     .plan-sep {
       height: 1px;
       background: var(--border);
-      margin: 6px 0 8px;
+      margin: 4px 0 8px;
     }
 
-    .plan.featured .plan-sep { background: rgba(200,255,0,.2); }
+    .plan.featured .plan-sep { background: rgba(200,255,0,.25); }
     .plan.premium  .plan-sep { background: rgba(245,200,66,.2); }
 
     /* ── Feature list ── */
@@ -305,7 +359,7 @@
       list-style: none;
       display: flex;
       flex-direction: column;
-      gap: 5px;
+      gap: 5.5px;
       flex: 1;
     }
 
@@ -313,58 +367,40 @@
       display: flex;
       align-items: flex-start;
       gap: 5px;
-      font-size: 9px;
+      font-size: 8.5px;
       color: var(--ink);
-      line-height: 1.35;
-      font-weight: 400;
+      line-height: 1.25;
+      font-weight: 500;
     }
 
     .features li .icon {
       flex-shrink: 0;
-      width: 12px;
-      height: 12px;
-      margin-top: 0px;
+      width: 11px;
+      height: 11px;
+      margin-top: 1px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 8px;
+      font-weight: 800;
     }
 
-    .plan.basic  .icon { color: var(--ink-soft); }
+    .plan.basic .icon    { color: #aaa; }
     .plan.featured .icon { color: var(--volt); }
-    .plan.premium  .icon { color: var(--gold); }
+    .plan.premium .icon  { color: var(--gold); }
 
     .features li.muted {
-      color: var(--ink-soft);
-      opacity: .5;
+      color: #555;
     }
+    .features li.muted .icon { color: #333; }
 
-    .features li.muted .icon { color: var(--border); }
-
-    /* ── Socios cap tag ── */
-    .capacity-tag {
-      display: inline-block;
-      font-size: 7.5px;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      padding: 2px 7px;
-      border-radius: 100px;
-      margin-bottom: 8px;
-      margin-top: -2px;
-    }
-
-    .plan.basic  .capacity-tag { background: rgba(255,255,255,.05); color: var(--ink-soft); border: 1px solid var(--border); }
-    .plan.featured .capacity-tag { background: rgba(200,255,0,.12); color: var(--volt); border: 1px solid rgba(200,255,0,.3); }
-    .plan.premium  .capacity-tag { background: rgba(245,200,66,.1); color: var(--gold); border: 1px solid rgba(245,200,66,.3); }
-
-    /* ── CTA button at bottom of card ── */
+    /* ── CTA Button ── */
     .plan-cta {
       margin-top: 10px;
       padding: 7px 0;
-      border-radius: 8px;
+      border-radius: 7px;
       font-size: 9px;
-      font-weight: 700;
+      font-weight: 800;
       letter-spacing: 0.08em;
       text-transform: uppercase;
       text-align: center;
@@ -373,24 +409,24 @@
       width: 100%;
     }
 
-    .plan.basic  .plan-cta { background: var(--paper-3); color: var(--ink-soft); border: 1px solid var(--border); }
-    .plan.featured .plan-cta { background: var(--volt); color: #0a0a0a; }
-    .plan.premium  .plan-cta { background: linear-gradient(135deg, #b8860b, var(--gold)); color: #0a0a0a; }
+    .plan.basic .plan-cta    { background: rgba(255,255,255,.08); color: #bbb; border: 1px solid rgba(255,255,255,.1); }
+    .plan.featured .plan-cta { background: var(--volt); color: #080808; box-shadow: 0 0 16px rgba(200,255,0,.35); }
+    .plan.premium .plan-cta  { background: linear-gradient(135deg, #b8860b, var(--gold)); color: #0a0a0a; }
 
-    /* ── Footer strip ── */
+    /* ── Footer ── */
     .footer {
       position: relative;
       z-index: 10;
-      padding: 12px 28px 18px;
+      padding: 10px 18px 16px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
     }
 
     .footer-features {
       display: flex;
-      gap: 14px;
+      gap: 10px;
       flex-wrap: wrap;
       justify-content: center;
     }
@@ -398,29 +434,30 @@
     .footer-feat {
       display: flex;
       align-items: center;
-      gap: 4px;
-      font-size: 8.5px;
-      color: var(--ink-soft);
-      font-weight: 400;
+      gap: 3px;
+      font-size: 8px;
+      color: #888;
+      font-weight: 500;
     }
 
     .footer-feat::before {
       content: '✓';
       color: var(--volt);
-      font-weight: 700;
-      font-size: 8px;
+      font-weight: 800;
+      font-size: 7.5px;
     }
 
     .footer-contact {
       font-size: 8px;
-      color: #444;
+      color: #555;
       letter-spacing: 0.06em;
       text-transform: uppercase;
-      margin-top: 4px;
+      margin-top: 2px;
     }
 
     .footer-contact span {
-      color: var(--volt-dim);
+      color: var(--volt);
+      font-weight: 600;
     }
 
     /* Bottom edge glow */
@@ -432,103 +469,6 @@
       background: linear-gradient(90deg, transparent 0%, var(--volt) 30%, var(--volt) 70%, transparent 100%);
       opacity: .35;
     }
-
-    /* ── Promo banner ── */
-    .promo-banner {
-      position: relative;
-      z-index: 10;
-      margin: 0 14px 10px;
-      border-radius: 10px;
-      padding: 9px 14px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: linear-gradient(105deg, #1a1f00 0%, #141a00 60%, #0f1300 100%);
-      border: 1px solid rgba(200,255,0,.4);
-      box-shadow: 0 0 18px rgba(200,255,0,.08), inset 0 0 20px rgba(200,255,0,.04);
-      overflow: hidden;
-    }
-
-    /* Glow pulse corner */
-    .promo-banner::before {
-      content: '';
-      position: absolute;
-      top: -12px; right: -12px;
-      width: 55px; height: 55px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(200,255,0,.25) 0%, transparent 70%);
-      pointer-events: none;
-    }
-
-    .promo-pct {
-      flex-shrink: 0;
-      font-family: 'Orbitron', monospace;
-      font-weight: 900;
-      font-size: 26px;
-      line-height: 1;
-      color: var(--volt);
-      text-shadow: 0 0 18px rgba(200,255,0,.55);
-    }
-
-    .promo-pct sup {
-      font-size: 13px;
-      vertical-align: super;
-      margin-left: 1px;
-    }
-
-    .promo-text {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .promo-title {
-      font-size: 10.5px;
-      font-weight: 700;
-      color: var(--ink);
-      line-height: 1.2;
-    }
-
-    .promo-sub {
-      font-size: 8.5px;
-      color: var(--ink-soft);
-      font-weight: 400;
-      line-height: 1.3;
-    }
-
-    .promo-sub strong {
-      color: var(--volt);
-      font-weight: 600;
-    }
-
-    .promo-tag {
-      flex-shrink: 0;
-      margin-left: auto;
-      background: rgba(200,255,0,.12);
-      border: 1px solid rgba(200,255,0,.3);
-      border-radius: 6px;
-      padding: 4px 7px;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      gap: 1px;
-    }
-
-    .promo-tag-line1 {
-      font-size: 7px;
-      font-weight: 600;
-      color: var(--volt);
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      white-space: nowrap;
-    }
-
-    .promo-tag-line2 {
-      font-size: 8.5px;
-      font-weight: 700;
-      color: var(--volt);
-      white-space: nowrap;
-    }
   </style>
 </head>
 <body>
@@ -536,36 +476,29 @@
     <!-- Background layers -->
     <div class="bg-mesh"></div>
     <div class="bg-grid"></div>
-    <div class="scanline"></div>
 
     <!-- Header -->
     <header class="header">
-      <div class="badge-top">Software de gestión · SaaS</div>
+      <div class="badge-top">Tu gimnasio en el celular de tus socios</div>
       <div class="logo-text">SYS<span>GYM</span></div>
-      <p class="tagline">La plataforma inteligente para tu gimnasio</p>
+      <p class="tagline">Control de acceso, cobranza automática y rutinas con tu marca</p>
     </header>
+
+    <!-- Promo banner -->
+    <div class="promo-banner">
+      <div class="promo-badge">14 DÍAS<br>GRATIS</div>
+      <div class="promo-text">
+        <div class="promo-title">Probá SysGym en tu gimnasio <span>SIN TARJETA</span></div>
+        <div class="promo-sub">
+          Setup en el día. Si contratás en la prueba, ahorrás <strong>20% OFF</strong> en tu 1er mes.
+        </div>
+      </div>
+    </div>
 
     <!-- Section label -->
     <div class="section-label">
       <h2>Elegí tu plan</h2>
-      <div class="divider-line"><div class="divider-dot"></div></div>
-    </div>
-
-    <!-- Promo banner -->
-    <div class="promo-banner">
-      <div class="promo-pct">20<sup>%</sup></div>
-      <div class="promo-text">
-        <div class="promo-title">Descuento de lanzamiento</div>
-        <div class="promo-sub">
-          Contratá dentro de los <strong>primeros 3 días</strong><br>
-          del período de prueba y ahorrás 20% en el<br>
-          plan + el costo de setup inicial.
-        </div>
-      </div>
-      <div class="promo-tag">
-        <div class="promo-tag-line1">Solo por</div>
-        <div class="promo-tag-line2">3 días</div>
-      </div>
+      <div class="divider-line"></div>
     </div>
 
     <!-- Plans -->
@@ -574,57 +507,54 @@
       <!-- BÁSICO -->
       <div class="plan basic">
         <div class="plan-name">Básico</div>
-        <div class="capacity-tag">Hasta 30 socios</div>
+        <div class="capacity-tag">Hasta 50 socios</div>
         <div class="price-block">
           <div class="price-amount">$25.000</div>
           <div class="price-period">/ mes · ARS</div>
         </div>
         <div class="plan-sep"></div>
         <ul class="features">
-          <li><span class="icon">✓</span>Alta y baja de socios</li>
-          <li><span class="icon">✓</span>Control de cuotas y pagos</li>
-          <li><span class="icon">✓</span>Ingreso al gym por DNI</li>
-          <li><span class="icon">✓</span>Aviso cuando vence la cuota</li>
-          <li><span class="icon">✓</span>Mensajes individuales</li>
-          <li><span class="icon">✓</span>Color y nombre del gym</li>
-          <li class="muted"><span class="icon">–</span>Rutinas para socios</li>
-          <li class="muted"><span class="icon">–</span>Avisos en el celular</li>
-          <li class="muted"><span class="icon">–</span>Historial de cobros</li>
-          <li class="muted"><span class="icon">–</span>App para el socio</li>
+          <li><span class="icon">✓</span>App móvil para socios</li>
+          <li><span class="icon">✓</span>Generador de rutinas con IA basado en objetivos y técnicas</li>
+          <li><span class="icon">✓</span>Control de cuotas</li>
+          <li><span class="icon">✓</span>Ingreso por DNI</li>
+          <li><span class="icon">✓</span>Cobro por Alias/CBU</li>
+          <li><span class="icon">✓</span>Chat con cada alumno</li>
+          <li class="muted"><span class="icon">–</span>Avisos a todo el gym</li>
+          <li class="muted"><span class="icon">–</span>Logo y colores propios</li>
         </ul>
         <button class="plan-cta">Empezar</button>
       </div>
 
       <!-- PRO (featured) -->
       <div class="plan featured">
-        <div class="plan-badge">Más popular</div>
+        <div class="plan-badge">Más elegido</div>
         <div class="plan-name">Pro</div>
-        <div class="capacity-tag">Hasta 45 socios</div>
+        <div class="capacity-tag">Hasta 150 socios</div>
         <div class="price-block">
           <div class="price-amount">$38.000</div>
           <div class="price-period">/ mes · ARS</div>
         </div>
         <div class="plan-sep"></div>
         <ul class="features">
-          <li><span class="icon">✓</span>Alta y baja de socios</li>
-          <li><span class="icon">✓</span>Control de cuotas y pagos</li>
-          <li><span class="icon">✓</span>Ingreso al gym por DNI</li>
-          <li><span class="icon">✓</span>Aviso cuando vence la cuota</li>
-          <li><span class="icon">✓</span>Mensajes a todos los socios</li>
-          <li><span class="icon">✓</span>Logo y colores del gym</li>
-          <li><span class="icon">✓</span>Rutinas automáticas</li>
-          <li><span class="icon">✓</span>Avisos en el celular</li>
-          <li><span class="icon">✓</span>Historial de cobros</li>
-          <li><span class="icon">✓</span>App para el socio</li>
+          <li><span class="icon">✓</span>Todo lo del Básico</li>
+          <li><span class="icon">✓</span>Tu logo y colores</li>
+          <li><span class="icon">✓</span>Avisos de cuota al celu</li>
+          <li><span class="icon">✓</span>Comunicados en 1 clic</li>
+          <li><span class="icon">✓</span>Filtro anti-lesiones</li>
+          <li><span class="icon">✓</span>Cronómetro descanso</li>
+          <li><span class="icon">✓</span>Caja con clave PIN</li>
+          <li class="muted"><span class="icon">–</span>Cobro con Mercado Pago y renovación automática</li>
+          <li class="muted"><span class="icon">–</span>Terminal de acceso táctil en recepción</li>
         </ul>
-        <button class="plan-cta">Elegir Pro</button>
+        <button class="plan-cta">Probar Gratis</button>
       </div>
 
       <!-- ELITE -->
       <div class="plan premium">
         <div class="plan-badge gold">Elite</div>
         <div class="plan-name">Elite</div>
-        <div class="capacity-tag">Hasta 300 socios</div>
+        <div class="capacity-tag">Hasta 350 socios</div>
         <div class="price-block">
           <div class="price-amount">$55.000</div>
           <div class="price-period">/ mes · ARS</div>
@@ -632,17 +562,15 @@
         <div class="plan-sep"></div>
         <ul class="features">
           <li><span class="icon">✓</span>Todo lo del Pro</li>
-          <li><span class="icon">✓</span>Hasta 300 socios</li>
-          <li><span class="icon">✓</span>Pantalla de ingreso propia</li>
-          <li><span class="icon">✓</span>Marca visual completa</li>
-          <li><span class="icon">✓</span>Día de prueba para socios</li>
-          <li><span class="icon">✓</span>Gestión de deudores</li>
+          <li><span class="icon">✓</span>Cobro con Mercado Pago y renovación automática</li>
+          <li><span class="icon">✓</span>Terminal de acceso táctil en recepción</li>
+          <li><span class="icon">✓</span>Reloj ambiental y logo</li>
+          <li><span class="icon">✓</span>Aviso antes de vencer</li>
+          <li><span class="icon">✓</span>Corte a deudores</li>
           <li><span class="icon">✓</span>Funciona sin internet</li>
-          <li><span class="icon">✓</span>Soporte prioritario</li>
-          <li><span class="icon">✓</span>Configuración avanzada</li>
-          <li><span class="icon">✓</span>Actualizaciones incluidas</li>
+          <li><span class="icon">✓</span>Buzón de reclamos</li>
         </ul>
-        <button class="plan-cta">Contactar</button>
+        <button class="plan-cta">Pedir Demo</button>
       </div>
 
     </div>
@@ -650,10 +578,10 @@
     <!-- Footer -->
     <footer class="footer">
       <div class="footer-features">
-        <div class="footer-feat">Sin permanencia</div>
-        <div class="footer-feat">Setup gratuito</div>
+        <div class="footer-feat">Sin contratos</div>
+        <div class="footer-feat">Setup en el día</div>
         <div class="footer-feat">Soporte por WhatsApp</div>
-        <div class="footer-feat">Actualizaciones incluidas</div>
+        <div class="footer-feat">Cancelás cuando quieras</div>
       </div>
       <div class="footer-contact">
         <span>2920 605208</span> &nbsp;·&nbsp; <span>sistemagym914@gmail.com</span>

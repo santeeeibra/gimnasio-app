@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SysGym – Tu Propia App Móvil</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    /* ── Reset ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── Canvas optimizado para exportar a JPG de WhatsApp (1080 x 1920 ratio en 480 x 860) ── */
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 480px;
+      height: 860px;
+      overflow: hidden;
+      background: #060709;
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      color: #fff;
+    }
+
+    .canvas {
+      width: 480px;
+      height: 860px;
+      background: #060709;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 24px 20px 18px;
+    }
+
+    /* ── Tokens de Alto Impacto ── */
+    :root {
+      --volt:       #c8ff00;
+      --volt-dim:   #a3cf00;
+      --volt-glow:  rgba(200, 255, 0, 0.28);
+      --ink:        #ffffff;
+      --ink-soft:   #9ca3af;
+      --paper:      #0b0d12;
+      --card:       rgba(17, 21, 30, 0.85);
+      --border:     rgba(255, 255, 255, 0.09);
+      --ok:         #10b981;
+      --blue:       #38bdf8;
+      --danger:     #ef4444;
+    }
+
+    /* ── Iluminación de Estudio Neón ── */
+    .glow-top {
+      position: absolute;
+      top: -90px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 420px;
+      height: 260px;
+      background: radial-gradient(ellipse, rgba(200, 255, 0, 0.16) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .glow-phone {
+      position: absolute;
+      top: 360px;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 320px;
+      height: 380px;
+      background: radial-gradient(circle, rgba(200, 255, 0, 0.09) 0%, transparent 65%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .bg-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 32px 32px;
+      pointer-events: none;
+    }
+
+    /* ── Header: Cero rodeo, impacto visual ── */
+    .header {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 5px;
+    }
+
+    .top-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(200, 255, 0, 0.1);
+      border: 1px solid rgba(200, 255, 0, 0.35);
+      border-radius: 100px;
+      padding: 4px 14px;
+      font-size: 8.5px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--volt);
+    }
+
+    .top-pill-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--volt);
+      box-shadow: 0 0 8px var(--volt);
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 2px;
+    }
+
+    .logo-text {
+      font-family: 'Orbitron', monospace;
+      font-weight: 900;
+      font-size: 28px;
+      letter-spacing: -0.01em;
+      color: #fff;
+    }
+
+    .logo-text span {
+      color: var(--volt);
+      text-shadow: 0 0 20px rgba(200, 255, 0, 0.6);
+    }
+
+    .brand-sep {
+      width: 1px;
+      height: 20px;
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .brand-subtitle {
+      font-size: 11px;
+      font-weight: 800;
+      color: #ddd;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .main-headline {
+      font-size: 16px;
+      font-weight: 900;
+      color: #fff;
+      line-height: 1.25;
+      margin-top: 4px;
+      letter-spacing: -0.02em;
+      max-width: 440px;
+    }
+
+    .main-headline mark {
+      background: transparent;
+      color: var(--volt);
+    }
+
+    /* ── Zona Central: MOCKUP REAL DE IPHONE + CALLOUTS ── */
+    .hero-stage {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 8px 0;
+      height: 480px;
+    }
+
+    /* El Teléfono Real */
+    .iphone-frame {
+      width: 250px;
+      height: 475px;
+      background: #000;
+      border-radius: 40px;
+      border: 3px solid #282d37;
+      box-shadow:
+        0 0 0 1px #11151c,
+        0 20px 50px -10px rgba(0, 0, 0, 0.9),
+        0 0 45px rgba(200, 255, 0, 0.14);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      z-index: 5;
+    }
+
+    /* Notch Dinámico */
+    .notch {
+      position: absolute;
+      top: 7px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 78px;
+      height: 18px;
+      background: #000;
+      border-radius: 20px;
+      z-index: 20;
+    }
+
+    /* Pantalla interna de la App */
+    .phone-screen {
+      flex: 1;
+      background: #0c0f17;
+      padding: 30px 12px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      font-size: 10px;
+    }
+
+    /* App Header */
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      padding-bottom: 6px;
+    }
+
+    .app-gym-logo {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .gym-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 6px;
+      background: var(--volt);
+      color: #000;
+      font-size: 10px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .gym-name {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      color: #fff;
+    }
+
+    .user-avatar {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #252d3d;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    /* Card 1 en el celu: Estado de Cuota */
+    .app-card-cuota {
+      background: linear-gradient(135deg, #131a03 0%, #0d1201 100%);
+      border: 1px solid rgba(200,255,0,0.3);
+      border-radius: 12px;
+      padding: 9px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .cuota-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .cuota-tag {
+      font-size: 7px;
+      font-weight: 800;
+      color: var(--volt);
+      text-transform: uppercase;
+      background: rgba(200,255,0,0.15);
+      padding: 2px 6px;
+      border-radius: 100px;
+    }
+
+    .cuota-dias {
+      font-size: 13px;
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: -0.02em;
+    }
+
+    .cuota-sub {
+      font-size: 7.5px;
+      color: #a3a3a3;
+    }
+
+    .mp-btn-sim {
+      margin-top: 2px;
+      background: #009ee3;
+      color: #fff;
+      font-size: 8px;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    /* Card 2 en el celu: Tu Rutina */
+    .app-card-rutina {
+      background: #141924;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 12px;
+      padding: 9px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .rutina-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .rutina-title {
+      font-size: 9px;
+      font-weight: 800;
+      color: #fff;
+      text-transform: uppercase;
+    }
+
+    .rutina-badge {
+      font-size: 7px;
+      font-weight: 700;
+      color: var(--blue);
+      background: rgba(56,189,248,0.12);
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+
+    .exercise-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(0,0,0,0.3);
+      padding: 5px 6px;
+      border-radius: 8px;
+    }
+
+    .exercise-thumb {
+      width: 26px;
+      height: 26px;
+      border-radius: 5px;
+      background: #222938;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+    }
+
+    .exercise-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .exercise-name {
+      font-size: 8.5px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .exercise-meta {
+      font-size: 7.5px;
+      color: var(--volt);
+      font-weight: 600;
+    }
+
+    .timer-pill {
+      background: rgba(16,185,129,0.15);
+      border: 1px solid rgba(16,185,129,0.3);
+      color: var(--ok);
+      font-size: 7.5px;
+      font-weight: 800;
+      padding: 2px 5px;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    /* App Bottom Nav */
+    .app-bottom-nav {
+      margin-top: auto;
+      display: flex;
+      justify-content: space-around;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding-top: 6px;
+      color: #64748b;
+      font-size: 6.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .app-bottom-nav .active {
+      color: var(--volt);
+    }
+
+    /* ── TARJETAS CALLOUTS FLOTANTES ALREDEDOR DEL TELÉFONO ── */
+    .callout {
+      position: absolute;
+      width: 175px;
+      background: rgba(13, 16, 23, 0.92);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      padding: 9px 11px;
+      backdrop-filter: blur(14px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+      z-index: 15;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .callout-tag {
+      font-size: 7.5px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .callout-title {
+      font-size: 11px;
+      font-weight: 900;
+      color: #fff;
+      line-height: 1.2;
+    }
+
+    .callout-text {
+      font-size: 8px;
+      color: #aaa;
+      line-height: 1.35;
+      font-weight: 500;
+    }
+
+    .callout-text strong {
+      color: #fff;
+    }
+
+    /* Posicionamiento estratégico de los 4 callouts */
+    .callout-top-left {
+      top: 15px;
+      left: 0;
+      border-left: 3px solid var(--volt);
+    }
+
+    .callout-top-right {
+      top: 50px;
+      right: 0;
+      border-right: 3px solid var(--ok);
+    }
+
+    .callout-bottom-left {
+      bottom: 60px;
+      left: 0;
+      border-left: 3px solid var(--blue);
+    }
+
+    .callout-bottom-right {
+      bottom: 25px;
+      right: 0;
+      border-right: 3px solid var(--gold);
+    }
+
+    /* ── Banner de Oferta & Cierre Comercial ── */
+    .closing-box {
+      position: relative;
+      z-index: 10;
+      border-radius: 14px;
+      padding: 12px 16px;
+      background: linear-gradient(135deg, #182200 0%, #101602 100%);
+      border: 1.5px solid var(--volt);
+      box-shadow:
+        0 0 25px rgba(200, 255, 0, 0.18),
+        inset 0 0 20px rgba(200, 255, 0, 0.05);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .closing-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .closing-badge {
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--volt);
+    }
+
+    .closing-title {
+      font-size: 13px;
+      font-weight: 900;
+      color: #fff;
+      line-height: 1.15;
+    }
+
+    .closing-sub {
+      font-size: 8.5px;
+      color: #ccc;
+    }
+
+    .closing-sub strong {
+      color: var(--volt);
+    }
+
+    .whatsapp-btn {
+      flex-shrink: 0;
+      background: var(--volt);
+      color: #060709;
+      font-weight: 900;
+      font-size: 10px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 10px 14px;
+      border-radius: 9px;
+      text-decoration: none;
+      box-shadow: 0 0 18px rgba(200, 255, 0, 0.45);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding-top: 4px;
+    }
+
+    .footer-features {
+      display: flex;
+      gap: 12px;
+      font-size: 8px;
+      color: #888;
+      font-weight: 600;
+    }
+
+    .footer-features span {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .footer-features span::before {
+      content: '✓';
+      color: var(--volt);
+      font-weight: 800;
+    }
+
+    .footer-contact {
+      font-size: 8px;
+      color: #555;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .footer-contact span {
+      color: var(--volt);
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <div class="canvas">
+    <!-- Luces y Fondos -->
+    <div class="glow-top"></div>
+    <div class="glow-phone"></div>
+    <div class="bg-grid"></div>
+
+    <!-- 1. Encabezado de Venta -->
+    <header class="header">
+      <div class="top-pill">
+        <div class="top-pill-dot"></div>
+        La plataforma definitiva para gimnasios
+      </div>
+      <div class="brand-row">
+        <div class="logo-text">SYS<span>GYM</span></div>
+        <div class="brand-sep"></div>
+        <div class="brand-subtitle">Tu App Propia</div>
+      </div>
+      <h1 class="main-headline">
+        Dejá de perseguir cuotas y dale a tu gym su <mark>propia app móvil</mark>
+      </h1>
+    </header>
+
+    <!-- 2. Escenario Visual: El Teléfono Real con la App + 4 Callouts -->
+    <div class="hero-stage">
+
+      <!-- Callout 1 (Superior Izquierda): COBRANZAS -->
+      <div class="callout callout-top-left">
+        <span class="callout-tag" style="color:var(--volt);">💳 CERO DEUDORES</span>
+        <h3 class="callout-title">Cobro Automático</h3>
+        <p class="callout-text">
+          El socio paga con <strong>Mercado Pago</strong> o Transferencia y se <strong>renueva solo</strong>. Avisos automáticos antes de vencer.
+        </p>
+      </div>
+
+      <!-- Callout 2 (Superior Derecha): CHECK-IN EN PUERTA -->
+      <div class="callout callout-top-right">
+        <span class="callout-tag" style="color:var(--ok);">📱 MODO CHECK-IN</span>
+        <h3 class="callout-title">Control en Puerta</h3>
+        <p class="callout-text">
+          Poné cualquier tablet en la entrada. Ingreso por <strong>DNI en 1 segundo</strong>. Bloqueo estricto a cuotas vencidas.
+        </p>
+      </div>
+
+      <!-- EL TELÉFONO CENTRAL CON LA APP REAL -->
+      <div class="iphone-frame">
+        <div class="notch"></div>
+        <div class="phone-screen">
+          <!-- App Header -->
+          <div class="app-header">
+            <div class="app-gym-logo">
+              <div class="gym-icon">G</div>
+              <span class="gym-name">TU GIMNASIO</span>
+            </div>
+            <div class="user-avatar"></div>
+          </div>
+
+          <!-- Card 1: Cuota al Día con Mercado Pago -->
+          <div class="app-card-cuota">
+            <div class="cuota-top">
+              <span class="cuota-tag">Cuota al día</span>
+              <span style="font-size:7.5px; color:#aaa;">Pase Libre</span>
+            </div>
+            <div class="cuota-dias">Vence en 24 días</div>
+            <div class="cuota-sub">Cobro recurrente activado</div>
+            <div class="mp-btn-sim">
+              <span>💳 Pagar con Mercado Pago</span>
+            </div>
+          </div>
+
+          <!-- Card 2: Rutina Inteligente -->
+          <div class="app-card-rutina">
+            <div class="rutina-header">
+              <span class="rutina-title">Día 1 · Pecho y Bíceps</span>
+              <span class="rutina-badge">Con IA</span>
+            </div>
+            <div class="exercise-row">
+              <div class="exercise-thumb">🏋️</div>
+              <div class="exercise-info">
+                <span class="exercise-name">Press Banco Plano</span>
+                <span class="exercise-meta">4 series × 10 reps</span>
+              </div>
+              <div class="timer-pill">⏱ 90s</div>
+            </div>
+            <div class="exercise-row">
+              <div class="exercise-thumb">💪</div>
+              <div class="exercise-info">
+                <span class="exercise-name">Curl Mancuerna</span>
+                <span class="exercise-meta">3 series × 12 reps</span>
+              </div>
+              <div class="timer-pill">⏱ 60s</div>
+            </div>
+          </div>
+
+          <!-- Bottom Nav -->
+          <div class="app-bottom-nav">
+            <span class="active">● Inicio</span>
+            <span>Rutina</span>
+            <span>Mensajes</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Callout 3 (Inferior Izquierda): RUTINAS CON IA -->
+      <div class="callout callout-bottom-left">
+        <span class="callout-tag" style="color:var(--blue);">🧠 RUTINAS CON IA</span>
+        <h3 class="callout-title">Filtro Anti-Dolor</h3>
+        <p class="callout-text">
+          Rutinas a medida con <strong>fotos de técnica</strong> y filtro inteligente para alumnos con <strong>dolor lumbar o rodilla</strong>.
+        </p>
+      </div>
+
+      <!-- Callout 4 (Inferior Derecha): PRIVACIDAD Y MARCA -->
+      <div class="callout callout-bottom-right">
+        <span class="callout-tag" style="color:var(--gold);">🔒 TOTAL PRIVACIDAD</span>
+        <h3 class="callout-title">Caja con PIN</h3>
+        <p class="callout-text">
+          Tus profes usan la app pero la <strong>facturación y recaudación quedan con clave</strong>. 100% tus colores y tu logo.
+        </p>
+      </div>
+
+    </div>
+
+    <!-- 3. Oferta Irresistible de Cierre para WhatsApp -->
+    <div class="closing-box">
+      <div class="closing-info">
+        <span class="closing-badge">🔥 Promo Exclusiva 72 hs</span>
+        <h4 class="closing-title">14 DÍAS GRATIS en tu Gym</h4>
+        <p class="closing-sub">
+          Te regalamos la carga de todos tus socios (<strong>Ahorro de $35.000</strong>).
+        </p>
+      </div>
+      <a href="https://wa.me/5492920605208?text=Hola!%20Quiero%20probar%20SysGym%2014%20d%C3%ADas%20gratis%20en%20mi%20gimnasio" class="whatsapp-btn">
+        Probar Gratis
+      </a>
+    </div>
+
+    <!-- 4. Footer de Confianza -->
+    <footer class="footer">
+      <div class="footer-features">
+        <span>Sin contratos</span>
+        <span>Setup en el día</span>
+        <span>Soporte directo</span>
+        <span>Funciona sin internet</span>
+      </div>
+      <div class="footer-contact">
+        WhatsApp: <span>2920 605208</span> &nbsp;·&nbsp; <span>sistemagym914@gmail.com</span>
+      </div>
+    </footer>
+
+  </div>
+</body>
+</html>

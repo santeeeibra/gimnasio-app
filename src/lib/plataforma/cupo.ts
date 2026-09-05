@@ -30,7 +30,7 @@ export async function cupoSocios(
   } | null;
 
   // Si no tiene plan asignado (ej. gimnasio nuevo o en prueba sin plan explícito),
-  // el free tier de 14 días activa el plan Básico (30 socios).
+  // el free tier de 14 días activa el plan Básico (50 socios).
   if (!plan) {
     const { data: planBasico } = await db
       .from("planes_plataforma")
@@ -49,7 +49,7 @@ export async function cupoSocios(
     .eq("gimnasio_id", gimnasioId);
   const usados = count ?? 0;
 
-  const max = plan?.max_socios ?? 30;
+  const max = plan?.max_socios ?? 50;
   return {
     ok: max == null || usados < max,
     usados,
