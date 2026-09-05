@@ -391,7 +391,7 @@ export default async function ClienteDetallePage({
           clienteId={c.id}
           creadoPor="dueno"
           action={guardarPesoSocio.bind(null, c.id)}
-          fetchRegistros={() => obtenerPesosSocio(c.id)}
+          fetchRegistros={obtenerPesosSocio.bind(null, c.id)}
         />
       </Panel>
 
