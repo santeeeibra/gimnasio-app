@@ -10,8 +10,9 @@ import {
   User,
   ArrowRight,
   ShieldCheck,
+  Terminal,
 } from "lucide-react";
-import { login, type LoginState } from "./actions";
+import { login, loginDevAction, type LoginState } from "./actions";
 import {
   iniciarAudioHaptico,
   hapticoDial,
@@ -43,6 +44,21 @@ export function LoginForm({
   );
   const [cambiandoGimnasio, setCambiandoGimnasio] = useState(false);
   const [dni, setDni] = useState("");
+  const [clave, setClave] = useState("");
+
+  const autocompletar = (rol: "dueno" | "socio") => {
+    hapticoSeleccion();
+    setGimnasio("sante");
+    setGimnasioNombre("Gimnasio Sante");
+    setCambiandoGimnasio(false);
+    if (rol === "dueno") {
+      setDni("12345678");
+      setClave("admin123");
+    } else {
+      setDni("20000000");
+      setClave("gym2000");
+    }
+  };
 
   // Cargar gimnasio recordado desde localStorage si no vino precargado por SSR
   useEffect(() => {
@@ -276,6 +292,8 @@ export function LoginForm({
                     name="clave"
                     type={showPass ? "text" : "password"}
                     autoComplete="current-password"
+                    value={clave}
+                    onChange={(e) => setClave(e.target.value)}
                     required
                     className="w-full h-12.5 pl-10.5 pr-12 rounded-xl border border-white/20 bg-[#1d212d] text-white text-[16px] outline-none transition-[border-color,box-shadow,background-color] duration-150 focus:border-volt focus:bg-[#222736] focus:ring-2 focus:ring-volt/30"
                   />
@@ -293,6 +311,29 @@ export function LoginForm({
                     ) : (
                       <Eye className="size-5" />
                     )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Atajos de Relleno Rápido para Testing */}
+              <div className="rounded-xl bg-white/[0.04] border border-white/10 p-2.5 flex items-center justify-between gap-2">
+                <span className="text-[11px] font-semibold text-slate-400">
+                  Rellenar prueba:
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => autocompletar("dueno")}
+                    className="h-7 px-2.5 rounded-lg text-xs font-semibold text-volt bg-volt/10 hover:bg-volt/20 border border-volt/30 transition-all active:scale-95 cursor-pointer"
+                  >
+                    👔 Dueño
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => autocompletar("socio")}
+                    className="h-7 px-2.5 rounded-lg text-xs font-semibold text-slate-200 bg-white/10 hover:bg-white/15 border border-white/15 transition-all active:scale-95 cursor-pointer"
+                  >
+                    🏋️ Socio
                   </button>
                 </div>
               </div>
@@ -371,6 +412,19 @@ export function LoginForm({
                     Olvidé mi contraseña
                   </Link>
                 </div>
+              </div>
+
+              {/* Acceso Rápido al Panel Dev */}
+              <div className="mt-2 pt-3 border-t border-white/10 text-center">
+                <form action={loginDevAction}>
+                  <button
+                    type="submit"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold text-volt/90 bg-volt/10 hover:bg-volt/20 border border-volt/30 active:scale-95 transition-all cursor-pointer touch-manipulation shadow-sm"
+                  >
+                    <Terminal className="size-3.5" />
+                    <span>⚡ Entrar directo al Panel Dev (/admin)</span>
+                  </button>
+                </form>
               </div>
             </form>
           </div>
