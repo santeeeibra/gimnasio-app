@@ -416,3 +416,63 @@ export async function activarGimnasioDisponible(
     msg: `Activado. Login → gimnasio: ${slugFinal} · DNI: ${dni} · clave: ${password}`,
   };
 }
+
+// ── Switcher rápido de plan para testing (Cockpit Dev) ──
+// Cambia al instante el plan de un gimnasio (por defecto "sante") a Básico, Pro o Elite.
+export async function cambiarPlanRapido(
+  planNombre: "Básico" | "Pro" | "Elite",
+  gimnasioSlug: string = "sante",
+): Promise<{ ok: boolean; msg: string; planActual?: string }> {
+  const admin = await requireSuperadmin();
+  const db = createAdminClient();
+
+  const { data: plan } = await db
+    .from("planes_plataforma")
+    .select("id, nombre")
+    .eq("nombre", planNombre)
+    .single();
+
+  if (!plan) return { ok: false, msg: `Plan "${planNombre}" no encontrado.` };
+
+  const { data: gym } = await db
+    .from("gimnasios")
+    .select("id, slug")
+    .eq("slug", gimnasioSlug)
+    .single();
+
+  if (!gym) return { ok: false, msg: `Gimnasio "${gimnasioSlug}" no encontrado.` };
+
+  // Vencimiento a 1 año en el futuro para que esté 100% vigente en pruebas
+  const vence = new Date();
+  vence.setFullYear(vence.getFullYear() + 1);
+  const venceStr = vence.toISOString().split("T")[0];
+
+  const { error } = await db
+    .from("gimnasios")
+    .update({
+      plan_plataforma_id: plan.id,
+      plan_plataforma_vence_el: venceStr,
+      estado: "activo",
+    })
+    .eq("id", gym.id);
+
+  if (error) return { ok: false, msg: error.message };
+
+  await registrarAccionAdmin(admin.id, "asignar_plan_plataforma", gym.id, {
+    plan: planNombre,
+    vence_el: venceStr,
+  });
+
+  revalidatePath("/admin");
+  revalidatePath(`/admin/gimnasios/${gym.id}`);
+  revalidatePath("/panel");
+  revalidatePath("/panel/ajustes");
+  revalidatePath("/checkin");
+
+  return {
+    ok: true,
+    msg: `Plan cambiado a "${planNombre}" exitosamente.`,
+    planActual: planNombre,
+  };
+}
+

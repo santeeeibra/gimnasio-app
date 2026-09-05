@@ -1,5 +1,7 @@
 import { notFound, redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export type Profile = {
   id: string;
@@ -55,8 +57,26 @@ export async function requireDueno(): Promise<Profile> {
 // Devuelve 404 (no redirect) para no revelar que la ruta existe a un dueño
 // que la esté probando: indistinguible de una ruta inexistente.
 export async function requireSuperadmin(): Promise<Profile> {
-  const profile = await getSessionProfile();
   const superId = process.env.SUPERADMIN_ID;
-  if (!profile || !superId || profile.id !== superId) notFound();
-  return profile;
+  if (!superId) notFound();
+
+  const profile = await getSessionProfile();
+  if (profile && profile.id === superId) {
+    return profile;
+  }
+
+  // Si hay impersonación activa (STASH cookie), el superadmin conserva acceso a /admin
+  const jar = await cookies();
+  const stash = jar.get("sb-super-stash")?.value;
+  if (stash) {
+    const db = createAdminClient();
+    const { data: superProfile } = await db
+      .from("profiles")
+      .select("id, gimnasio_id, rol, dni, nombre, telefono, debe_cambiar_clave")
+      .eq("id", superId)
+      .single();
+    if (superProfile) return superProfile as Profile;
+  }
+
+  notFound();
 }
