@@ -24,7 +24,7 @@ import { editarItem, editarTecnica, sustituirEjercicio } from "./actions";
 import { StickyProgresoDia } from "@/components/rutinas/sticky-progreso-dia";
 import { LogroDiaCompletado } from "@/components/rutinas/logro-dia-completado";
 import { BotonPedirAyuda } from "@/components/rutinas/boton-pedir-ayuda";
-import { MiniRegistroProgreso } from "@/components/progreso/mini-registro-progreso";
+import { DialVerticalProgreso } from "@/components/progreso/dial-vertical-progreso";
 import { HistorialEjercicio } from "@/components/progreso/historial-ejercicio";
 import {
   guardarProgresoCliente,
@@ -710,7 +710,28 @@ function ItemFila({
   return (
     <li className="p-4 transition-colors duration-150">
       <div className="flex items-start gap-3">
-        <ExThumb ej={ej} onOpen={() => ej && onVer(ej)} />
+        <div className="flex flex-col items-center gap-2 shrink-0 w-[68px]">
+          <ExThumb ej={ej} onOpen={() => ej && onVer(ej)} />
+          {clienteId && item.ejercicio && (
+            <DialVerticalProgreso
+              ejercicioId={item.ejercicio.id}
+              action={
+                creadoPor === "dueno"
+                  ? guardarProgresoSocio.bind(null, clienteId)
+                  : guardarProgresoCliente
+              }
+              fetchUltimoPeso={async (eid) => {
+                const registros =
+                  creadoPor === "dueno"
+                    ? await obtenerProgresoSocio(clienteId, eid, 1)
+                    : await obtenerProgresoCliente(eid, 1);
+                return registros[0]
+                  ? { peso: registros[0].peso, reps: registros[0].reps }
+                  : null;
+              }}
+            />
+          )}
+        </div>
 
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
@@ -909,32 +930,16 @@ function ItemFila({
             </div>
           </details>
 
-          {/* Solo mostrar si hay clienteId (no en preview del dueño sin contexto) */}
+          {/* Historial y gráfico del ejercicio */}
           {clienteId && item.ejercicio && (
-            <>
-              <MiniRegistroProgreso
-                ejercicioId={item.ejercicio.id}
-                action={
-                  creadoPor === 'dueno'
-                    ? guardarProgresoSocio.bind(null, clienteId)
-                    : guardarProgresoCliente
-                }
-                fetchUltimoPeso={async (eid) => {
-                  const registros = creadoPor === 'dueno'
-                    ? await obtenerProgresoSocio(clienteId, eid, 1)
-                    : await obtenerProgresoCliente(eid, 1);
-                  return registros[0] ? { peso: registros[0].peso, reps: registros[0].reps } : null;
-                }}
-              />
-              <HistorialEjercicio
-                ejercicioNombre={item.ejercicio.nombre ?? 'Ejercicio'}
-                fetchHistorial={async () =>
-                  creadoPor === 'dueno'
-                    ? obtenerProgresoSocio(clienteId, item.ejercicio!.id)
-                    : obtenerProgresoCliente(item.ejercicio!.id)
-                }
-              />
-            </>
+            <HistorialEjercicio
+              ejercicioNombre={item.ejercicio.nombre ?? "Ejercicio"}
+              fetchHistorial={async () =>
+                creadoPor === "dueno"
+                  ? obtenerProgresoSocio(clienteId, item.ejercicio!.id)
+                  : obtenerProgresoCliente(item.ejercicio!.id)
+              }
+            />
           )}
 
           {mostrarTecnica ? (

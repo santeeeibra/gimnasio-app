@@ -9,54 +9,12 @@ import {
 } from "react";
 import { Spinner } from "@/components/ui";
 import type { RegistroPeso, PesoState } from "@/lib/peso/actions";
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Sonido: click suave de rueda con Web Audio API (creado lazy tras gesto)
-// ─────────────────────────────────────────────────────────────────────────────
-let audioCtx: AudioContext | null = null;
-function getAudioCtx(): AudioContext | null {
-  if (typeof window === "undefined") return null;
-  if (!audioCtx) {
-    try {
-      audioCtx = new AudioContext();
-    } catch {
-      return null;
-    }
-  }
-  return audioCtx;
-}
-
-let lastTickTime = 0;
-function playTick() {
-  const now = Date.now();
-  if (now - lastTickTime < 18) return; // evitar saturación de audio
-  lastTickTime = now;
-
-  const ctx = getAudioCtx();
-  if (!ctx) return;
-  if (ctx.state === "suspended") ctx.resume();
-
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-
-  osc.type = "sine";
-  osc.frequency.setValueAtTime(1050, ctx.currentTime);
-  osc.frequency.exponentialRampToValueAtTime(700, ctx.currentTime + 0.02);
-
-  gain.gain.setValueAtTime(0.08, ctx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.035);
-
-  osc.start(ctx.currentTime);
-  osc.stop(ctx.currentTime + 0.04);
-}
-
-function vibrate(ms = 4) {
-  if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-    navigator.vibrate(ms);
-  }
-}
+import {
+  iniciarAudioHaptico,
+  hapticoDial,
+  hapticoExito,
+  hapticoError,
+} from "@/lib/ui/hapticos";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // RulerWeightPicker — Dial horizontal estilo regla / temporizador iOS
@@ -172,8 +130,7 @@ export function RulerWeightPicker({ defaultValue, onChange }: RulerProps) {
       if (rounded !== lastEmittedRef.current) {
         lastEmittedRef.current = rounded;
         onChange(rounded);
-        playTick();
-        vibrate(3);
+        hapticoDial();
       }
     },
     [draw, onChange]
@@ -203,6 +160,7 @@ export function RulerWeightPicker({ defaultValue, onChange }: RulerProps) {
 
   // Pointer events (touch + mouse unificados)
   const onPointerDown = (e: React.PointerEvent) => {
+    iniciarAudioHaptico();
     if (animIdRef.current) cancelAnimationFrame(animIdRef.current);
     isDraggingRef.current = true;
     startXRef.current = e.clientX;
@@ -242,6 +200,7 @@ export function RulerWeightPicker({ defaultValue, onChange }: RulerProps) {
 
   // Scroll con rueda de mouse / trackpad
   const onWheel = (e: React.WheelEvent) => {
+    iniciarAudioHaptico();
     e.preventDefault();
     const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
     const deltaKg = (delta / PX_PER_STEP) * 0.05;
@@ -440,12 +399,15 @@ export function CardPeso({
       .finally(() => setCargando(false));
   }, [fetchRegistros]);
 
-  // Recargar después de guardar exitosamente
+  // Recargar después de guardar exitosamente y disparar háptico
   useEffect(() => {
     if (state.ok) {
+      hapticoExito();
       fetchRegistros().then((data) => {
         setRegistros(data);
       });
+    } else if (state.error) {
+      hapticoError();
     }
   }, [state, fetchRegistros]);
 

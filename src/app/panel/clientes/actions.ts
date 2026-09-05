@@ -141,14 +141,44 @@ async function altaClienteInterno(
       : null,
   };
 
-  let { error: cliErr } = await admin.from("clientes").insert(insertData);
+  const pesoInicial = Number(formData.get("peso_inicial") ?? 0);
+
+  let clienteId: string | null = null;
+  let { data: cliData, error: cliErr } = await admin
+    .from("clientes")
+    .insert(insertData)
+    .select("id")
+    .single();
   if (cliErr && cliErr.message?.includes("foto_url")) {
     delete insertData.foto_url;
-    const res = await admin.from("clientes").insert(insertData);
+    const res = await admin
+      .from("clientes")
+      .insert(insertData)
+      .select("id")
+      .single();
     cliErr = res.error;
+    cliData = res.data;
   }
+  clienteId = (cliData as { id: string } | null)?.id ?? null;
+
   if (cliErr) {
     await registrarError(dueno.gimnasio_id, "alta_cliente", cliErr);
+  }
+
+  // Registrar peso corporal inicial si fue provisto
+  if (clienteId && pesoInicial > 0 && pesoInicial < 1000) {
+    try {
+      await admin.from("registro_peso").insert({
+        gimnasio_id: dueno.gimnasio_id,
+        cliente_id: clienteId,
+        fecha: new Date().toISOString().slice(0, 10),
+        peso: pesoInicial,
+        nota: "Peso inicial al alta",
+        creado_por: "dueno",
+      });
+    } catch {
+      // no bloquea el alta
+    }
   }
 
   revalidatePath("/panel/clientes");

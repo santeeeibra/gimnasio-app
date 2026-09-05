@@ -7,7 +7,7 @@ import { ActivarNotificaciones } from "./activar-notificaciones";
 import { VerTutorialDeNuevo } from "@/components/tutorial/tutorial";
 import { AnilloProgreso } from "@/components/anillo-progreso";
 import { pillClasses } from "@/components/ui";
-import { ChevronRight, CreditCard, Dumbbell, Inbox, MessageSquare, Palette } from "lucide-react";
+import { ChevronRight, CreditCard, Dumbbell, Inbox, MessageSquare, Palette, User } from "lucide-react";
 import { RachaConstancia } from "@/components/mi/racha-constancia";
 import { DatosTransferencia } from "@/components/mi/datos-transferencia";
 import { CacheAlVuelo } from "@/components/offline/cache-al-vuelo";
@@ -181,6 +181,22 @@ export default async function MiPage() {
       ) : null}
 
       <ul className="stagger-in card-cut overflow-hidden border border-rule bg-paper-2 divide-y divide-rule">
+        <li>
+          <Link
+            href="/mi/perfil"
+            className="group flex items-center gap-3 px-4 py-4 transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper active:bg-paper active:scale-[0.985]"
+          >
+            <User aria-hidden strokeWidth={2} className="size-[18px] shrink-0 text-ink-soft transition-colors duration-150 [transition-timing-function:var(--ease-out)] group-active:text-ink" />
+            <span className="min-w-0 flex-1 text-sm font-medium">
+              Mi perfil y peso corporal
+            </span>
+            <ChevronRight
+              aria-hidden
+              strokeWidth={2}
+              className="size-4 shrink-0 text-ink-soft transition-transform duration-150 [transition-timing-function:var(--ease-out)] group-active:translate-x-[3px]"
+            />
+          </Link>
+        </li>
         <li>
           <Link
             href="/mi/mensajes"

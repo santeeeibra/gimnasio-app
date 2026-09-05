@@ -243,6 +243,17 @@ export function AltaForm({
           ))}
         </Select>
 
+        <Field
+          label="Peso corporal inicial (kg, opcional)"
+          name="peso_inicial"
+          type="number"
+          step="0.1"
+          min="20"
+          max="300"
+          placeholder="ej. 75.5"
+          hint="Para arrancar su seguimiento de peso desde el día 1."
+        />
+
         <p className="sm:col-span-2 text-xs text-ink-soft">
           El alta no registra el pago. Después de crear el socio, registrá el
           primer pago desde su ficha.

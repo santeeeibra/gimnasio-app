@@ -26,8 +26,6 @@ import { GenerarRutinaForm } from "./generar-form";
 import { RutinaEditor, type DiaEditable } from "./rutina-editor";
 import { BuilderManual } from "./builder-manual";
 import { BannerMotivacional } from "@/components/rutinas/banner-motivacional";
-import { CardPeso } from "@/components/peso/card-peso";
-import { guardarPesoCliente, obtenerPesosCliente } from "@/lib/peso/actions";
 import { DescargarRutinaPdf } from "@/components/pdf/descargar-rutina-pdf";
 
 export const dynamic = "force-dynamic";
@@ -236,15 +234,6 @@ export default async function MiRutinaPage() {
       </div>
 
       <BannerMotivacional />
-
-      {cliente && (
-        <CardPeso
-          clienteId={cliente.id}
-          creadoPor="cliente"
-          action={guardarPesoCliente}
-          fetchRegistros={obtenerPesosCliente}
-        />
-      )}
 
       {!rutina ? (
         <>
