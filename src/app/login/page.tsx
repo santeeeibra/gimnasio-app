@@ -36,7 +36,7 @@ export default async function LoginPage({
   }
 
   return (
-    <Suspense fallback={<div className="min-h-screen bg-paper" />}>
+    <Suspense fallback={<div className="min-h-screen bg-[#0c0d11]" />}>
       <LoginForm
         initialGymSlug={initialGymSlug}
         initialGymNombre={initialGymNombre}
