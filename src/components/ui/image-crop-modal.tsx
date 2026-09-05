@@ -186,14 +186,19 @@ export function ImageCropModal({
     const width = CANVAS_SIZE;
     const height = CANVAS_SIZE;
 
-    if (canvas.width !== width * dpr || canvas.height !== height * dpr) {
-      canvas.width = width * dpr;
-      canvas.height = height * dpr;
+    const targetW = Math.round(width * dpr);
+    const targetH = Math.round(height * dpr);
+    if (canvas.width !== targetW || canvas.height !== targetH) {
+      canvas.width = targetW;
+      canvas.height = targetH;
     }
 
-    ctx.save();
-    ctx.scale(dpr, dpr);
-    ctx.clearRect(0, 0, width, height);
+    // 1. Resetear SIEMPRE la matriz de transformación para evitar cualquier acumulación de scale entre frames
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 2. Aplicar la escala limpia según el DPR de la pantalla retina
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     const isSideways = rotation % 180 !== 0;
     const ew = isSideways ? imgH : imgW;
@@ -207,7 +212,7 @@ export function ImageCropModal({
     const cx = width / 2;
     const cy = height / 2;
 
-    // 1. Dibujar imagen trasladada y rotada
+    // 3. Dibujar la imagen trasladada, rotada y escalada
     ctx.save();
     ctx.translate(cx + clamped.x, cy + clamped.y);
     ctx.rotate((rotation * Math.PI) / 180);
@@ -215,8 +220,7 @@ export function ImageCropModal({
     ctx.drawImage(source, -imgW / 2, -imgH / 2);
     ctx.restore();
 
-    // 2. Máscara oscura con ventana de visualización nítida
-    ctx.save();
+    // 4. Máscara oscura con ventana de visualización nítida
     ctx.fillStyle = "rgba(4, 7, 12, 0.72)";
     ctx.beginPath();
     ctx.rect(0, 0, width, height);
@@ -228,42 +232,50 @@ export function ImageCropModal({
     if (cropShape === "circle") {
       ctx.arc(cx, cy, cropRadius, 0, Math.PI * 2, true);
     } else {
-      const r = 14;
-      ctx.moveTo(cropLeft + r, cropTop);
-      ctx.lineTo(cropLeft + CROP_SIZE - r, cropTop);
-      ctx.arcTo(cropLeft + CROP_SIZE, cropTop, cropLeft + CROP_SIZE, cropTop + r, r);
-      ctx.lineTo(cropLeft + CROP_SIZE, cropTop + CROP_SIZE - r);
-      ctx.arcTo(cropLeft + CROP_SIZE, cropTop + CROP_SIZE, cropLeft + CROP_SIZE - r, cropTop + CROP_SIZE, r);
-      ctx.lineTo(cropLeft + r, cropTop + CROP_SIZE);
-      ctx.arcTo(cropLeft, cropTop + CROP_SIZE, cropLeft, cropTop + CROP_SIZE - r, r);
-      ctx.lineTo(cropLeft, cropTop + r);
-      ctx.arcTo(cropLeft, cropTop, cropLeft + r, cropTop, r);
-      ctx.closePath();
+      if ("roundRect" in ctx && typeof ctx.roundRect === "function") {
+        ctx.roundRect(cropLeft, cropTop, CROP_SIZE, CROP_SIZE, 14);
+      } else {
+        const r = 14;
+        ctx.moveTo(cropLeft + r, cropTop);
+        ctx.lineTo(cropLeft + CROP_SIZE - r, cropTop);
+        ctx.arcTo(cropLeft + CROP_SIZE, cropTop, cropLeft + CROP_SIZE, cropTop + r, r);
+        ctx.lineTo(cropLeft + CROP_SIZE, cropTop + CROP_SIZE - r);
+        ctx.arcTo(cropLeft + CROP_SIZE, cropTop + CROP_SIZE, cropLeft + CROP_SIZE - r, cropTop + CROP_SIZE, r);
+        ctx.lineTo(cropLeft + r, cropTop + CROP_SIZE);
+        ctx.arcTo(cropLeft, cropTop + CROP_SIZE, cropLeft, cropTop + CROP_SIZE - r, r);
+        ctx.lineTo(cropLeft, cropTop + r);
+        ctx.arcTo(cropLeft, cropTop, cropLeft + r, cropTop, r);
+        ctx.closePath();
+      }
     }
     ctx.fill("evenodd");
 
-    // 3. Borde acentuado alrededor del recorte
+    // 5. Borde acentuado alrededor del recorte
     ctx.strokeStyle = "rgba(16, 231, 160, 0.95)";
     ctx.lineWidth = 2;
     ctx.beginPath();
     if (cropShape === "circle") {
       ctx.arc(cx, cy, cropRadius, 0, Math.PI * 2);
     } else {
-      const r = 14;
-      ctx.moveTo(cropLeft + r, cropTop);
-      ctx.lineTo(cropLeft + CROP_SIZE - r, cropTop);
-      ctx.arcTo(cropLeft + CROP_SIZE, cropTop, cropLeft + CROP_SIZE, cropTop + r, r);
-      ctx.lineTo(cropLeft + CROP_SIZE, cropTop + CROP_SIZE - r);
-      ctx.arcTo(cropLeft + CROP_SIZE, cropTop + CROP_SIZE, cropLeft + CROP_SIZE - r, cropTop + CROP_SIZE, r);
-      ctx.lineTo(cropLeft + r, cropTop + CROP_SIZE);
-      ctx.arcTo(cropLeft, cropTop + CROP_SIZE, cropLeft, cropTop + CROP_SIZE - r, r);
-      ctx.lineTo(cropLeft, cropTop + r);
-      ctx.arcTo(cropLeft, cropTop, cropLeft + r, cropTop, r);
-      ctx.closePath();
+      if ("roundRect" in ctx && typeof ctx.roundRect === "function") {
+        ctx.roundRect(cropLeft, cropTop, CROP_SIZE, CROP_SIZE, 14);
+      } else {
+        const r = 14;
+        ctx.moveTo(cropLeft + r, cropTop);
+        ctx.lineTo(cropLeft + CROP_SIZE - r, cropTop);
+        ctx.arcTo(cropLeft + CROP_SIZE, cropTop, cropLeft + CROP_SIZE, cropTop + r, r);
+        ctx.lineTo(cropLeft + CROP_SIZE, cropTop + CROP_SIZE - r);
+        ctx.arcTo(cropLeft + CROP_SIZE, cropTop + CROP_SIZE, cropLeft + CROP_SIZE - r, cropTop + CROP_SIZE, r);
+        ctx.lineTo(cropLeft + r, cropTop + CROP_SIZE);
+        ctx.arcTo(cropLeft, cropTop + CROP_SIZE, cropLeft, cropTop + CROP_SIZE - r, r);
+        ctx.lineTo(cropLeft, cropTop + r);
+        ctx.arcTo(cropLeft, cropTop, cropLeft + r, cropTop, r);
+        ctx.closePath();
+      }
     }
     ctx.stroke();
 
-    // 4. Guía de tercios al arrastrar o hacer zoom
+    // 6. Guía de tercios al arrastrar o hacer zoom
     if (isInteracting) {
       ctx.save();
       ctx.beginPath();
@@ -293,7 +305,8 @@ export function ImageCropModal({
       ctx.restore();
     }
 
-    ctx.restore();
+    // 7. Devolver a matriz limpia
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
   }, [imageLoaded, cropShape, zoom, pan, rotation, isInteracting, getClampedPan]);
 
   useEffect(() => {
