@@ -10,6 +10,7 @@ import {
 } from "@/lib/pagos/cobro-socio";
 import {
   crearLinkConToken,
+  crearSuscripcionPreapproval,
   cuentaMP,
 } from "@/lib/pagos/mercadopago-connect";
 
@@ -119,6 +120,101 @@ export async function iniciarPagoMercadoPago(): Promise<PagarState> {
     return {
       error:
         "No pudimos abrir el checkout de Mercado Pago. Podés pagar por transferencia con los datos de abajo.",
+    };
+  }
+}
+
+export type SuscripcionState = {
+  error?: string;
+  url?: string;
+  necesitaEmail?: boolean;
+};
+
+/** Crea el débito automático / suscripción con Mercado Pago (Preapproval). */
+export async function crearSuscripcionMP(
+  clienteId?: string,
+  emailIngresado?: string,
+): Promise<SuscripcionState> {
+  const profile = await requireProfile();
+  const db = createAdminClient();
+
+  const estado = await estadoCobroAutomatico(db, profile.gimnasio_id);
+  if (!estado.activo) {
+    return { error: "El cobro automático no está disponible en tu gimnasio." };
+  }
+
+  // Buscar ficha del socio
+  let query = db
+    .from("clientes")
+    .select(
+      "id, nombre, email, plan_id, mp_preapproval_id, plan:planes(id, nombre, precio, duracion_dias)",
+    )
+    .eq("gimnasio_id", profile.gimnasio_id);
+
+  if (clienteId) {
+    query = query.eq("id", clienteId);
+  } else {
+    query = query.eq("profile_id", profile.id);
+  }
+
+  const { data: cli } = await query.maybeSingle();
+  if (!cli) return { error: "No encontramos tu ficha de socio." };
+
+  const plan = (cli as any)?.plan;
+  if (!plan) {
+    return {
+      error: "Todavía no tenés un plan asignado. Hablá con tu gimnasio.",
+    };
+  }
+
+  const monto = Number(plan.precio);
+  if (!(monto > 0)) {
+    return {
+      error: "Tu plan no tiene un precio cargado. Hablá con tu gimnasio.",
+    };
+  }
+
+  // Verificar email del pagador (requerido por Preapproval de Mercado Pago)
+  const email = (emailIngresado ?? cli.email)?.trim().toLowerCase();
+  if (!email || !email.includes("@")) {
+    return {
+      error: "Ingresá tu email para continuar con el débito automático.",
+      necesitaEmail: true,
+    };
+  }
+
+  // Si mandó email y no lo tenía en la DB, guardarlo
+  if (email && (!cli.email || cli.email !== email)) {
+    await db.from("clientes").update({ email }).eq("id", cli.id);
+  }
+
+  const h = await headers();
+  const origin =
+    process.env.NEXT_PUBLIC_BASE_URL ?? `https://${h.get("host") ?? ""}`;
+
+  try {
+    const res = await crearSuscripcionPreapproval(db, profile.gimnasio_id, {
+      clienteId: cli.id,
+      reason: `Cuota ${plan.nombre}`,
+      payerEmail: email,
+      montoARS: monto,
+      backUrl: `${origin}/mi/pagos?mp=ok`,
+      applicationFeePct: estado.applicationFeePct,
+    });
+
+    // Guardar clientes.mp_preapproval_id
+    await db
+      .from("clientes")
+      .update({ mp_preapproval_id: res.id })
+      .eq("id", cli.id);
+
+    return { url: res.initPoint };
+  } catch (err: any) {
+    console.error("[mi/pagos] crear suscripcion MP:", err);
+    await registrarError(profile.gimnasio_id, "suscripcion_mp", err);
+    return {
+      error:
+        "No pudimos iniciar el cobro automático de Mercado Pago. Podés pagar por transferencia con los datos de abajo.",
     };
   }
 }

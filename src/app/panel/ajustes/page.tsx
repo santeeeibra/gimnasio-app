@@ -14,6 +14,9 @@ import { EmailRecuperacionForm } from "./email-recuperacion-form";
 import { ContactarSoporteForm } from "./contactar-soporte-form";
 import { VerTutorialDeNuevo } from "@/components/tutorial/tutorial";
 import { LinkAccesoCard } from "./link-acceso-card";
+import { MercadoPagoAjustesCard } from "./mp-card";
+import { estadoCobroAutomatico } from "@/lib/pagos/cobro-socio";
+import { connectConfigurado } from "@/lib/pagos/mercadopago-connect";
 
 const ESTADO_LABEL: Record<string, string> = {
   prueba: "En prueba",
@@ -21,12 +24,16 @@ const ESTADO_LABEL: Record<string, string> = {
   solo_lectura: "Solo lectura",
 };
 
-export default async function AjustesPage() {
+export default async function AjustesPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ mp?: string }>;
+}) {
   const profile = await requireDueno();
   const supabase = await createClient();
   const db = createAdminClient();
 
-  const [{ data: gym }, cupo, { data: planPlat }, { data: miPerfil }] =
+  const [{ data: gym }, cupo, { data: planPlat }, { data: miPerfil }, cobroAuto, sp] =
     await Promise.all([
       supabase
         .from("gimnasios")
@@ -46,6 +53,8 @@ export default async function AjustesPage() {
         .select("email_recuperacion")
         .eq("id", profile.id)
         .single(),
+      estadoCobroAutomatico(db, profile.gimnasio_id),
+      searchParams ?? Promise.resolve({}),
     ]);
 
   const estado = gym?.estado ?? "prueba";
@@ -179,6 +188,15 @@ export default async function AjustesPage() {
           />
         </div>
       ) : null}
+
+      <MercadoPagoAjustesCard
+        elite={cobroAuto.elite}
+        vinculado={cobroAuto.vinculado}
+        userId={cobroAuto.userId}
+        vinculadoAt={cobroAuto.vinculadoAt}
+        configurado={connectConfigurado()}
+        aviso={sp?.mp ?? null}
+      />
 
       <div className="card-cut card-cut-lg mt-6 border border-rule bg-paper-2 p-6">
         <h2 className="text-lg mb-1">Email para recuperar tu contraseña</h2>

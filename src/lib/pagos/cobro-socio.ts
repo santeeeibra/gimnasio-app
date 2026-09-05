@@ -70,6 +70,9 @@ export type EstadoCobroAutomatico = {
   activo: boolean;
   vinculadoAt: string | null;
   collectorId: string | null;
+  userId: string | null;
+  tokenExpiraEn: string | null;
+  applicationFeePct: number | null;
 };
 
 /**
@@ -84,7 +87,7 @@ export async function estadoCobroAutomatico(
   const { data } = await db
     .from("gimnasios")
     .select(
-      "estado, plan_plataforma_vence_el, mp_access_token, mp_vinculado_at, mp_collector_id, plan:planes_plataforma(nombre)",
+      "estado, plan_plataforma_vence_el, mp_access_token, mp_vinculado_at, mp_collector_id, mp_user_id, mp_token_expira_en, mp_application_fee_pct, plan:planes_plataforma(nombre)",
     )
     .eq("id", gimnasioId)
     .maybeSingle();
@@ -100,13 +103,22 @@ export async function estadoCobroAutomatico(
     vigente &&
     data?.estado !== "solo_lectura";
   const vinculado = Boolean(data?.mp_access_token);
+  const userId =
+    (data?.mp_user_id as string | null) ??
+    (data?.mp_collector_id as string | null) ??
+    null;
 
   return {
     elite,
     vinculado,
     activo: elite && vinculado,
     vinculadoAt: (data?.mp_vinculado_at as string | null) ?? null,
-    collectorId: (data?.mp_collector_id as string | null) ?? null,
+    collectorId: userId,
+    userId,
+    tokenExpiraEn: (data?.mp_token_expira_en as string | null) ?? null,
+    applicationFeePct: data?.mp_application_fee_pct
+      ? Number(data.mp_application_fee_pct)
+      : 5,
   };
 }
 

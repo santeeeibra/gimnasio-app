@@ -32,7 +32,7 @@ export default async function MisPagosPage() {
       .single(),
     supabase
       .from("clientes")
-      .select("id, fecha_vencimiento, plan:planes(nombre, precio)")
+      .select("id, email, mp_preapproval_id, fecha_vencimiento, plan:planes(nombre, precio)")
       .eq("profile_id", profile.id)
       .maybeSingle(),
   ]);
@@ -80,7 +80,13 @@ export default async function MisPagosPage() {
       ) : null}
 
       {puedePagarOnline ? (
-        <PagarMpButton monto={montoCuota} plan={planSocio!.nombre} />
+        <PagarMpButton
+          monto={montoCuota}
+          plan={planSocio!.nombre}
+          clienteId={cli?.id}
+          email={cli?.email}
+          suscrito={Boolean(cli?.mp_preapproval_id)}
+        />
       ) : null}
 
       <DatosTransferencia

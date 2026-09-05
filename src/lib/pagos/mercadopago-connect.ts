@@ -12,30 +12,38 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 //      MP_CONNECT_REDIRECT_URI (opcional: si falta se arma con el host).
 
 const API = "https://api.mercadopago.com";
-const AUTH = "https://auth.mercadopago.com.ar/authorization";
+const AUTH = "https://auth.mercadopago.com/authorization";
 
 export function connectConfigurado(): boolean {
   return Boolean(
-    process.env.MP_CONNECT_CLIENT_ID && process.env.MP_CONNECT_CLIENT_SECRET,
+    (process.env.MERCADOPAGO_CLIENT_ID || process.env.MP_CONNECT_CLIENT_ID) &&
+      (process.env.MERCADOPAGO_CLIENT_SECRET || process.env.MP_CONNECT_CLIENT_SECRET),
   );
 }
 
 function clientId(): string {
-  const v = process.env.MP_CONNECT_CLIENT_ID;
-  if (!v) throw new Error("Falta MP_CONNECT_CLIENT_ID.");
+  const v =
+    process.env.MERCADOPAGO_CLIENT_ID ?? process.env.MP_CONNECT_CLIENT_ID;
+  if (!v) throw new Error("Falta MERCADOPAGO_CLIENT_ID (o MP_CONNECT_CLIENT_ID).");
   return v;
 }
 
-function clientSecret(): string {
-  const v = process.env.MP_CONNECT_CLIENT_SECRET;
-  if (!v) throw new Error("Falta MP_CONNECT_CLIENT_SECRET.");
+export function clientSecret(): string {
+  const v =
+    process.env.MERCADOPAGO_CLIENT_SECRET ??
+    process.env.MP_CONNECT_CLIENT_SECRET;
+  if (!v)
+    throw new Error(
+      "Falta MERCADOPAGO_CLIENT_SECRET (o MP_CONNECT_CLIENT_SECRET).",
+    );
   return v;
 }
 
 export function redirectUri(origin: string): string {
   return (
+    process.env.MERCADOPAGO_REDIRECT_URI ??
     process.env.MP_CONNECT_REDIRECT_URI ??
-    new URL("/api/mp-connect/callback", origin).toString()
+    new URL("/api/mercadopago/callback", origin).toString()
   );
 }
 
@@ -84,6 +92,8 @@ export type TokensMP = {
   accessToken: string;
   refreshToken: string | null;
   collectorId: string | null;
+  userId: string | null;
+  expiresIn?: number;
 };
 
 async function oauthToken(body: Record<string, string>): Promise<TokensMP> {
@@ -103,11 +113,15 @@ async function oauthToken(body: Record<string, string>): Promise<TokensMP> {
     access_token: string;
     refresh_token?: string;
     user_id?: number | string;
+    expires_in?: number;
   };
+  const uid = d.user_id != null ? String(d.user_id) : null;
   return {
     accessToken: d.access_token,
     refreshToken: d.refresh_token ?? null,
-    collectorId: d.user_id != null ? String(d.user_id) : null,
+    collectorId: uid,
+    userId: uid,
+    expiresIn: d.expires_in,
   };
 }
 
@@ -133,6 +147,8 @@ export type CuentaMP = {
   accessToken: string;
   refreshToken: string | null;
   collectorId: string | null;
+  userId: string | null;
+  tokenExpiraEn: string | null;
 };
 
 /** Lee las credenciales de MP de un gimnasio. Requiere client service_role. */
@@ -142,14 +158,20 @@ export async function cuentaMP(
 ): Promise<CuentaMP | null> {
   const { data } = await db
     .from("gimnasios")
-    .select("mp_access_token, mp_refresh_token, mp_collector_id")
+    .select("mp_access_token, mp_refresh_token, mp_collector_id, mp_user_id, mp_token_expira_en")
     .eq("id", gimnasioId)
     .maybeSingle();
   if (!data?.mp_access_token) return null;
+  const uid =
+    (data.mp_user_id as string | null) ??
+    (data.mp_collector_id as string | null) ??
+    null;
   return {
     accessToken: data.mp_access_token as string,
     refreshToken: (data.mp_refresh_token as string | null) ?? null,
-    collectorId: (data.mp_collector_id as string | null) ?? null,
+    collectorId: uid,
+    userId: uid,
+    tokenExpiraEn: (data.mp_token_expira_en as string | null) ?? null,
   };
 }
 
@@ -158,12 +180,18 @@ export async function guardarTokens(
   gimnasioId: string,
   t: TokensMP,
 ): Promise<void> {
+  const expiraEn = t.expiresIn
+    ? new Date(Date.now() + t.expiresIn * 1000).toISOString()
+    : new Date(Date.now() + 180 * 86400 * 1000).toISOString();
+
   await db
     .from("gimnasios")
     .update({
       mp_access_token: t.accessToken,
       mp_refresh_token: t.refreshToken,
-      mp_collector_id: t.collectorId,
+      mp_collector_id: t.userId ?? t.collectorId,
+      mp_user_id: t.userId ?? t.collectorId,
+      mp_token_expira_en: expiraEn,
       mp_vinculado_at: new Date().toISOString(),
     })
     .eq("id", gimnasioId);
@@ -179,9 +207,50 @@ export async function desvincular(
       mp_access_token: null,
       mp_refresh_token: null,
       mp_collector_id: null,
+      mp_user_id: null,
+      mp_token_expira_en: null,
       mp_vinculado_at: null,
     })
     .eq("id", gimnasioId);
+}
+
+/** Asegura que el gimnasio tenga un access_token válido, refrescándolo si expiró o vence pronto. */
+export async function asegurarTokenValido(
+  db: SupabaseClient,
+  gimnasioId: string,
+): Promise<string> {
+  const { data } = await db
+    .from("gimnasios")
+    .select("mp_access_token, mp_refresh_token, mp_user_id, mp_collector_id, mp_token_expira_en")
+    .eq("id", gimnasioId)
+    .maybeSingle();
+
+  if (!data?.mp_access_token) {
+    throw new Error("Gimnasio no tiene cuenta de Mercado Pago vinculada.");
+  }
+
+  const expira = data.mp_token_expira_en ? new Date(data.mp_token_expira_en).getTime() : 0;
+  // Margen de seguridad: refrescar si vence en menos de 60 minutos o ya venció
+  const margen = 60 * 60 * 1000;
+  if (data.mp_refresh_token && (expira === 0 || Date.now() + margen >= expira)) {
+    try {
+      const nuevos = await refrescarToken(data.mp_refresh_token);
+      const merge: TokensMP = {
+        accessToken: nuevos.accessToken,
+        refreshToken: nuevos.refreshToken ?? data.mp_refresh_token,
+        collectorId: nuevos.userId ?? data.mp_user_id ?? data.mp_collector_id,
+        userId: nuevos.userId ?? data.mp_user_id ?? data.mp_collector_id,
+        expiresIn: nuevos.expiresIn,
+      };
+      await guardarTokens(db, gimnasioId, merge);
+      return merge.accessToken;
+    } catch (err) {
+      console.error("[mp-connect] Error refrescando token:", err);
+      return data.mp_access_token;
+    }
+  }
+
+  return data.mp_access_token;
 }
 
 // Los access_token de MP vencen (~180 días). Toda llamada a la API pasa por
@@ -324,3 +393,136 @@ export async function leerNotificacion(
   if (tipo !== "payment" || !dataId) return null;
   return { dataId: String(dataId) };
 }
+
+// -------------------------------------------------------- preapproval / suscripciones ----
+
+export type DatosSuscripcionSocio = {
+  clienteId: string;
+  reason: string;
+  payerEmail: string;
+  montoARS: number;
+  backUrl: string;
+  applicationFeePct?: number | null;
+};
+
+/** Crea la suscripción de débito automático (Preapproval) en Mercado Pago. */
+export async function crearSuscripcionPreapproval(
+  db: SupabaseClient,
+  gimnasioId: string,
+  d: DatosSuscripcionSocio,
+): Promise<{ id: string; initPoint: string }> {
+  const token = await asegurarTokenValido(db, gimnasioId);
+  const monto = Number(d.montoARS);
+  if (!(monto > 0)) throw new Error("El monto de la cuota debe ser mayor a 0.");
+
+  const body: Record<string, any> = {
+    reason: d.reason.slice(0, 250),
+    payer_email: d.payerEmail,
+    auto_recurring: {
+      frequency: 1,
+      frequency_type: "months",
+      transaction_amount: Number(monto.toFixed(2)),
+      currency_id: "ARS",
+    },
+    back_url: d.backUrl,
+    external_reference: d.clienteId,
+  };
+
+  if (d.applicationFeePct && d.applicationFeePct > 0) {
+    body.application_fee = Number(((monto * d.applicationFeePct) / 100).toFixed(2));
+  }
+
+  let res = await fetch(`${API}/preapproval`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+
+  // Si MP no permite application_fee en la cuenta del dueño para Preapproval, reintentar sin el fee
+  if (!res.ok && body.application_fee) {
+    delete body.application_fee;
+    res = await fetch(`${API}/preapproval`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+  }
+
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(`MP preapproval ${res.status}: ${txt}`);
+  }
+
+  const data = (await res.json()) as { id: string; init_point: string };
+  return { id: data.id, initPoint: data.init_point };
+}
+
+/** Consulta el detalle de un Preapproval en Mercado Pago. */
+export async function leerPreapprovalConToken(
+  db: SupabaseClient,
+  gimnasioId: string,
+  preapprovalId: string,
+): Promise<{
+  id: string;
+  status: string;
+  reason?: string;
+  external_reference?: string;
+  payer_email?: string;
+}> {
+  const token = await asegurarTokenValido(db, gimnasioId);
+  const res = await fetch(`${API}/preapproval/${preapprovalId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+  if (!res.ok) throw new Error(`MP preapproval ${preapprovalId} ${res.status}`);
+  return (await res.json()) as any;
+}
+
+// ------------------------------------------------------------- firma webhook ----
+
+/** Valida la firma x-signature del webhook de Mercado Pago. */
+export function validarFirmaWebhookMP(
+  xSignature: string | null,
+  xRequestId: string | null,
+  dataId: string | null,
+  secretOverride?: string,
+): boolean {
+  let clave: string;
+  try {
+    clave = secretOverride ?? clientSecret();
+  } catch {
+    return false;
+  }
+  if (!xSignature || !dataId || !clave) return false;
+
+  const partes = xSignature.split(",").reduce<Record<string, string>>((acc, p) => {
+    const [k, v] = p.trim().split("=");
+    if (k && v) acc[k] = v;
+    return acc;
+  }, {});
+
+  const { ts, v1 } = partes;
+  if (!ts || !v1) return false;
+
+  // Manifest: id:{data.id};request-id:{x-request-id};ts:{ts};
+  // Si xRequestId no viene en el header, puede omitirse según doc de MP
+  const manifest = xRequestId
+    ? `id:${dataId};request-id:${xRequestId};ts:${ts};`
+    : `id:${dataId};ts:${ts};`;
+
+  const esperado = createHmac("sha256", clave).update(manifest).digest("hex");
+  const a = Buffer.from(v1, "hex");
+  const b = Buffer.from(esperado, "hex");
+  if (a.length !== b.length || !timingSafeEqual(a, b)) return false;
+
+  return true;
+}
+
