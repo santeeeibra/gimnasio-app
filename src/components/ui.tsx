@@ -1,6 +1,5 @@
 import Link from "next/link";
 import type { ComponentProps } from "react";
-import { hapticoImpactoMedio, hapticoImpactoSuave } from "@/lib/ui/hapticos";
 
 /** Círculo de carga. Hereda el color del texto (`currentColor`), así sirve
  *  sobre cualquier variante de botón o superficie. */
@@ -19,7 +18,6 @@ export function Button({
   loading = false,
   disabled,
   children,
-  onClick,
   ...props
 }: ComponentProps<"button"> & {
   variant?: "primary" | "ghost" | "danger" | "volt";
@@ -38,16 +36,6 @@ export function Button({
       className={`${base} ${styles} ${className}`}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
-      onClick={(e) => {
-        if (!disabled && !loading) {
-          if (variant === "primary" || variant === "volt") {
-            hapticoImpactoMedio();
-          } else {
-            hapticoImpactoSuave();
-          }
-        }
-        onClick?.(e);
-      }}
       {...props}
     >
       {loading ? <Spinner /> : null}

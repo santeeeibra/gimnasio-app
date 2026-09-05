@@ -35,7 +35,7 @@ export default async function CheckinLayout({
       >
         <header className="flex items-center gap-2.5 border-b border-rule px-5 py-3">
           {gym?.logo_url ? (
-            <span className="size-8 shrink-0 overflow-hidden rounded-[6px] border border-rule bg-paper-2">
+            <span className="size-8 shrink-0 overflow-hidden rounded-[10px] border border-rule bg-paper-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={gym.logo_url}

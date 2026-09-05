@@ -19,6 +19,7 @@ import { estadoCobroAutomatico } from "@/lib/pagos/cobro-socio";
 import { connectConfigurado } from "@/lib/pagos/mercadopago-connect";
 import { BotonInstalarApp } from "@/components/pwa/boton-instalar-app";
 import { verificarPlanGimnasio } from "@/lib/plataforma/plan-gate";
+import { BloqueoEliteGate } from "@/components/ui/bloqueo-elite-gate";
 
 const ESTADO_LABEL: Record<string, string> = {
   prueba: "En prueba",
@@ -171,19 +172,21 @@ export default async function AjustesPage({
             Mandamos un push automático al socio unos días antes de que se le
             venza la cuota, para que la renueve a tiempo.
           </p>
-          {planInfo.permiteAvisosMorosidad ? (
+          <BloqueoEliteGate
+            bloqueado={!planInfo.permiteAvisosMorosidad}
+            titulo="Avisos Automáticos de Morosidad"
+            descripcion="Notificá a tus socios por WhatsApp y Push antes de que venza su cuota para reducir la morosidad y cobrar a tiempo."
+            beneficios={[
+              "Push y WhatsApp automatizados",
+              "Días de anticipación configurables",
+              "Reducción directa de la cartera morosa",
+            ]}
+          >
             <AvisoMorosidadForm
               gimnasioId={gym.id}
               diasAviso={gym.dias_aviso_morosidad ?? 5}
             />
-          ) : (
-            <div className="rounded-lg border border-rule bg-paper p-4 text-sm text-ink-soft flex items-center justify-between gap-4">
-              <span>Esta función requiere el <strong>Plan Elite</strong>. Notificá a tus socios automáticamente antes de que venza su cuota.</span>
-              <Link href="/panel/plan" className="shrink-0 text-sm font-medium text-ink underline hover:text-ink-soft">
-                Mejorar a Elite →
-              </Link>
-            </div>
-          )}
+          </BloqueoEliteGate>
         </div>
       ) : null}
 
@@ -199,19 +202,21 @@ export default async function AjustesPage({
             Cuando nadie toca la pantalla de check-in por un rato, aparece un
             fondo ambiental oscuro con la hora. Cualquier toque vuelve al DNI.
           </p>
-          {planInfo.permiteReposoCheckin ? (
+          <BloqueoEliteGate
+            bloqueado={!planInfo.permiteReposoCheckin}
+            titulo="Pantalla de Reposo de Terminal"
+            descripcion="Transformá la tablet de recepción en un reloj de marca elegante con el logo de tu gimnasio cuando no está en uso."
+            beneficios={[
+              "Diseño ambiental continuo",
+              "Reloj digital de gran formato",
+              "Despertar instantáneo al tocar",
+            ]}
+          >
             <ReposoCheckinForm
               gimnasioId={gym.id}
               reposo={parseTema(gym.tema).reposoCheckin}
             />
-          ) : (
-            <div className="rounded-lg border border-rule bg-paper p-4 text-sm text-ink-soft flex items-center justify-between gap-4">
-              <span>La personalización de la terminal de acceso táctil es exclusiva del <strong>Plan Elite</strong>.</span>
-              <Link href="/panel/plan" className="shrink-0 text-sm font-medium text-ink underline hover:text-ink-soft">
-                Mejorar a Elite →
-              </Link>
-            </div>
-          )}
+          </BloqueoEliteGate>
         </div>
       ) : null}
 
