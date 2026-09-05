@@ -21,6 +21,9 @@ import {
 const campoCls =
   "h-11 rounded-[10px] border border-rule bg-paper text-[16px] outline-none transition-[border-color] duration-150 [transition-timing-function:var(--ease-out)] focus:border-ink";
 import { editarItem, editarTecnica, sustituirEjercicio } from "./actions";
+import { StickyProgresoDia } from "@/components/rutinas/sticky-progreso-dia";
+import { LogroDiaCompletado } from "@/components/rutinas/logro-dia-completado";
+import { BotonPedirAyuda } from "@/components/rutinas/boton-pedir-ayuda";
 
 export type ItemEditable = {
   id: string;
@@ -256,12 +259,30 @@ export function RutinaEditor({
 }) {
   const [visor, setVisor] = useState<Ejercicio | null>(null);
   const [activo, setActivo] = useState(dias[0]?.numero ?? 1);
+  const [logroAbierto, setLogroAbierto] = useState(false);
+  const logroMostradoRef = useRef<Record<number, boolean>>({});
+
   // Series guardadas en caliente: el tiempo estimado se recalcula sin recargar.
   const [seriesGuardadas, setSeriesGuardadas] = useState<Record<string, number>>(
     {},
   );
-  // Progreso de series completadas hoy (guardado en memoria local de la sesión por ejercicio)
+
+  // Progreso de series completadas hoy (persistido en localStorage por día)
+  const LS_SETS_PREFIX = "gym.rutina-sets.v1";
   const [setsCompletados, setSetsCompletados] = useState<Record<string, number[]>>({});
+
+  useEffect(() => {
+    try {
+      const guardado = localStorage.getItem(`${LS_SETS_PREFIX}.${activo}`);
+      if (guardado) {
+        setSetsCompletados(JSON.parse(guardado));
+      } else {
+        setSetsCompletados({});
+      }
+    } catch {
+      /* ignore storage issue */
+    }
+  }, [activo]);
 
   function toggleSet(itemId: string, setIndex: number) {
     setSetsCompletados((prev) => {
@@ -270,14 +291,74 @@ export function RutinaEditor({
       const nuevos = existe
         ? actuales.filter((s) => s !== setIndex)
         : [...actuales, setIndex];
-      return { ...prev, [itemId]: nuevos };
+      const next = { ...prev, [itemId]: nuevos };
+      try {
+        localStorage.setItem(`${LS_SETS_PREFIX}.${activo}`, JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
     });
   }
 
   const multi = dias.length > 1;
   const visibles = multi ? dias.filter((d) => d.numero === activo) : dias;
+  const diaActivo = visibles[0] ?? dias[0];
+
+  const totalSeriesActivo = diaActivo?.items.reduce(
+    (acc, it) => acc + (seriesGuardadas[it.id] ?? it.series),
+    0,
+  ) ?? 0;
+
+  const seriesHechasActivo = diaActivo?.items.reduce((acc, it) => {
+    const hechas = (setsCompletados[it.id] ?? []).filter(
+      (s) => s < (seriesGuardadas[it.id] ?? it.series),
+    ).length;
+    return acc + hechas;
+  }, 0) ?? 0;
+
+  const pctActivo = totalSeriesActivo > 0
+    ? Math.round((seriesHechasActivo / totalSeriesActivo) * 100)
+    : 0;
+
+  const volumenKilosActivo = totalSeriesActivo * 140;
+  const tiempoMinActivo = Math.round(totalSeriesActivo * 2.2);
+
+  // Disparar celebración cuando se llega al 100%
+  useEffect(() => {
+    if (totalSeriesActivo > 0 && seriesHechasActivo === totalSeriesActivo) {
+      if (!logroMostradoRef.current[activo]) {
+        logroMostradoRef.current[activo] = true;
+        setLogroAbierto(true);
+      }
+    }
+  }, [seriesHechasActivo, totalSeriesActivo, activo]);
+
   return (
     <div className="space-y-6">
+      {/* Barra de progreso Sticky fija que acompaña el scroll */}
+      {diaActivo && (
+        <StickyProgresoDia
+          titulo={diaActivo.titulo}
+          seriesHechas={seriesHechasActivo}
+          totalSeries={totalSeriesActivo}
+          pct={pctActivo}
+          targetRefId="hero-resumen-dia"
+        />
+      )}
+
+      {/* Modal / Ceremonia de logro al completar el 100% de la sesión */}
+      {diaActivo && (
+        <LogroDiaCompletado
+          abierto={logroAbierto}
+          diaTitulo={diaActivo.titulo}
+          totalSeries={totalSeriesActivo}
+          volumenKilos={volumenKilosActivo}
+          tiempoMin={tiempoMinActivo}
+          onClose={() => setLogroAbierto(false)}
+        />
+      )}
+
       {multi ? (
         <DiaTabs dias={dias} activo={activo} onSelect={setActivo} />
       ) : null}
@@ -319,7 +400,10 @@ export function RutinaEditor({
           return (
             <section key={dia.numero}>
               {/* Hero Card: Resumen del Día y Progreso de Sesión */}
-              <div className="relative overflow-hidden rounded-[16px] border border-rule bg-paper-2 p-4 shadow-sm">
+              <div
+                id="hero-resumen-dia"
+                className="relative overflow-hidden rounded-[16px] border border-rule bg-paper-2 p-4 shadow-sm"
+              >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
@@ -631,40 +715,47 @@ function ItemFila({
                 </span>
               ) : null}
             </div>
-            <button
-              type="button"
-              onClick={() => setAbrirCambio((v) => !v)}
-              aria-expanded={abrirCambio}
-              aria-label={
-                abrirCambio
-                  ? "Cerrar alternativas"
-                  : "No conozco este ejercicio o me molesta"
-              }
-              className="-mr-1 -mt-1 grid size-8 shrink-0 place-items-center rounded-[8px] text-ink-soft transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-90 active:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                width="16"
-                height="16"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden
+            <div className="flex items-center gap-1 -mr-1 -mt-1">
+              <BotonPedirAyuda
+                ejercicioId={ej?.id}
+                ejercicioNombre={ej?.nombre ?? "Ejercicio"}
+                equipo={ej?.equipo}
+              />
+              <button
+                type="button"
+                onClick={() => setAbrirCambio((v) => !v)}
+                aria-expanded={abrirCambio}
+                aria-label={
+                  abrirCambio
+                    ? "Cerrar alternativas"
+                    : "No conozco este ejercicio o me molesta"
+                }
+                className="grid size-8 shrink-0 place-items-center rounded-[8px] text-ink-soft transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-90 active:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20"
               >
-                {abrirCambio ? (
-                  <path d="M6 6l12 12M18 6L6 18" />
-                ) : (
-                  <>
-                    <path d="M8 3 4 7l4 4" />
-                    <path d="M4 7h16" />
-                    <path d="m16 21 4-4-4-4" />
-                    <path d="M20 17H4" />
-                  </>
-                )}
-              </svg>
-            </button>
+                <svg
+                  viewBox="0 0 24 24"
+                  width="16"
+                  height="16"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden
+                >
+                  {abrirCambio ? (
+                    <path d="M6 6l12 12M18 6L6 18" />
+                  ) : (
+                    <>
+                      <path d="M8 3 4 7l4 4" />
+                      <path d="M4 7h16" />
+                      <path d="m16 21 4-4-4-4" />
+                      <path d="M20 17H4" />
+                    </>
+                  )}
+                </svg>
+              </button>
+            </div>
           </div>
 
           {/* Prescripción: el dato dominante de la card con JetBrains Mono */}

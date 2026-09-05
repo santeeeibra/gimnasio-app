@@ -100,6 +100,8 @@ export const viewport: Viewport = {
   themeColor: "#16181d",
 };
 
+import { ActualizadorApp } from "@/components/actualizador-app";
+
 export default function RootLayout({
   children,
 }: {
@@ -111,7 +113,10 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${bricolage.variable} ${inter.variable} ${spaceGrotesk.variable} ${geist.variable} ${fraunces.variable} ${dmSans.variable} ${manrope.variable} ${archivo.variable} ${sora.variable} ${plusJakarta.variable} ${orbitron.variable}`}
     >
-      <body>{children}</body>
+      <body>
+        {children}
+        <ActualizadorApp />
+      </body>
     </html>
   );
 }

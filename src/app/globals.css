@@ -840,3 +840,125 @@ h3 {
     bottom: 1rem;
   }
 }
+
+/* ============================================================
+   Microinteracciones: Timer de Descanso, Logro y Sticky Bar
+   ============================================================ */
+@keyframes timer-glow-breathe {
+  0%, 100% {
+    box-shadow: 0 0 6px color-mix(in srgb, var(--accent) 35%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 75%, transparent), 0 0 28px color-mix(in srgb, var(--accent) 30%, transparent);
+  }
+}
+.animate-timer-breathe {
+  animation: timer-glow-breathe 2s var(--ease-in-out) infinite;
+}
+
+@keyframes timer-ripple {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 80%, transparent);
+    transform: scale(0.96);
+  }
+  50% {
+    transform: scale(1.03);
+  }
+  100% {
+    box-shadow: 0 0 0 14px transparent;
+    transform: scale(1);
+  }
+}
+.animate-timer-ripple {
+  animation: timer-ripple 500ms var(--ease-out) forwards;
+}
+
+@keyframes timer-alert-bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  25% {
+    transform: translateY(-8px) scale(1.04);
+  }
+  50% {
+    transform: translateY(0) scale(1);
+  }
+  75% {
+    transform: translateY(-4px);
+  }
+}
+.animate-timer-alert {
+  animation: timer-alert-bounce 600ms var(--ease-out);
+}
+
+@keyframes timer-alert-flash {
+  0%, 100% {
+    background-color: transparent;
+  }
+  50% {
+    background-color: color-mix(in srgb, var(--accent) 25%, transparent);
+  }
+}
+.animate-timer-flash {
+  animation: timer-alert-flash 700ms var(--ease-out) 2;
+}
+
+@keyframes trophy-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.5) rotate(-6deg);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.1) rotate(3deg);
+  }
+  80% {
+    transform: scale(0.96) rotate(-1deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0);
+  }
+}
+.animate-trophy-pop {
+  animation: trophy-pop 700ms var(--ease-out) both;
+}
+
+@keyframes trophy-glow-pulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 10px color-mix(in srgb, var(--accent) 40%, transparent));
+  }
+  50% {
+    filter: drop-shadow(0 0 24px color-mix(in srgb, var(--accent) 80%, transparent));
+  }
+}
+.animate-trophy-glow {
+  animation: trophy-glow-pulse 2.4s var(--ease-in-out) infinite;
+}
+
+@keyframes sticky-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-sticky-slide-down {
+  animation: sticky-slide-down 240ms var(--ease-out) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-timer-breathe,
+  .animate-timer-ripple,
+  .animate-timer-alert,
+  .animate-timer-flash,
+  .animate-trophy-pop,
+  .animate-trophy-glow,
+  .animate-sticky-slide-down {
+    animation: none !important;
+  }
+}
+

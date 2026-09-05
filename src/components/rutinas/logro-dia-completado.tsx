@@ -1,0 +1,181 @@
+"use client";
+
+import { useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
+
+interface LogroDiaCompletadoProps {
+  abierto: boolean;
+  diaTitulo: string;
+  totalSeries: number;
+  volumenKilos: number;
+  tiempoMin: number;
+  onClose: () => void;
+}
+
+export function LogroDiaCompletado({
+  abierto,
+  diaTitulo,
+  totalSeries,
+  volumenKilos,
+  tiempoMin,
+  onClose,
+}: LogroDiaCompletadoProps) {
+  const audioCtxRef = useRef<AudioContext | null>(null);
+
+  useEffect(() => {
+    if (!abierto) return;
+
+    // Háptica victoriosa
+    if ("vibrate" in navigator) {
+      navigator.vibrate([80, 50, 80, 50, 220]);
+    }
+
+    // Fanfarria sutil de celebración con Web Audio API (acorde C5 - E5 - G5)
+    try {
+      if (!audioCtxRef.current) {
+        audioCtxRef.current = new AudioContext();
+      }
+      const ctx = audioCtxRef.current;
+      const notas = [523.25, 659.25, 783.99]; // C5, E5, G5
+      notas.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        const startTime = ctx.currentTime + idx * 0.12;
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq, startTime);
+
+        gain.gain.setValueAtTime(0.001, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.25, startTime + 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.35);
+
+        osc.start(startTime);
+        osc.stop(startTime + 0.36);
+      });
+    } catch (err) {
+      console.warn("No se pudo reproducir audio de logro:", err);
+    }
+  }, [abierto]);
+
+  if (!abierto || typeof document === "undefined") return null;
+
+  return createPortal(
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="titulo-logro"
+      onClick={onClose}
+      className="fixed inset-0 z-[110] flex items-center justify-center bg-[color:var(--scrim)] p-4 backdrop-blur-md animate-fade-in"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-sm overflow-hidden rounded-[22px] border border-accent/40 bg-paper-2 p-6 text-center shadow-2xl animate-scale-in"
+      >
+        {/* Halo de resplandor superior */}
+        <div
+          className="pointer-events-none absolute -top-16 left-1/2 -translate-x-1/2 size-40 rounded-full bg-accent/20 blur-2xl"
+          aria-hidden
+        />
+
+        {/* Chispas/Partículas decorativas con aceleración GPU */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+          {Array.from({ length: 12 }).map((_, i) => (
+            <span
+              key={i}
+              className="absolute size-1.5 rounded-full bg-accent animate-ping"
+              style={{
+                top: `${20 + (i * 17) % 65}%`,
+                left: `${10 + (i * 23) % 80}%`,
+                animationDuration: `${1.2 + (i % 3) * 0.4}s`,
+                animationDelay: `${i * 0.1}s`,
+                opacity: 0.6,
+              }}
+            />
+          ))}
+        </div>
+
+        {/* Trofeo triunfal animado */}
+        <div className="relative mx-auto mb-4 grid size-20 place-items-center rounded-full border border-accent/40 bg-accent/15 text-accent shadow-[0_0_24px_var(--accent)] animate-trophy-pop">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="size-10 animate-trophy-glow"
+          >
+            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+            <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+            <path d="M4 22h16" />
+            <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+            <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+            <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+          </svg>
+        </div>
+
+        <span className="inline-block rounded-full bg-accent/20 px-3 py-1 text-xs font-bold uppercase tracking-widest text-accent">
+          ¡Meta cumplida!
+        </span>
+
+        <h2
+          id="titulo-logro"
+          className="mt-2 text-2xl font-bold tracking-tight text-ink"
+        >
+          ¡Día completado! 💥
+        </h2>
+        <p className="mt-1 text-xs leading-snug text-ink-soft">
+          Terminaste todas las series de <strong className="text-ink font-semibold">{diaTitulo}</strong>. Tu esfuerzo de hoy ya suma para tu progreso.
+        </p>
+
+        {/* Estadísticas finales del día */}
+        <div className="mt-5 grid grid-cols-3 gap-2 rounded-[14px] border border-rule bg-paper p-3">
+          <div>
+            <div
+              className="text-base font-bold text-accent"
+              style={{ fontFamily: "var(--font-hero)" }}
+            >
+              {totalSeries}/{totalSeries}
+            </div>
+            <div className="text-[10px] font-semibold uppercase text-ink-soft">
+              Series
+            </div>
+          </div>
+          <div>
+            <div
+              className="text-base font-bold text-ink"
+              style={{ fontFamily: "var(--font-hero)" }}
+            >
+              ~{volumenKilos.toLocaleString("es-AR")} kg
+            </div>
+            <div className="text-[10px] font-semibold uppercase text-ink-soft">
+              Volumen
+            </div>
+          </div>
+          <div>
+            <div
+              className="text-base font-bold text-ink"
+              style={{ fontFamily: "var(--font-hero)" }}
+            >
+              ~{tiempoMin}m
+            </div>
+            <div className="text-[10px] font-semibold uppercase text-ink-soft">
+              Tiempo
+            </div>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="mt-6 flex h-12 w-full items-center justify-center rounded-[12px] bg-accent text-sm font-bold text-accent-ink shadow-md transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+        >
+          A descansar
+        </button>
+      </div>
+    </div>,
+    document.body,
+  );
+}

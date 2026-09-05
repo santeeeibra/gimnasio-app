@@ -9,13 +9,15 @@ import { cupoSocios } from "@/lib/plataforma/cupo";
 import { ClienteRow, type ClienteVista } from "./clientes/cliente-row";
 import { OnboardingDueno } from "./onboarding-dueno";
 import { BotonInstalarApp } from "@/components/pwa/boton-instalar-app";
+import { WidgetAsistenciaSala } from "@/components/panel/widget-asistencia-sala";
+import { obtenerPedidosActivos } from "./asistencia/actions";
 
 export default async function ResumenPage() {
   const dueno = await requireDueno();
   const supabase = await createClient();
 
   const adminDb = createAdminClient();
-  const [{ data: gym }, cupo, { data }, { count: planesCount }] = await Promise.all([
+  const [{ data: gym }, cupo, { data }, { count: planesCount }, pedidosRes] = await Promise.all([
     supabase
       .from("gimnasios")
       .select("estado")
@@ -43,7 +45,10 @@ export default async function ResumenPage() {
       .from("planes")
       .select("id", { count: "exact", head: true })
       .eq("gimnasio_id", dueno.gimnasio_id),
+    obtenerPedidosActivos(),
   ]);
+
+  const pedidosActivos = pedidosRes?.pedidos ?? [];
 
   const estadoGimnasio = gym?.estado ?? "prueba";
   const soloLectura = estadoGimnasio === "solo_lectura";
@@ -93,6 +98,11 @@ export default async function ResumenPage() {
 
   return (
     <div className="stagger">
+      <WidgetAsistenciaSala
+        iniciales={pedidosActivos}
+        gimnasioId={dueno.gimnasio_id}
+      />
+
       {soloLectura && (
         <div className="mb-6 rounded-lg border-2 border-danger bg-danger/10 p-4">
           <h2 className="mb-2 text-lg font-display text-danger">
