@@ -122,6 +122,12 @@ export default async function AdminPage() {
               <span className="text-xs font-bold text-ink">{errores24h ?? 0}</span>
               <span className="text-[11px] text-ink-soft">err 24h</span>
             </div>
+            <Link
+              href="/admin/gimnasios/nuevo"
+              className="inline-flex items-center gap-1.5 rounded-[12px] bg-ink px-3.5 py-1.5 text-xs font-semibold text-paper shadow-sm hover:brightness-125 active:scale-95 transition-all"
+            >
+              + Nuevo Gym
+            </Link>
           </div>
         </div>
 

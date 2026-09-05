@@ -63,7 +63,7 @@ export default async function ClienteDetallePage({
           return await supabase
             .from("clientes")
             .select(
-              "id, estado_cuota, fecha_inicio, fecha_vencimiento, plan_id, sexo, email, en_prueba, prueba_iniciada_en, acceso_habilitado, profile:profiles(id, nombre, dni, telefono, debe_cambiar_clave), plan:planes(nombre)",
+              "id, estado_cuota, fecha_inicio, fecha_vencimiento, plan_id, sexo, email, foto_url, en_prueba, prueba_iniciada_en, acceso_habilitado, profile:profiles(id, nombre, dni, telefono, debe_cambiar_clave), plan:planes(nombre)",
             )
             .eq("id", id)
             .maybeSingle();
@@ -162,20 +162,22 @@ export default async function ClienteDetallePage({
           <ChevronLeft aria-hidden strokeWidth={2} className="size-4" />
           Clientes
         </Link>
-        <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl">{c.profile?.nombre}</h1>
-            <p className="text-sm text-ink-soft">
-              DNI {c.profile?.dni}
-              {c.profile?.telefono ? ` · ${c.profile.telefono}` : ""}
-            </p>
+        <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-rule/50 pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <FotoSocioUploader
+              gimnasioId={dueno.gimnasio_id}
+              clienteId={id}
+              fotoUrlInicial={c.foto_url ?? null}
+              nombre={c.profile?.nombre ?? "Socio"}
+            />
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-ink">{c.profile?.nombre}</h1>
+              <p className="text-sm text-ink-soft">
+                DNI {c.profile?.dni}
+                {c.profile?.telefono ? ` · ${c.profile.telefono}` : ""}
+              </p>
+            </div>
           </div>
-          <FotoSocioUploader
-            gimnasioId={dueno.gimnasio_id}
-            clienteId={id}
-            fotoUrlInicial={c.foto_url ?? null}
-            nombre={c.profile?.nombre ?? "Socio"}
-          />
         </div>
       </div>
 

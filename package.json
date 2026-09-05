@@ -6,7 +6,8 @@
     "dev": "next dev -H 0.0.0.0",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:fast": "node scripts/test-rapido.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.2",

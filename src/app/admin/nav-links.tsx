@@ -9,10 +9,12 @@ import {
   CreditCard,
   BellRing,
   Dumbbell,
+  HeartPulse,
 } from "lucide-react";
 
 const NAV = [
   { href: "/admin", label: "Cockpit", icon: Gauge },
+  { href: "/admin/salud", label: "Salud", icon: HeartPulse },
   { href: "/admin/gimnasios", label: "Gimnasios", icon: Building2 },
   { href: "/admin/errores", label: "Errores", icon: AlertTriangle },
   { href: "/admin/planes", label: "Planes", icon: CreditCard },

@@ -6,6 +6,8 @@ import { comprimirImagen } from "@/lib/img/comprimir";
 import { guardarFotoSocio } from "../actions";
 import { Spinner, linkClasses } from "@/components/ui";
 import { ImageCropModal } from "@/components/ui/image-crop-modal";
+import { Camera } from "lucide-react";
+import { hapticoExito, hapticoImpactoMedio } from "@/lib/ui/hapticos";
 
 const BUCKET = "fotos-socios";
 const FOTO_MAX_LADO = 256;
@@ -90,6 +92,7 @@ export function FotoSocioUploader({
 
       setVersion(Date.now());
       setFotoUrl(publicUrl);
+      hapticoExito();
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "No se pudo guardar la foto.",
@@ -113,6 +116,7 @@ export function FotoSocioUploader({
 
       setFotoUrl(null);
       setVersion(Date.now());
+      hapticoImpactoMedio();
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "No se pudo quitar la foto.",
@@ -125,45 +129,62 @@ export function FotoSocioUploader({
   return (
     <>
       <div className="flex items-center gap-4">
-        {/* AVATAR CIRCULAR */}
-        <div className="relative size-16 shrink-0">
+        {/* AVATAR TÁCTIL CON BADGE DE CÁMARA */}
+        <label
+          className={`relative size-18 sm:size-20 shrink-0 cursor-pointer rounded-full group select-none transition-transform active:scale-95 ${
+            pending ? "pointer-events-none opacity-60" : ""
+          }`}
+          title="Tocar para cambiar foto"
+        >
+          <input
+            type="file"
+            accept="image/*"
+            disabled={pending}
+            className="sr-only"
+            onChange={onFileChange}
+          />
+
           {src ? (
             /* eslint-disable-next-line @next/next/no-img-element */
             <img
               src={src}
               alt={`Foto de ${nombre}`}
-              className="size-16 rounded-full object-cover border-2 border-rule bg-paper-2 shadow-sm"
+              className="size-full rounded-full object-cover border-2 border-rule bg-paper-2 shadow-sm group-hover:brightness-95 transition-all"
             />
           ) : (
-            <div className="size-16 rounded-full bg-paper-3 border-2 border-dashed border-rule text-ink-soft grid place-items-center text-sm font-semibold tracking-wider">
+            <div className="size-full rounded-full bg-paper-2 border-2 border-dashed border-rule text-ink-soft grid place-items-center text-lg font-semibold tracking-wider group-hover:border-ink/50 transition-all">
               {iniciales}
             </div>
           )}
 
+          {/* BADGE DE CÁMARA ESTILO IOS */}
+          <div className="absolute -bottom-1 -right-1 size-7 rounded-full bg-ink text-paper flex items-center justify-center shadow-md border-2 border-paper transition-transform group-hover:scale-110">
+            <Camera className="size-3.5" />
+          </div>
+
           {pending ? (
             <div className="absolute inset-0 bg-paper/70 backdrop-blur-xs rounded-full grid place-items-center">
-              <Spinner className="text-accent" />
+              <Spinner className="text-ink" />
             </div>
           ) : null}
-        </div>
+        </label>
 
-        {/* ACCIONES (SUBIR / CAMBIAR / QUITAR) CON FIX DE SAFARI IOS */}
-        <div className="flex flex-col gap-1.5 min-w-0">
+        {/* ACCIONES Y TEXTO ASISTENCIAL */}
+        <div className="flex flex-col gap-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <label
-              className={`relative inline-flex h-8 items-center justify-center gap-1.5 overflow-hidden rounded-[5px] border border-rule bg-paper px-3 text-xs font-medium text-ink transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 hover:bg-paper-2 focus-within:outline-none focus-within:ring-2 focus-within:ring-ink/20 ${
-                pending
-                  ? "cursor-not-allowed opacity-50 pointer-events-none"
-                  : "cursor-pointer"
+              className={`relative inline-flex h-8 items-center justify-center gap-1.5 overflow-hidden rounded-[8px] border border-rule bg-paper px-3 text-xs font-semibold text-ink transition-all active:scale-95 hover:bg-paper-2 ${
+                pending ? "cursor-not-allowed opacity-50 pointer-events-none" : "cursor-pointer shadow-xs"
               }`}
             >
               <input
                 type="file"
                 accept="image/*"
                 disabled={pending}
-                className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed"
+                className="sr-only"
                 onChange={onFileChange}
               />
+              <Camera className="size-3.5 text-ink-soft" />
               <span>{src ? "Cambiar foto" : "Subir foto"}</span>
             </label>
 
@@ -172,7 +193,7 @@ export function FotoSocioUploader({
                 type="button"
                 disabled={pending}
                 onClick={quitarFoto}
-                className={`text-xs disabled:opacity-50 ${linkClasses.accion}`}
+                className={`text-xs text-danger hover:underline disabled:opacity-50 py-1 px-1.5`}
               >
                 Quitar
               </button>
@@ -180,11 +201,11 @@ export function FotoSocioUploader({
           </div>
 
           <span className="text-[11px] text-ink-soft">
-            Máx. 256px · Se comprime a menos de 60 KB
+            Tocá la foto para sacarle o subir una desde tu celular
           </span>
 
           {error ? (
-            <p role="alert" className="text-xs text-danger">
+            <p role="alert" className="text-xs text-danger font-medium mt-0.5">
               {error}
             </p>
           ) : null}

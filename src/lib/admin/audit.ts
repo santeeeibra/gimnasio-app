@@ -12,6 +12,7 @@ const AVISA_SUPERADMIN = new Set<AccionAdmin>([
   "rechazar_pago_plataforma",
   "entrar_como",
   "activar_gimnasio_disponible",
+  "crear_gimnasio",
 ]);
 
 type AccionAdmin =
@@ -28,6 +29,7 @@ type AccionAdmin =
   | "rechazar_pago_plataforma"
   | "forzar_estado_socio"
   | "activar_gimnasio_disponible"
+  | "crear_gimnasio"
   | "importar_socios";
 
 // Traduce (action, meta) a un texto legible para la notificación al

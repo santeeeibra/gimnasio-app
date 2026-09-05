@@ -65,7 +65,15 @@ export default async function AdminGimnasiosPage() {
 
   return (
     <div className="stagger">
-      <h1 className="mb-1 text-lg">Gimnasios</h1>
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <h1 className="text-lg font-bold text-ink">Gimnasios</h1>
+        <Link
+          href="/admin/gimnasios/nuevo"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] bg-ink text-paper text-xs font-semibold hover:brightness-125 transition-all shadow-sm active:scale-95"
+        >
+          + Nuevo Gimnasio
+        </Link>
+      </div>
       <p className="mb-4 text-sm text-ink-soft">
         {lista.length} en total. Vista de soporte, solo lectura. La bolita marca
         errores de las últimas 24 h:{" "}

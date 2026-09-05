@@ -476,3 +476,137 @@ export async function cambiarPlanRapido(
   };
 }
 
+// ── Alta de un nuevo gimnasio desde /admin (Onboarding móvil) ──
+
+export type ResultadoAltaGym = {
+  ok: boolean;
+  msg: string;
+  credenciales?: {
+    gimnasioId: string;
+    nombre: string;
+    slug: string;
+    dni: string;
+    nombreDueno: string;
+    emailSintetico: string;
+    passwordTemporal: string;
+  };
+};
+
+export async function crearGimnasio(
+  _prev: ResultadoAltaGym | null,
+  formData: FormData,
+): Promise<ResultadoAltaGym> {
+  const admin = await requireSuperadmin();
+  const db = createAdminClient();
+
+  const nombre = String(formData.get("nombre") ?? "").trim();
+  const rawSlug = String(formData.get("slug") ?? "").trim().toLowerCase();
+  const slug = rawSlug.replace(/[^a-z0-9_-]/g, "");
+  const dni = String(formData.get("dni") ?? "").replace(/\D/g, "");
+  const nombreDueno = String(formData.get("nombre_dueno") ?? "").trim();
+  const emailRecuperacion = String(formData.get("email_recuperacion") ?? "").trim().toLowerCase();
+  const planId = String(formData.get("plan_id") ?? "").trim();
+
+  if (!nombre || !slug || !dni || !nombreDueno) {
+    return { ok: false, msg: "Completá nombre, slug, DNI y nombre del dueño." };
+  }
+
+  if (dni.length < 6) {
+    return { ok: false, msg: "El DNI ingresado no parece válido." };
+  }
+
+  // 1. Verificar si el slug ya existe
+  const { data: gymExistente } = await db
+    .from("gimnasios")
+    .select("id")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (gymExistente) {
+    return { ok: false, msg: `El slug "${slug}" ya está en uso por otro gimnasio.` };
+  }
+
+  // 2. Obtener plan seleccionado o Básico
+  let planElegidoId: string | null = planId || null;
+  if (!planElegidoId) {
+    const { data: planBasico } = await db
+      .from("planes_plataforma")
+      .select("id")
+      .eq("nombre", "Básico")
+      .maybeSingle();
+    planElegidoId = planBasico?.id ?? null;
+  }
+
+  // 3. Crear el gimnasio
+  const { data: gym, error: gymErr } = await db
+    .from("gimnasios")
+    .insert({
+      nombre,
+      slug,
+      plan_plataforma_id: planElegidoId,
+      estado: "activo",
+    })
+    .select()
+    .single();
+
+  if (gymErr || !gym) {
+    return { ok: false, msg: `Error al crear gimnasio: ${gymErr?.message ?? "desconocido"}` };
+  }
+
+  // 4. Crear usuario en Auth con email sintético
+  const emailSintetico = `${dni}@${slug}.gym.local`;
+  const passwordTemporal = `gym${dni.slice(-4)}`;
+
+  const { data: createdUser, error: authErr } = await db.auth.admin.createUser({
+    email: emailSintetico,
+    password: passwordTemporal,
+    email_confirm: true,
+  });
+
+  if (authErr || !createdUser.user) {
+    // Revertir creación de gimnasio si falla auth
+    await db.from("gimnasios").delete().eq("id", gym.id);
+    return { ok: false, msg: `Error creando usuario en Auth: ${authErr?.message ?? "desconocido"}` };
+  }
+
+  // 5. Crear perfil del dueño
+  const { error: profErr } = await db.from("profiles").insert({
+    id: createdUser.user.id,
+    gimnasio_id: gym.id,
+    rol: "dueno",
+    dni,
+    nombre: nombreDueno,
+    debe_cambiar_clave: true,
+    email_recuperacion: emailRecuperacion || null,
+  });
+
+  if (profErr) {
+    return { ok: false, msg: `Error creando perfil: ${profErr.message}` };
+  }
+
+  // 6. Auditoría
+  await registrarAccionAdmin(admin.id, "crear_gimnasio", gym.id, {
+    nombre,
+    slug,
+    dni,
+    nombreDueno,
+    planId: planElegidoId,
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/gimnasios");
+
+  return {
+    ok: true,
+    msg: `¡Gimnasio "${nombre}" dado de alta con éxito!`,
+    credenciales: {
+      gimnasioId: gym.id,
+      nombre,
+      slug,
+      dni,
+      nombreDueno,
+      emailSintetico,
+      passwordTemporal,
+    },
+  };
+}
