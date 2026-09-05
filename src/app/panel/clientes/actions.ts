@@ -427,3 +427,37 @@ export async function generarRutinaCliente(
   revalidatePath(`/panel/clientes/${clienteId}`);
   return { ok: "Rutina generada para el cliente." };
 }
+
+export async function guardarFotoSocio(
+  clienteId: string,
+  fotoUrl: string | null,
+): Promise<{ error?: string }> {
+  const dueno = await requireDueno();
+  const supabase = await createClient();
+
+  const { data: cli } = await supabase
+    .from("clientes")
+    .select("id, gimnasio_id")
+    .eq("id", clienteId)
+    .maybeSingle();
+
+  if (!cli || cli.gimnasio_id !== dueno.gimnasio_id) {
+    return { error: "Cliente no encontrado o no pertenece a tu gimnasio." };
+  }
+
+  const { error } = await supabase
+    .from("clientes")
+    .update({ foto_url: fotoUrl })
+    .eq("id", clienteId)
+    .eq("gimnasio_id", dueno.gimnasio_id);
+
+  if (error) {
+    return { error: "No se pudo actualizar la foto de perfil." };
+  }
+
+  revalidatePath(`/panel/clientes/${clienteId}`);
+  revalidatePath("/panel/clientes");
+  revalidatePath("/panel");
+
+  return {};
+}

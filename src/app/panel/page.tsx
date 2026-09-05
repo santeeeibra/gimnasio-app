@@ -23,9 +23,20 @@ export default async function ResumenPage() {
     supabase
       .from("clientes")
       .select(
-        "id, estado_cuota, fecha_vencimiento, plan_id, profile:profiles(nombre, dni, telefono), plan:planes(nombre)",
+        "id, estado_cuota, fecha_vencimiento, plan_id, foto_url, profile:profiles(nombre, dni, telefono), plan:planes(nombre)",
       )
-      .order("fecha_vencimiento", { ascending: true, nullsFirst: true }),
+      .order("fecha_vencimiento", { ascending: true, nullsFirst: true })
+      .then(async (res) => {
+        if (res.error) {
+          return await supabase
+            .from("clientes")
+            .select(
+              "id, estado_cuota, fecha_vencimiento, plan_id, profile:profiles(nombre, dni, telefono), plan:planes(nombre)",
+            )
+            .order("fecha_vencimiento", { ascending: true, nullsFirst: true });
+        }
+        return res;
+      }),
     supabase
       .from("planes")
       .select("id", { count: "exact", head: true })

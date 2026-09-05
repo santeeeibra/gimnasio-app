@@ -7,6 +7,7 @@ export type ClienteVista = {
   estado_cuota: "al_dia" | "por_vencer" | "vencido";
   fecha_vencimiento: string | null;
   plan_id: string | null;
+  foto_url?: string | null;
   en_prueba?: boolean;
   profile: { nombre: string; dni: string; telefono: string | null } | null;
   plan: { nombre: string } | null;
@@ -48,30 +49,55 @@ export function ClienteRow({
   const puedeRenovar =
     !enPrueba && !!cliente.plan_id && estado !== "al_dia";
 
+  const iniciales = cliente.profile?.nombre
+    ? cliente.profile.nombre
+        .split(" ")
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((p) => p[0])
+        .join("")
+        .toUpperCase()
+    : "👤";
+
   return (
     <li className={`flex items-stretch border-l-[3px] ${RAIL[estado]}`}>
       <Link
         href={`/panel/clientes/${cliente.id}`}
-        className="flex flex-1 items-center justify-between gap-4 px-4 py-4 transition-colors duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper active:bg-paper"
+        className="flex flex-1 items-center justify-between gap-4 px-4 py-3.5 transition-colors duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper active:bg-paper"
       >
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <p className="truncate text-[15px] font-medium">
-              {cliente.profile?.nombre ?? "—"}
+        <div className="flex items-center gap-3 min-w-0">
+          {cliente.foto_url ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={cliente.foto_url}
+              alt=""
+              className="size-10 rounded-full object-cover shrink-0 border border-rule bg-paper-2"
+            />
+          ) : (
+            <span className="size-10 rounded-full bg-paper-3 text-ink-soft border border-rule grid place-items-center text-xs font-semibold shrink-0 uppercase tracking-wider">
+              {iniciales}
+            </span>
+          )}
+
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <p className="truncate text-[15px] font-medium">
+                {cliente.profile?.nombre ?? "—"}
+              </p>
+              {pruebaVencida ? (
+                <span className="shrink-0 rounded-full border border-danger px-2 py-0.5 text-[11px] font-medium leading-none text-danger">
+                  Prueba vencida
+                </span>
+              ) : enPrueba ? (
+                <span className="shrink-0 rounded-full border border-rule px-2 py-0.5 text-[11px] font-medium leading-none text-ink-soft">
+                  En prueba
+                </span>
+              ) : null}
+            </div>
+            <p className="mt-0.5 truncate text-xs text-ink-soft">
+              DNI {cliente.profile?.dni} · {cliente.plan?.nombre ?? "sin plan"}
             </p>
-            {pruebaVencida ? (
-              <span className="shrink-0 rounded-full border border-danger px-2 py-0.5 text-[11px] font-medium leading-none text-danger">
-                Prueba vencida
-              </span>
-            ) : enPrueba ? (
-              <span className="shrink-0 rounded-full border border-rule px-2 py-0.5 text-[11px] font-medium leading-none text-ink-soft">
-                En prueba
-              </span>
-            ) : null}
           </div>
-          <p className="mt-0.5 truncate text-xs text-ink-soft">
-            DNI {cliente.profile?.dni} · {cliente.plan?.nombre ?? "sin plan"}
-          </p>
         </div>
         <div className="shrink-0 text-right">
           <p className="text-[11px] uppercase tracking-[0.08em] text-ink-soft">

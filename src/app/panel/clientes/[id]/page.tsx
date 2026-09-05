@@ -35,6 +35,7 @@ type Prefs = {
 } | null;
 import { PagoForm } from "./pago-form";
 import { RutinaPanelDueno } from "./rutina-panel";
+import { FotoSocioUploader } from "./foto-socio-uploader";
 
 export default async function ClienteDetallePage({
   params,
@@ -49,10 +50,22 @@ export default async function ClienteDetallePage({
     supabase
       .from("clientes")
       .select(
-        "id, estado_cuota, fecha_inicio, fecha_vencimiento, plan_id, sexo, email, en_prueba, prueba_iniciada_en, acceso_habilitado, profile:profiles(id, nombre, dni, telefono, debe_cambiar_clave), plan:planes(nombre)",
+        "id, estado_cuota, fecha_inicio, fecha_vencimiento, plan_id, sexo, email, foto_url, en_prueba, prueba_iniciada_en, acceso_habilitado, profile:profiles(id, nombre, dni, telefono, debe_cambiar_clave), plan:planes(nombre)",
       )
       .eq("id", id)
-      .maybeSingle(),
+      .maybeSingle()
+      .then(async (res) => {
+        if (res.error) {
+          return await supabase
+            .from("clientes")
+            .select(
+              "id, estado_cuota, fecha_inicio, fecha_vencimiento, plan_id, sexo, email, en_prueba, prueba_iniciada_en, acceso_habilitado, profile:profiles(id, nombre, dni, telefono, debe_cambiar_clave), plan:planes(nombre)",
+            )
+            .eq("id", id)
+            .maybeSingle();
+        }
+        return res;
+      }),
     supabase
       .from("gimnasios")
       .select("slug, nombre")
@@ -128,11 +141,21 @@ export default async function ClienteDetallePage({
           <ChevronLeft aria-hidden strokeWidth={2} className="size-4" />
           Clientes
         </Link>
-        <h1 className="text-2xl mt-2">{c.profile?.nombre}</h1>
-        <p className="text-sm text-ink-soft">
-          DNI {c.profile?.dni}
-          {c.profile?.telefono ? ` · ${c.profile.telefono}` : ""}
-        </p>
+        <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl">{c.profile?.nombre}</h1>
+            <p className="text-sm text-ink-soft">
+              DNI {c.profile?.dni}
+              {c.profile?.telefono ? ` · ${c.profile.telefono}` : ""}
+            </p>
+          </div>
+          <FotoSocioUploader
+            gimnasioId={dueno.gimnasio_id}
+            clienteId={id}
+            fotoUrlInicial={c.foto_url ?? null}
+            nombre={c.profile?.nombre ?? "Socio"}
+          />
+        </div>
       </div>
 
       <Panel className="p-5">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { procesarLogo } from "@/lib/logo/comprimir";
 import { colorDominante } from "@/lib/logo/paleta";
@@ -22,7 +22,6 @@ export function LogoUploader({
   /** Color dominante detectado en el logo recién subido. */
   onColor: (hex: string) => void;
 }) {
-  const inputRef = useRef<HTMLInputElement>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Cache-buster: el path es fijo (<id>.webp), hay que forzar recarga.
@@ -127,12 +126,20 @@ export function LogoUploader({
         )}
 
         <div className="flex min-w-0 flex-col gap-2">
-          <button
-            type="button"
-            disabled={pending}
-            onClick={() => inputRef.current?.click()}
-            className="inline-flex h-9 items-center justify-center gap-2 rounded-[5px] border border-rule bg-paper px-3 text-sm font-medium text-ink transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 hover:bg-paper-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 disabled:opacity-50"
+          <label
+            className={`relative inline-flex h-9 items-center justify-center gap-2 overflow-hidden rounded-[5px] border border-rule bg-paper px-3 text-sm font-medium text-ink transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 hover:bg-paper-2 focus-within:outline-none focus-within:ring-2 focus-within:ring-ink/20 ${
+              pending
+                ? "cursor-not-allowed opacity-50 pointer-events-none"
+                : "cursor-pointer"
+            }`}
           >
+            <input
+              type="file"
+              accept="image/*"
+              disabled={pending}
+              className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed"
+              onChange={onFile}
+            />
             {pending ? (
               <>
                 <Spinner />
@@ -143,7 +150,7 @@ export function LogoUploader({
             ) : (
               "Subir logo"
             )}
-          </button>
+          </label>
           {src ? (
             <button
               type="button"
@@ -156,14 +163,6 @@ export function LogoUploader({
           ) : null}
         </div>
       </div>
-
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*"
-        className="sr-only"
-        onChange={onFile}
-      />
 
       {error ? (
         <p role="alert" className="text-sm text-danger">
