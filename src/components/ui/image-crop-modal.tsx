@@ -12,9 +12,18 @@ export interface ImageCropModalProps {
 }
 
 type CropShape = "circle" | "square";
+type ImageSource = HTMLCanvasElement | HTMLImageElement;
 
 const CANVAS_SIZE = 280; // Tamaño del canvas en pantalla (CSS px)
 const CROP_SIZE = 240;   // Diámetro / ancho de la zona de recorte (CSS px)
+
+function getSourceDims(source: ImageSource | null) {
+  if (!source) return { w: 0, h: 0 };
+  if ("naturalWidth" in source && source.naturalWidth) {
+    return { w: source.naturalWidth, h: source.naturalHeight };
+  }
+  return { w: source.width, h: source.height };
+}
 
 export function ImageCropModal({
   isOpen,
@@ -23,7 +32,7 @@ export function ImageCropModal({
   onCancel,
 }: ImageCropModalProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const imageRef = useRef<HTMLImageElement | null>(null);
+  const imageRef = useRef<ImageSource | null>(null);
 
   const [imageLoaded, setImageLoaded] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -44,14 +53,13 @@ export function ImageCropModal({
   // Función de contención (clamp) para que la imagen nunca deje huecos vacíos en el recorte
   const getClampedPan = useCallback(
     (px: number, py: number, currentZoom: number, currentRot: number) => {
-      const img = imageRef.current;
-      if (!img || !img.naturalWidth || !img.naturalHeight) {
-        return { x: 0, y: 0 };
-      }
+      const source = imageRef.current;
+      const { w, h } = getSourceDims(source);
+      if (!w || !h) return { x: 0, y: 0 };
 
       const isSideways = currentRot % 180 !== 0;
-      const ew = isSideways ? img.naturalHeight : img.naturalWidth;
-      const eh = isSideways ? img.naturalWidth : img.naturalHeight;
+      const ew = isSideways ? h : w;
+      const eh = isSideways ? w : h;
 
       if (!ew || !eh) return { x: 0, y: 0 };
 
@@ -95,7 +103,7 @@ export function ImageCropModal({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onCancel]);
 
-  // Cargar imagen desde el File
+  // Cargar imagen desde el File optimizándola para interacción en tiempo real
   useEffect(() => {
     if (!isOpen || !file) {
       setImageLoaded(false);
@@ -111,20 +119,51 @@ export function ImageCropModal({
     setRotation(0);
 
     const objectUrl = URL.createObjectURL(file);
-    const img = new Image();
+    const rawImg = new Image();
 
-    img.onload = () => {
-      imageRef.current = img;
+    rawImg.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      const nw = rawImg.naturalWidth;
+      const nh = rawImg.naturalHeight;
+      if (!nw || !nh) {
+        setLoadError("La imagen no tiene dimensiones válidas.");
+        return;
+      }
+
+      // Fotos de celulares (iOS/Android) suelen ser de 12MP a 48MP (4000x3000 o más).
+      // Reducir la imagen en un canvas offscreen de máx 1024px previene el 100% de
+      // los bloqueos, congelamientos de Safari y saltos bruscos de FPS, manteniendo
+      // una resolución 4x superior a los 256px requeridos.
+      const maxDim = Math.max(nw, nh);
+      if (maxDim > 1024) {
+        const scale = 1024 / maxDim;
+        const offCanvas = document.createElement("canvas");
+        offCanvas.width = Math.round(nw * scale);
+        offCanvas.height = Math.round(nh * scale);
+        const offCtx = offCanvas.getContext("2d");
+        if (offCtx) {
+          offCtx.imageSmoothingEnabled = true;
+          offCtx.imageSmoothingQuality = "high";
+          offCtx.drawImage(rawImg, 0, 0, offCanvas.width, offCanvas.height);
+          imageRef.current = offCanvas;
+        } else {
+          imageRef.current = rawImg;
+        }
+      } else {
+        imageRef.current = rawImg;
+      }
+
       setImageLoaded(true);
       setLoadError(null);
     };
 
-    img.onerror = () => {
+    rawImg.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
       setLoadError("No se pudo cargar la imagen. Probá con otra foto.");
       setImageLoaded(false);
     };
 
-    img.src = objectUrl;
+    rawImg.src = objectUrl;
 
     return () => {
       URL.revokeObjectURL(objectUrl);
@@ -134,8 +173,11 @@ export function ImageCropModal({
   // Dibujar en el canvas de previsualización
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
-    const img = imageRef.current;
-    if (!canvas || !img || !imageLoaded) return;
+    const source = imageRef.current;
+    if (!canvas || !source || !imageLoaded) return;
+
+    const { w: imgW, h: imgH } = getSourceDims(source);
+    if (!imgW || !imgH) return;
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
@@ -154,8 +196,8 @@ export function ImageCropModal({
     ctx.clearRect(0, 0, width, height);
 
     const isSideways = rotation % 180 !== 0;
-    const ew = isSideways ? img.naturalHeight : img.naturalWidth;
-    const eh = isSideways ? img.naturalWidth : img.naturalHeight;
+    const ew = isSideways ? imgH : imgW;
+    const eh = isSideways ? imgW : imgH;
 
     const baseScale = Math.max(CROP_SIZE / ew, CROP_SIZE / eh);
     const scale = baseScale * zoom;
@@ -170,7 +212,7 @@ export function ImageCropModal({
     ctx.translate(cx + clamped.x, cy + clamped.y);
     ctx.rotate((rotation * Math.PI) / 180);
     ctx.scale(scale, scale);
-    ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
+    ctx.drawImage(source, -imgW / 2, -imgH / 2);
     ctx.restore();
 
     // 2. Máscara oscura con ventana de visualización nítida
@@ -258,90 +300,138 @@ export function ImageCropModal({
     draw();
   }, [draw]);
 
-  // Manejo de eventos nativos Touch y Wheel con preventDefault para evitar rebotes/zoom de Safari iOS
+  // Manejo robusto de eventos Touch con máquina de estados limpia
+  const touchStateRef = useRef<{
+    mode: "none" | "pan" | "pinch";
+    startTouches: { id: number; x: number; y: number }[];
+    startPan: { x: number; y: number };
+    startZoom: number;
+    startDist: number;
+  }>({
+    mode: "none",
+    startTouches: [],
+    startPan: { x: 0, y: 0 },
+    startZoom: 1,
+    startDist: 0,
+  });
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    let touchStartPoints: { x: number; y: number }[] = [];
-    let lastPinchDistance = 0;
-
     const onTouchStart = (e: TouchEvent) => {
       e.preventDefault();
       setIsInteracting(true);
+
       if (e.touches.length === 1) {
-        touchStartPoints = [{ x: e.touches[0].clientX, y: e.touches[0].clientY }];
+        touchStateRef.current = {
+          mode: "pan",
+          startTouches: [{ id: e.touches[0].identifier, x: e.touches[0].clientX, y: e.touches[0].clientY }],
+          startPan: { ...panRef.current },
+          startZoom: zoomRef.current,
+          startDist: 0,
+        };
       } else if (e.touches.length >= 2) {
-        touchStartPoints = [
-          { x: e.touches[0].clientX, y: e.touches[0].clientY },
-          { x: e.touches[1].clientX, y: e.touches[1].clientY },
-        ];
-        lastPinchDistance = Math.hypot(
-          touchStartPoints[0].x - touchStartPoints[1].x,
-          touchStartPoints[0].y - touchStartPoints[1].y,
-        );
+        const t1 = e.touches[0];
+        const t2 = e.touches[1];
+        const dist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+        touchStateRef.current = {
+          mode: "pinch",
+          startTouches: [
+            { id: t1.identifier, x: t1.clientX, y: t1.clientY },
+            { id: t2.identifier, x: t2.clientX, y: t2.clientY },
+          ],
+          startPan: { ...panRef.current },
+          startZoom: zoomRef.current,
+          startDist: Math.max(10, dist),
+        };
       }
     };
 
     const onTouchMove = (e: TouchEvent) => {
       e.preventDefault();
-      if (e.touches.length === 1 && touchStartPoints.length >= 1) {
-        const currentX = e.touches[0].clientX;
-        const currentY = e.touches[0].clientY;
-        const dx = currentX - touchStartPoints[0].x;
-        const dy = currentY - touchStartPoints[0].y;
-        touchStartPoints = [{ x: currentX, y: currentY }];
+      const state = touchStateRef.current;
 
-        setPan((prev) =>
-          getClampedPan(prev.x + dx, prev.y + dy, zoomRef.current, rotationRef.current),
-        );
-      } else if (e.touches.length >= 2 && lastPinchDistance > 0) {
-        const currentDist = Math.hypot(
-          e.touches[0].clientX - e.touches[1].clientX,
-          e.touches[0].clientY - e.touches[1].clientY,
-        );
-        if (currentDist > 0) {
-          const ratio = currentDist / lastPinchDistance;
-          lastPinchDistance = currentDist;
-          setZoom((prev) => {
-            const nextZoom = Math.max(1, Math.min(4, +(prev * ratio).toFixed(2)));
-            setPan((currPan) =>
-              getClampedPan(currPan.x, currPan.y, nextZoom, rotationRef.current),
-            );
-            return nextZoom;
-          });
+      if (state.mode === "pan" && e.touches.length === 1) {
+        const dx = e.touches[0].clientX - state.startTouches[0].x;
+        const dy = e.touches[0].clientY - state.startTouches[0].y;
+        const nextX = state.startPan.x + dx;
+        const nextY = state.startPan.y + dy;
+
+        const clamped = getClampedPan(nextX, nextY, zoomRef.current, rotationRef.current);
+        panRef.current = clamped;
+        setPan(clamped);
+      } else if (e.touches.length >= 2) {
+        const t1 = e.touches[0];
+        const t2 = e.touches[1];
+        const currentDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+
+        if (state.mode !== "pinch" || state.startDist < 10) {
+          touchStateRef.current = {
+            mode: "pinch",
+            startTouches: [
+              { id: t1.identifier, x: t1.clientX, y: t1.clientY },
+              { id: t2.identifier, x: t2.clientX, y: t2.clientY },
+            ],
+            startPan: { ...panRef.current },
+            startZoom: zoomRef.current,
+            startDist: Math.max(10, currentDist),
+          };
+          return;
         }
+
+        // Factor lineal suave y directo: nunca salta ni se dispara exponencialmente
+        const scaleFactor = currentDist / state.startDist;
+        const targetZoom = state.startZoom * scaleFactor;
+        const sanitizedZoom = Math.max(1, Math.min(3, +(targetZoom).toFixed(2)));
+
+        zoomRef.current = sanitizedZoom;
+        setZoom(sanitizedZoom);
+
+        const clamped = getClampedPan(panRef.current.x, panRef.current.y, sanitizedZoom, rotationRef.current);
+        panRef.current = clamped;
+        setPan(clamped);
       }
     };
 
     const onTouchEnd = (e: TouchEvent) => {
       if (e.touches.length === 0) {
+        touchStateRef.current.mode = "none";
         setIsInteracting(false);
-        touchStartPoints = [];
-        lastPinchDistance = 0;
       } else if (e.touches.length === 1) {
-        touchStartPoints = [{ x: e.touches[0].clientX, y: e.touches[0].clientY }];
-        lastPinchDistance = 0;
+        touchStateRef.current = {
+          mode: "pan",
+          startTouches: [{ id: e.touches[0].identifier, x: e.touches[0].clientX, y: e.touches[0].clientY }],
+          startPan: { ...panRef.current },
+          startZoom: zoomRef.current,
+          startDist: 0,
+        };
       }
     };
 
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      const delta = -e.deltaY * 0.002;
-      setZoom((prev) => {
-        const nextZoom = Math.max(1, Math.min(4, +(prev + delta).toFixed(2)));
-        setPan((currPan) =>
-          getClampedPan(currPan.x, currPan.y, nextZoom, rotationRef.current),
-        );
-        return nextZoom;
-      });
+      const rawDelta = -e.deltaY * 0.0015;
+      const delta = Math.max(-0.25, Math.min(0.25, rawDelta));
+      const nextZoom = Math.max(1, Math.min(3, +(zoomRef.current + delta).toFixed(2)));
+      zoomRef.current = nextZoom;
+      setZoom(nextZoom);
+
+      const clamped = getClampedPan(panRef.current.x, panRef.current.y, nextZoom, rotationRef.current);
+      panRef.current = clamped;
+      setPan(clamped);
     };
+
+    const preventGesture = (e: Event) => e.preventDefault();
 
     canvas.addEventListener("touchstart", onTouchStart, { passive: false });
     canvas.addEventListener("touchmove", onTouchMove, { passive: false });
     canvas.addEventListener("touchend", onTouchEnd, { passive: false });
     canvas.addEventListener("touchcancel", onTouchEnd, { passive: false });
     canvas.addEventListener("wheel", onWheel, { passive: false });
+    canvas.addEventListener("gesturestart", preventGesture);
+    canvas.addEventListener("gesturechange", preventGesture);
+    canvas.addEventListener("gestureend", preventGesture);
 
     return () => {
       canvas.removeEventListener("touchstart", onTouchStart);
@@ -349,28 +439,36 @@ export function ImageCropModal({
       canvas.removeEventListener("touchend", onTouchEnd);
       canvas.removeEventListener("touchcancel", onTouchEnd);
       canvas.removeEventListener("wheel", onWheel);
+      canvas.removeEventListener("gesturestart", preventGesture);
+      canvas.removeEventListener("gesturechange", preventGesture);
+      canvas.removeEventListener("gestureend", preventGesture);
     };
   }, [getClampedPan]);
 
   // Manejo de ratón (desktop)
   const isMouseDownRef = useRef(false);
-  const lastMousePos = useRef({ x: 0, y: 0 });
+  const mouseStartPos = useRef({ x: 0, y: 0 });
+  const mouseStartPan = useRef({ x: 0, y: 0 });
 
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     isMouseDownRef.current = true;
-    lastMousePos.current = { x: e.clientX, y: e.clientY };
+    mouseStartPos.current = { x: e.clientX, y: e.clientY };
+    mouseStartPan.current = { ...panRef.current };
     setIsInteracting(true);
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!isMouseDownRef.current) return;
-    const dx = e.clientX - lastMousePos.current.x;
-    const dy = e.clientY - lastMousePos.current.y;
-    lastMousePos.current = { x: e.clientX, y: e.clientY };
-
-    setPan((prev) =>
-      getClampedPan(prev.x + dx, prev.y + dy, zoomRef.current, rotationRef.current),
+    const dx = e.clientX - mouseStartPos.current.x;
+    const dy = e.clientY - mouseStartPos.current.y;
+    const clamped = getClampedPan(
+      mouseStartPan.current.x + dx,
+      mouseStartPan.current.y + dy,
+      zoomRef.current,
+      rotationRef.current,
     );
+    panRef.current = clamped;
+    setPan(clamped);
   };
 
   const handleMouseUp = () => {
@@ -382,21 +480,23 @@ export function ImageCropModal({
 
   // Cambio de zoom seguro vía slider o botones
   const handleZoomChange = (nextZoom: number) => {
-    const sanitized = Math.max(1, Math.min(4, Number.isFinite(nextZoom) ? nextZoom : 1));
+    const sanitized = Math.max(1, Math.min(3, Number.isFinite(nextZoom) ? nextZoom : 1));
+    zoomRef.current = sanitized;
     setZoom(sanitized);
-    setPan((currPan) =>
-      getClampedPan(currPan.x, currPan.y, sanitized, rotationRef.current),
-    );
+    const clamped = getClampedPan(panRef.current.x, panRef.current.y, sanitized, rotationRef.current);
+    panRef.current = clamped;
+    setPan(clamped);
   };
 
   // Confirmar y generar el canvas cuadrado en alta fidelidad (512x512)
   const handleConfirm = () => {
-    const img = imageRef.current;
-    if (!img || !img.naturalWidth || !img.naturalHeight) return;
+    const source = imageRef.current;
+    const { w, h } = getSourceDims(source);
+    if (!source || !w || !h) return;
 
     const isSideways = rotation % 180 !== 0;
-    const ew = isSideways ? img.naturalHeight : img.naturalWidth;
-    const eh = isSideways ? img.naturalWidth : img.naturalHeight;
+    const ew = isSideways ? h : w;
+    const eh = isSideways ? w : h;
 
     const baseScale = Math.max(CROP_SIZE / ew, CROP_SIZE / eh);
     const scale = baseScale * zoom;
@@ -422,7 +522,7 @@ export function ImageCropModal({
     outCtx.translate(outputSize / 2 + clamped.x * factor, outputSize / 2 + clamped.y * factor);
     outCtx.rotate((rotation * Math.PI) / 180);
     outCtx.scale(scale * factor, scale * factor);
-    outCtx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
+    outCtx.drawImage(source, -w / 2, -h / 2);
     outCtx.restore();
 
     onCrop(outputCanvas);
@@ -504,7 +604,10 @@ export function ImageCropModal({
         </div>
 
         {/* Área interactiva del Canvas */}
-        <div className="relative flex items-center justify-center rounded-[16px] border border-rule bg-paper-2 overflow-hidden select-none aspect-square w-full max-w-[280px] mx-auto shadow-inner">
+        <div
+          style={{ touchAction: "none" }}
+          className="relative flex items-center justify-center rounded-[16px] border border-rule bg-paper-2 overflow-hidden select-none aspect-square w-full max-w-[280px] mx-auto shadow-inner"
+        >
           {!imageLoaded && !loadError && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-ink-soft text-xs">
               <Spinner className="size-5" />
@@ -539,7 +642,7 @@ export function ImageCropModal({
             <button
               type="button"
               onClick={() => handleZoomChange(+(zoom - 0.2).toFixed(2))}
-              disabled={!imageLoaded || zoom <= 1}
+              disabled={!imageLoaded || zoom <= 1.01}
               aria-label="Alejar imagen"
               className="size-9 shrink-0 inline-flex items-center justify-center rounded-[10px] border border-rule bg-paper-2 text-ink hover:bg-paper active:scale-95 disabled:opacity-40 disabled:pointer-events-none transition-all"
             >
@@ -551,7 +654,7 @@ export function ImageCropModal({
               <input
                 type="range"
                 min="1"
-                max="4"
+                max="3"
                 step="0.02"
                 value={zoom}
                 disabled={!imageLoaded}
@@ -563,7 +666,7 @@ export function ImageCropModal({
             <button
               type="button"
               onClick={() => handleZoomChange(+(zoom + 0.2).toFixed(2))}
-              disabled={!imageLoaded || zoom >= 4}
+              disabled={!imageLoaded || zoom >= 2.99}
               aria-label="Acercar imagen"
               className="size-9 shrink-0 inline-flex items-center justify-center rounded-[10px] border border-rule bg-paper-2 text-ink hover:bg-paper active:scale-95 disabled:opacity-40 disabled:pointer-events-none transition-all"
             >
