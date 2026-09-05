@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CreditCard, UserPlus, ScanLine, ArrowUpRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { linkClasses } from "@/components/ui";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -132,55 +133,82 @@ export default async function ResumenPage() {
         tieneSocios={total > 0}
       />
 
-      {/* ACCIONES RÁPIDAS DEL DÍA A DÍA (80/20) */}
+      {/* ACCIONES RÁPIDAS DEL DÍA A DÍA */}
       <div className="mb-8">
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-[11px] uppercase tracking-[0.08em] text-ink-soft font-semibold">
-            Acciones Rápidas
-          </span>
-          <span className="text-xs text-ink-soft/70">
+        <div className="flex items-center justify-between mb-3.5 px-0.5">
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] uppercase tracking-[0.12em] text-ink-soft font-bold">
+              Acciones Rápidas
+            </span>
+            <span className="size-1.5 rounded-full bg-volt animate-pulse" />
+          </div>
+          <span className="text-xs text-ink-soft/70 font-medium">
             Operativa de recepción
           </span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Cobrar cuota */}
           <Link
             href="/panel/clientes"
-            className="flex items-center gap-3 p-3.5 rounded-[6px] border border-rule bg-paper-2 hover:bg-paper-3 hover:border-ink transition-colors group"
+            className="group relative flex items-center justify-between p-4 rounded-xl border border-rule bg-paper-2 hover:bg-paper-3 hover:border-ink/30 transition-all duration-200 active:scale-[0.98] shadow-sm overflow-hidden"
           >
-            <div className="size-9 rounded-[5px] bg-ok/15 text-ok border border-ok/25 grid place-items-center text-base shrink-0 group-hover:scale-105 transition-transform">
-              💳
+            <div className="flex items-center gap-3.5 min-w-0">
+              <div className="size-11 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 dark:text-emerald-400 grid place-items-center shrink-0 group-hover:scale-105 group-hover:bg-emerald-500/15 transition-all shadow-sm">
+                <CreditCard className="size-5" />
+              </div>
+              <div className="min-w-0">
+                <span className="block text-sm font-bold text-ink leading-tight">
+                  Cobrar cuota
+                </span>
+                <span className="block text-xs text-ink-soft mt-0.5 truncate">
+                  Buscar socio y registrar pago
+                </span>
+              </div>
             </div>
-            <div className="min-w-0">
-              <span className="block text-sm font-semibold text-ink">Cobrar cuota</span>
-              <span className="block text-xs text-ink-soft truncate">Buscar socio y registrar pago</span>
-            </div>
+            <ArrowUpRight className="size-4 text-ink-soft/40 group-hover:text-ink group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0 ml-2" />
           </Link>
 
+          {/* Nuevo socio */}
           <Link
             href="/panel/clientes"
-            className="flex items-center gap-3 p-3.5 rounded-[6px] border border-rule bg-paper-2 hover:bg-paper-3 hover:border-ink transition-colors group"
+            className="group relative flex items-center justify-between p-4 rounded-xl border border-rule bg-paper-2 hover:bg-paper-3 hover:border-ink/30 transition-all duration-200 active:scale-[0.98] shadow-sm overflow-hidden"
           >
-            <div className="size-9 rounded-[5px] bg-accent/15 text-accent border border-accent/25 grid place-items-center text-base shrink-0 group-hover:scale-105 transition-transform">
-              👤
+            <div className="flex items-center gap-3.5 min-w-0">
+              <div className="size-11 rounded-xl bg-volt/20 border border-volt/35 text-volt-ink dark:text-volt grid place-items-center shrink-0 group-hover:scale-105 group-hover:bg-volt/30 transition-all shadow-sm">
+                <UserPlus className="size-5" />
+              </div>
+              <div className="min-w-0">
+                <span className="block text-sm font-bold text-ink leading-tight">
+                  Nuevo socio
+                </span>
+                <span className="block text-xs text-ink-soft mt-0.5 truncate">
+                  Alta rápida con DNI
+                </span>
+              </div>
             </div>
-            <div className="min-w-0">
-              <span className="block text-sm font-semibold text-ink">Nuevo socio</span>
-              <span className="block text-xs text-ink-soft truncate">Alta rápida con DNI</span>
-            </div>
+            <ArrowUpRight className="size-4 text-ink-soft/40 group-hover:text-ink group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0 ml-2" />
           </Link>
 
+          {/* Modo Check-in */}
           <Link
             href="/checkin"
-            className="flex items-center gap-3 p-3.5 rounded-[6px] border border-rule bg-paper-2 hover:bg-paper-3 hover:border-ink transition-colors group"
+            className="group relative flex items-center justify-between p-4 rounded-xl border border-rule bg-paper-2 hover:bg-paper-3 hover:border-ink/30 transition-all duration-200 active:scale-[0.98] shadow-sm overflow-hidden"
           >
-            <div className="size-9 rounded-[5px] bg-blue-500/15 text-blue-400 border border-blue-500/25 grid place-items-center text-base shrink-0 group-hover:scale-105 transition-transform">
-              📲
+            <div className="flex items-center gap-3.5 min-w-0">
+              <div className="size-11 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-500 dark:text-cyan-400 grid place-items-center shrink-0 group-hover:scale-105 group-hover:bg-cyan-500/15 transition-all shadow-sm">
+                <ScanLine className="size-5" />
+              </div>
+              <div className="min-w-0">
+                <span className="block text-sm font-bold text-ink leading-tight">
+                  Modo Check-in
+                </span>
+                <span className="block text-xs text-ink-soft mt-0.5 truncate">
+                  Pantalla ingreso recepción
+                </span>
+              </div>
             </div>
-            <div className="min-w-0">
-              <span className="block text-sm font-semibold text-ink">Modo Check-in</span>
-              <span className="block text-xs text-ink-soft truncate">Pantalla de ingreso recepción</span>
-            </div>
+            <ArrowUpRight className="size-4 text-ink-soft/40 group-hover:text-ink group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0 ml-2" />
           </Link>
         </div>
       </div>

@@ -190,7 +190,7 @@ export function OnboardingDueno({
 
               <Link
                 href={s.href}
-                className="text-xs font-medium text-accent hover:underline shrink-0 pl-2"
+                className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-md border border-rule bg-paper-2 hover:bg-paper-3 hover:border-ink/40 text-ink transition-all shrink-0 active:scale-95"
               >
                 {s.cta}
               </Link>

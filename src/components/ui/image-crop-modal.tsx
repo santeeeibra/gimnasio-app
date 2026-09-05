@@ -336,11 +336,52 @@ export function ImageCropModal({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    let initialGestureZoom = 1;
+    let initialTouchDist = 0;
+    let initialTouchZoom = 1;
+    let lastTouchTap = 0;
+
+    const onGestureStart = (e: any) => {
+      e.preventDefault();
+      initialGestureZoom = zoomRef.current;
+      setIsInteracting(true);
+    };
+
+    const onGestureChange = (e: any) => {
+      e.preventDefault();
+      const scale = typeof e.scale === "number" && !isNaN(e.scale) ? e.scale : 1;
+      const targetZoom = Math.max(1, Math.min(3, +(initialGestureZoom * scale).toFixed(2)));
+      zoomRef.current = targetZoom;
+      setZoom(targetZoom);
+      const clamped = getClampedPan(panRef.current.x, panRef.current.y, targetZoom, rotationRef.current);
+      panRef.current = clamped;
+      setPan(clamped);
+    };
+
+    const onGestureEnd = (e: any) => {
+      e.preventDefault();
+      setIsInteracting(false);
+    };
+
     const onTouchStart = (e: TouchEvent) => {
       e.preventDefault();
       setIsInteracting(true);
 
       if (e.touches.length === 1) {
+        const now = Date.now();
+        // Doble tap rápido para zoom/reset táctil
+        if (now - lastTouchTap < 300) {
+          const nextZoom = zoomRef.current > 1.2 ? 1 : 1.8;
+          zoomRef.current = nextZoom;
+          setZoom(nextZoom);
+          const clamped = getClampedPan(panRef.current.x, panRef.current.y, nextZoom, rotationRef.current);
+          panRef.current = clamped;
+          setPan(clamped);
+          lastTouchTap = 0;
+          return;
+        }
+        lastTouchTap = now;
+
         touchStateRef.current = {
           mode: "pan",
           startTouches: [{ id: e.touches[0].identifier, x: e.touches[0].clientX, y: e.touches[0].clientY }],
@@ -352,6 +393,8 @@ export function ImageCropModal({
         const t1 = e.touches[0];
         const t2 = e.touches[1];
         const dist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+        initialTouchDist = Math.max(10, dist);
+        initialTouchZoom = zoomRef.current;
         touchStateRef.current = {
           mode: "pinch",
           startTouches: [
@@ -360,52 +403,43 @@ export function ImageCropModal({
           ],
           startPan: { ...panRef.current },
           startZoom: zoomRef.current,
-          startDist: Math.max(10, dist),
+          startDist: initialTouchDist,
         };
       }
     };
 
     const onTouchMove = (e: TouchEvent) => {
       e.preventDefault();
-      const state = touchStateRef.current;
 
-      if (state.mode === "pan" && e.touches.length === 1) {
-        const dx = e.touches[0].clientX - state.startTouches[0].x;
-        const dy = e.touches[0].clientY - state.startTouches[0].y;
-        const nextX = state.startPan.x + dx;
-        const nextY = state.startPan.y + dy;
-
-        const clamped = getClampedPan(nextX, nextY, zoomRef.current, rotationRef.current);
-        panRef.current = clamped;
-        setPan(clamped);
-      } else if (e.touches.length >= 2) {
+      if (e.touches.length >= 2) {
         const t1 = e.touches[0];
         const t2 = e.touches[1];
         const currentDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
 
-        if (state.mode !== "pinch" || state.startDist < 10) {
-          touchStateRef.current = {
-            mode: "pinch",
-            startTouches: [
-              { id: t1.identifier, x: t1.clientX, y: t1.clientY },
-              { id: t2.identifier, x: t2.clientX, y: t2.clientY },
-            ],
-            startPan: { ...panRef.current },
-            startZoom: zoomRef.current,
-            startDist: Math.max(10, currentDist),
-          };
+        if (initialTouchDist <= 0) {
+          initialTouchDist = Math.max(10, currentDist);
+          initialTouchZoom = zoomRef.current;
           return;
         }
 
-        // Factor lineal suave y directo: nunca salta ni se dispara exponencialmente
-        const scaleFactor = currentDist / state.startDist;
-        const targetZoom = state.startZoom * scaleFactor;
-        const sanitizedZoom = Math.max(1, Math.min(3, +(targetZoom).toFixed(2)));
+        const scaleFactor = currentDist / initialTouchDist;
+        const targetZoom = Math.max(1, Math.min(3, +(initialTouchZoom * scaleFactor).toFixed(2)));
 
-        zoomRef.current = sanitizedZoom;
-        setZoom(sanitizedZoom);
+        zoomRef.current = targetZoom;
+        setZoom(targetZoom);
 
-        const clamped = getClampedPan(panRef.current.x, panRef.current.y, sanitizedZoom, rotationRef.current);
+        const clamped = getClampedPan(panRef.current.x, panRef.current.y, targetZoom, rotationRef.current);
+        panRef.current = clamped;
+        setPan(clamped);
+      } else if (e.touches.length === 1 && touchStateRef.current.mode === "pan") {
+        const startTouch = touchStateRef.current.startTouches[0];
+        if (!startTouch) return;
+        const dx = e.touches[0].clientX - startTouch.x;
+        const dy = e.touches[0].clientY - startTouch.y;
+        const nextX = touchStateRef.current.startPan.x + dx;
+        const nextY = touchStateRef.current.startPan.y + dy;
+
+        const clamped = getClampedPan(nextX, nextY, zoomRef.current, rotationRef.current);
         panRef.current = clamped;
         setPan(clamped);
       }
@@ -414,6 +448,7 @@ export function ImageCropModal({
     const onTouchEnd = (e: TouchEvent) => {
       if (e.touches.length === 0) {
         touchStateRef.current.mode = "none";
+        initialTouchDist = 0;
         setIsInteracting(false);
       } else if (e.touches.length === 1) {
         touchStateRef.current = {
@@ -423,6 +458,7 @@ export function ImageCropModal({
           startZoom: zoomRef.current,
           startDist: 0,
         };
+        initialTouchDist = 0;
       }
     };
 
@@ -439,16 +475,14 @@ export function ImageCropModal({
       setPan(clamped);
     };
 
-    const preventGesture = (e: Event) => e.preventDefault();
-
     canvas.addEventListener("touchstart", onTouchStart, { passive: false });
     canvas.addEventListener("touchmove", onTouchMove, { passive: false });
     canvas.addEventListener("touchend", onTouchEnd, { passive: false });
     canvas.addEventListener("touchcancel", onTouchEnd, { passive: false });
     canvas.addEventListener("wheel", onWheel, { passive: false });
-    canvas.addEventListener("gesturestart", preventGesture);
-    canvas.addEventListener("gesturechange", preventGesture);
-    canvas.addEventListener("gestureend", preventGesture);
+    canvas.addEventListener("gesturestart", onGestureStart);
+    canvas.addEventListener("gesturechange", onGestureChange);
+    canvas.addEventListener("gestureend", onGestureEnd);
 
     return () => {
       canvas.removeEventListener("touchstart", onTouchStart);
@@ -456,9 +490,9 @@ export function ImageCropModal({
       canvas.removeEventListener("touchend", onTouchEnd);
       canvas.removeEventListener("touchcancel", onTouchEnd);
       canvas.removeEventListener("wheel", onWheel);
-      canvas.removeEventListener("gesturestart", preventGesture);
-      canvas.removeEventListener("gesturechange", preventGesture);
-      canvas.removeEventListener("gestureend", preventGesture);
+      canvas.removeEventListener("gesturestart", onGestureStart);
+      canvas.removeEventListener("gesturechange", onGestureChange);
+      canvas.removeEventListener("gestureend", onGestureEnd);
     };
   }, [getClampedPan]);
 
