@@ -1,21 +1,21 @@
 import Link from "next/link";
-import { Lock, Sparkles, ArrowRight } from "lucide-react";
+import { Lock, ArrowRight } from "lucide-react";
 import { SalirModoCheckin } from "./salir-form";
+import { BadgeElite } from "@/components/ui/bloqueo-elite-gate";
 
 export function CheckinBloqueadoElite() {
   return (
     <div className="w-full max-w-md">
-      <div className="card-cut card-cut-lg border border-rule bg-paper-2 p-7 text-center">
-        <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl border border-volt/30 bg-volt/10 text-ink shadow-sm">
-          <Lock className="size-6 text-volt" />
+      <div className="glow-elite animate-destello rounded-[22px] border-2 border-[#10e7a0]/60 bg-paper-2/95 p-8 text-center shadow-[0_20px_60px_rgba(0,0,0,0.7),0_0_40px_rgba(16,231,160,0.35)] backdrop-blur-2xl">
+        <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl border-2 border-[#10e7a0] bg-gradient-to-b from-[#10e7a0]/30 to-[#10e7a0]/10 text-[#10e7a0] shadow-[0_0_25px_rgba(16,231,160,0.5)]">
+          <Lock className="size-7 text-[#10e7a0]" />
         </div>
 
-        <div className="inline-flex items-center gap-1.5 rounded-full border border-volt/30 bg-volt/10 px-3 py-1 text-xs font-semibold text-ink">
-          <Sparkles className="size-3.5 text-volt" />
-          <span>Función Exclusiva Plan Elite</span>
+        <div className="flex justify-center">
+          <BadgeElite label="✦ EXCLUSIVO PLAN ELITE" />
         </div>
 
-        <h1 className="mt-4 font-display text-2xl leading-tight">
+        <h1 className="mt-4 font-display text-2xl font-black leading-tight text-ink">
           Modo Check-in Táctil
         </h1>
 
@@ -25,18 +25,18 @@ export function CheckinBloqueadoElite() {
           alertas sonoras de morosidad.
         </p>
 
-        <div className="mt-6 flex flex-col gap-3">
+        <div className="mt-7 flex flex-col gap-3">
           <Link
             href="/panel/plan"
-            className="btn-volt inline-flex h-12 w-full items-center justify-center gap-2 rounded-[6px] font-medium text-ink shadow-sm hover:brightness-110 active:scale-[0.98]"
+            className="animate-destello inline-flex h-12 w-full items-center justify-center gap-2 rounded-[14px] bg-gradient-to-r from-[#10e7a0] via-[#22c55e] to-[#059669] font-black text-black shadow-[0_0_24px_rgba(16,231,160,0.6),0_4px_16px_rgba(0,0,0,0.4)] transition-all duration-150 hover:brightness-110 active:scale-[0.98]"
           >
             <span>Ver planes y pasar a Elite</span>
-            <ArrowRight className="size-4" />
+            <ArrowRight className="size-4 stroke-[3]" />
           </Link>
 
           <Link
             href="/panel"
-            className="inline-flex h-10 w-full items-center justify-center rounded-[6px] border border-rule text-sm text-ink-soft transition-colors hover:bg-paper hover:text-ink active:scale-[0.98]"
+            className="inline-flex h-10 w-full items-center justify-center rounded-[12px] border border-rule text-sm text-ink-soft transition-colors hover:bg-paper hover:text-ink active:scale-[0.98]"
           >
             Volver al panel principal
           </Link>

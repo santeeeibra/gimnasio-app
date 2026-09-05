@@ -979,4 +979,51 @@ h3 {
   border: 1px solid var(--rule);
 }
 
+/* Animación de destello brillante para elementos Elite */
+@keyframes destello-sweep {
+  0% {
+    transform: translateX(-160%) skewX(-25deg);
+  }
+  30%, 100% {
+    transform: translateX(260%) skewX(-25deg);
+  }
+}
+
+.animate-destello {
+  position: relative;
+  overflow: hidden;
+}
+
+.animate-destello::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: 0;
+  width: 65%;
+  height: 200%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.65) 50%,
+    transparent 100%
+  );
+  transform: translateX(-160%) skewX(-25deg);
+  animation: destello-sweep 2.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  pointer-events: none;
+}
+
+@keyframes elite-aura {
+  0%, 100% {
+    box-shadow: 0 0 18px rgba(16, 231, 160, 0.35), 0 8px 30px rgba(0, 0, 0, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 36px rgba(16, 231, 160, 0.65), 0 12px 40px rgba(0, 0, 0, 0.6);
+  }
+}
+
+.glow-elite {
+  animation: elite-aura 3s ease-in-out infinite;
+}
+
+
 

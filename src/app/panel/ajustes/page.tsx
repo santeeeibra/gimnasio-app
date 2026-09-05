@@ -19,7 +19,7 @@ import { estadoCobroAutomatico } from "@/lib/pagos/cobro-socio";
 import { connectConfigurado } from "@/lib/pagos/mercadopago-connect";
 import { BotonInstalarApp } from "@/components/pwa/boton-instalar-app";
 import { verificarPlanGimnasio } from "@/lib/plataforma/plan-gate";
-import { BloqueoEliteGate } from "@/components/ui/bloqueo-elite-gate";
+import { BloqueoEliteGate, BadgeElite } from "@/components/ui/bloqueo-elite-gate";
 
 const ESTADO_LABEL: Record<string, string> = {
   prueba: "En prueba",
@@ -164,9 +164,7 @@ export default async function AjustesPage({
         <div className="card-cut card-cut-lg mt-6 border border-rule bg-paper-2 p-6">
           <div className="flex items-center justify-between gap-3 mb-1">
             <h2 className="text-lg">Aviso de vencimiento</h2>
-            <span className="rounded-[4px] bg-volt/20 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-ink">
-              Plan Elite
-            </span>
+            <BadgeElite />
           </div>
           <p className="text-sm text-ink-soft mb-4">
             Mandamos un push automático al socio unos días antes de que se le
@@ -194,9 +192,7 @@ export default async function AjustesPage({
         <div className="card-cut card-cut-lg mt-6 border border-rule bg-paper-2 p-6">
           <div className="flex items-center justify-between gap-3 mb-1">
             <h2 className="text-lg">Pantalla de reposo del check-in</h2>
-            <span className="rounded-[4px] bg-volt/20 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-ink">
-              Plan Elite
-            </span>
+            <BadgeElite />
           </div>
           <p className="text-sm text-ink-soft mb-4">
             Cuando nadie toca la pantalla de check-in por un rato, aparece un

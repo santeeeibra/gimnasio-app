@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui";
 import { desconectarMercadoPago } from "./mp-actions";
-import { BloqueoEliteGate } from "@/components/ui/bloqueo-elite-gate";
+import { BloqueoEliteGate, BadgeElite } from "@/components/ui/bloqueo-elite-gate";
 
 type Props = {
   elite: boolean;
@@ -55,9 +55,7 @@ export function MercadoPagoAjustesCard({
     <div className="card-cut card-cut-lg mt-6 border border-rule bg-paper-2 p-6">
       <div className="flex items-center justify-between gap-3 mb-1">
         <h2 className="text-lg">Cobro automático con Mercado Pago</h2>
-        <span className="rounded-[4px] bg-volt/20 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-ink">
-          Plan Elite
-        </span>
+        <BadgeElite />
       </div>
       <p className="text-sm text-ink-soft mb-4">
         Permite a tus socios adherirse al débito automático mensual de su cuota.
