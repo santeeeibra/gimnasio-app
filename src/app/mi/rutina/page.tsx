@@ -253,11 +253,19 @@ export default async function MiRutinaPage() {
             return (
               <details className="group rounded-[14px] border border-rule bg-paper-2 p-4 shadow-sm">
                 <summary
-                  className="flex w-fit cursor-pointer select-none list-none items-center gap-2 text-sm font-medium text-ink-soft hover:text-ink transition-colors [&::-webkit-details-marker]:hidden"
+                  className="flex w-full cursor-pointer select-none list-none items-center justify-between text-sm font-medium text-ink transition-colors [&::-webkit-details-marker]:hidden"
                 >
-                  <ChevronRight aria-hidden className="size-4 shrink-0 transition-transform duration-150 [transition-timing-function:var(--ease-out)] group-open:rotate-90 text-accent" />
-                  <span className="group-open:hidden">Explicame esta rutina</span>
-                  <span className="hidden group-open:inline">Cerrar explicación</span>
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="grid size-7 shrink-0 place-items-center rounded-[8px] bg-accent/15 text-accent text-xs">
+                      💡
+                    </span>
+                    <span className="font-semibold text-ink">¿Por qué está armada así tu rutina?</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-xs font-medium text-accent">
+                    <span className="group-open:hidden">Ver explicación</span>
+                    <span className="hidden group-open:inline">Cerrar</span>
+                    <ChevronRight aria-hidden className="size-4 shrink-0 transition-transform duration-150 [transition-timing-function:var(--ease-out)] group-open:rotate-90 text-accent" />
+                  </div>
                 </summary>
                 <div className="mt-3 space-y-2 text-sm leading-snug animate-fade-in">
                   {p?.explicacionGeneral ? (

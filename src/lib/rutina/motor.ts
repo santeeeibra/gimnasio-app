@@ -16,6 +16,7 @@ import {
   ENFASIS_GRUPOS,
   MOLESTIAS,
   PREFERENCIAS_EQUIPO,
+  type Bloque,
   type Ejercicio,
   type Enfasis,
   type EntradaMotor,
@@ -26,11 +27,15 @@ import {
   type PlanGenerado,
   type ItemGenerado,
   type Rango,
+  type Ranura,
   type Rol,
   type Sexo,
   type Tecnica,
   type Volumen,
 } from "./tipos";
+import { calcularBalanceVolumen, resumirBalance } from "./balance";
+import { auditarYEspaciarDias } from "./recuperacion";
+import { obtenerFallbackSeguro } from "./fallbacks";
 
 const NIVEL_ORDEN: Record<Nivel, number> = {
   principiante: 0,
@@ -52,12 +57,6 @@ const EQUIPO_PESO: Record<string, number> = {
 // ─────────────────────────────────────────────────────────────
 // Ranuras: cada día es una lista de "huecos" a llenar
 // ─────────────────────────────────────────────────────────────
-
-type Ranura = {
-  grupo: string;
-  patron?: string;
-  rol: Rol;
-};
 
 // primario = movimiento pesado de arranque · secundario = compuesto de apoyo
 // aislamiento = accesorio de una articulación.
@@ -136,11 +135,9 @@ const LEGS: Ranura[] = [
   A("core"),
 ];
 
-type Bloque = { titulo: string; ranuras: Ranura[] };
-
-// Avanzado nunca hace full body puro: el volumen semanal por grupo que tolera
-// sin fatiga excesiva no entra en sesiones de cuerpo completo (Schoenfeld et
-// al., ACSM). Desde 2 días va Upper/Lower; 5–6 pasa a Push/Pull/Legs.
+// Avanzado en 2 días va Upper/Lower; en 3 días Full Body A/B/C para garantizar
+// Frecuencia 2x real en piernas y torso sin junk volume (Schoenfeld 2016, Saladino);
+// en 4 días Torso/Pierna; en 5–6 pasa a Push/Pull/Legs.
 function splitAvanzado(dias: number): Bloque[] {
   const UP: Bloque = { titulo: "Tren superior", ranuras: TORSO };
   const LO: Bloque = { titulo: "Tren inferior", ranuras: PIERNA };
@@ -148,7 +145,11 @@ function splitAvanzado(dias: number): Bloque[] {
     case 2:
       return [UP, LO];
     case 3:
-      return [UP, LO, UP];
+      return [
+        { titulo: "Cuerpo completo A (Tensión)", ranuras: FULL_BODY_A },
+        { titulo: "Cuerpo completo B (Elongación)", ranuras: FULL_BODY_B },
+        { titulo: "Cuerpo completo C (Estabilidad)", ranuras: FULL_BODY_C },
+      ];
     case 4:
       return [UP, LO, UP, LO];
     case 5:
@@ -495,30 +496,29 @@ const ESQUEMA_RANGO: Record<
   },
 };
 
-// Periodización ondulante diaria (DUP): el rango rota PESADO → LIVIANO → MEDIO
-// según el índice de día (Rhea et al. 2002; Zourdos et al. 2016). El día liviano
-// va segundo a propósito: intercalado entre los dos días de más carga, sirve de
-// recuperación activa (irrigar la zona, bajar la fatiga del sistema nervioso)
-// sin frenar el estímulo. Evita que se acumulen dos sesiones pesadas seguidas.
-// Día 1 pesado (~5 reps) · Día 2 liviano (~15 reps) · Día 3 medio (~10 reps).
+// Periodización ondulante diaria (DUP): el rango rota PESADO → METABÓLICO → MEDIO
+// según el índice de día (Rhea et al. 2002; Zourdos et al. 2016).
+// Incorpora principios de David Marchante (VBT en pesado), Jeff Nippard (elongación en metabólico)
+// y Joan Pradells (máxima estabilidad en medio).
+// Día 1 pesado (~5–8 reps) · Día 2 metabólico (~10–15 reps) · Día 3 medio (~8–12 reps).
 const ESQUEMA_ONDULANTE: EsquemaObj[] = [
   {
-    primario: { series: 5, reps: "3–5" },
-    secundario: { series: 4, reps: "5" },
-    aislamiento: { series: 3, reps: "6–8" },
-    descanso: "Día pesado · Descanso 2–3 min",
+    primario: { series: 4, reps: "5–8" },
+    secundario: { series: 3, reps: "6–8" },
+    aislamiento: { series: 3, reps: "8–10" },
+    descanso: "Día pesado · Descanso 2–3 min · Tensión mecánica (Marchante VBT)",
   },
   {
-    primario: { series: 3, reps: "15–20" },
-    secundario: { series: 3, reps: "15–20" },
-    aislamiento: { series: 2, reps: "20+" },
-    descanso: "Día liviano · Descanso 45–60 s · irriga la zona y baja la fatiga",
+    primario: { series: 3, reps: "10–12" },
+    secundario: { series: 3, reps: "12–15" },
+    aislamiento: { series: 2, reps: "15–20" },
+    descanso: "Día metabólico · Descanso 60–90 s · Hipertrofia en elongación (Nippard)",
   },
   {
     primario: { series: 4, reps: "8–10" },
-    secundario: { series: 3, reps: "10–12" },
+    secundario: { series: 3, reps: "8–12" },
     aislamiento: { series: 3, reps: "10–12" },
-    descanso: "Día medio · Descanso 90–120 s",
+    descanso: "Día medio · Descanso 90–120 s · Máxima estabilidad (Pradells)",
   },
 ];
 
@@ -536,24 +536,26 @@ function resolverEsquema(
 }
 
 // Texto de RIR que se anexa a la nota de cada ítem (SPEC §2.4). No toca
-// series/reps. Grgic et al. 2022.
+// series/reps. Grgic et al. 2022; David Marchante (PowerExplosive).
 function notaRir(rir: OpcionesAvanzadas["rir"], rol: Rol): string {
-  if (rir === "2-3") return " · Dejá 2–3 repeticiones en reserva";
-  if (rir === "1-2") return " · Dejá 1–2 repeticiones en reserva";
+  if (rir === "2-3") return " · RIR 2–3 (lejos del fallo, máxima técnica)";
+  if (rir === "1-2") {
+    return rol === "primario"
+      ? " · RIR 1–2: aceleración concéntrica máxima (VBT Marchante)"
+      : " · Dejá 1–2 repeticiones en reserva";
+  }
   return rol === "primario"
-    ? " · RIR 1: cerca del fallo, técnica estricta"
-    : " · Última serie al fallo (RIR 0–1)";
+    ? " · RIR 1: cerca del fallo, técnica estricta (prohibido fallo en axiales)"
+    : " · Última serie al fallo técnico (RIR 0–1)";
 }
 
 // ── Fase 2 · Presupuesto cerrado de series por día ──
-// Techo TOTAL de series del día (no por ranura). Reemplaza al viejo modelo
-// aditivo (6 ranuras base + hasta 3 extra de énfasis, cada una 3-5 series, que
-// se disparaba a 30-40 series/día). Ahora el día tiene un total fijo por nivel
-// y todo lo demás se reparte dentro de ese techo.
+// Techo TOTAL de series del día (evita junk volume según Schoenfeld et al. 2017 y Baz-Valle 2022).
+// El máximo por sesión queda acotado a 16–22 series totales.
 const PRESUPUESTO_DIA: Record<Nivel, number> = {
-  principiante: 18,
-  intermedio: 21,
-  avanzado: 24,
+  principiante: 16,
+  intermedio: 18,
+  avanzado: 20,
 };
 
 // Modo avanzado: el volumen semanal elegido escala el presupuesto del día.
@@ -561,7 +563,7 @@ const PRESUPUESTO_DIA: Record<Nivel, number> = {
 const FACTOR_VOLUMEN: Record<string, number> = {
   mev: 0.85,
   estandar: 1,
-  mav: 1.15,
+  mav: 1.1,
 };
 
 // "Esfuerzo" (RIR) también escala el presupuesto: entrenar suave (2–3 reps en
@@ -603,24 +605,23 @@ function ajustarPorSexo(
   return final;
 }
 
-// Cuando se elige volumen alto (MAV, ~18–20 series semanales), se expanden los techos
-// duros por rol (+2 primarios hasta 6, +2 secundarios hasta 5, +1 aislamientos hasta 4)
-// para que el presupuesto MAV (ej. 28 series) se pueda distribuir y materializar en la sesión.
+// Techo duro por rol: evita la acumulación de más de 4 series en un mismo ejercicio
+// básico (Beardsley/Schoenfeld: rendimientos decrecientes y daño articular excesivo).
 function resolverMaxPorRol(
   esquema: EsquemaObj,
   volumen?: Volumen,
 ): Record<Rol, number> {
   if (volumen === "mav") {
     return {
-      primario: Math.min(6, esquema.primario.series + 2),
-      secundario: Math.min(5, esquema.secundario.series + 2),
-      aislamiento: Math.min(4, esquema.aislamiento.series + 1),
+      primario: Math.min(4, esquema.primario.series + 1),
+      secundario: Math.min(4, esquema.secundario.series + 1),
+      aislamiento: Math.min(3, esquema.aislamiento.series + 1),
     };
   }
   return {
-    primario: esquema.primario.series,
-    secundario: esquema.secundario.series,
-    aislamiento: esquema.aislamiento.series,
+    primario: Math.min(4, esquema.primario.series),
+    secundario: Math.min(3, esquema.secundario.series),
+    aislamiento: Math.min(3, esquema.aislamiento.series),
   };
 }
 
@@ -696,29 +697,33 @@ function nivelIdx(nivel: string | null): number {
 // secundario del día cae en un básico probado y no en un accesorio flojo.
 // Se identifican por slug (exacto, sin ambigüedad de acentos/nombres).
 const TIER_1 = new Set<string>([
-  // Pecho
+  // Pecho (Tensión mecánica y haz clavicular)
   "press-inclinado-mancuernas",
   "press-pecho-maquina",
   "press-banca-barra",
-  // Espalda
+  // Espalda (Estabilidad y plano escapular)
   "dominadas",
   "jalon-al-pecho",
   "remo-maquina",
-  // Cuádriceps
+  // Cuádriceps (Flexión profunda y estabilidad)
   "prensa-piernas",
   "sentadilla-bulgara",
-  // Glúteo / Isquios
+  // Glúteo / Isquios (Elongación de cadera y bisagra)
   "peso-muerto-rumano",
   "peso-muerto-rumano-mancuernas",
   "rdl-unilateral-mancuerna",
+  "curl-femoral-acostado",
   "hip-thrust",
   "hip-thrust-barra",
-  // Hombro
+  "zancada-inversa-deficit",
+  // Hombro (Tensión continua y descompresión)
   "press-hombro-maquina",
   "press-hombro-mancuernas",
   "elevaciones-laterales",
-  // Brazos
+  // Brazos (Hipertrofia mediada por estiramiento - Nippard/Beardsley)
+  "curl-inclinado-mancuernas",
   "curl-mancuernas",
+  "extension-triceps-mancuerna",
   "press-frances",
 ]);
 
@@ -866,19 +871,22 @@ function sesgoSexo(ej: Ejercicio, ranura: Ranura, sexo: Sexo): number {
   return p;
 }
 
-// Sustitución por molestia (SPEC §7.2). Cada molestia descarta patrones/equipos
-// que suelen provocar dolor en esa articulación. Conservador y por patrón, no
-// por nombre. Si tras el recorte no queda candidato para la ranura, `elegir`
-// ignora el filtro para ese hueco.
+// Sustitución por molestia (SPEC §7.2; Charles Glass). Cada molestia descarta patrones/equipos
+// que provocan torque o cizalla lesiva directa en esa articulación:
+// - Lumbar: peso muerto libre y remos libres con barra (elimina compresión en L4-S1).
+// - Rodilla: sentadilla libre con barra y extensiones pesadas (protege tendón rotuliano).
+// - Hombro: press vertical con barra y aperturas con mancuernas (evita pinzamiento subacromial).
+// - Codo/Muñeca: barras rígidas en curls y empujes (favorece poleas o mancuernas libres).
 const MOLESTIA_BLOQUEA: Record<Molestia, (ej: Ejercicio) => boolean> = {
   hombro: (e) =>
     (e.patron === "empuje_vertical" && e.equipo === "barra") ||
-    (e.grupo_muscular === "pecho" && e.patron === "aislamiento"), // aperturas
+    (e.grupo_muscular === "pecho" && e.patron === "aislamiento" && e.equipo === "mancuernas"),
   rodilla: (e) =>
     (e.patron === "dominante_rodilla" && e.equipo === "barra") ||
-    (e.grupo_muscular === "cuadriceps" && e.patron === "aislamiento"),
+    (e.grupo_muscular === "cuadriceps" && e.patron === "aislamiento" && (e.slug?.includes("extension") ?? false)),
   lumbar: (e) =>
-    e.patron === "dominante_cadera" && e.equipo === "barra",
+    (e.patron === "dominante_cadera" && e.equipo === "barra") ||
+    (e.patron === "traccion_horizontal" && e.equipo === "barra" && !(e.slug?.includes("apoyado") ?? false)),
   muñeca: (e) =>
     (e.grupo_muscular === "biceps" && e.equipo === "barra") ||
     (e.patron === "empuje_horizontal" && e.equipo === "barra"),
@@ -989,7 +997,9 @@ function elegir(
   const conFiltros = sinAxial.length > 0 ? sinAxial : filtrados;
   const rankeados = conFiltros.length > 0 ? conFiltros : todos;
 
-  if (rankeados.length === 0) return null;
+  if (rankeados.length === 0) {
+    return obtenerFallbackSeguro(ranura.grupo, ranura.rol, evitar);
+  }
   if (!seed) return rankeados[0].ej;
 
   // Con seed: rotar solo entre los que quedaron a ≤10 pts del mejor (hasta 3).
@@ -1082,8 +1092,9 @@ export function generarPlan(
     avanzado && avanzado.split !== "auto"
       ? splitExplicito(avanzado.split, dias)
       : [];
-  const bloques =
+  const bloquesCrudos =
     explicito.length > 0 ? explicito : splitPorDias(dias, entrada.nivel);
+  const bloques = auditarYEspaciarDias(bloquesCrudos);
 
   if (avanzado) {
     trace?.push(
@@ -1247,9 +1258,21 @@ export function generarPlan(
       rolItems.push(ranura.rol);
     });
 
-    // Técnica de intensidad en la última serie de los últimos 1–2 aislamientos.
+    // Técnica de intensidad en la última serie de los últimos aislamientos.
     const tec = avanzado?.tecnicaAislamientos ?? "ninguna";
-    if (tec !== "ninguna") {
+    if (tec === "fst7") {
+      // Protocolo FST-7 (Hany Rambod): exactamente 7 series de 10-12 reps con 35s descanso en el último aislamiento
+      const ultimoAisl = rolItems
+        .map((r, i) => (r === "aislamiento" ? i : -1))
+        .filter((i) => i >= 0)
+        .slice(-1);
+      for (const i of ultimoAisl) {
+        items[i].tecnica = "fst7";
+        items[i].series = 7;
+        items[i].repeticiones = "10–12";
+        items[i].nota = "Protocolo FST-7 (Hany Rambod) · Descanso 35s estricto + pose isométrica interserie";
+      }
+    } else if (tec !== "ninguna") {
       const aisl = rolItems
         .map((r, i) => (r === "aislamiento" ? i : -1))
         .filter((i) => i >= 0)
@@ -1264,10 +1287,118 @@ export function generarPlan(
     return { titulo: tituloDia, items };
   });
 
-  return {
+  const planGenerado: PlanGenerado = {
     entrada: { ...entrada, dias, sexo, enfasis, zonasDolor },
     dias: diasPlan,
     ...(trace ? { trace } : {}),
+  };
+
+  const planReparado = validarYRepararPlan(planGenerado, ejercicios);
+  if (trace) {
+    const balance = calcularBalanceVolumen(planReparado, ejercicios);
+    trace.push(
+      `Balance semanal de volumen efectivo (con crédito 0.5 a sinergistas): ${resumirBalance(balance)}`,
+    );
+  }
+
+  return planReparado;
+}
+
+/**
+ * ── Validador e Inyector de Auto-Reparación (Invariantes Biomecánicos) ──
+ * Inspecciona el plan generado antes de devolverlo y corrige cualquier
+ * anomalía en tiempo de ejecución de forma determinista:
+ * 1. Poda series si la sesión supera 22 series totales (cero junk volume).
+ * 2. Limita a 4 series por ejercicio si no es FST-7.
+ * 3. Desduplica cualquier ejercicio repetido en el mismo día.
+ * 4. Desactiva axiales dobles en el mismo día.
+ * 5. Sanitiza valores vacíos o series <= 0.
+ */
+export function validarYRepararPlan(
+  plan: PlanGenerado,
+  ejercicios: Ejercicio[],
+): PlanGenerado {
+  const ejercicioPorSlug = new Map<string, Ejercicio>(
+    ejercicios.filter((e) => e.slug).map((e) => [e.slug!, e]),
+  );
+
+  const diasReparados = plan.dias.map((dia) => {
+    const items = [...dia.items];
+    const slugsVistos = new Set<string>();
+    let tieneAxialLibre = false;
+
+    // 1. Sanitizar y desduplicar
+    const itemsLimpios: ItemGenerado[] = [];
+    for (const it of items) {
+      if (!it.ejercicio_slug || it.series <= 0) continue;
+
+      const itemActual: ItemGenerado = { ...it };
+      const ejActual = ejercicioPorSlug.get(itemActual.ejercicio_slug);
+
+      // Capping de series individuales
+      if (itemActual.tecnica !== "fst7" && itemActual.series > 4) {
+        itemActual.series = 4;
+      }
+
+      // Desduplicación en el mismo día
+      if (slugsVistos.has(itemActual.ejercicio_slug)) {
+        if (ejActual) {
+          const alternativo = ejercicios.find(
+            (alt) =>
+              alt.slug &&
+              alt.grupo_muscular === ejActual.grupo_muscular &&
+              !slugsVistos.has(alt.slug),
+          );
+          if (alternativo && alternativo.slug) {
+            itemActual.ejercicio_slug = alternativo.slug;
+          }
+        }
+      }
+
+      // Prevención de doble axial libre pesado
+      if (ejActual && esAxialPesado(ejActual)) {
+        if (tieneAxialLibre) {
+          const alternativoSeguro = ejercicios.find(
+            (alt) =>
+              alt.slug &&
+              alt.grupo_muscular === ejActual.grupo_muscular &&
+              (alt.equipo === "maquina" || alt.equipo === "polea" || alt.equipo === "mancuernas") &&
+              !slugsVistos.has(alt.slug),
+          );
+          if (alternativoSeguro && alternativoSeguro.slug) {
+            itemActual.ejercicio_slug = alternativoSeguro.slug;
+          }
+        } else {
+          tieneAxialLibre = true;
+        }
+      }
+
+      slugsVistos.add(itemActual.ejercicio_slug);
+      itemsLimpios.push(itemActual);
+    }
+
+    // 2. Poda de series si la sesión supera 22 series totales (cero junk volume)
+    const MAX_TOTAL_SESION = 22;
+    let totalSeries = itemsLimpios.reduce((sum, it) => sum + it.series, 0);
+
+    if (totalSeries > MAX_TOTAL_SESION) {
+      for (let i = itemsLimpios.length - 1; i >= 0 && totalSeries > MAX_TOTAL_SESION; i--) {
+        while (itemsLimpios[i].series > 2 && totalSeries > MAX_TOTAL_SESION) {
+          itemsLimpios[i].series--;
+          totalSeries--;
+        }
+      }
+    }
+
+    return {
+      ...dia,
+      items: itemsLimpios,
+    };
+  });
+
+  return {
+    ...plan,
+    dias: diasReparados,
   };
 }
 

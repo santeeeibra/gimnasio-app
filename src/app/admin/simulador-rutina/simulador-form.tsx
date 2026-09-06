@@ -410,6 +410,50 @@ export function SimuladorForm() {
               ))}
             </div>
           </Bloque>
+
+          {state.balance ? (
+            <Bloque titulo="4 · Auditoría Científica: Libro Mayor de Volumen (Sinergistas 0.5x)">
+              <p className="mb-3 text-xs text-ink-soft">
+                Cálculo de series efectivas semanales considerando el estímulo indirecto de ejercicios multiarticulares (Schoenfeld / Israetel / Beardsley).
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                {Object.entries(state.balance).map(([grupo, metrica]) => (
+                  <div
+                    key={grupo}
+                    className="rounded-[10px] border border-rule bg-paper p-2.5 flex flex-col justify-between"
+                  >
+                    <div className="flex items-center justify-between gap-1.5">
+                      <span className="text-xs font-semibold capitalize text-ink">
+                        {grupo}
+                      </span>
+                      <span
+                        className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase ${
+                          metrica.estado === "mav"
+                            ? "bg-emerald-500/15 text-emerald-500"
+                            : metrica.estado === "mev"
+                              ? "bg-sky-500/15 text-sky-500"
+                              : "bg-amber-500/15 text-amber-500"
+                        }`}
+                      >
+                        {metrica.estado}
+                      </span>
+                    </div>
+                    <div className="mt-2 text-xs space-y-0.5 text-ink-soft">
+                      <p>
+                        Total efectivo:{" "}
+                        <strong className="text-ink font-semibold">
+                          {metrica.totalEfectivo} sets
+                        </strong>
+                      </p>
+                      <p className="text-[11px] text-ink-soft/70">
+                        {metrica.directas} directas + {metrica.indirectas * 0.5} sinérgicas
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Bloque>
+          ) : null}
         </section>
       ) : null}
     </div>

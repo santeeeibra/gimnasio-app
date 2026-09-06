@@ -18,26 +18,75 @@ export const TEORIA = {
     fuente:
       "Schoenfeld, Ogborn & Krieger, Sports Medicine 2016 (meta-análisis de frecuencia de entrenamiento).",
   },
+  schoenfeld_techo: {
+    titulo: "Techo de volumen por sesión (Evitar Junk Volume)",
+    resumen:
+      "El estímulo óptimo por músculo satura entre 6 y 8 series por sesión. Superar ese límite genera fatiga y daño muscular sin ganancia extra.",
+    fuente:
+      "Baz-Valle et al. 2022; Krieger 2020; Heaselgrave et al. 2019.",
+  },
   dup: {
     titulo: "Periodización ondulante diaria (DUP)",
     resumen:
-      "Variar el rango de repeticiones día a día (pesado / medio / liviano) iguala o supera a mantenerlo fijo, en personas entrenadas.",
+      "Variar el rango de repeticiones día a día (pesado / medio / liviano) estimula diferentes adaptaciones neuromusculares sin quemar el sistema nervioso.",
     fuente:
-      "Rhea et al., Journal of Strength and Conditioning Research 2002 (DUP vs. periodización lineal).",
+      "Rhea et al. 2002; Zourdos et al. 2016 (DUP vs. periodización lineal).",
   },
   volumen: {
-    titulo: "Volumen semanal por grupo muscular",
+    titulo: "Volumen semanal por grupo muscular (MEV y MAV)",
     resumen:
-      "Más de 10 series semanales por grupo produce más hipertrofia que menos de 10; el beneficio sigue subiendo hasta ~20 con rendimientos decrecientes.",
+      "El rango adaptativo óptimo (MAV) se sitúa entre 12 y 18 series semanales. Se asigna 0.5 series de crédito a músculos sinergistas en compuestos.",
     fuente:
-      "Schoenfeld et al., Journal of Sports Sciences 2017 (dosis-respuesta) y Baz-Valle et al. 2022 (revisión).",
+      "Schoenfeld et al. 2017; Israetel, Scientific Principles of Hypertrophy Training.",
   },
   rir: {
-    titulo: "Esfuerzo: repeticiones en reserva (RIR)",
+    titulo: "Esfuerzo: repeticiones en reserva (RIR) y VBT",
     resumen:
-      "Llegar al fallo no es necesario para ganar músculo cuando el volumen está igualado, y agrega fatiga y tiempo de recuperación, sobre todo en los básicos.",
+      "Entrenar a RIR 1–2 (1 a 2 repeticiones antes del fallo) maximiza el reclutamiento de fibras rápidas con mínima fatiga del sistema nervioso.",
     fuente:
-      "Grgic et al., Sports Medicine 2022 (meta-análisis entrenamiento al fallo vs. sin fallo).",
+      "Grgic et al. 2022; David Marchante (PowerExplosive, entrenamiento basado en velocidad).",
+  },
+  beardsley_rep_efectivas: {
+    titulo: "Repeticiones Efectivas y Tensión Mecánica",
+    resumen:
+      "Solo las últimas 5 repeticiones de una serie pesada cercana al fallo generan tensión mecánica de alto umbral.",
+    fuente:
+      "Chris Beardsley, Strength and Conditioning Research.",
+  },
+  nippard_estiramiento: {
+    titulo: "Hipertrofia mediada por estiramiento",
+    resumen:
+      "Entrenar en posiciones de máxima elongación muscular (bancos inclinados, poleas cruzadas, sentadillas profundas) dispara la adición de sarcómeros en serie.",
+    fuente:
+      "Jeff Nippard; Pedrosa et al. 2022; Maeo et al. 2021.",
+  },
+  pradells_estabilidad: {
+    titulo: "Tensión Mecánica por Máxima Estabilidad",
+    resumen:
+      "El uso de máquinas convergentes, péndulos y remos apoyados elimina el factor limitante del equilibrio, permitiendo empujar al límite con total seguridad.",
+    fuente:
+      "Joan Pradells; Directrices de estabilidad biomecánica de alta carga.",
+  },
+  glass_angulacion: {
+    titulo: "Ángulos articulares protectores",
+    resumen:
+      "Inclinaciones bajas (15–30°), remos con soporte de pecho y pies altos en prensa eliminan el estrés en lumbares, manguito rotador y rodillas.",
+    fuente:
+      "Charles Glass, The Godfather of Bodybuilding; biomecánica articular aplicada.",
+  },
+  rambod_fst7: {
+    titulo: "Protocolo FST-7 (Fascia Stretch Training)",
+    resumen:
+      "7 series finales de aislamiento con 30–45s de descanso y pose isométrica para inducir hiperemia reactiva y volemia fascial.",
+    fuente:
+      "Hany Rambod, Creador de FST-7 y 24x campeón del Olympia.",
+  },
+  saladino_atletico: {
+    titulo: "Rendimiento y Balance Unilateral",
+    resumen:
+      "Integrar trabajo unilateral y transporte con carga (carries) equilibra asimetrías de fuerza y protege la columna lumbopélvica.",
+    fuente:
+      "Don Saladino, Especialista en rendimiento atlético funcional.",
   },
   tecnicas: {
     titulo: "Técnicas de intensidad (dropset, rest-pause, myo-reps)",

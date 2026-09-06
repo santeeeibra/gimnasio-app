@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test:fast": "node scripts/test-rapido.mjs"
+    "test:fast": "node scripts/test-rapido.mjs",
+    "test:fuzz": "node scripts/test-motor-fuzz.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.2",

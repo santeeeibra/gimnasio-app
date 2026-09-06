@@ -7,6 +7,7 @@
 import { requireSuperadmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generarPlan } from "@/lib/rutina/motor";
+import { calcularBalanceVolumen, type BalanceVolumenSemanal } from "@/lib/rutina/balance";
 import { TEORIA, type ClaveTeoria } from "@/lib/rutina/teoria";
 import {
   ENFASIS,
@@ -64,6 +65,7 @@ export type SimState = {
   porque?: { titulo: string; resumen: string; fuente: string }[];
   trace?: string[];
   dias?: { titulo: string; items: ItemSim[] }[];
+  balance?: BalanceVolumenSemanal;
 };
 
 function pick<T extends string>(
@@ -216,5 +218,7 @@ export async function simularRutina(
     }),
   }));
 
-  return { combinacion, porque, trace: plan.trace ?? [], dias: diasSim };
+  const balance = calcularBalanceVolumen(plan, ejercicios);
+
+  return { combinacion, porque, trace: plan.trace ?? [], dias: diasSim, balance };
 }

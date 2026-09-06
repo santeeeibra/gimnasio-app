@@ -119,6 +119,7 @@ export const TECNICAS = [
   "myo_reps",
   "superserie",
   "cluster_set",
+  "fst7",
 ] as const;
 export type Tecnica = (typeof TECNICAS)[number];
 
@@ -129,6 +130,7 @@ export const TECNICA_LABEL: Record<Tecnica, string> = {
   myo_reps: "Myo-reps",
   superserie: "Superserie",
   cluster_set: "Cluster set",
+  fst7: "FST-7 (Hany Rambod)",
 };
 
 export const TECNICA_DESC: Record<Tecnica, string> = {
@@ -138,6 +140,7 @@ export const TECNICA_DESC: Record<Tecnica, string> = {
   myo_reps: "Una serie de activación + mini-series cortas con poco descanso.",
   superserie: "Dos ejercicios seguidos sin descanso entre ellos.",
   cluster_set: "Repeticiones divididas en bloques con micro-pausas.",
+  fst7: "7 series finales de 10–12 reps con 30–45s de descanso para estiramiento y bombeo fascial.",
 };
 
 // Tope de ejercicios por día: el mismo que usa aplicarEnfasis() en el motor.
@@ -326,6 +329,17 @@ export type EntradaMotor = {
 
 // Rol de la ranura que ocupa el ejercicio dentro del día.
 export type Rol = "primario" | "secundario" | "aislamiento";
+
+export type Ranura = {
+  grupo: string;
+  patron?: string;
+  rol: Rol;
+};
+
+export type Bloque = {
+  titulo: string;
+  ranuras: Ranura[];
+};
 
 export type ItemGenerado = {
   ejercicio_slug: string;

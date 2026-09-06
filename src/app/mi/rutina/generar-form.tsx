@@ -3,6 +3,8 @@
 import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Select, linkClasses } from "@/components/ui";
+import { hapticoSeleccion } from "@/lib/ui/hapticos";
+import { HelpCircle, ChevronDown, ChevronUp } from "lucide-react";
 import {
   ENFASIS,
   ENFASIS_LABEL,
@@ -63,6 +65,109 @@ function Porque({ clave }: { clave: ClaveTeoria }) {
       <p className="mt-1 leading-snug">{t.resumen}</p>
       <p className="mt-1 leading-snug text-ink-soft/70">Fuente: {t.fuente}</p>
     </details>
+  );
+}
+
+function GuiaPrincipiante() {
+  const [abierta, setAbierta] = useState(false);
+
+  return (
+    <div className="sm:col-span-2 mb-1">
+      <button
+        type="button"
+        onClick={() => {
+          hapticoSeleccion();
+          setAbierta(!abierta);
+        }}
+        className="flex w-full items-center justify-between gap-3 rounded-[12px] border border-accent/30 bg-accent/5 p-3 text-left transition-all duration-150 active:scale-[0.99] hover:bg-accent/10 shadow-sm"
+      >
+        <div className="flex items-center gap-2.5 min-w-0">
+          <span className="grid size-7 shrink-0 place-items-center rounded-[8px] bg-accent/20 text-accent text-sm">
+            💡
+          </span>
+          <div>
+            <p className="text-xs font-semibold text-ink">
+              ¿Cómo armamos tu rutina? (Guía para no expertos)
+            </p>
+            <p className="text-[11px] text-ink-soft">
+              Entendé las razones de series, descansos y frecuencia sin jerga
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-1 text-xs font-medium text-accent shrink-0">
+          <span>{abierta ? "Cerrar guía" : "Ver explicación"}</span>
+          {abierta ? (
+            <ChevronUp aria-hidden className="size-3.5" />
+          ) : (
+            <ChevronDown aria-hidden className="size-3.5" />
+          )}
+        </div>
+      </button>
+
+      {abierta && (
+        <div className="mt-2.5 rounded-[14px] border border-rule bg-paper-2 p-4 text-xs text-ink-soft space-y-3 animate-fade-in shadow-sm">
+          <div className="flex gap-2.5 items-start">
+            <span className="grid size-5 shrink-0 place-items-center rounded-full bg-accent/15 text-[11px] font-bold text-accent">
+              1
+            </span>
+            <div>
+              <p className="font-semibold text-ink">Por qué no te ponemos 30 series por día</p>
+              <p className="mt-0.5 leading-relaxed">
+                El mito de «más es mejor» te frena. La ciencia deportiva (Dr. Brad Schoenfeld) demostró que después de 6 a 8 series exigentes por músculo en una sesión, el cuerpo ya no crea más masa muscular y solo acumula cansancio inútil (volumen basura). Menos series con más energía te darán el doble de resultados en menos tiempo.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-2.5 items-start">
+            <span className="grid size-5 shrink-0 place-items-center rounded-full bg-accent/15 text-[11px] font-bold text-accent">
+              2
+            </span>
+            <div>
+              <p className="font-semibold text-ink">Por qué cada músculo se entrena 2 veces por semana</p>
+              <p className="mt-0.5 leading-relaxed">
+                Repartir el esfuerzo en 2 días activa el crecimiento muscular dos veces en la semana en lugar de una sola. Llegás a cada ejercicio fresco y con fuerza, levantando más peso de forma segura.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-2.5 items-start">
+            <span className="grid size-5 shrink-0 place-items-center rounded-full bg-accent/15 text-[11px] font-bold text-accent">
+              3
+            </span>
+            <div>
+              <p className="font-semibold text-ink">Por qué los ejercicios pesados van al principio</p>
+              <p className="mt-0.5 leading-relaxed">
+                Los ejercicios con barra, mancuerna o máquinas compuestas reclutan las fibras más potentes. Si los hiciéramos al final cansado, tu técnica se rompería. Dejamos los ejercicios de brazos o accesorios para el cierre.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-2.5 items-start">
+            <span className="grid size-5 shrink-0 place-items-center rounded-full bg-accent/15 text-[11px] font-bold text-accent">
+              4
+            </span>
+            <div>
+              <p className="font-semibold text-ink">Por qué no vas al fallo total en cada serie (RIR 1–2)</p>
+              <p className="mt-0.5 leading-relaxed">
+                Llegar a no poder mover la barra agota el sistema nervioso y multiplica el riesgo de lesión sin darte más músculo. Dejar 1 o 2 repeticiones en reserva (RIR 1–2) estimula el 100% del crecimiento y te permite volver a entrenar con energía al día siguiente.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-2.5 items-start">
+            <span className="grid size-5 shrink-0 place-items-center rounded-full bg-accent/15 text-[11px] font-bold text-accent">
+              5
+            </span>
+            <div>
+              <p className="font-semibold text-ink">Si te duele algo, cuidamos tus articulaciones</p>
+              <p className="mt-0.5 leading-relaxed">
+                Si marcás dolor en rodilla, hombro o cintura baja, el motor no te deja sin entrenar: reemplaza los movimientos agresivos por variantes biomecánicas seguras (respaldos, poleas, ángulos ergonómicos) recomendadas por preparadores de élite (Charles Glass, Joan Pradells).
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -170,6 +275,8 @@ export function GenerarRutinaForm({
   return (
     <form action={formAction} className="stagger grid gap-4 sm:grid-cols-2">
       {clienteId ? <input type="hidden" name="cliente_id" value={clienteId} /> : null}
+
+      <GuiaPrincipiante />
 
       <div>
         <Select
