@@ -107,10 +107,18 @@ export function LoginForm({
       {/* ── Encabezado / Hero Unificado ── */}
       <header className="relative z-10 shrink-0 pt-10 pb-4 px-6 md:pt-14 md:pb-8">
         <div className="max-w-md mx-auto">
-          {/* Badge píldora */}
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 backdrop-blur-md text-[11px] font-bold tracking-widest uppercase text-volt mb-4 shadow-[0_2px_10px_rgba(0,0,0,0.4)]">
-            <span className="size-1.5 rounded-full bg-volt animate-pulse" />
-            Gestión de gimnasio
+          {/* Badges píldora */}
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 backdrop-blur-md text-[11px] font-bold tracking-widest uppercase text-volt shadow-[0_2px_10px_rgba(0,0,0,0.4)]">
+              <span className="size-1.5 rounded-full bg-volt animate-pulse" />
+              Gestión de gimnasio
+            </div>
+            <a
+              href="/promo-video/index.html"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/25 hover:bg-emerald-500/35 border border-emerald-400/50 text-[11px] font-bold tracking-wide uppercase text-emerald-300 backdrop-blur-md transition-all active:scale-95 shadow-[0_0_15px_rgba(34,197,94,0.3)]"
+            >
+              🎬 Ver Video Promo
+            </a>
           </div>
 
           <h1 className="font-display tracking-tight leading-[0.95] text-[clamp(2.2rem,7.5vw,3.2rem)] font-black">

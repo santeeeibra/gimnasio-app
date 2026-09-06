@@ -20,7 +20,7 @@ type Prefs = {
   zonasDolor?: Molestia[];
 } | null;
 import { pillClasses } from "@/components/ui";
-import { ChevronLeft, ChevronRight, Plus, SlidersHorizontal } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, RotateCcw, SlidersHorizontal } from "lucide-react";
 import { generarMiRutina } from "./actions";
 import { GenerarRutinaForm } from "./generar-form";
 import { RutinaEditor, type DiaEditable } from "./rutina-editor";
@@ -133,39 +133,28 @@ export default async function MiRutinaPage() {
     </Link>
   );
 
-  const opcionesPersonalizacion = (
-    <div className="space-y-2.5">
-      {entradaManual}
-      {linkAvanzado}
-    </div>
-  );
-
   const regenerarDetails = rutina ? (
-    <details className="group">
-      <summary className="flex w-fit cursor-pointer select-none list-none items-center gap-1.5 rounded-[10px] border border-rule px-3 py-2 text-sm text-ink-soft transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 active:bg-paper-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 [&::-webkit-details-marker]:hidden">
-        <svg
-          viewBox="0 0 24 24"
-          width="15"
-          height="15"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+    <details
+      id="generar-rutina-auto"
+      className="group rounded-[14px] border border-rule bg-paper-2 p-4 shadow-sm"
+    >
+      <summary className="flex cursor-pointer select-none list-none items-center justify-between text-sm font-medium text-ink transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.99] [&::-webkit-details-marker]:hidden">
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="grid size-8 shrink-0 place-items-center rounded-[8px] border border-rule bg-paper text-accent">
+            <RotateCcw aria-hidden className="size-4" />
+          </span>
+          <span className="truncate group-open:hidden">Regenerar rutina</span>
+          <span className="hidden truncate group-open:inline">
+            Cerrar generador
+          </span>
+        </div>
+        <ChevronRight
           aria-hidden
-          className="transition-transform duration-150 [transition-timing-function:var(--ease-out)] group-open:rotate-180"
-        >
-          <path d="M23 4v6h-6M1 20v-6h6" />
-          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-        </svg>
-        <span className="group-open:hidden">Regenerar rutina</span>
-        <span className="hidden group-open:inline">Cerrar</span>
+          className="size-4 shrink-0 text-ink-soft transition-transform duration-150 [transition-timing-function:var(--ease-out)] group-open:rotate-90"
+        />
       </summary>
-      <div
-        id="generar-rutina-auto"
-        className="mt-3 w-[min(22rem,calc(100vw-2.5rem))] scroll-mt-4 rounded-[14px] border border-rule bg-paper-2 p-4 animate-fade-in"
-      >
-        <p className="mb-3 text-xs text-ink-soft">
+      <div className="mt-3 pt-3 border-t border-rule animate-fade-in">
+        <p className="mb-3 text-xs leading-snug text-ink-soft">
           Cambiá lo que haga falta y armamos un plan nuevo. Reemplaza los
           ejercicios actuales.
         </p>
@@ -185,6 +174,14 @@ export default async function MiRutinaPage() {
       </div>
     </details>
   ) : null;
+
+  const opcionesPersonalizacion = (
+    <div className="space-y-2.5">
+      {regenerarDetails}
+      {entradaManual}
+      {linkAvanzado}
+    </div>
+  );
 
   // pb generoso: en mobile, abajo del scroll conviven la bottom nav (~38px) y
   // el timer de descanso — colapsado ~62px, expandido ~214px — ambos fijos.
@@ -216,18 +213,15 @@ export default async function MiRutinaPage() {
               </p>
             ) : null}
           </div>
-          {regenerarDetails ? (
-            <div className="shrink-0 flex items-center gap-2">
-              {rutina && cliente && (
-                <DescargarRutinaPdf
-                  clienteNombre={profile.nombre ?? ""}
-                  gimnasioNombre={gymData?.nombre ?? ""}
-                  rutinaNombre={`${OBJETIVO_LABEL[rutina.objetivo as Objetivo] ?? rutina.objetivo}${rutina.nivel ? ` · ${NIVEL_LABEL[rutina.nivel as Nivel]}` : ""}${rutina.dias_por_semana ? ` · ${rutina.dias_por_semana} días` : ""}`}
-                  dias={agruparPorDia((itemsData ?? []) as any[], (rutina.dias_titulos as string[] | null) ?? null)}
-                  logoUrl={gymData?.logo_url ?? null}
-                />
-              )}
-              {regenerarDetails}
+          {rutina && cliente ? (
+            <div className="shrink-0">
+              <DescargarRutinaPdf
+                clienteNombre={profile.nombre ?? ""}
+                gimnasioNombre={gymData?.nombre ?? ""}
+                rutinaNombre={`${OBJETIVO_LABEL[rutina.objetivo as Objetivo] ?? rutina.objetivo}${rutina.nivel ? ` · ${NIVEL_LABEL[rutina.nivel as Nivel]}` : ""}${rutina.dias_por_semana ? ` · ${rutina.dias_por_semana} días` : ""}`}
+                dias={agruparPorDia((itemsData ?? []) as any[], (rutina.dias_titulos as string[] | null) ?? null)}
+                logoUrl={gymData?.logo_url ?? null}
+              />
             </div>
           ) : null}
         </div>

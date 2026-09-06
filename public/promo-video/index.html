@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SysGym — Video Spot Comercial de Alta Conversión</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,600;0,700;0,800;0,900;1,800&family=Outfit:wght@700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #22c55e;
+      --primary-glow: rgba(34, 197, 94, 0.45);
+      --titanium: #1f2229;
+      --screen-glass: #0b0f17;
+      --text-white: #ffffff;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background: #060709;
+      color: var(--text-white);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      overflow-x: hidden;
+    }
+
+    /* BARRA DE HERRAMIENTAS Y CONTROLES */
+    .director-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      width: 100%;
+      max-width: 1080px;
+      margin-bottom: 16px;
+      background: rgba(18, 22, 32, 0.85);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 18px;
+      padding: 12px 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    .badge-studio {
+      background: linear-gradient(135deg, #22c55e, #15803d);
+      color: #000;
+      font-size: 0.7rem;
+      font-weight: 900;
+      padding: 4px 10px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .btn-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      border: none;
+      outline: none;
+      padding: 10px 18px;
+      border-radius: 12px;
+      font-family: inherit;
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .btn:active {
+      transform: scale(0.96);
+    }
+
+    .btn-action {
+      background: #22c55e;
+      color: #051308;
+      box-shadow: 0 0 25px var(--primary-glow);
+    }
+
+    .btn-action:hover {
+      background: #4ade80;
+      box-shadow: 0 0 35px rgba(74, 222, 128, 0.6);
+    }
+
+    .btn-glass {
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .btn-glass:hover {
+      background: rgba(255, 255, 255, 0.16);
+    }
+
+    .aspect-selector {
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    /* ESCENARIO DEL VIDEO (CANVAS CINEMATOGRÁFICO) */
+    .video-viewport {
+      position: relative;
+      width: 405px;
+      max-width: calc(100vw - 24px);
+      height: 720px;
+      max-height: calc((100vw - 24px) * 16 / 9);
+      border-radius: 36px;
+      overflow: hidden;
+      box-shadow: 0 30px 80px -15px rgba(0, 0, 0, 0.95), 0 0 50px rgba(34, 197, 94, 0.2);
+      border: 3px solid rgba(255, 255, 255, 0.14);
+      background: #000;
+      transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1), height 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      perspective: 1400px;
+    }
+
+    .video-viewport.ratio-feed {
+      width: 450px;
+      height: 562px;
+      max-height: calc((100vw - 24px) * 5 / 4);
+    }
+
+    .video-viewport.ratio-square {
+      width: 540px;
+      height: 540px;
+      max-height: calc(100vw - 24px);
+    }
+
+    @media (max-width: 440px) {
+      .video-viewport {
+        border-radius: 24px;
+        height: 82vh;
+      }
+      .iphone-3d {
+        width: 220px !important;
+        height: 420px !important;
+      }
+      .headline-kinetic {
+        font-size: 1.55rem !important;
+      }
+      .director-bar {
+        padding: 10px 14px;
+      }
+    }
+
+    /* BARRA DE PROGRESO DE INSTAGRAM EN EL TOPE */
+    .ig-top-bar {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      right: 14px;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 4px;
+      z-index: 90;
+      overflow: hidden;
+    }
+
+    .ig-top-fill {
+      width: 0%;
+      height: 100%;
+      background: #ffffff;
+      box-shadow: 0 0 10px #ffffff;
+      transition: width 0.05s linear;
+    }
+
+    .ig-brand-header {
+      position: absolute;
+      top: 26px;
+      left: 16px;
+      right: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 90;
+    }
+
+    .ig-author {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(12px);
+      padding: 5px 12px 5px 6px;
+      border-radius: 30px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .ig-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 0.72rem;
+      color: #000;
+    }
+
+    .ig-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+
+    /* CAPA DE FONDOS REALES CINEMATOGRÁFICOS CON PERSONAS EN EL GIMNASIO */
+    .cinematic-bg-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    .bg-scene-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      transform: scale(1.08);
+      transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 6s cubic-bezier(0.25, 1, 0.5, 1);
+      filter: brightness(0.42) saturate(1.2);
+    }
+
+    .bg-scene-img.active {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    /* Gradiente cinematográfico sobre las fotos de fondo */
+    .cinematic-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      background: radial-gradient(circle at center, rgba(10, 15, 26, 0.2) 0%, rgba(5, 7, 12, 0.85) 75%, #05070a 100%);
+      pointer-events: none;
+    }
+
+    /* CONTENEDOR DE CONTENIDO DEL SPOT */
+    .spot-stage {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 70px 20px 24px;
+      box-sizing: border-box;
+    }
+
+    /* TÍTULOS CINÉTICOS DE RETENCIÓN */
+    .hook-container {
+      text-align: center;
+      transition: transform 0.4s ease, opacity 0.4s ease;
+    }
+
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: 30px;
+      margin-bottom: 10px;
+      backdrop-filter: blur(12px);
+    }
+
+    .badge-red {
+      background: rgba(239, 68, 68, 0.25);
+      border: 1px solid rgba(239, 68, 68, 0.6);
+      color: #fca5a5;
+    }
+
+    .badge-green {
+      background: rgba(34, 197, 94, 0.25);
+      border: 1px solid rgba(34, 197, 94, 0.6);
+      color: #86efac;
+    }
+
+    .badge-blue {
+      background: rgba(59, 130, 246, 0.25);
+      border: 1px solid rgba(59, 130, 246, 0.6);
+      color: #93c5fd;
+    }
+
+    .headline-kinetic {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.95rem;
+      font-weight: 900;
+      line-height: 1.12;
+      text-transform: uppercase;
+      letter-spacing: -0.5px;
+      text-shadow: 0 4px 20px rgba(0,0,0,0.8);
+    }
+
+    .hl-green {
+      color: #22c55e;
+      text-shadow: 0 0 25px rgba(34, 197, 94, 0.6);
+    }
+
+    .hl-red {
+      color: #ef4444;
+      text-shadow: 0 0 25px rgba(239, 68, 68, 0.6);
+    }
+
+    /* EL CELULAR (iPHONE 16 PRO EN 3D REALISTA) */
+    .phone-perspective-stage {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 10px 0;
+      perspective: 1200px;
+    }
+
+    .iphone-3d {
+      position: relative;
+      width: 250px;
+      height: 480px;
+      background: #0c0f16;
+      border-radius: 46px;
+      border: 4px solid #333842;
+      box-shadow: 
+        0 25px 60px rgba(0,0,0,0.9),
+        0 0 0 2px rgba(255, 255, 255, 0.15),
+        inset 0 0 0 3px #181b22,
+        0 0 50px rgba(34, 197, 94, 0.2);
+      transform-style: preserve-3d;
+      transform: rotateY(-6deg) rotateX(8deg) translateZ(20px);
+      transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.8s ease;
+      overflow: hidden;
+    }
+
+    /* Estado cuando se hace zoom en la mano/celular */
+    .iphone-3d.zoomed {
+      transform: rotateY(0deg) rotateX(0deg) scale(1.12) translateZ(40px);
+      box-shadow: 0 35px 80px rgba(0,0,0,0.95), 0 0 70px rgba(34, 197, 94, 0.4);
+    }
+
+    /* Isla dinámica de Apple */
+    .dynamic-island {
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 86px;
+      height: 24px;
+      background: #000;
+      border-radius: 20px;
+      z-index: 80;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 10px;
+      transition: width 0.3s ease, height 0.3s ease;
+    }
+
+    .di-lens {
+      width: 10px;
+      height: 10px;
+      background: #0a1128;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .di-sensor {
+      width: 7px;
+      height: 7px;
+      background: #141b2d;
+      border-radius: 50%;
+    }
+
+    /* Pantalla con brillo de cristal Liquid Glass */
+    .iphone-screen {
+      position: absolute;
+      inset: 4px;
+      border-radius: 40px;
+      background: #080b11;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      padding: 42px 14px 18px;
+    }
+
+    .glass-light-sheen {
+      position: absolute;
+      top: -100%;
+      left: -100%;
+      width: 300%;
+      height: 300%;
+      background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.02) 40%, transparent 60%);
+      transform: rotate(35deg);
+      pointer-events: none;
+      z-index: 70;
+      animation: sheenSweep 6s infinite ease-in-out;
+    }
+
+    @keyframes sheenSweep {
+      0%, 100% { transform: translateY(0) rotate(35deg); }
+      50% { transform: translateY(80%) rotate(35deg); }
+    }
+
+    /* UI REAL DE SYSGYM ADENTRO DEL IPHONE */
+    .ui-app-view {
+      position: absolute;
+      inset: 42px 12px 16px;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      transform: translateY(10px) scale(0.96);
+      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: none;
+    }
+
+    .ui-app-view.active {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+    }
+
+    /* PANTALLA 1 DEL IPHONE: CARNET DIGITAL & QR DE ACCESO EN VIVO */
+    .carnet-card {
+      background: linear-gradient(145deg, #161c28, #0e121a);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      padding: 14px;
+      text-align: center;
+      position: relative;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    }
+
+    .qr-live-wrapper {
+      position: relative;
+      width: 120px;
+      height: 120px;
+      margin: 10px auto;
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 25px rgba(34, 197, 94, 0.4);
+    }
+
+    .qr-laser-scanner {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: #22c55e;
+      box-shadow: 0 0 12px #22c55e, 0 0 20px #22c55e;
+      animation: laserTravel 1.6s infinite ease-in-out;
+      border-radius: 4px;
+    }
+
+    @keyframes laserTravel {
+      0%, 100% { top: 6px; opacity: 0.3; }
+      50% { top: calc(100% - 8px); opacity: 1; }
+    }
+
+    .access-badge {
+      background: rgba(34, 197, 94, 0.2);
+      border: 1px solid #22c55e;
+      color: #4ade80;
+      font-size: 0.72rem;
+      font-weight: 800;
+      padding: 6px 12px;
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+      animation: bounceBadge 1.8s infinite;
+    }
+
+    @keyframes bounceBadge {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.06); }
+    }
+
+    /* PANTALLA 2 DEL IPHONE: RUTINA INTERACTIVA CON CRONÓMETRO */
+    .routine-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .routine-box {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 14px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .routine-box.done {
+      background: rgba(34, 197, 94, 0.12);
+      border-color: rgba(34, 197, 94, 0.4);
+    }
+
+    .check-btn-sim {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #22c55e;
+      color: #000;
+      font-size: 0.75rem;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 10px rgba(34, 197, 94, 0.6);
+    }
+
+    /* PANTALLA 3 DEL IPHONE: DASHBOARD DE COBROS Y CAJA */
+    .kpi-card {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      padding: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      text-align: left;
+    }
+
+    .kpi-number {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.85rem;
+      font-weight: 900;
+      color: #22c55e;
+      letter-spacing: -0.5px;
+      margin: 4px 0;
+    }
+
+    /* SUBTÍTULOS DE ALTA RETENCIÓN (KINETIC CAPTIONS INFERIORES) */
+    .caption-banner {
+      background: rgba(0, 0, 0, 0.88);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 16px;
+      padding: 12px 16px;
+      text-align: center;
+      font-size: 0.96rem;
+      font-weight: 800;
+      color: #fff;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+      margin-top: 10px;
+    }
+
+    .caption-banner span {
+      color: #22c55e;
+    }
+
+    /* BOTÓN CTA FINAL */
+    .final-cta-btn {
+      background: linear-gradient(135deg, #22c55e, #15803d);
+      color: #051308;
+      font-size: 1.05rem;
+      font-weight: 900;
+      padding: 15px 20px;
+      border-radius: 16px;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      box-shadow: 0 0 35px var(--primary-glow);
+      animation: pulseCta 1.4s infinite alternate;
+      cursor: pointer;
+    }
+
+    @keyframes pulseCta {
+      from { transform: scale(0.98); }
+      to { transform: scale(1.04); }
+    }
+
+    /* NOTAS DEL DIRECTOR Y TIPS DE INSTAGRAM */
+    .director-notes {
+      width: 100%;
+      max-width: 1080px;
+      margin-top: 20px;
+      background: rgba(18, 22, 32, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 18px;
+      padding: 22px;
+    }
+
+    .notes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      margin-top: 14px;
+    }
+
+    .note-box {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .note-box h4 {
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: #4ade80;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .note-box p {
+      font-size: 0.8rem;
+      color: #94a3b8;
+      line-height: 1.5;
+    }
+
+    .badge-time {
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+      padding: 2px 7px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- BARRA DE HERRAMIENTAS -->
+  <div class="director-bar">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <span style="font-weight: 800; font-size: 1.1rem;">SysGym</span>
+      <span class="badge-studio">Spot Profesional Reel / Feed</span>
+    </div>
+
+    <div class="btn-group">
+      <select id="aspectSelect" class="aspect-selector" onchange="changeFormat(this.value)">
+        <option value="ratio-reel">Formato Reels / Stories (9:16)</option>
+        <option value="ratio-feed">Formato Feed Vertical (4:5)</option>
+        <option value="ratio-square">Formato Feed Cuadrado (1:1)</option>
+      </select>
+
+      <button id="btnPlay" class="btn btn-action" onclick="togglePlayVideo()">
+        <span id="playIcon">▶</span>
+        <span id="playLabel">Reproducir Spot (30s)</span>
+      </button>
+
+      <button id="btnRecord" class="btn btn-glass" onclick="startScreenRecording()">
+        <span>⏺</span>
+        <span id="recordLabel">Grabar Pantalla / WebM</span>
+      </button>
+
+      <button class="btn btn-glass" onclick="toggleSoundFx()">
+        <span id="soundIco">🔊</span>
+        <span id="soundLbl">Sonido: ON</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ESCENARIO DEL SPOT CINEMATOGRÁFICO -->
+  <div id="videoViewport" class="video-viewport">
+    
+    <!-- Barra de progreso Instagram -->
+    <div class="ig-top-bar">
+      <div id="igProgress" class="ig-top-fill"></div>
+    </div>
+
+    <!-- Header Instagram -->
+    <div class="ig-brand-header">
+      <div class="ig-author">
+        <div class="ig-avatar">SG</div>
+        <div class="ig-label">sysgym.app</div>
+      </div>
+      <div style="background: rgba(34,197,94,0.25); color: #4ade80; border: 1px solid #22c55e; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 800;">
+        DEMO DISPONIBLE
+      </div>
+    </div>
+
+    <!-- FONDOS REALES CON PERSONAS EN EL GIMNASIO -->
+    <div class="cinematic-bg-layer">
+      <!-- Escena 1: Persona entrando al gimnasio / mostrador -->
+      <img id="bg-1" class="bg-scene-img active" 
+           src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=1080&auto=format&fit=crop" 
+           alt="Personas en recepción de gimnasio" />
+
+      <!-- Escena 2: Primer plano persona mostrando celular para ingresar -->
+      <img id="bg-2" class="bg-scene-img" 
+           src="https://images.unsplash.com/photo-1517838277536-f5f99be501cd?q=80&w=1080&auto=format&fit=crop" 
+           alt="Persona escaneando celular en gimnasio" />
+
+      <!-- Escena 3: Socio entrenando en el gym viendo su rutina en smartphone -->
+      <img id="bg-3" class="bg-scene-img" 
+           src="https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?q=80&w=1080&auto=format&fit=crop" 
+           alt="Socio entrenando con la app" />
+
+      <!-- Escena 4: Dueño del gimnasio gestionando feliz desde su tablet/laptop -->
+      <img id="bg-4" class="bg-scene-img" 
+           src="https://images.unsplash.com/photo-1574680096145-d05b474e2155?q=80&w=1080&auto=format&fit=crop" 
+           alt="Dueño de gimnasio en mostrador" />
+
+      <!-- Escena 5: Gym moderno con iluminación premium -->
+      <img id="bg-5" class="bg-scene-img" 
+           src="https://images.unsplash.com/photo-1540497077202-7c8a3999166f?q=80&w=1080&auto=format&fit=crop" 
+           alt="Gimnasio moderno" />
+    </div>
+
+    <div class="cinematic-overlay"></div>
+
+    <!-- CONTENIDO ACTIVO DEL SPOT -->
+    <div class="spot-stage">
+      
+      <!-- TÍTULO SUPERIOR CINÉTICO -->
+      <div class="hook-container" id="hookContainer">
+        <div id="hookBadge" class="badge-pill badge-red">⚠️ BASTA DE CUADERNOS</div>
+        <h2 id="hookTitle" class="headline-kinetic">
+          ¿TUS SOCIOS ENTRAN <br><span class="hl-red">SIN CONTROL</span>?
+        </h2>
+      </div>
+
+      <!-- iPHONE 16 PRO EN PERSPECTIVA 3D CON LA APP CORRIENDO -->
+      <div class="phone-perspective-stage">
+        <div id="iphone3D" class="iphone-3d">
+          
+          <!-- Isla Dinámica -->
+          <div class="dynamic-island" id="dynamicIsland">
+            <div class="di-lens"></div>
+            <div style="font-size: 0.55rem; font-weight: 800; color: #22c55e;" id="diText">● SysGym</div>
+            <div class="di-sensor"></div>
+          </div>
+
+          <div class="iphone-screen">
+            <div class="glass-light-sheen"></div>
+
+            <!-- VISTA 1: CARNET DIGITAL DEL SOCIO CON QR EN VIVO (0s - 10s) -->
+            <div id="view-carnet" class="ui-app-view active">
+              <div style="font-size: 0.72rem; color: #94a3b8; font-weight: 700; margin-bottom: 2px;">SYSGYM • ACCESO</div>
+              <div style="font-size: 0.95rem; font-weight: 900; margin-bottom: 8px;">Carnet Digital</div>
+              
+              <div class="carnet-card">
+                <div style="font-size: 0.78rem; font-weight: 800; color: #fff;">Lucas Benítez</div>
+                <div style="font-size: 0.65rem; color: #22c55e; font-weight: 700;">Plan Musculación Libre</div>
+
+                <div class="qr-live-wrapper">
+                  <div class="qr-laser-scanner"></div>
+                  <!-- Código QR SVG Realista -->
+                  <svg width="100" height="100" viewBox="0 0 24 24" fill="#0b0f17">
+                    <rect x="2" y="2" width="6" height="6" rx="1"/>
+                    <rect x="16" y="2" width="6" height="6" rx="1"/>
+                    <rect x="2" y="16" width="6" height="6" rx="1"/>
+                    <rect x="4" y="4" width="2" height="2" fill="#fff"/>
+                    <rect x="18" y="4" width="2" height="2" fill="#fff"/>
+                    <rect x="4" y="18" width="2" height="2" fill="#fff"/>
+                    <rect x="10" y="3" width="2" height="4"/>
+                    <rect x="11" y="9" width="3" height="3"/>
+                    <rect x="15" y="10" width="3" height="2"/>
+                    <rect x="9" y="15" width="4" height="2"/>
+                    <rect x="15" y="15" width="2" height="6"/>
+                    <rect x="19" y="17" width="2" height="4"/>
+                    <rect x="10" y="19" width="3" height="2"/>
+                  </svg>
+                </div>
+
+                <div id="badgeAcceso" class="access-badge">
+                  ✓ ACCESO PERMITIDO
+                </div>
+                <div style="font-size: 0.62rem; color: #94a3b8; margin-top: 4px;">Cuota al día • Vence en 24 días</div>
+              </div>
+            </div>
+
+            <!-- VISTA 2: RUTINA INTERACTIVA CON SEGUIMIENTO (10s - 18s) -->
+            <div id="view-rutina" class="ui-app-view">
+              <div class="routine-header">
+                <div>
+                  <div style="font-size: 0.68rem; color: #22c55e; font-weight: 800;">MI ENTRENAMIENTO</div>
+                  <div style="font-size: 0.95rem; font-weight: 900;">Día 1: Hipertrofia</div>
+                </div>
+                <span style="font-size: 0.65rem; background: rgba(59,130,246,0.2); color:#60a5fa; padding:3px 8px; border-radius:6px; font-weight:800;">
+                  3/4
+                </span>
+              </div>
+
+              <div class="routine-box done">
+                <div>
+                  <div style="font-size: 0.78rem; font-weight: 800;">Press de Banca</div>
+                  <div style="font-size: 0.65rem; color: #94a3b8;">4 series × 10 reps (80 kg)</div>
+                </div>
+                <div class="check-btn-sim">✓</div>
+              </div>
+
+              <div class="routine-box done">
+                <div>
+                  <div style="font-size: 0.78rem; font-weight: 800;">Aperturas con Mancuerna</div>
+                  <div style="font-size: 0.65rem; color: #94a3b8;">3 series × 12 reps (18 kg)</div>
+                </div>
+                <div class="check-btn-sim">✓</div>
+              </div>
+
+              <div class="routine-box" style="border-color: rgba(245,158,11,0.5); background: rgba(245,158,11,0.08);">
+                <div>
+                  <div style="font-size: 0.78rem; font-weight: 800;">Press Militar Barra</div>
+                  <div style="font-size: 0.65rem; color: #fbbf24;">Descanso: 00:45s ⏱</div>
+                </div>
+                <div style="font-size: 0.7rem; font-weight: 900; color: #f59e0b;">En curso</div>
+              </div>
+            </div>
+
+            <!-- VISTA 3: PANEL DEL GIMNASIO & CAJA EN TIEMPO REAL (18s - 25s) -->
+            <div id="view-admin" class="ui-app-view">
+              <div style="font-size: 0.68rem; color: #22c55e; font-weight: 800; margin-bottom: 2px;">ADMINISTRACIÓN</div>
+              <div style="font-size: 0.95rem; font-weight: 900; margin-bottom: 8px;">Control en Vivo</div>
+
+              <div class="kpi-card">
+                <div style="font-size: 0.72rem; color: #94a3b8; font-weight: 700;">Ingresos del Mes</div>
+                <div class="kpi-number">$ 2.450.000</div>
+                <div style="font-size: 0.7rem; color: #4ade80; font-weight: 800;">▲ 0 cuotas vencidas impagas</div>
+              </div>
+
+              <div style="margin-top: 8px; background: rgba(255,255,255,0.04); border-radius: 12px; padding: 8px 10px;">
+                <div style="font-size: 0.7rem; font-weight: 800; display:flex; justify-content:space-between;">
+                  <span>Socios Activos</span>
+                  <span style="color: #22c55e;">248 alumnos</span>
+                </div>
+                <div style="font-size: 0.65rem; color: #94a3b8; margin-top: 3px;">+38 altas en este mes</div>
+              </div>
+            </div>
+
+            <!-- VISTA 4: PANTALLA FINAL CTA (25s - 30s) -->
+            <div id="view-final" class="ui-app-view" style="justify-content: center; text-align: center;">
+              <div style="width: 50px; height: 50px; border-radius: 50%; background: #22c55e; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.2rem; color: #000; box-shadow: 0 0 25px #22c55e;">
+                SG
+              </div>
+              <div style="font-size: 1.1rem; font-weight: 900; line-height: 1.1; margin-bottom: 4px;">SysGym App</div>
+              <div style="font-size: 0.72rem; color: #94a3b8; margin-bottom: 14px;">El software preferido por gimnasios</div>
+              <div style="background: rgba(34,197,94,0.2); border: 1px solid #22c55e; color: #4ade80; padding: 6px; border-radius: 10px; font-size: 0.7rem; font-weight: 800;">
+                COMENTÁ "SYSGYM"
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- SUBTÍTULO / CAPTION DINÁMICO DE RETENCIÓN -->
+      <div id="captionBanner" class="caption-banner">
+        ¿Tus socios entran <span>sin saber si deben cuota</span>?
+      </div>
+
+    </div>
+  </div>
+
+  <!-- NOTAS DEL DIRECTOR Y ESTRATEGIA DE CONVERSIÓN -->
+  <aside class="director-notes">
+    <h3 style="font-size: 1.1rem; font-weight: 900; margin-bottom: 4px;">
+      🎬 Por qué este spot se ve cinematográfico y retiene en Instagram
+    </h3>
+    <p style="font-size: 0.85rem; color: #94a3b8;">
+      Combina tomas de personas reales con la app de SysGym corriendo en 3D en primer plano:
+    </p>
+
+    <div class="notes-grid">
+      <div class="note-box">
+        <h4>1. Escenas Reales en Gimnasio <span class="badge-time">Fondo</span></h4>
+        <p>Muestra personas reales en el gym entrando, entrenando con pesas y en recepción. Esto da credibilidad inmediata y elimina la sensación de "animación genérica".</p>
+      </div>
+
+      <div class="note-box">
+        <h4>2. La App en un iPhone 16 Pro 3D <span class="badge-time">Hardware</span></h4>
+        <p>El teléfono tiene perspectiva tridimensional real, reflejos dinámicos Liquid Glass y hace zoom cuando el socio escanea el QR en la entrada.</p>
+      </div>
+
+      <div class="note-box">
+        <h4>3. La UI Real de SysGym Activa <span class="badge-time">Software</span></h4>
+        <p>No son capturas fijas: el láser del QR escanea en vivo, el carnet valida el acceso en verde y la rutina tilda las series interactivamente.</p>
+      </div>
+
+      <div class="note-box">
+        <h4>4. Subtítulos para Modo Silencioso <span class="badge-time">Retención</span></h4>
+        <p>Resalta con verde neón las palabras de alto impacto para capturar a los usuarios que ven historias o reels sin auriculares.</p>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MOTOR DE AUDIO SINTETIZADO Y ANIMACIÓN 60FPS -->
+  <script>
+    const TOTAL_DURATION = 30000;
+    let isPlaying = false;
+    let startTime = null;
+    let rafId = null;
+    let soundEnabled = true;
+
+    // Escenas con sus tiempos exactos, fondos fotográficos, textos y vistas de la app
+    const scenes = [
+      {
+        start: 0,
+        end: 5000,
+        bgId: 'bg-1',
+        badge: '⚠️ BASTA DE CUADERNOS',
+        badgeClass: 'badge-red',
+        title: '¿TUS SOCIOS ENTRAN <br><span class="hl-red">SIN CONTROL</span>?',
+        sub: '¿Tus socios entran <span>sin saber si pagaron la cuota</span>?',
+        appView: 'view-carnet',
+        zoom: false,
+        di: '● Entrada Gym',
+        sfx: 'alert'
+      },
+      {
+        start: 5000,
+        end: 11000,
+        bgId: 'bg-2',
+        badge: '⚡ ACCESO INSTANTÁNEO',
+        badgeClass: 'badge-green',
+        title: 'ESCANEAN Y PASAN EN <br><span class="hl-green">1 SEGUNDO</span>',
+        sub: 'Llegan a recepción, <span>apoyan el QR</span> y listo: cuota validada.',
+        appView: 'view-carnet',
+        zoom: true, // Zoom cinematográfico al teléfono
+        di: '✓ Cuota al Día',
+        sfx: 'beep-qr'
+      },
+      {
+        start: 11000,
+        end: 18500,
+        bgId: 'bg-3',
+        badge: '💪 CERO FOTOCOPIAS',
+        badgeClass: 'badge-blue',
+        title: 'RUTINAS DIGITALES EN <br><span class="hl-green">SU CELULAR</span>',
+        sub: 'Tus alumnos ven sus <span>series, pesos y descansos</span> al instante.',
+        appView: 'view-rutina',
+        zoom: false,
+        di: '⏱ Press Banca',
+        sfx: 'click'
+      },
+      {
+        start: 18500,
+        end: 24500,
+        bgId: 'bg-4',
+        badge: '📈 NÚMEROS CLAROS',
+        badgeClass: 'badge-green',
+        title: 'COBROS Y CAJA <br><span class="hl-green">100% AUTOMÁTICOS</span>',
+        sub: 'Controlá ingresos y cuotas vencidas <span>desde cualquier dispositivo</span>.',
+        appView: 'view-admin',
+        zoom: true,
+        di: '▲ Cobros OK',
+        sfx: 'coin'
+      },
+      {
+        start: 24500,
+        end: 30000,
+        bgId: 'bg-5',
+        badge: '🚀 PROBALO HOY',
+        badgeClass: 'badge-green',
+        title: 'MODERNIZÁ TU GYM <br><span class="hl-green">GRATIS HOY</span>',
+        sub: 'Comentá <span>"SYSGYM"</span> abajo y te enviamos la demo.',
+        appView: 'view-final',
+        zoom: false,
+        di: '★ SysGym App',
+        sfx: 'fanfare'
+      }
+    ];
+
+    let currentSceneIdx = -1;
+
+    // Audio sintetizado de cero latencia
+    let audioCtx = null;
+    function initAudio() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    }
+
+    function playSfx(type) {
+      if (!soundEnabled) return;
+      try {
+        const ctx = initAudio();
+        const now = ctx.currentTime;
+
+        if (type === 'alert') {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(220, now);
+          osc.frequency.exponentialRampToValueAtTime(140, now + 0.3);
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.linearRampToValueAtTime(0.001, now + 0.3);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.3);
+        } else if (type === 'beep-qr') {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(1200, now);
+          gain.gain.setValueAtTime(0.25, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.15);
+        } else if (type === 'click') {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(600, now);
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.08);
+        } else if (type === 'coin') {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(987.77, now);
+          osc.frequency.setValueAtTime(1318.51, now + 0.08);
+          gain.gain.setValueAtTime(0.25, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.35);
+        } else if (type === 'fanfare') {
+          [523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.frequency.setValueAtTime(freq, now + (i * 0.08));
+            gain.gain.setValueAtTime(0.18, now + (i * 0.08));
+            gain.gain.exponentialRampToValueAtTime(0.001, now + (i * 0.08) + 0.4);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now + (i * 0.08));
+            osc.stop(now + (i * 0.08) + 0.4);
+          });
+        }
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+
+    function toggleSoundFx() {
+      soundEnabled = !soundEnabled;
+      document.getElementById('soundLbl').innerText = soundEnabled ? 'Sonido: ON' : 'Sonido: OFF';
+      document.getElementById('soundIco').innerText = soundEnabled ? '🔊' : '🔇';
+    }
+
+    function changeFormat(val) {
+      const el = document.getElementById('videoViewport');
+      el.classList.remove('ratio-feed', 'ratio-square');
+      if (val === 'ratio-feed') el.classList.add('ratio-feed');
+      if (val === 'ratio-square') el.classList.add('ratio-square');
+    }
+
+    function togglePlayVideo() {
+      if (isPlaying) {
+        pauseVideo();
+      } else {
+        startVideo();
+      }
+    }
+
+    function startVideo() {
+      isPlaying = true;
+      startTime = performance.now();
+      document.getElementById('playIcon').innerText = '⏸';
+      document.getElementById('playLabel').innerText = 'Pausar';
+      loop();
+    }
+
+    function pauseVideo() {
+      isPlaying = false;
+      document.getElementById('playIcon').innerText = '▶';
+      document.getElementById('playLabel').innerText = 'Reanudar';
+      cancelAnimationFrame(rafId);
+    }
+
+    function loop() {
+      if (!isPlaying) return;
+      const now = performance.now();
+      const elapsed = (now - startTime) % TOTAL_DURATION;
+      const pct = (elapsed / TOTAL_DURATION) * 100;
+
+      document.getElementById('igProgress').style.width = pct + '%';
+
+      const sIndex = scenes.findIndex(s => elapsed >= s.start && elapsed < s.end);
+      if (sIndex !== -1 && sIndex !== currentSceneIdx) {
+        applyScene(sIndex);
+      }
+
+      rafId = requestAnimationFrame(loop);
+    }
+
+    function applyScene(idx) {
+      currentSceneIdx = idx;
+      const sc = scenes[idx];
+
+      // 1. Fondos con personas reales
+      document.querySelectorAll('.bg-scene-img').forEach(img => img.classList.remove('active'));
+      const activeBg = document.getElementById(sc.bgId);
+      if (activeBg) activeBg.classList.add('active');
+
+      // 2. Textos cinéticos de retención
+      const badge = document.getElementById('hookBadge');
+      badge.className = `badge-pill ${sc.badgeClass}`;
+      badge.innerText = sc.badge;
+
+      document.getElementById('hookTitle').innerHTML = sc.title;
+      document.getElementById('captionBanner').innerHTML = sc.sub;
+      document.getElementById('diText').innerText = sc.di;
+
+      // 3. Vistas dentro del iPhone 16 Pro
+      document.querySelectorAll('.ui-app-view').forEach(v => v.classList.remove('active'));
+      const targetView = document.getElementById(sc.appView);
+      if (targetView) targetView.classList.add('active');
+
+      // 4. Cámara 3D / Zoom
+      const phone = document.getElementById('iphone3D');
+      if (sc.zoom) {
+        phone.classList.add('zoomed');
+      } else {
+        phone.classList.remove('zoomed');
+      }
+
+      // 5. Audio SFX
+      playSfx(sc.sfx);
+    }
+
+    // Grabación directa WebM / MP4 en el navegador
+    async function startScreenRecording() {
+      try {
+        const stream = await navigator.mediaDevices.getDisplayMedia({
+          video: { frameRate: 60 },
+          audio: true
+        });
+
+        const recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
+        const parts = [];
+
+        recorder.ondataavailable = e => parts.push(e.data);
+        recorder.onstop = () => {
+          const blob = new Blob(parts, { type: 'video/webm' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `sysgym-promo-spot-${Date.now()}.webm`;
+          a.click();
+          document.getElementById('recordLabel').innerText = 'Grabar Pantalla / WebM';
+        };
+
+        recorder.start();
+        document.getElementById('recordLabel').innerText = 'Grabando... (Click Detener)';
+        document.getElementById('btnRecord').onclick = () => {
+          recorder.stop();
+          stream.getTracks().forEach(t => t.stop());
+          document.getElementById('btnRecord').onclick = startScreenRecording;
+        };
+
+        currentSceneIdx = -1;
+        startVideo();
+
+      } catch (err) {
+        alert('Podés grabar la pantalla con OBS o presionando Win + Alt + R en Windows para máxima calidad.');
+      }
+    }
+  </script>
+</body>
+</html>
