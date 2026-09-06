@@ -8,7 +8,7 @@ export async function ImpersonationBanner() {
   if (!imp) return null;
 
   return (
-    <div className="sticky top-0 z-50 flex items-center justify-between gap-3 bg-ink px-4 py-2 text-[13px] text-paper">
+    <div className="sticky top-0 z-50 flex items-center justify-between gap-3 bg-ink px-4 pb-2 pt-[calc(env(safe-area-inset-top,0px)+0.5rem)] text-[13px] text-paper">
       <span className="min-w-0 truncate">
         Viendo como <strong>{imp.nombre}</strong>{" "}
         {imp.rol === "dueno" ? "(dueño)" : "(socio)"} · {imp.gym}

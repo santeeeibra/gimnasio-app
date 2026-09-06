@@ -111,12 +111,14 @@ export function TimerDescanso() {
     const handleTimerIniciar = (e: CustomEvent<{ segundos?: number }>) => {
       const segs = e.detail?.segundos || 60;
       if (segs > 0) {
-        setColapsado(false);
         setPresetSeg(segs);
         finEnRef.current = Date.now() + segs * 1000;
         setSegundosRestantes(segs);
         setEstado("corriendo");
+        setAlertFinalizado(false);
+        setJustStarted(true);
         hapticoImpactoMedio();
+        setTimeout(() => setJustStarted(false), 500);
       }
     };
 
@@ -283,8 +285,8 @@ export function TimerDescanso() {
         if (!prev) return prev;
         const w = window.innerWidth;
         const h = window.innerHeight;
-        const elemWidth = colapsado ? 160 : 300;
-        const elemHeight = colapsado ? 48 : 220;
+        const elemWidth = 160;
+        const elemHeight = 48;
         const margin = 12;
         const bottomNavHeight = 70;
         const topMargin = 10;
@@ -300,7 +302,7 @@ export function TimerDescanso() {
     };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [colapsado]);
+  }, []);
 
   function snapToClosestEdge(currentX: number, currentY: number) {
     if (typeof window === "undefined") return;
@@ -329,7 +331,7 @@ export function TimerDescanso() {
   function onPointerDown(e: React.PointerEvent) {
     // Solo click primario / touch
     if (e.button !== undefined && e.button !== 0) return;
-    // Si se hizo click sobre botones o controles internos cuando está expandido, no arrastrar
+    // Si se hizo click sobre botones o controles internos, no arrastrar
     const target = e.target as HTMLElement;
     if (target.closest("button") || target.closest("select") || target.closest("input")) {
       return;
@@ -377,19 +379,15 @@ export function TimerDescanso() {
       window.removeEventListener("pointercancel", onPointerUp);
 
       if (dragInfoRef.current.hasMoved) {
-        // Soltado tras arrastre: snap al borde más próximo si está colapsado
+        // Soltado tras arrastre: snap al borde más próximo
         setPos((latest) => {
           if (!latest) return latest;
-          if (colapsado) {
-            snapToClosestEdge(latest.x, latest.y);
-          }
+          snapToClosestEdge(latest.x, latest.y);
           return latest;
         });
       } else {
-        // Fue un tap limpio sin arrastre: toggle in situ
-        // Mismo camino que el botón de cerrar: al expandir hay que reencuadrar
-        // el panel para que no quede cortado contra el borde o la bottom nav.
-        toggleExpandirInSitu(!colapsado);
+        // Fue un tap limpio sin arrastre: abrir modal centrado
+        setColapsado(false);
       }
     };
 
@@ -398,295 +396,288 @@ export function TimerDescanso() {
     window.addEventListener("pointercancel", onPointerUp);
   }
 
-  // Ajustar posición al expandirse para que no desborde hacia la derecha o hacia abajo
-  function toggleExpandirInSitu(nuevaColapsada: boolean) {
-    setColapsado(nuevaColapsada);
-    if (!nuevaColapsada && pos && typeof window !== "undefined") {
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      const panelWidth = Math.min(300, w - 24);
-      const panelHeight = 240;
-      const margin = 12;
-      const bottomNavHeight = 70;
-      const topMargin = 10;
-
-      const maxX = Math.max(margin, w - panelWidth - margin);
-      const maxY = Math.max(topMargin, h - bottomNavHeight - panelHeight - margin);
-
-      const clampedX = Math.max(margin, Math.min(maxX, pos.x));
-      const clampedY = Math.max(topMargin, Math.min(maxY, pos.y));
-      setPos({ x: clampedX, y: clampedY });
-    }
-  }
-
   if (!pos) return null;
 
   return (
-    <div
-      ref={containerRef}
-      onPointerDown={onPointerDown}
-      style={{
-        transform: `translate3d(${pos.x}px, ${pos.y}px, 0)`,
-        touchAction: "none",
-      }}
-      className={`fixed top-0 left-0 z-50 select-none ${
-        snapping
-          ? "transition-transform duration-300 [transition-timing-function:cubic-bezier(0.2,0.9,0.3,1.2)]"
-          : isDragging
-          ? "cursor-grabbing opacity-95"
-          : "cursor-grab"
-      }`}
-    >
-      {colapsado ? (
-        /* Modo Colapsado: Píldora táctil ergonómica (mínimo 48px de alto, cumple WCAG §3) */
+    <>
+      {/* Modo Colapsado: Píldora táctil ergonómica arrastrable */}
+      {colapsado && (
         <div
-          role="button"
-          tabIndex={0}
-          aria-label={alertFinalizado ? "Descanso terminado. Abrir timer" : "Abrir descanso entre series"}
-          className={`flex h-12 min-w-[48px] items-center gap-2.5 rounded-full border bg-paper/95 px-3 py-1.5 shadow-xl backdrop-blur-md transition-[transform,border-color,box-shadow] duration-200 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
-            alertFinalizado
-              ? "border-accent bg-accent/15 text-accent shadow-[0_0_16px_var(--accent)] animate-timer-alert"
-              : corriendo
-              ? "border-accent/80 animate-timer-breathe"
-              : justStarted
-              ? "border-accent animate-timer-ripple"
-              : "border-rule"
+          ref={containerRef}
+          onPointerDown={onPointerDown}
+          style={{
+            transform: `translate3d(${pos.x}px, ${pos.y}px, 0)`,
+            touchAction: "none",
+          }}
+          className={`fixed top-0 left-0 z-40 select-none ${
+            snapping
+              ? "transition-transform duration-300 [transition-timing-function:cubic-bezier(0.2,0.9,0.3,1.2)]"
+              : isDragging
+              ? "cursor-grabbing opacity-95"
+              : "cursor-grab"
           }`}
         >
           <div
-            className={`relative grid size-8 shrink-0 place-items-center rounded-full border transition-colors ${
+            role="button"
+            tabIndex={0}
+            aria-label={alertFinalizado ? "Descanso terminado. Abrir timer" : "Abrir descanso entre series"}
+            className={`flex h-12 min-w-[48px] items-center gap-2.5 rounded-full border bg-paper/95 px-3 py-1.5 shadow-xl backdrop-blur-md transition-[transform,border-color,box-shadow] duration-200 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
               alertFinalizado
-                ? "border-accent bg-accent text-accent-ink"
+                ? "border-accent bg-accent/15 text-accent shadow-[0_0_16px_var(--accent)] animate-timer-alert"
                 : corriendo
-                ? "border-accent/40 bg-accent text-accent-ink shadow-[0_0_10px_var(--ring)]"
-                : "bg-paper-2 text-ink"
+                ? "border-accent/80 animate-timer-breathe"
+                : justStarted
+                ? "border-accent animate-timer-ripple"
+                : "border-rule"
             }`}
           >
-            {/* Anillo perimetral SVG para cuenta regresiva */}
-            {corriendo && (
-              <svg className="absolute inset-0 size-full -rotate-90" viewBox="0 0 32 32">
-                <circle
-                  cx="16"
-                  cy="16"
-                  r="14"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  className="text-rule/40"
-                />
-                <circle
-                  cx="16"
-                  cy="16"
-                  r="14"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeDasharray={87.96}
-                  strokeDashoffset={87.96 - (87.96 * pctRestante) / 100}
-                  className="text-accent-ink transition-[stroke-dashoffset] duration-1000 linear"
-                />
-              </svg>
-            )}
-            {alertFinalizado ? (
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="size-4 animate-pop-in">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-            ) : (
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                className={`size-4 ${corriendo ? "animate-pulse" : ""}`}
-                aria-hidden
-              >
-                <circle cx="12" cy="12" r="10" />
-                <polyline points="12 6 12 12 16 14" />
-              </svg>
-            )}
-          </div>
-          <div className="flex flex-col pr-1.5">
-            <span
-              className={`text-[13.5px] font-bold tabular-nums leading-tight ${
+            <div
+              className={`relative grid size-8 shrink-0 place-items-center rounded-full border transition-colors ${
                 alertFinalizado
-                  ? "text-accent font-extrabold tracking-wide animate-pop-in"
+                  ? "border-accent bg-accent text-accent-ink"
                   : corriendo
-                  ? "text-accent"
-                  : "text-ink"
+                  ? "border-accent/40 bg-accent text-accent-ink shadow-[0_0_10px_var(--ring)]"
+                  : "bg-paper-2 text-ink"
               }`}
-              style={{ fontFamily: "var(--font-hero)" }}
             >
-              {alertFinalizado ? "¡LISTO!" : display}
-            </span>
-            <span className="text-[9px] font-bold uppercase tracking-wider text-ink-soft">
-              {alertFinalizado ? "A entrenar" : corriendo ? "Descanso" : pausado ? "Pausado" : "Timer"}
-            </span>
-          </div>
-        </div>
-      ) : (
-        /* Modo Expandido In-Situ: Panel completo con presets y controles */
-        <div
-          onClick={(e) => e.stopPropagation()}
-          className={`w-[290px] max-w-[calc(100vw-24px)] rounded-[16px] border bg-paper/95 p-4 shadow-2xl backdrop-blur-md animate-fade-in transition-[border-color,box-shadow] duration-200 ${
-            alertFinalizado
-              ? "border-accent ring-2 ring-accent/60 shadow-[0_0_24px_var(--accent)] animate-timer-flash"
-              : corriendo
-              ? "border-accent/50 shadow-xl"
-              : "border-rule"
-          }`}
-        >
-          {/* Header con botón cerrar */}
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-ink-soft">
-              Descanso entre series
-            </h3>
-            <button
-              type="button"
-              onClick={() => toggleExpandirInSitu(true)}
-              className="size-9 shrink-0 grid place-items-center rounded-[8px] border border-rule bg-paper-2 text-ink-soft transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-90 hover:text-ink"
-              aria-label="Cerrar timer"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                className="size-4"
-              >
-                <path d="M6 6l12 12M18 6L6 18" />
-              </svg>
-            </button>
-          </div>
-
-          <div className="space-y-3">
-            {/* Display de tiempo grande monoespaciado */}
-            <div className="flex flex-col items-center justify-center py-2">
-              {alertFinalizado ? (
-                <div className="flex flex-col items-center py-1 animate-pop-in">
-                  <span
-                    className="text-3xl font-bold tracking-tight text-accent animate-bounce"
-                    style={{ fontFamily: "var(--font-hero)" }}
-                  >
-                    ¡A ENTRENAR!
-                  </span>
-                  <span className="mt-0.5 text-xs font-semibold text-ink-soft">
-                    Descanso completado
-                  </span>
-                </div>
-              ) : (
-                <div className={`flex flex-col items-center py-1 ${justStarted ? "animate-timer-ripple" : ""}`}>
-                  <span
-                    className={`text-4xl font-bold tabular-nums tracking-tight transition-colors ${
-                      corriendo
-                        ? "text-accent drop-shadow-[0_0_12px_var(--ring)]"
-                        : pausado
-                        ? "text-warn"
-                        : "text-ink"
-                    }`}
-                    style={{ fontFamily: "var(--font-hero)" }}
-                  >
-                    {display}
-                  </span>
-                  {corriendo && (
-                    <span className="mt-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-accent animate-pulse">
-                      <span className="size-1.5 rounded-full bg-accent" />
-                      Descanso en curso
-                    </span>
-                  )}
-                </div>
-              )}
-
-              {/* Barra de progreso de descanso */}
-              <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full border border-rule bg-paper-2">
-                <div
-                  className={`h-full transition-[width] duration-1000 linear ${
-                    alertFinalizado
-                      ? "bg-accent w-full"
-                      : corriendo
-                      ? "bg-accent"
-                      : "bg-ink-soft/40"
-                  }`}
-                  style={{ width: `${alertFinalizado ? 100 : pctRestante}%` }}
-                />
-              </div>
-            </div>
-
-            {/* Presets rápidos (44px de alto para cumplir WCAG §3) */}
-            <div className="grid grid-cols-4 gap-1.5">
-              {PRESETS.map((p) => (
-                <button
-                  key={p.segundos}
-                  type="button"
-                  onClick={() => seleccionarPreset(p.segundos)}
-                  disabled={corriendo}
-                  className={`h-11 rounded-[10px] border text-xs font-bold transition-[transform,background-color,border-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
-                    presetSeg === p.segundos && detenido
-                      ? "border-accent bg-accent text-accent-ink shadow-sm"
-                      : "border-rule bg-paper-2 text-ink-soft hover:text-ink hover:bg-paper"
-                  }`}
-                  style={{ fontFamily: "var(--font-hero)" }}
-                >
-                  {p.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Controles principales (44px) */}
-            <div className="flex gap-2 pt-1">
-              {detenido && (
-                <button
-                  type="button"
-                  onClick={iniciar}
-                  className="flex-1 h-11 rounded-[12px] bg-accent text-accent-ink font-bold text-sm transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 shadow-sm"
-                >
-                  Iniciar
-                </button>
-              )}
-
+              {/* Anillo perimetral SVG para cuenta regresiva */}
               {corriendo && (
-                <>
-                  <button
-                    type="button"
-                    onClick={pausar}
-                    className="flex-1 h-11 rounded-[12px] border border-rule bg-paper-2 text-ink font-semibold text-sm transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] hover:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
-                  >
-                    Pausar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={resetear}
-                    className="flex-1 h-11 rounded-[12px] border border-rule bg-paper-2 text-ink font-semibold text-sm transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] hover:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
-                  >
-                    Resetear
-                  </button>
-                </>
+                <svg className="absolute inset-0 size-full -rotate-90" viewBox="0 0 32 32">
+                  <circle
+                    cx="16"
+                    cy="16"
+                    r="14"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    className="text-rule/40"
+                  />
+                  <circle
+                    cx="16"
+                    cy="16"
+                    r="14"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeDasharray={87.96}
+                    strokeDashoffset={87.96 - (87.96 * pctRestante) / 100}
+                    className="text-accent-ink transition-[stroke-dashoffset] duration-1000 linear"
+                  />
+                </svg>
               )}
-
-              {pausado && (
-                <>
-                  <button
-                    type="button"
-                    onClick={reanudar}
-                    className="flex-1 h-11 rounded-[12px] bg-accent text-accent-ink font-bold text-sm transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 shadow-sm"
-                  >
-                    Reanudar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={resetear}
-                    className="flex-1 h-11 rounded-[12px] border border-rule bg-paper-2 text-ink font-semibold text-sm transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] hover:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
-                  >
-                    Resetear
-                  </button>
-                </>
+              {alertFinalizado ? (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="size-4 animate-pop-in">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              ) : (
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  className={`size-4 ${corriendo ? "animate-pulse" : ""}`}
+                  aria-hidden
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
               )}
+            </div>
+            <div className="flex flex-col pr-1.5">
+              <span
+                className={`text-[13.5px] font-bold tabular-nums leading-tight ${
+                  alertFinalizado
+                    ? "text-accent font-extrabold tracking-wide animate-pop-in"
+                    : corriendo
+                    ? "text-accent"
+                    : "text-ink"
+                }`}
+                style={{ fontFamily: "var(--font-hero)" }}
+              >
+                {alertFinalizado ? "¡LISTO!" : display}
+              </span>
+              <span className="text-[9px] font-bold uppercase tracking-wider text-ink-soft">
+                {alertFinalizado ? "A entrenar" : corriendo ? "Descanso" : pausado ? "Pausado" : "Timer"}
+              </span>
             </div>
           </div>
         </div>
       )}
-    </div>
+
+      {/* Modo Expandido: Modal centrado con Backdrop estilo iOS */}
+      {!colapsado && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs animate-fade-in"
+            onClick={() => setColapsado(true)}
+            aria-hidden="true"
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Descanso entre series"
+            onClick={(e) => e.stopPropagation()}
+            className={`relative z-10 w-full max-w-[320px] rounded-[20px] border bg-paper p-5 shadow-2xl backdrop-blur-xl animate-fade-in transition-[border-color,box-shadow] duration-200 ${
+              alertFinalizado
+                ? "border-accent ring-2 ring-accent/60 shadow-[0_0_24px_var(--accent)] animate-timer-flash"
+                : corriendo
+                ? "border-accent/50 shadow-xl"
+                : "border-rule"
+            }`}
+          >
+            {/* Header con botón cerrar */}
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-ink-soft">
+                Descanso entre series
+              </h3>
+              <button
+                type="button"
+                onClick={() => setColapsado(true)}
+                className="size-9 shrink-0 grid place-items-center rounded-[10px] border border-rule bg-paper-2 text-ink-soft transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-90 hover:text-ink"
+                aria-label="Cerrar timer"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  className="size-4"
+                >
+                  <path d="M6 6l12 12M18 6L6 18" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {/* Display de tiempo grande monoespaciado */}
+              <div className="flex flex-col items-center justify-center py-2">
+                {alertFinalizado ? (
+                  <div className="flex flex-col items-center py-1 animate-pop-in">
+                    <span
+                      className="text-3xl font-bold tracking-tight text-accent animate-bounce"
+                      style={{ fontFamily: "var(--font-hero)" }}
+                    >
+                      ¡A ENTRENAR!
+                    </span>
+                    <span className="mt-0.5 text-xs font-semibold text-ink-soft">
+                      Descanso completado
+                    </span>
+                  </div>
+                ) : (
+                  <div className={`flex flex-col items-center py-1 ${justStarted ? "animate-timer-ripple" : ""}`}>
+                    <span
+                      className={`text-4xl font-bold tabular-nums tracking-tight transition-colors ${
+                        corriendo
+                          ? "text-accent drop-shadow-[0_0_12px_var(--ring)]"
+                          : pausado
+                          ? "text-warn"
+                          : "text-ink"
+                      }`}
+                      style={{ fontFamily: "var(--font-hero)" }}
+                    >
+                      {display}
+                    </span>
+                    {corriendo && (
+                      <span className="mt-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-accent animate-pulse">
+                        <span className="size-1.5 rounded-full bg-accent" />
+                        Descanso en curso
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {/* Barra de progreso de descanso */}
+                <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full border border-rule bg-paper-2">
+                  <div
+                    className={`h-full transition-[width] duration-1000 linear ${
+                      alertFinalizado
+                        ? "bg-accent w-full"
+                        : corriendo
+                        ? "bg-accent"
+                        : "bg-ink-soft/40"
+                    }`}
+                    style={{ width: `${alertFinalizado ? 100 : pctRestante}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Presets rápidos (44px de alto para cumplir WCAG §3) */}
+              <div className="grid grid-cols-4 gap-1.5">
+                {PRESETS.map((p) => (
+                  <button
+                    key={p.segundos}
+                    type="button"
+                    onClick={() => seleccionarPreset(p.segundos)}
+                    disabled={corriendo}
+                    className={`h-11 rounded-[10px] border text-xs font-bold transition-[transform,background-color,border-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
+                      presetSeg === p.segundos && detenido
+                        ? "border-accent bg-accent text-accent-ink shadow-sm"
+                        : "border-rule bg-paper-2 text-ink-soft hover:text-ink hover:bg-paper"
+                    }`}
+                    style={{ fontFamily: "var(--font-hero)" }}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Controles principales (44px) */}
+              <div className="flex gap-2 pt-1">
+                {detenido && (
+                  <button
+                    type="button"
+                    onClick={iniciar}
+                    className="flex-1 h-11 rounded-[12px] bg-accent text-accent-ink font-bold text-sm transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 shadow-sm"
+                  >
+                    Iniciar
+                  </button>
+                )}
+
+                {corriendo && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={pausar}
+                      className="flex-1 h-11 rounded-[12px] border border-rule bg-paper-2 text-ink font-semibold text-sm transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] hover:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+                    >
+                      Pausar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={resetear}
+                      className="flex-1 h-11 rounded-[12px] border border-rule bg-paper-2 text-ink font-semibold text-sm transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] hover:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+                    >
+                      Resetear
+                    </button>
+                  </>
+                )}
+
+                {pausado && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={reanudar}
+                      className="flex-1 h-11 rounded-[12px] bg-accent text-accent-ink font-bold text-sm transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 shadow-sm"
+                    >
+                      Reanudar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={resetear}
+                      className="flex-1 h-11 rounded-[12px] border border-rule bg-paper-2 text-ink font-semibold text-sm transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] hover:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+                    >
+                      Resetear
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
