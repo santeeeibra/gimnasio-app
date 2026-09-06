@@ -347,10 +347,12 @@ function intercambiarPorEnfasis(
       trace?.push(
         `${tituloDia}: énfasis en ${zona} → ranura de ${out[donante].grupo} (${out[donante].rol}) se convierte en ${grupoObjetivo}. No suma series: el presupuesto del día no cambia.`,
       );
+      const patronFinal =
+        t > 0 && grupoObjetivo === "gluteos" ? "aislamiento" : patron;
       out[donante] = {
         grupo: grupoObjetivo,
-        patron,
-        rol: patron ? "secundario" : "aislamiento",
+        patron: patronFinal,
+        rol: patronFinal === "aislamiento" ? "aislamiento" : (patron ? "secundario" : "aislamiento"),
       };
     }
   }
@@ -714,7 +716,8 @@ const TIER_1 = new Set<string>([
   "rdl-unilateral-mancuerna",
   "curl-femoral-acostado",
   "hip-thrust",
-  "hip-thrust-barra",
+  "hip-thrust-maquina",
+  "sentadilla-sumo-mancuerna",
   "zancada-inversa-deficit",
   // Hombro (Tensión continua y descompresión)
   "press-hombro-maquina",
@@ -857,17 +860,63 @@ const GRUPOS_CADERA = new Set(["gluteos", "isquios"]);
 function sesgoSexo(ej: Ejercicio, ranura: Ranura, sexo: Sexo): number {
   if (sexo !== "mujer") return 0;
   const eq = ej.equipo ?? "";
+  const slug = ej.slug ?? "";
   let p = 0;
-  // Cadera / glúteo / isquios en cualquier rol.
-  if (GRUPOS_CADERA.has(ej.grupo_muscular ?? "")) p += 6;
-  if (ej.patron === "dominante_cadera") p += 4;
-  // Accesorios en polea / máquina: fáciles de dosificar, tensión constante.
-  if (ranura.rol !== "primario" && (eq === "maquina" || eq === "polea")) p += 4;
-  // En el primario del día de empuje, no penaliza barra pero la iguala con
-  // mancuerna / máquina (deja de ganar solo por EQUIPO_PESO).
-  if (ranura.rol === "primario" && (eq === "mancuernas" || eq === "maquina")) {
-    p += 2;
+
+  // Cadera / glúteo / isquios: máxima prioridad y adherencia femenina
+  if (GRUPOS_CADERA.has(ej.grupo_muscular ?? "")) p += 12;
+  if (ej.patron === "dominante_cadera") p += 8;
+  if (ej.grupo_muscular === "gluteos") p += 10;
+
+  // Accesorios en polea / máquina: seguros, dosificables, tensión continua
+  if (ranura.rol !== "primario" && (eq === "maquina" || eq === "polea")) p += 8;
+
+  // Pecho: preferir máquinas guiadas, mancuernas inclinadas y poleas sobre barra pesada o flexiones estrictas
+  if (ranura.grupo === "pecho") {
+    if (slug === "press-pecho-maquina") p += 35;
+    else if (slug === "press-inclinado-mancuernas") p += 32;
+    else if (slug === "press-banca-mancuernas" || slug === "aperturas-polea") p += 25;
+    else if (eq === "maquina" || eq === "mancuernas" || eq === "polea") p += 18;
+
+    if (slug === "press-banca-barra" || slug === "flexiones") p -= 20;
   }
+
+  // Espalda: preferir jalón al pecho en polea y remos en máquina sobre dominadas libres o remo libre con barra
+  if (ranura.grupo === "espalda") {
+    if (slug === "jalon-al-pecho") p += 35;
+    else if (slug === "remo-maquina" || slug === "remo-polea") p += 30;
+    else if (slug.includes("remo") && eq === "mancuernas") p += 22;
+
+    if (slug === "dominadas") p -= 30;
+    if (slug === "remo-barra") p -= 15;
+  }
+
+  // Glúteos y piernas: enfatizar hip thrust, sentadilla búlgara, prensa, RDL, abductores y patadas
+  if (
+    ej.grupo_muscular === "gluteos" ||
+    ej.grupo_muscular === "cuadriceps" ||
+    ej.grupo_muscular === "isquios"
+  ) {
+    if (slug.includes("hip-thrust")) p += 30;
+    else if (slug === "sentadilla-bulgara") p += 25;
+    else if (slug === "prensa-piernas") p += 20;
+    else if (slug.includes("peso-muerto-rumano") || slug.includes("rdl")) p += 22;
+    else if (
+      slug.includes("patada") ||
+      slug.includes("kickback") ||
+      slug.includes("abduccion")
+    )
+      p += 22;
+    else if (slug.includes("puente-gluteo") || slug.includes("curl-femoral"))
+      p += 18;
+  }
+
+  // Brazos: preferir poleas y mancuernas sobre barras rígidas
+  if (ej.grupo_muscular === "biceps" || ej.grupo_muscular === "triceps") {
+    if (eq === "mancuernas" || eq === "polea") p += 10;
+    if (slug === "curl-barra" || slug === "fondos-banco") p -= 15;
+  }
+
   return p;
 }
 
@@ -909,7 +958,8 @@ function puntuar(
   usadosSemana: Set<string>,
   usadosDia: Set<string>,
 ): number {
-  if (usadosDia.has(ej.id)) return -Infinity; // nunca repetir en el mismo día
+  const key = ej.slug || ej.id;
+  if (key && usadosDia.has(key)) return -Infinity; // nunca repetir en el mismo día
   let p = 0;
   const esCompuesto = ranura.rol !== "aislamiento";
   if (ranura.patron && ej.patron === ranura.patron) p += 40;
@@ -925,7 +975,7 @@ function puntuar(
   }
   if (nivelIdx(ej.nivel) <= NIVEL_ORDEN[nivelCliente]) p += 10;
   else p -= 15 * (nivelIdx(ej.nivel) - NIVEL_ORDEN[nivelCliente]);
-  if (!usadosSemana.has(ej.id)) {
+  if (!key || !usadosSemana.has(key)) {
     p += 15; // preferir variedad en la semana
   } else {
     p -= 25; // penalizar repetir el mismo ejercicio en la semana si hay otra alternativa
@@ -1237,8 +1287,11 @@ export function generarPlan(
         evitarAxial,
       );
       if (!ej || !ej.slug) return;
-      usadosDia.add(ej.id);
-      usadosSemana.add(ej.id);
+      const key = ej.slug || ej.id;
+      if (key) {
+        usadosDia.add(key);
+        usadosSemana.add(key);
+      }
       if (esAxialPesado(ej)) axialUsadoDia = true;
       distintosPorGrupo.set(ranura.grupo, yaEnGrupo + 1);
       if (!slugPorGrupo.has(ranura.grupo)) slugPorGrupo.set(ranura.grupo, ej.slug);

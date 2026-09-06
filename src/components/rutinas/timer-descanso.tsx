@@ -106,6 +106,26 @@ export function TimerDescanso() {
     };
   }, []);
 
+  // Escuchar evento global "timer:iniciar" para sincronizar el cronómetro automáticamente
+  useEffect(() => {
+    const handleTimerIniciar = (e: CustomEvent<{ segundos?: number }>) => {
+      const segs = e.detail?.segundos || 60;
+      if (segs > 0) {
+        setColapsado(false);
+        setPresetSeg(segs);
+        finEnRef.current = Date.now() + segs * 1000;
+        setSegundosRestantes(segs);
+        setEstado("corriendo");
+        hapticoImpactoMedio();
+      }
+    };
+
+    window.addEventListener("timer:iniciar", handleTimerIniciar as EventListener);
+    return () => {
+      window.removeEventListener("timer:iniciar", handleTimerIniciar as EventListener);
+    };
+  }, []);
+
   // Countdown: el valor sale siempre de `finEnRef` (reloj real), así no hay
   // drift aunque el tab estuviera en segundo plano.
   useEffect(() => {

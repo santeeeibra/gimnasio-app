@@ -48,6 +48,16 @@ export type DiaEditable = {
   items: ItemEditable[];
 };
 
+export function extraerSegundosDescanso(nota?: string): number {
+  if (!nota) return 60;
+  if (nota.includes("35s")) return 35;
+  if (nota.includes("45-60") || nota.includes("45–60")) return 60;
+  if (nota.includes("60-90") || nota.includes("60–90")) return 60;
+  if (nota.includes("90-120") || nota.includes("90–120")) return 90;
+  if (nota.includes("2-3 min") || nota.includes("2–3 min")) return 120;
+  return 60;
+}
+
 /** free-exercise-db trae 2 cuadros por ejercicio (…/0.jpg y …/1.jpg). */
 function frameAlterno(url: string): string | null {
   if (/\/0\.jpg$/i.test(url)) return url.replace(/\/0\.jpg$/i, "/1.jpg");
@@ -85,12 +95,12 @@ function ImagenAnimada({
 
   useEffect(() => {
     if (!activo || !alt) return;
-    const id = setInterval(() => setMostrarAlt((v) => !v), 1800);
+    const id = setInterval(() => setMostrarAlt((v) => !v), 850);
     return () => clearInterval(id);
   }, [activo, alt]);
 
   return (
-    <div className="relative h-full w-full">
+    <div className="relative h-full w-full flex items-center justify-center overflow-hidden">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={url}
@@ -98,7 +108,7 @@ function ImagenAnimada({
         loading="lazy"
         decoding="async"
         onError={onError}
-        className={`${className} absolute inset-0 transition-opacity duration-500 ${mostrarAlt ? "opacity-0" : "opacity-100"}`}
+        className={`${className} absolute inset-0 m-auto max-h-full max-w-full object-contain object-center transition-opacity duration-200 [transition-timing-function:var(--ease-out)] ${mostrarAlt ? "opacity-0" : "opacity-100"}`}
       />
       {alt && (
         // eslint-disable-next-line @next/next/no-img-element
@@ -107,7 +117,7 @@ function ImagenAnimada({
           alt=""
           loading="lazy"
           decoding="async"
-          className={`${className} absolute inset-0 transition-opacity duration-500 ${mostrarAlt ? "opacity-100" : "opacity-0"}`}
+          className={`${className} absolute inset-0 m-auto max-h-full max-w-full object-contain object-center transition-opacity duration-200 [transition-timing-function:var(--ease-out)] ${mostrarAlt ? "opacity-100" : "opacity-0"}`}
         />
       )}
     </div>
@@ -157,7 +167,7 @@ function ExThumb({
       type="button"
       onClick={onOpen}
       aria-label={`Ver ${ej?.nombre ?? "ejercicio"} en grande`}
-      className="group relative size-[68px] shrink-0 overflow-hidden rounded-[10px] border border-rule bg-paper-2 transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20"
+      className="group relative size-[68px] shrink-0 overflow-hidden rounded-[10px] border border-rule bg-white shadow-xs transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20"
     >
       <ImagenAnimada
         url={url}
@@ -231,14 +241,14 @@ function VisorEjercicio({
           </button>
         </div>
 
-        <div className="relative mt-3 grid aspect-square w-full place-items-center overflow-hidden rounded-[12px] border border-rule bg-paper-2">
+        <div className="relative mt-3 grid aspect-square w-full place-items-center overflow-hidden rounded-[12px] border border-rule bg-white shadow-xs">
           {url && !err ? (
             <ImagenAnimada
               url={url}
               activo={!reduce && !err}
               onError={() => setErr(true)}
               alt={ej.nombre}
-              className="h-full w-full object-contain p-2"
+              className="h-full w-full object-contain object-center p-3"
             />
           ) : (
             <Glifo className="size-10 text-ink-soft" />
@@ -824,6 +834,13 @@ function ItemFila({
             ) : null}
           </div>
 
+          {item.nota ? (
+            <div className="mt-2 flex items-center gap-1.5 rounded-[8px] border border-accent/20 bg-accent/5 px-2.5 py-1 text-[11px] text-ink-soft">
+              <span className="font-semibold text-accent shrink-0">💡 Guía:</span>
+              <span className="truncate">{item.nota}</span>
+            </div>
+          ) : null}
+
           {/* Tracker táctil de series de hoy (mínimo 44x44px por botón táctil §3 WCAG) */}
           <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 rounded-[10px] border border-rule bg-paper p-2">
             <span className="text-[11px] font-semibold text-ink-soft">
@@ -836,7 +853,19 @@ function ItemFila({
                   <button
                     key={sIdx}
                     type="button"
-                    onClick={() => onToggleSet(sIdx)}
+                    onClick={() => {
+                      if (!hecho) {
+                        const segs = extraerSegundosDescanso(item.nota);
+                        if (typeof window !== "undefined") {
+                          window.dispatchEvent(
+                            new CustomEvent("timer:iniciar", {
+                              detail: { segundos: segs },
+                            }),
+                          );
+                        }
+                      }
+                      onToggleSet(sIdx);
+                    }}
                     aria-label={`Serie ${sIdx + 1} de ${numSeries} ${hecho ? "completada" : "pendiente"}`}
                     className={`grid size-11 min-w-[44px] place-items-center rounded-[10px] border text-xs font-bold transition-all duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${
                       hecho

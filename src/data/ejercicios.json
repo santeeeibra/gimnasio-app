@@ -537,17 +537,17 @@
     "equipo": "polea",
     "nivel": "principiante",
     "descripcion": "Tobillera en la polea baja, llevá el talón hacia atrás y arriba sin arquear la lumbar.",
-    "imagen_url": null
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/One-Legged_Cable_Kickback/0.jpg"
   },
   {
-    "slug": "hip-thrust-barra",
-    "nombre": "Hip thrust con barra",
+    "slug": "hip-thrust-maquina",
+    "nombre": "Hip thrust en máquina",
     "grupo_muscular": "gluteos",
     "patron": "dominante_cadera",
-    "equipo": "barra",
-    "nivel": "intermedio",
-    "descripcion": "Espalda apoyada en el banco, empujá con los talones hasta alinear tronco y muslos, mentón metido.",
-    "imagen_url": null
+    "equipo": "maquina",
+    "nivel": "principiante",
+    "descripcion": "Apoyada en la máquina de hip thrust, empujá con los talones hasta alinear tronco y pelvis.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Barbell_Hip_Thrust/0.jpg"
   },
   {
     "slug": "zancada-inversa-deficit",
@@ -557,7 +557,7 @@
     "equipo": "mancuernas",
     "nivel": "avanzado",
     "descripcion": "Parado sobre un step, llevá una pierna atrás y abajo buscando rango extra en el glúteo.",
-    "imagen_url": null
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Dumbbell_Lunges/0.jpg"
   },
   {
     "slug": "curl-femoral-acostado",
@@ -567,7 +567,7 @@
     "equipo": "maquina",
     "nivel": "principiante",
     "descripcion": "Boca abajo, flexioná las rodillas llevando el rodillo hacia los glúteos y bajá controlando.",
-    "imagen_url": null
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Lying_Leg_Curls/0.jpg"
   },
   {
     "slug": "rdl-unilateral-mancuerna",
@@ -577,7 +577,7 @@
     "equipo": "mancuernas",
     "nivel": "intermedio",
     "descripcion": "Sobre una pierna, llevá la cadera atrás con la espalda recta hasta sentir tensión en el isquio.",
-    "imagen_url": null
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Kettlebell_One-Legged_Deadlift/0.jpg"
   },
   {
     "slug": "puente-gluteo-barra",
@@ -587,17 +587,17 @@
     "equipo": "barra",
     "nivel": "intermedio",
     "descripcion": "Acostado en el piso con la barra sobre la cadera, elevá la pelvis y apretá el glúteo arriba.",
-    "imagen_url": null
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Barbell_Glute_Bridge/0.jpg"
   },
   {
-    "slug": "abduccion-maquina-sentada",
-    "nombre": "Abducción en máquina sentada",
+    "slug": "sentadilla-sumo-mancuerna",
+    "nombre": "Sentadilla sumo con mancuerna",
     "grupo_muscular": "gluteos",
-    "patron": "aislamiento",
-    "equipo": "maquina",
+    "patron": "dominante_rodilla",
+    "equipo": "mancuernas",
     "nivel": "principiante",
-    "descripcion": "Sentado, abrí las piernas contra la resistencia y volvé despacio sin golpear el tope.",
-    "imagen_url": null
+    "descripcion": "Pies separados a 45°, mancuerna tomada al centro, bajá profundo contrayendo glúteos al subir.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Goblet_Squat/0.jpg"
   },
   {
     "slug": "flexiones-pica",
@@ -607,7 +607,7 @@
     "equipo": "peso_corporal",
     "nivel": "principiante",
     "descripcion": "Cuerpo en V invertida, baja la coronilla hacia el suelo flexionando los codos y empuja hacia arriba.",
-    "imagen_url": null
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Pushups/0.jpg"
   },
   {
     "slug": "flexiones-declinadas",
@@ -617,7 +617,7 @@
     "equipo": "peso_corporal",
     "nivel": "intermedio",
     "descripcion": "Pies elevados sobre banco o silla, cuerpo alineado, empuja focalizando en deltoides anterior y pecho superior.",
-    "imagen_url": null
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Decline_Push-Up/0.jpg"
   },
   {
     "slug": "curl-concentrado-mancuerna",
@@ -627,7 +627,7 @@
     "equipo": "mancuernas",
     "nivel": "principiante",
     "descripcion": "Sentado con el codo apoyado en la cara interna del muslo, flexiona el brazo aislando completamente el bíceps.",
-    "imagen_url": null
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Concentration_Curls/0.jpg"
   },
   {
     "slug": "curl-inclinado-mancuernas",
@@ -637,7 +637,7 @@
     "equipo": "mancuernas",
     "nivel": "intermedio",
     "descripcion": "Banco a 45–60°, brazos colgando perpendiculares, curl controlando el máximo estiramiento del bíceps.",
-    "imagen_url": null
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Incline_Dumbbell_Curl/0.jpg"
   },
   {
     "slug": "extension-triceps-mancuerna",
@@ -647,7 +647,7 @@
     "equipo": "mancuernas",
     "nivel": "principiante",
     "descripcion": "Mancuerna tomada a dos manos por detrás de la cabeza, extiende los codos manteniendo los brazos verticales.",
-    "imagen_url": null
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Standing_Dumbbell_Triceps_Extension/0.jpg"
   },
   {
     "slug": "flexiones-diamante",
@@ -657,7 +657,7 @@
     "equipo": "peso_corporal",
     "nivel": "intermedio",
     "descripcion": "Manos juntas formando un triángulo bajo el pecho, baja y empuja enfatizando el tríceps.",
-    "imagen_url": null
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Push-Ups_-_Close_Triceps_Position/0.jpg"
   },
   {
     "slug": "elevacion-gemelos-sentado",
@@ -667,7 +667,7 @@
     "equipo": "mancuernas",
     "nivel": "principiante",
     "descripcion": "Sentado con mancuernas sobre las rodillas flexionadas a 90°, eleva los talones contrayendo el sóleo.",
-    "imagen_url": null
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Barbell_Seated_Calf_Raise/0.jpg"
   },
   {
     "slug": "crunch-suelo",
@@ -677,7 +677,7 @@
     "equipo": "peso_corporal",
     "nivel": "principiante",
     "descripcion": "Acostado boca arriba con rodillas flexionadas, despega las escápulas del suelo contrayendo el abdomen.",
-    "imagen_url": null
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Crunches/0.jpg"
   },
   {
     "slug": "crunch-maquina",
@@ -687,7 +687,7 @@
     "equipo": "maquina",
     "nivel": "principiante",
     "descripcion": "Sentado en máquina de abdomen, flexiona el torso contra la resistencia guiada con movimiento controlado.",
-    "imagen_url": null
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Ab_Crunch_Machine/0.jpg"
   },
   {
     "slug": "lenador-polea",
@@ -697,6 +697,6 @@
     "equipo": "polea",
     "nivel": "intermedio",
     "descripcion": "De pie en polea, rotación diagonal controlada del torso resistiendo con oblicuos y zona media.",
-    "imagen_url": null
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Standing_Cable_Wood_Chop/0.jpg"
   }
 ]

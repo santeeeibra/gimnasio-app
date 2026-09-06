@@ -208,7 +208,10 @@ export function GenerarRutinaForm({
 }) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState<S, FormData>(action, {});
-  const [enfasis, setEnfasis] = useState<Enfasis[]>(defaults?.enfasis ?? []);
+  const [enfasis, setEnfasis] = useState<Enfasis[]>(
+    defaults?.enfasis ??
+      ((defaults?.sexo ?? clienteSexo) === "mujer" ? ["gluteos"] : []),
+  );
   const [zonasDolor, setZonasDolor] = useState<Molestia[]>(
     defaults?.zonasDolor ?? [],
   );
@@ -322,21 +325,17 @@ export function GenerarRutinaForm({
         ))}
       </Select>
 
-      {clienteSexo != null ? (
-        <Select
-          label="Sexo"
-          name="sexo"
-          defaultValue={defaults?.sexo ?? clienteSexo}
-        >
-          {SEXOS.map((s) => (
-            <option key={s} value={s}>
-              {SEXO_LABEL[s]}
-            </option>
-          ))}
-        </Select>
-      ) : (
-        <input type="hidden" name="sexo" value="sin_especificar" />
-      )}
+      <Select
+        label="Sexo"
+        name="sexo"
+        defaultValue={defaults?.sexo ?? clienteSexo ?? "sin_especificar"}
+      >
+        {SEXOS.map((s) => (
+          <option key={s} value={s}>
+            {SEXO_LABEL[s]}
+          </option>
+        ))}
+      </Select>
 
       <fieldset className="sm:col-span-2">
         <legend className="text-[13px] font-medium text-ink-soft mb-1.5">
