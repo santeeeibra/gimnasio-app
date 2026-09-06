@@ -33,7 +33,7 @@ export default async function CheckinLayout({
         data-theme-polarity={polaridadTema(tema)}
         data-motion={resolverMotion(tema)}
       >
-        <header className="flex items-center gap-2.5 border-b border-rule px-5 py-3">
+        <header className="flex items-center gap-2.5 border-b border-rule px-5 pb-3 pt-[calc(env(safe-area-inset-top,0px)+0.75rem)]">
           {gym?.logo_url ? (
             <span className="size-8 shrink-0 overflow-hidden rounded-[10px] border border-rule bg-paper-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -73,7 +73,7 @@ export default async function CheckinLayout({
         nombre={gym?.nombre ?? ""}
         logoUrl={gym?.logo_url ?? null}
       />
-      <header className="flex items-center gap-2.5 border-b border-rule px-5 py-3">
+      <header className="flex items-center gap-2.5 border-b border-rule px-5 pb-3 pt-[calc(env(safe-area-inset-top,0px)+0.75rem)]">
         {gym?.logo_url ? (
           <span className="size-8 shrink-0 overflow-hidden rounded-[6px] border border-rule bg-paper-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}

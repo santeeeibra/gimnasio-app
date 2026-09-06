@@ -166,7 +166,7 @@ export function PanelTopbar({
   esSuper?: boolean;
 }) {
   return (
-    <header className="md:hidden flex items-center justify-between border-b border-rule px-5 py-3">
+    <header className="md:hidden sticky top-0 z-30 flex items-center justify-between border-b border-rule bg-paper/95 backdrop-blur-md px-5 pb-3 pt-[calc(env(safe-area-inset-top,0px)+0.75rem)]">
       <div className="flex min-w-0 items-center gap-2">
         <LogoMark logo={logo} size="size-7" />
         <p className="font-display text-base leading-tight truncate">{nombre}</p>

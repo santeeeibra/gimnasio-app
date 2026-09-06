@@ -85,7 +85,7 @@ export default async function MiLayout({
       <ImpersonationBanner />
       <OfflineProvider />
       {gym?.logo_url ? (
-        <header className="flex items-center gap-2.5 border-b border-rule px-5 py-2.5">
+        <header className="sticky top-0 z-30 flex items-center gap-2.5 border-b border-rule bg-paper/95 backdrop-blur-md px-5 pb-2.5 pt-[calc(env(safe-area-inset-top,0px)+0.625rem)]">
           <span className="size-8 shrink-0 overflow-hidden rounded-[6px] border border-rule bg-paper-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -99,7 +99,9 @@ export default async function MiLayout({
             {gym.nombre}
           </span>
         </header>
-      ) : null}
+      ) : (
+        <div className="h-[env(safe-area-inset-top,0px)]" />
+      )}
       <div className="pb-20 md:pb-0">{children}</div>
       <MiBottomNav />
       <Tutorial rol="cliente" />
