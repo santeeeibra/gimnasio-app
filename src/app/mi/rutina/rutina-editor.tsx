@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { ejerciciosSimilares, estaBloqueado } from "@/lib/rutina/motor";
+import { obtenerClasificacionEjercicio } from "@/lib/rutina/clasificacion-muscular";
 import { Spinner } from "@/components/ui";
 import {
   GRUPO_MUSCULAR_LABEL,
@@ -585,6 +586,7 @@ export function RutinaEditor({
                       key={item.id}
                       indice={i + 1}
                       item={item}
+                      itemsDelDia={dia.items}
                       ejercicios={ejercicios}
                       mostrarTecnica={mostrarTecnica}
                       onVer={setVisor}
@@ -784,6 +786,7 @@ function BadgeEquipo({
 function ItemFila({
   item,
   indice,
+  itemsDelDia = [],
   ejercicios,
   mostrarTecnica,
   onVer,
@@ -796,6 +799,7 @@ function ItemFila({
 }: {
   item: ItemEditable;
   indice: number;
+  itemsDelDia?: ItemEditable[];
   ejercicios: Ejercicio[];
   mostrarTecnica: boolean;
   onVer: (ej: Ejercicio) => void;
@@ -815,6 +819,10 @@ function ItemFila({
   const [msg, setMsg] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const msgTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [confirmacionSolape, setConfirmacionSolape] = useState<{
+    ejercicio: Ejercicio;
+    ocupadoPor: { nombre: string; indice: number; porcionLabel: string };
+  } | null>(null);
 
   const dirty =
     series !== String(item.series) || reps.trim() !== item.repeticiones;
@@ -850,6 +858,7 @@ function ItemFila({
       }
       setEj(nuevo);
       setAbrirCambio(false);
+      setConfirmacionSolape(null);
       flash("Ejercicio cambiado ✓");
     });
   }
@@ -869,12 +878,69 @@ function ItemFila({
     });
   }
 
-  const baseAlt = ej ? ejerciciosSimilares(ej, ejercicios, 12) : [];
-  const alternativas = (
-    molestias.length
-      ? baseAlt.filter((a) => !estaBloqueado(a, molestias))
-      : baseAlt
-  ).slice(0, 6);
+  // Porciones musculares ya cubiertas hoy por otros ejercicios del mismo grupo
+  const porcionesOcupadas = useMemo(() => {
+    const mapa = new Map<
+      string,
+      { nombre: string; indice: number; porcionLabel: string }
+    >();
+    if (!ej) return mapa;
+    const clasifActual = obtenerClasificacionEjercicio(ej);
+
+    itemsDelDia.forEach((it, idx) => {
+      if (it.id !== item.id && it.ejercicio) {
+        const c = obtenerClasificacionEjercicio(it.ejercicio);
+        if (c.grupo === clasifActual.grupo) {
+          mapa.set(c.porcionId, {
+            nombre: it.ejercicio.nombre,
+            indice: idx + 1,
+            porcionLabel: c.label,
+          });
+        }
+      }
+    });
+    return mapa;
+  }, [itemsDelDia, item.id, ej]);
+
+  const baseAlt = ej ? ejerciciosSimilares(ej, ejercicios, 16) : [];
+  const alternativasFiltradas = molestias.length
+    ? baseAlt.filter((a) => !estaBloqueado(a, molestias))
+    : baseAlt;
+
+  // Clasificamos cada alternativa y detectamos si solapa
+  const alternativasProcesadas = useMemo(() => {
+    return alternativasFiltradas
+      .map((alt) => {
+        const c = obtenerClasificacionEjercicio(alt);
+        const solapaCon = porcionesOcupadas.get(c.porcionId);
+        return {
+          ejercicio: alt,
+          clasif: c,
+          solapaCon,
+        };
+      })
+      .sort((a, b) => {
+        // Priorizar las porciones distintas (sin solapamiento)
+        if (!a.solapaCon && b.solapaCon) return -1;
+        if (a.solapaCon && !b.solapaCon) return 1;
+        return 0;
+      })
+      .slice(0, 8);
+  }, [alternativasFiltradas, porcionesOcupadas]);
+
+  function handleSeleccionarAlternativa(altItem: {
+    ejercicio: Ejercicio;
+    solapaCon?: { nombre: string; indice: number; porcionLabel: string };
+  }) {
+    if (altItem.solapaCon) {
+      setConfirmacionSolape({
+        ejercicio: altItem.ejercicio,
+        ocupadoPor: altItem.solapaCon,
+      });
+      return;
+    }
+    cambiar(altItem.ejercicio);
+  }
 
   // Menús cerrados: si el valor guardado no está en la lista, lo agregamos
   // como primera opción para no perderlo.
@@ -1215,22 +1281,88 @@ function ItemFila({
                   );
                 })}
               </div>
+              {confirmacionSolape ? (
+                <div className="mb-3 rounded-[12px] border border-amber-500/40 bg-amber-500/10 p-3 text-xs animate-fade-in shadow-xs">
+                  <div className="flex items-start gap-2.5">
+                    <span className="text-amber-500 text-base font-bold shrink-0 mt-0.5" aria-hidden>
+                      ⚠️
+                    </span>
+                    <div className="flex-1">
+                      <p className="font-bold text-ink">
+                        Posible solapamiento muscular
+                      </p>
+                      <p className="mt-1 text-ink-soft leading-relaxed text-[11.5px]">
+                        <strong>{confirmacionSolape.ejercicio.nombre}</strong> trabaja principalmente{" "}
+                        <strong className="text-amber-600 dark:text-amber-400 font-semibold">
+                          {confirmacionSolape.ocupadoPor.porcionLabel}
+                        </strong>
+                        , al igual que el <strong>Ejercicio #{confirmacionSolape.ocupadoPor.indice} ({confirmacionSolape.ocupadoPor.nombre})</strong> de tu rutina de hoy.
+                      </p>
+                      <div className="mt-2.5 flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const ejElegido = confirmacionSolape.ejercicio;
+                            setConfirmacionSolape(null);
+                            cambiar(ejElegido);
+                          }}
+                          disabled={pending}
+                          className="h-9 px-3 rounded-[8px] bg-accent text-accent-ink font-bold text-[11.5px] transition-transform active:scale-95 disabled:opacity-50 shadow-xs"
+                        >
+                          Cambiar igual
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmacionSolape(null)}
+                          className="h-9 px-3 rounded-[8px] border border-rule bg-paper text-ink-soft font-semibold text-[11.5px] transition-transform active:scale-95 hover:border-ink/40"
+                        >
+                          Elegir otro
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+
               <p className="text-xs text-ink-soft mb-2">
-                Marcá una molestia para descartar variantes, o cambialo por uno equivalente:
+                Priorizamos variantes que no repiten la misma porción muscular del día:
               </p>
-              {alternativas.length === 0 ? (
+              {alternativasProcesadas.length === 0 ? (
                 <p className="text-xs text-ink-soft">Sin alternativas para este grupo.</p>
               ) : (
-                <div className="flex flex-wrap gap-2">
-                  {alternativas.map((alt) => (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {alternativasProcesadas.map(({ ejercicio: alt, clasif, solapaCon }) => (
                     <button
                       key={alt.id}
                       type="button"
-                      onClick={() => cambiar(alt)}
+                      onClick={() => handleSeleccionarAlternativa({ ejercicio: alt, solapaCon })}
                       disabled={pending}
-                      className="h-11 px-3 rounded-[10px] border border-rule bg-paper-2 text-sm font-medium transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 disabled:opacity-50"
+                      className={`flex flex-col items-start justify-center p-2.5 rounded-[10px] border text-left transition-all duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 disabled:opacity-50 ${
+                        solapaCon
+                          ? "border-rule/80 bg-paper/50 hover:border-amber-500/40 text-ink-soft"
+                          : "border-rule bg-paper-2 hover:border-accent/40 text-ink"
+                      }`}
                     >
-                      {alt.nombre}
+                      <div className="flex items-center justify-between gap-1.5 w-full">
+                        <span className="font-semibold text-xs leading-tight text-ink line-clamp-1">
+                          {alt.nombre}
+                        </span>
+                        {solapaCon ? (
+                          <span className="shrink-0 text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.2 rounded-[4px]">
+                            Solapa #{solapaCon.indice}
+                          </span>
+                        ) : (
+                          <span className="shrink-0 text-[10px] font-semibold text-accent bg-accent/10 px-1.5 py-0.2 rounded-[4px]">
+                            Recomendado
+                          </span>
+                        )}
+                      </div>
+                      <span className="mt-1 text-[10.5px] text-ink-soft flex items-center gap-1">
+                        <span>{clasif.label}</span>
+                        {alt.equipo ? (
+                          <span className="text-ink-soft/70">· {alt.equipo}</span>
+                        ) : null}
+                      </span>
                     </button>
                   ))}
                 </div>
