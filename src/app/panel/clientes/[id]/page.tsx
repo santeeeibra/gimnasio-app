@@ -110,7 +110,7 @@ export default async function ClienteDetallePage({
       supabase
         .from("rutinas")
         .select(
-          "id, objetivo, nivel, dias_por_semana, dias_titulos, preferencias, origen, actualizado_at, rutina_items(dia, orden, tecnica, ejercicio:ejercicios(nombre))",
+          "id, objetivo, nivel, dias_por_semana, dias_titulos, preferencias, origen, actualizado_at, rutina_items(id, dia, orden, series, repeticiones, nota, tecnica, ejercicio:ejercicios(id, nombre))",
         )
         .eq("cliente_id", id)
         .maybeSingle(),

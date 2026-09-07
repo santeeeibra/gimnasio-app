@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { DiaEditable } from "@/app/mi/rutina/rutina-editor";
+import { hapticoExito } from "@/lib/ui/hapticos";
 
 interface Props {
   clienteNombre: string;
@@ -36,7 +37,7 @@ export function DescargarRutinaPdf({
       const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
       const pageW = doc.internal.pageSize.getWidth();
       const pageH = doc.internal.pageSize.getHeight();
-      const margen = 14;
+      const margen = 16;
 
       // ── Pre-cargar imagen del logo (síncrono en didDrawPage no puede ser async) ─
       let logoDataUrl: string | null = null;
@@ -44,13 +45,13 @@ export function DescargarRutinaPdf({
         try { logoDataUrl = (await cargarImagen(logoUrl)).dataUrl; } catch { /* ok */ }
       }
 
-      // Logo SysGym del encabezado (public/logo-sysgym.png). Si falta, se omite.
+      // Logo SysGym del encabezado (public/logo-sysgym.png).
       let sysLogoDataUrl: string | null = null;
-      let sysLogoAspect = 1; // ancho / alto
+      let sysLogoAspect = 5.915; // Proporción exacta 349/59
       try {
         const r = await cargarImagen("/logo-sysgym.png", "image/png");
         sysLogoDataUrl = r.dataUrl;
-        sysLogoAspect = r.w / r.h || 1;
+        sysLogoAspect = r.w / r.h || 5.915;
       } catch { /* ok */ }
 
       /** Dibuja marca de agua centrada, baja opacidad (síncrono). */
@@ -58,7 +59,7 @@ export function DescargarRutinaPdf({
         if (!logoDataUrl) return;
         try {
           doc.saveGraphicsState();
-          doc.setGState(doc.GState({ opacity: 0.06 }));
+          doc.setGState(doc.GState({ opacity: 0.05 }));
           const logoSize = 80;
           doc.addImage(logoDataUrl, "WEBP", (pageW - logoSize) / 2, (pageH - logoSize) / 2, logoSize, logoSize);
           doc.restoreGraphicsState();
@@ -68,74 +69,70 @@ export function DescargarRutinaPdf({
       // ── Encabezado de página 1 ─────────────────────────────────────────
       dibujarMarcaAgua();
 
-      // Logo SysGym arriba del todo (banner horizontal). El resto va debajo.
-      let textoY = margen + 6;
+      // 1. Logo SysGym en la esquina superior derecha
       if (sysLogoDataUrl) {
         try {
-          // Escala generosa respetando proporción panorámica (~5.8:1)
-          const maxW = 76;
-          const maxH = 20;
-          let w = maxW;
-          let h = maxW / sysLogoAspect;
-          if (h > maxH) {
-            h = maxH;
-            w = maxH * sysLogoAspect;
-          }
-          doc.addImage(sysLogoDataUrl, "PNG", margen, margen, w, h);
-          textoY = margen + h + 7;
+          const logoW = 44;
+          const logoH = logoW / sysLogoAspect;
+          const logoX = pageW - margen - logoW;
+          const logoY = margen;
+          doc.addImage(sysLogoDataUrl, "PNG", logoX, logoY, logoW, logoH);
         } catch {
           /* sin logo */
         }
       }
 
+      // 2. Nombre del gimnasio (arriba a la izquierda)
       doc.setFont("helvetica", "bold");
       doc.setFontSize(18);
-      doc.text(gimnasioNombre, margen, textoY);
+      doc.setTextColor(17, 24, 39);
+      doc.text(gimnasioNombre || "Gimnasio", margen, margen + 9.5);
 
+      // 3. Subtítulo y Fecha
+      const subY = margen + 16;
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(10);
-      doc.setTextColor(120);
-      doc.text(
-        `Rutina de ${clienteNombre}  ·  ${rutinaNombre}`,
-        margen,
-        textoY + 6,
-      );
-      doc.text(
-        `Generado el ${new Date().toLocaleDateString("es-AR", { day: "2-digit", month: "long", year: "numeric" })}`,
-        pageW - margen,
-        textoY + 6,
-        { align: "right" },
-      );
+      doc.setFontSize(9);
+      doc.setTextColor(107, 114, 128);
 
-      let lineaPeso = textoY + 11;
-      if (pesoCorporal != null) {
-        doc.text(`Peso corporal actual: ${pesoCorporal} kg`, margen, lineaPeso);
-        lineaPeso += 5;
-      }
-      doc.setTextColor(0);
+      const subtituloPartes = [
+        clienteNombre ? `Rutina de ${clienteNombre}` : null,
+        rutinaNombre || null,
+        pesoCorporal != null ? `Peso actual: ${pesoCorporal} kg` : null,
+      ].filter(Boolean);
+      const subtitulo = subtituloPartes.join("  ·  ");
 
-      // Línea separadora
-      const sepY = Math.max(textoY + 15, lineaPeso);
-      doc.setDrawColor(220);
-      doc.setLineWidth(0.4);
+      doc.text(subtitulo, margen, subY);
+
+      const fechaStr = `Generado el ${new Date().toLocaleDateString("es-AR", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      })}`;
+      doc.text(fechaStr, pageW - margen, subY, { align: "right" });
+
+      // 4. Línea separadora
+      const sepY = subY + 7;
+      doc.setDrawColor(229, 231, 235);
+      doc.setLineWidth(0.35);
       doc.line(margen, sepY, pageW - margen, sepY);
 
-      let cursorY = sepY + 7;
+      let cursorY = sepY + 9;
 
       // ── Tabla por día ──────────────────────────────────────────────────
       for (const dia of dias) {
         // Si no cabe en la página, nueva página
-        const estimado = 10 + dia.items.length * 8;
+        const estimado = 14 + dia.items.length * 8;
         if (cursorY + estimado > pageH - 20) {
           doc.addPage();
           dibujarMarcaAgua();
-          cursorY = margen;
+          cursorY = margen + 4;
         }
 
         doc.setFont("helvetica", "bold");
         doc.setFontSize(11);
+        doc.setTextColor(17, 24, 39);
         doc.text(dia.titulo, margen, cursorY);
-        cursorY += 5;
+        cursorY += 4.5;
 
         const body = dia.items.map((item) => {
           const pesoEj = item.ejercicio?.id
@@ -148,7 +145,7 @@ export function DescargarRutinaPdf({
               ? `${item.repeticiones}\nPeso actual: ${pesoEj} kg`
               : item.repeticiones,
             item.tecnica && item.tecnica !== "ninguna" ? item.tecnica : "—",
-            item.nota || "—",
+            item.nota?.trim() ? item.nota : "—",
           ];
         });
 
@@ -157,46 +154,63 @@ export function DescargarRutinaPdf({
           head: [["Ejercicio", "Series", "Reps", "Técnica", "Nota"]],
           body,
           margin: { left: margen, right: margen },
-          headStyles: {
-            fillColor: [30, 30, 36],
-            textColor: 255,
-            fontStyle: "bold",
-            fontSize: 9,
+          theme: "plain",
+          styles: {
+            font: "helvetica",
+            lineColor: [255, 255, 255],
+            lineWidth: 0,
           },
-          bodyStyles: { fontSize: 9, textColor: 40 },
-          alternateRowStyles: { fillColor: [248, 248, 250] },
+          headStyles: {
+            fillColor: [24, 24, 27],
+            textColor: [255, 255, 255],
+            fontStyle: "bold",
+            fontSize: 8.5,
+            cellPadding: { top: 2.8, bottom: 2.8, left: 3, right: 3 },
+          },
+          bodyStyles: {
+            fontSize: 8.5,
+            textColor: [31, 41, 55],
+            cellPadding: { top: 3.2, bottom: 3.2, left: 3, right: 3 },
+            lineWidth: 0,
+          },
+          alternateRowStyles: {
+            fillColor: [246, 247, 249],
+          },
           columnStyles: {
-            0: { cellWidth: "auto" },
+            0: { cellWidth: "auto", halign: "left" },
             1: { cellWidth: 16, halign: "center" },
-            2: { cellWidth: 30, halign: "center" },
-            3: { cellWidth: 24 },
-            4: { cellWidth: "auto" },
+            2: { cellWidth: 32, halign: "center" },
+            3: { cellWidth: 22, halign: "center" },
+            4: { cellWidth: "auto", halign: "left" },
           },
           // Síncrono: logoDataUrl ya está cargado antes del loop
-          didDrawPage: () => { dibujarMarcaAgua(); },
+          didDrawPage: () => {
+            dibujarMarcaAgua();
+          },
         });
 
-        cursorY = (doc as any).lastAutoTable.finalY + 8;
+        cursorY = (doc as any).lastAutoTable.finalY + 9;
       }
 
       // ── Pie de página en todas las páginas ────────────────────────────
       const totalPages = doc.internal.pages.length - 1;
       for (let p = 1; p <= totalPages; p++) {
         doc.setPage(p);
+        doc.setFont("helvetica", "normal");
         doc.setFontSize(8);
-        doc.setTextColor(160);
+        doc.setTextColor(156, 163, 175);
         doc.text(
           `Generado con SysGym  ·  Pág. ${p}/${totalPages}`,
           pageW / 2,
           pageH - 8,
           { align: "center" },
         );
-        doc.setTextColor(0);
       }
 
       // ── Descargar ──────────────────────────────────────────────────────
       const nombreArchivo = `rutina-${slugify(clienteNombre)}-${new Date().toISOString().slice(0, 10)}.pdf`;
       doc.save(nombreArchivo);
+      hapticoExito();
     } catch (err) {
       console.error("Error generando PDF:", err);
       alert("No se pudo generar el PDF. Intentá de nuevo.");

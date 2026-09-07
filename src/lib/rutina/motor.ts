@@ -89,7 +89,7 @@ const FULL_BODY_C: Ranura[] = [
   A("triceps"),
 ];
 
-const TORSO: Ranura[] = [
+const TORSO_A: Ranura[] = [
   P("pecho", "empuje_horizontal"),
   P("espalda", "traccion_horizontal"),
   S("hombros", "empuje_vertical"),
@@ -97,7 +97,17 @@ const TORSO: Ranura[] = [
   A("biceps"),
   A("triceps"),
 ];
-const PIERNA: Ranura[] = [
+const TORSO_B: Ranura[] = [
+  P("espalda", "traccion_vertical"),
+  P("pecho", "empuje_horizontal"),
+  S("hombros"),
+  S("espalda", "traccion_horizontal"),
+  A("triceps"),
+  A("biceps"),
+];
+const TORSO: Ranura[] = TORSO_A;
+
+const PIERNA_A: Ranura[] = [
   P("cuadriceps", "dominante_rodilla"),
   P("isquios", "dominante_cadera"),
   S("gluteos", "dominante_cadera"),
@@ -105,6 +115,15 @@ const PIERNA: Ranura[] = [
   A("gemelos"),
   A("core"),
 ];
+const PIERNA_B: Ranura[] = [
+  P("cuadriceps", "dominante_rodilla"),
+  P("isquios", "aislamiento"),
+  S("gluteos", "dominante_cadera"),
+  S("cuadriceps", "dominante_rodilla"),
+  A("gemelos"),
+  A("core"),
+];
+const PIERNA: Ranura[] = PIERNA_A;
 
 const PUSH: Ranura[] = [
   P("pecho", "empuje_horizontal"),
@@ -139,11 +158,13 @@ const LEGS: Ranura[] = [
 // Frecuencia 2x real en piernas y torso sin junk volume (Schoenfeld 2016, Saladino);
 // en 4 días Torso/Pierna; en 5–6 pasa a Push/Pull/Legs.
 function splitAvanzado(dias: number): Bloque[] {
-  const UP: Bloque = { titulo: "Tren superior", ranuras: TORSO };
-  const LO: Bloque = { titulo: "Tren inferior", ranuras: PIERNA };
+  const UP_A: Bloque = { titulo: "Tren superior A", ranuras: TORSO_A };
+  const LO_A: Bloque = { titulo: "Tren inferior A", ranuras: PIERNA_A };
+  const UP_B: Bloque = { titulo: "Tren superior B", ranuras: TORSO_B };
+  const LO_B: Bloque = { titulo: "Tren inferior B", ranuras: PIERNA_B };
   switch (dias) {
     case 2:
-      return [UP, LO];
+      return [UP_A, LO_A];
     case 3:
       return [
         { titulo: "Cuerpo completo A (Tensión)", ranuras: FULL_BODY_A },
@@ -151,7 +172,7 @@ function splitAvanzado(dias: number): Bloque[] {
         { titulo: "Cuerpo completo C (Estabilidad)", ranuras: FULL_BODY_C },
       ];
     case 4:
-      return [UP, LO, UP, LO];
+      return [UP_A, LO_A, UP_B, LO_B];
     case 5:
       return [
         { titulo: "Empuje", ranuras: PUSH },
@@ -190,18 +211,18 @@ function splitPorDias(dias: number, nivel: Nivel): Bloque[] {
       ];
     case 4:
       return [
-        { titulo: "Torso", ranuras: TORSO },
-        { titulo: "Pierna", ranuras: PIERNA },
-        { titulo: "Torso", ranuras: TORSO },
-        { titulo: "Pierna", ranuras: PIERNA },
+        { titulo: "Torso A", ranuras: TORSO_A },
+        { titulo: "Pierna A", ranuras: PIERNA_A },
+        { titulo: "Torso B", ranuras: TORSO_B },
+        { titulo: "Pierna B", ranuras: PIERNA_B },
       ];
     case 5:
       return [
         { titulo: "Empuje", ranuras: PUSH },
         { titulo: "Tracción", ranuras: PULL },
         { titulo: "Pierna", ranuras: LEGS },
-        { titulo: "Torso", ranuras: TORSO },
-        { titulo: "Pierna", ranuras: PIERNA },
+        { titulo: "Torso", ranuras: TORSO_A },
+        { titulo: "Pierna", ranuras: PIERNA_A },
       ];
     default: // 6
       return [
@@ -230,20 +251,30 @@ function splitExplicito(
         B(`Cuerpo completo ${String.fromCharCode(65 + (i % 3))}`, arr[i % 3]),
       );
     }
-    case "upper_lower":
-      return Array.from({ length: dias }, (_, i) =>
-        i % 2 === 0
-          ? B("Tren superior", TORSO)
-          : B("Tren inferior", PIERNA),
-      );
+    case "upper_lower": {
+      const uppers = [TORSO_A, TORSO_B];
+      const lowers = [PIERNA_A, PIERNA_B];
+      return Array.from({ length: dias }, (_, i) => {
+        const idx = Math.floor(i / 2) % 2;
+        return i % 2 === 0
+          ? B(dias > 2 ? `Tren superior ${idx === 0 ? "A" : "B"}` : "Tren superior", uppers[idx])
+          : B(dias > 2 ? `Tren inferior ${idx === 0 ? "A" : "B"}` : "Tren inferior", lowers[idx]);
+      });
+    }
     case "push_pull_legs": {
       const seq = [B("Empuje", PUSH), B("Tracción", PULL), B("Pierna", LEGS)];
       return Array.from({ length: dias }, (_, i) => seq[i % 3]);
     }
-    case "torso_pierna":
-      return Array.from({ length: dias }, (_, i) =>
-        i % 2 === 0 ? B("Torso", TORSO) : B("Pierna", PIERNA),
-      );
+    case "torso_pierna": {
+      const torsos = [TORSO_A, TORSO_B];
+      const piernas = [PIERNA_A, PIERNA_B];
+      return Array.from({ length: dias }, (_, i) => {
+        const idx = Math.floor(i / 2) % 2;
+        return i % 2 === 0
+          ? B(dias > 2 ? `Torso ${idx === 0 ? "A" : "B"}` : "Torso", torsos[idx])
+          : B(dias > 2 ? `Pierna ${idx === 0 ? "A" : "B"}` : "Pierna", piernas[idx]);
+      });
+    }
     default:
       return [];
   }
@@ -297,12 +328,24 @@ function elegirDonante(out: Ranura[], gruposEnfasis: Set<string>): number {
     .map((r, i) => ({ r, i }))
     .filter((x) => x.r.rol !== "primario" && !gruposEnfasis.has(x.r.grupo));
   if (cand.length === 0) return -1;
+
+  // Evitar dejar el día completamente sin brazos si hay otras opciones secundarias
+  const noVaciarBrazos = cand.filter((x) => {
+    if (x.r.grupo === "biceps" || x.r.grupo === "triceps") {
+      const quedanBrazos = out.filter(
+        (y, yi) => yi !== x.i && (y.grupo === "biceps" || y.grupo === "triceps"),
+      ).length;
+      return quedanBrazos > 0;
+    }
+    return true;
+  });
+  const candidatos = noVaciarBrazos.length > 0 ? noVaciarBrazos : cand;
   // Preferir un grupo que ese día tenga más de una ranura (no dejar un músculo
   // en cero si se puede evitar); si no hay, cae en cualquier ranura secundaria.
-  const conSobra = cand.filter(
+  const conSobra = candidatos.filter(
     (x) => out.filter((y) => y.grupo === x.r.grupo).length > 1,
   );
-  const pool = conSobra.length > 0 ? conSobra : cand;
+  const pool = conSobra.length > 0 ? conSobra : candidatos;
   return pool[pool.length - 1].i; // la última: preserva los apoyos tempranos
 }
 
@@ -347,8 +390,15 @@ function intercambiarPorEnfasis(
       trace?.push(
         `${tituloDia}: énfasis en ${zona} → ranura de ${out[donante].grupo} (${out[donante].rol}) se convierte en ${grupoObjetivo}. No suma series: el presupuesto del día no cambia.`,
       );
+      // Si el día ya tiene el patrón compuesto principal de este grupo, el énfasis
+      // se canaliza como aislamiento o variación para evitar redundancia biomecánica
+      const yaTienePatron = out.some(
+        (r, idx) => idx !== donante && r.grupo === grupoObjetivo && r.patron === patron,
+      );
       const patronFinal =
-        t > 0 && grupoObjetivo === "gluteos" ? "aislamiento" : patron;
+        yaTienePatron || (t > 0 && grupoObjetivo === "gluteos")
+          ? "aislamiento"
+          : patron;
       out[donante] = {
         grupo: grupoObjetivo,
         patron: patronFinal,
@@ -1304,7 +1354,10 @@ export function generarPlan(
 
       const nota = avanzado
         ? esquema.descanso + notaRir(avanzado.rir, ranura.rol)
-        : esquema.descanso;
+        : esquema.descanso +
+          (entrada.nivel === "principiante"
+            ? " · RIR 2 (técnica estricta)"
+            : " · RIR 1–2");
       const item: ItemGenerado = {
         ejercicio_slug: ej.slug,
         series: seriesPorRanura[si],

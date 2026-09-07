@@ -311,7 +311,7 @@
   },
   {
     "slug": "sentadilla-peso-corporal",
-    "nombre": "Sentadilla libre",
+    "nombre": "Sentadilla al aire (peso corporal)",
     "grupo_muscular": "cuadriceps",
     "patron": "dominante_rodilla",
     "equipo": "peso_corporal",
