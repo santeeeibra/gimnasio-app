@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireSuperadmin } from "@/lib/auth";
+import { requireSuperadmin, claveInicial, dniAEmail } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { enviarPush } from "@/lib/push/enviar";
 import { registrarAccionAdmin } from "@/lib/admin/audit";
@@ -610,3 +610,241 @@ export async function crearGimnasio(
     },
   };
 }
+
+// ── Reseteo de Contraseñas (Dev / Soporte) ──
+
+export async function resetearClaveUsuarioAction(params: {
+  profileId: string;
+  nuevaClave?: string;
+}): Promise<{
+  ok: boolean;
+  msg: string;
+  clave?: string;
+  dni?: string;
+  nombre?: string;
+  email?: string;
+  rol?: string;
+  slug?: string;
+}> {
+  const admin = await requireSuperadmin();
+  const db = createAdminClient();
+
+  const { data: profile, error: pErr } = await db
+    .from("profiles")
+    .select("id, dni, nombre, rol, gimnasio_id, gimnasios:gimnasio_id(id, nombre, slug)")
+    .eq("id", params.profileId)
+    .single();
+
+  if (pErr || !profile) {
+    return { ok: false, msg: "Usuario no encontrado." };
+  }
+
+  const gym = profile.gimnasios as unknown as { id: string; nombre: string; slug: string } | null;
+  const slug = gym?.slug ?? "gym";
+  const email = dniAEmail(profile.dni, slug);
+  const clave = params.nuevaClave?.trim() || claveInicial(profile.dni);
+
+  const { error: authErr } = await db.auth.admin.updateUserById(profile.id, {
+    password: clave,
+    email,
+  });
+
+  if (authErr) {
+    return { ok: false, msg: `Error en Auth: ${authErr.message}` };
+  }
+
+  await db
+    .from("profiles")
+    .update({ debe_cambiar_clave: true })
+    .eq("id", profile.id);
+
+  await registrarAccionAdmin(admin.id, "resetear_clave", gym?.id ?? null, {
+    profileId: profile.id,
+    nombre: profile.nombre,
+    dni: profile.dni,
+    rol: profile.rol,
+    nuevaClave: clave,
+  });
+
+  revalidatePath("/admin");
+  if (gym?.id) {
+    revalidatePath(`/admin/gimnasios/${gym.id}`);
+  }
+
+  return {
+    ok: true,
+    msg: `Contraseña restablecida exitosamente para ${profile.nombre ?? profile.dni}.`,
+    clave,
+    dni: profile.dni,
+    nombre: profile.nombre ?? undefined,
+    email,
+    rol: profile.rol,
+    slug,
+  };
+}
+
+export async function resetearClavesGimnasioAction(params: {
+  gimnasioId: string;
+  objetivo: "dueno" | "todos_socios";
+  nuevaClave?: string;
+}): Promise<{
+  ok: boolean;
+  msg: string;
+  clave?: string;
+  afectados?: number;
+  duenoInfo?: { dni: string; nombre?: string; email: string; clave: string; slug: string };
+}> {
+  const admin = await requireSuperadmin();
+  const db = createAdminClient();
+
+  const { data: gym } = await db
+    .from("gimnasios")
+    .select("id, nombre, slug")
+    .eq("id", params.gimnasioId)
+    .single();
+
+  if (!gym) return { ok: false, msg: "Gimnasio no encontrado." };
+
+  if (params.objetivo === "dueno") {
+    const { data: dueno } = await db
+      .from("profiles")
+      .select("id, dni, nombre, rol")
+      .eq("gimnasio_id", gym.id)
+      .eq("rol", "dueno")
+      .maybeSingle();
+
+    if (!dueno) {
+      return { ok: false, msg: "No se encontró perfil de dueño en este gimnasio." };
+    }
+
+    const clave = params.nuevaClave?.trim() || claveInicial(dueno.dni);
+    const email = dniAEmail(dueno.dni, gym.slug);
+
+    const { error: authErr } = await db.auth.admin.updateUserById(dueno.id, {
+      password: clave,
+      email,
+    });
+    if (authErr) return { ok: false, msg: authErr.message };
+
+    await db
+      .from("profiles")
+      .update({ debe_cambiar_clave: true })
+      .eq("id", dueno.id);
+
+    await registrarAccionAdmin(admin.id, "resetear_clave", gym.id, {
+      profileId: dueno.id,
+      nombre: dueno.nombre,
+      dni: dueno.dni,
+      rol: "dueno",
+      nuevaClave: clave,
+    });
+
+    revalidatePath("/admin");
+    revalidatePath(`/admin/gimnasios/${gym.id}`);
+
+    return {
+      ok: true,
+      msg: `Contraseña del dueño restablecida con éxito.`,
+      clave,
+      duenoInfo: {
+        dni: dueno.dni,
+        nombre: dueno.nombre ?? undefined,
+        email,
+        clave,
+        slug: gym.slug,
+      },
+    };
+  }
+
+  if (params.objetivo === "todos_socios") {
+    const { data: socios } = await db
+      .from("profiles")
+      .select("id, dni, nombre")
+      .eq("gimnasio_id", gym.id)
+      .eq("rol", "cliente");
+
+    if (!socios || socios.length === 0) {
+      return { ok: false, msg: "No hay socios registrados en este gimnasio." };
+    }
+
+    let actualizados = 0;
+    for (const socio of socios) {
+      const clave = params.nuevaClave?.trim() || claveInicial(socio.dni);
+      const email = dniAEmail(socio.dni, gym.slug);
+      const { error: authErr } = await db.auth.admin.updateUserById(socio.id, {
+        password: clave,
+        email,
+      });
+      if (!authErr) {
+        await db
+          .from("profiles")
+          .update({ debe_cambiar_clave: true })
+          .eq("id", socio.id);
+        actualizados++;
+      }
+    }
+
+    await registrarAccionAdmin(admin.id, "resetear_clave", gym.id, {
+      tipo: "todos_socios",
+      afectados: actualizados,
+    });
+
+    revalidatePath("/admin");
+    revalidatePath(`/admin/gimnasios/${gym.id}`);
+
+    return {
+      ok: true,
+      msg: `Se restablecieron las contraseñas de ${actualizados} socios a su clave inicial (gym<últimos 4 DNI>).`,
+      afectados: actualizados,
+    };
+  }
+
+  return { ok: false, msg: "Objetivo no válido." };
+}
+
+export async function obtenerUsuariosGimnasioDev(gimnasioId: string): Promise<{
+  ok: boolean;
+  dueno: { id: string; nombre: string | null; dni: string; slug: string } | null;
+  socios: { id: string; nombre: string | null; dni: string; estado_cuota?: string | null }[];
+}> {
+  await requireSuperadmin();
+  const db = createAdminClient();
+
+  const { data: gym } = await db
+    .from("gimnasios")
+    .select("id, slug")
+    .eq("id", gimnasioId)
+    .single();
+
+  if (!gym) return { ok: false, dueno: null, socios: [] };
+
+  const [{ data: dueno }, { data: sociosRaw }] = await Promise.all([
+    db
+      .from("profiles")
+      .select("id, nombre, dni")
+      .eq("gimnasio_id", gimnasioId)
+      .eq("rol", "dueno")
+      .maybeSingle(),
+    db
+      .from("clientes")
+      .select("id, estado_cuota, profile:profiles(id, nombre, dni)")
+      .eq("gimnasio_id", gimnasioId)
+      .order("creado_en", { ascending: false }),
+  ]);
+
+  const socios = (sociosRaw ?? [])
+    .map((c: any) => ({
+      id: c.profile?.id as string,
+      nombre: c.profile?.nombre as string | null,
+      dni: c.profile?.dni as string,
+      estado_cuota: c.estado_cuota as string | null,
+    }))
+    .filter((s) => Boolean(s.id && s.dni));
+
+  return {
+    ok: true,
+    dueno: dueno ? { ...dueno, slug: gym.slug } : null,
+    socios,
+  };
+}
+

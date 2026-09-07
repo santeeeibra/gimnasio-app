@@ -11,6 +11,7 @@ import { PlanPlataformaForm } from "./plan-plataforma-form";
 import { PagosPlataforma, type PagoPlataformaRow } from "./pagos-plataforma";
 import { DisparadoresSocio } from "./disparadores-socio";
 import { TourDev } from "./tour-dev";
+import { BotonResetClave } from "../../boton-reset-clave";
 
 export const dynamic = "force-dynamic";
 
@@ -201,12 +202,19 @@ export default async function AdminGimnasioDetalle({
           end-to-end. El banner de arriba te devuelve a soporte.
         </p>
         {duenoInfo ? (
-          <form action={entrarComoAction}>
-            <input type="hidden" name="profile_id" value={duenoInfo.id} />
-            <Button type="submit">
-              Entrar como {duenoInfo.nombre ?? "el dueño"} (dueño)
-            </Button>
-          </form>
+          <div className="flex flex-wrap items-center gap-3">
+            <form action={entrarComoAction}>
+              <input type="hidden" name="profile_id" value={duenoInfo.id} />
+              <Button type="submit">
+                Entrar como {duenoInfo.nombre ?? "el dueño"} (dueño)
+              </Button>
+            </form>
+            <BotonResetClave
+              profileId={duenoInfo.id}
+              nombre={duenoInfo.nombre}
+              rol="dueno"
+            />
+          </div>
         ) : (
           <p className="text-xs text-ink-soft">Sin dueño cargado.</p>
         )}
@@ -247,20 +255,31 @@ export default async function AdminGimnasioDetalle({
                   ? new Date(s.fecha_vencimiento).toLocaleDateString("es-AR")
                   : "—"}
               </span>
-              <form action={entrarComoAction} className="shrink-0">
-                <input
-                  type="hidden"
-                  name="profile_id"
-                  value={s.profile?.id ?? ""}
-                />
-                <button
-                  type="submit"
-                  disabled={!s.profile?.id}
-                  className={`text-xs disabled:opacity-40 ${linkClasses.inline}`}
-                >
-                  ver como
-                </button>
-              </form>
+              <div className="flex items-center gap-3 shrink-0">
+                {s.profile?.id && (
+                  <BotonResetClave
+                    profileId={s.profile.id}
+                    nombre={s.profile.nombre}
+                    dni={s.profile.dni}
+                    rol="cliente"
+                    compacto
+                  />
+                )}
+                <form action={entrarComoAction}>
+                  <input
+                    type="hidden"
+                    name="profile_id"
+                    value={s.profile?.id ?? ""}
+                  />
+                  <button
+                    type="submit"
+                    disabled={!s.profile?.id}
+                    className={`text-xs disabled:opacity-40 ${linkClasses.inline}`}
+                  >
+                    ver como
+                  </button>
+                </form>
+              </div>
             </li>
           ))}
         </ul>

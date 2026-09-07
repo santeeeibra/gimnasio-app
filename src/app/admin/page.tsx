@@ -5,6 +5,7 @@ import { impersonacionActiva } from "@/lib/impersonation";
 import { VistaSwitcher } from "./vista-switcher";
 import { CredencialesCard } from "./credenciales-card";
 import { SelectorPlanRapido } from "./selector-plan-rapido";
+import { ResetClavesDev } from "./reset-claves-dev";
 import {
   Building2,
   AlertTriangle,
@@ -36,6 +37,7 @@ export default async function AdminPage() {
     { count: totalGyms },
     { count: totalSocios },
     { count: errores24h },
+    { data: todosGyms },
   ] = await Promise.all([
     admin.rpc("db_size_bytes"),
     admin.from("monitor_db_estado").select("umbral_avisado, actualizado_at").eq("id", 1).single(),
@@ -47,6 +49,7 @@ export default async function AdminPage() {
     admin.from("gimnasios").select("id", { count: "exact", head: true }),
     admin.from("clientes").select("id", { count: "exact", head: true }),
     admin.from("errores_app").select("id", { count: "exact", head: true }).gte("creado_en", hace24h),
+    admin.from("gimnasios").select("id, nombre, slug").order("nombre", { ascending: true }),
   ]);
 
   // Si no se encuentra 'sante', buscar primer gimnasio disponible
@@ -166,10 +169,21 @@ export default async function AdminPage() {
         <CredencialesCard />
       </section>
 
-      {/* SECCIÓN 3: SELECTOR RÁPIDO DE PLAN (TESTING ELITE) */}
+      {/* SECCIÓN 3: RESETEO DE CONTRASEÑAS POR GYM O SOCIO */}
       <section className="space-y-3">
         <h2 className="text-xs font-black uppercase tracking-[0.16em] text-ink-soft">
-          3. Selector Rápido de Plan de Plataforma (Testing Elite)
+          3. Reseteo de Contraseñas (Dueños & Socios por Gym)
+        </h2>
+        <ResetClavesDev
+          gyms={todosGyms ?? []}
+          gymInicialId={gymTarget?.id}
+        />
+      </section>
+
+      {/* SECCIÓN 4: SELECTOR RÁPIDO DE PLAN (TESTING ELITE) */}
+      <section className="space-y-3">
+        <h2 className="text-xs font-black uppercase tracking-[0.16em] text-ink-soft">
+          4. Selector Rápido de Plan de Plataforma (Testing Elite)
         </h2>
         <SelectorPlanRapido
           gimnasioSlug={gymTarget?.slug ?? "sante"}
@@ -178,12 +192,12 @@ export default async function AdminPage() {
         />
       </section>
 
-      {/* SECCIÓN 4: DIAGNÓSTICO Y MONITOR DE PLATAFORMA */}
+      {/* SECCIÓN 5: DIAGNÓSTICO Y MONITOR DE PLATAFORMA */}
       <section className="space-y-4 pt-2">
         <div className="flex items-center justify-between border-t border-rule pt-6">
           <div>
             <h2 className="text-xs font-black uppercase tracking-[0.16em] text-ink-soft">
-              4. Diagnóstico & Accesos de Consola
+              5. Diagnóstico & Accesos de Consola
             </h2>
             <p className="text-xs text-ink-soft mt-0.5">
               Supervisión de infraestructura Supabase y herramientas de soporte

@@ -30,6 +30,7 @@ type AccionAdmin =
   | "forzar_estado_socio"
   | "activar_gimnasio_disponible"
   | "crear_gimnasio"
+  | "resetear_clave"
   | "importar_socios";
 
 // Traduce (action, meta) a un texto legible para la notificación al
@@ -75,6 +76,10 @@ function formatearAccionAdmin(
     case "importar_socios": {
       const exitosos = meta.exitosos ?? meta.creados ?? 0;
       return `Importación masiva en ${gym}: ${exitosos} socios creados`;
+    }
+    case "resetear_clave": {
+      const target = (meta.nombre as string | undefined) ?? (meta.dni as string | undefined) ?? "usuario";
+      return `Restablecieron la contraseña de ${target} en ${gym}`;
     }
     case "push_prueba":
       return "Push de prueba enviado";
