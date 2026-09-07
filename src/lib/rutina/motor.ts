@@ -973,8 +973,14 @@ function puntuar(
   } else {
     p -= 70; // fuera de las preferencias: solo si no queda otra en el catálogo
   }
-  if (nivelIdx(ej.nivel) <= NIVEL_ORDEN[nivelCliente]) p += 10;
-  else p -= 15 * (nivelIdx(ej.nivel) - NIVEL_ORDEN[nivelCliente]);
+  const idxEj = nivelIdx(ej.nivel);
+  const idxCli = NIVEL_ORDEN[nivelCliente];
+  if (idxEj <= idxCli) {
+    p += idxEj === idxCli ? 25 : 10;
+  } else {
+    // Ejercicio de nivel superior al cliente: penalización crítica para evitar asignación
+    p -= 500 * (idxEj - idxCli);
+  }
   if (!key || !usadosSemana.has(key)) {
     p += 15; // preferir variedad en la semana
   } else {

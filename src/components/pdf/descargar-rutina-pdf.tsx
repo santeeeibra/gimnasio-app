@@ -9,6 +9,10 @@ interface Props {
   rutinaNombre: string; // "Hipertrofia · Intermedio · 4 días"
   dias: DiaEditable[];
   logoUrl?: string | null;
+  /** Último peso corporal registrado (registro_peso), en kg. */
+  pesoCorporal?: number | null;
+  /** Último peso levantado por ejercicio: { [ejercicioId]: kg } (registro_progreso). */
+  pesosPorEjercicio?: Record<string, number>;
 }
 
 export function DescargarRutinaPdf({
@@ -17,6 +21,8 @@ export function DescargarRutinaPdf({
   rutinaNombre,
   dias,
   logoUrl,
+  pesoCorporal,
+  pesosPorEjercicio,
 }: Props) {
   const [generando, setGenerando] = useState(false);
 
@@ -35,8 +41,17 @@ export function DescargarRutinaPdf({
       // ── Pre-cargar imagen del logo (síncrono en didDrawPage no puede ser async) ─
       let logoDataUrl: string | null = null;
       if (logoUrl) {
-        try { logoDataUrl = await cargarImagen(logoUrl); } catch { /* ok */ }
+        try { logoDataUrl = (await cargarImagen(logoUrl)).dataUrl; } catch { /* ok */ }
       }
+
+      // Logo SysGym del encabezado (public/logo-sysgym.png). Si falta, se omite.
+      let sysLogoDataUrl: string | null = null;
+      let sysLogoAspect = 1; // ancho / alto
+      try {
+        const r = await cargarImagen("/logo-sysgym.png", "image/png");
+        sysLogoDataUrl = r.dataUrl;
+        sysLogoAspect = r.w / r.h || 1;
+      } catch { /* ok */ }
 
       /** Dibuja marca de agua centrada, baja opacidad (síncrono). */
       function dibujarMarcaAgua() {
@@ -53,16 +68,24 @@ export function DescargarRutinaPdf({
       // ── Encabezado de página 1 ─────────────────────────────────────────
       dibujarMarcaAgua();
 
-      // Logo en encabezado si hay
-      if (logoDataUrl) {
+      // Logo SysGym arriba del todo (banner horizontal). El resto va debajo.
+      let textoY = margen + 7;
+      if (sysLogoDataUrl) {
         try {
-          doc.addImage(logoDataUrl, "WEBP", margen, margen, 14, 14);
+          // Escala respetando la proporción real del PNG (evita deformarlo).
+          const maxW = 52;
+          const maxH = 22;
+          let w = maxW;
+          let h = maxW / sysLogoAspect;
+          if (h > maxH) { h = maxH; w = maxH * sysLogoAspect; }
+          doc.addImage(sysLogoDataUrl, "PNG", margen, margen, w, h);
+          textoY = margen + h + 6;
         } catch { /* sin logo */ }
       }
 
       doc.setFont("helvetica", "bold");
       doc.setFontSize(18);
-      doc.text(gimnasioNombre, logoDataUrl ? margen + 17 : margen, margen + 9);
+      doc.text(gimnasioNombre, margen, textoY);
 
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
@@ -70,22 +93,29 @@ export function DescargarRutinaPdf({
       doc.text(
         `Rutina de ${clienteNombre}  ·  ${rutinaNombre}`,
         margen,
-        margen + 17,
+        textoY + 6,
       );
       doc.text(
         `Generado el ${new Date().toLocaleDateString("es-AR", { day: "2-digit", month: "long", year: "numeric" })}`,
         pageW - margen,
-        margen + 17,
+        textoY + 6,
         { align: "right" },
       );
+
+      let lineaPeso = textoY + 11;
+      if (pesoCorporal != null) {
+        doc.text(`Peso corporal actual: ${pesoCorporal} kg`, margen, lineaPeso);
+        lineaPeso += 5;
+      }
       doc.setTextColor(0);
 
       // Línea separadora
+      const sepY = Math.max(textoY + 15, lineaPeso);
       doc.setDrawColor(220);
       doc.setLineWidth(0.4);
-      doc.line(margen, margen + 21, pageW - margen, margen + 21);
+      doc.line(margen, sepY, pageW - margen, sepY);
 
-      let cursorY = margen + 28;
+      let cursorY = sepY + 7;
 
       // ── Tabla por día ──────────────────────────────────────────────────
       for (const dia of dias) {
@@ -102,13 +132,20 @@ export function DescargarRutinaPdf({
         doc.text(dia.titulo, margen, cursorY);
         cursorY += 5;
 
-        const body = dia.items.map((item) => [
-          item.ejercicio?.nombre ?? "Ejercicio",
-          String(item.series),
-          item.repeticiones,
-          item.tecnica && item.tecnica !== "ninguna" ? item.tecnica : "—",
-          item.nota || "—",
-        ]);
+        const body = dia.items.map((item) => {
+          const pesoEj = item.ejercicio?.id
+            ? pesosPorEjercicio?.[item.ejercicio.id]
+            : undefined;
+          return [
+            item.ejercicio?.nombre ?? "Ejercicio",
+            String(item.series),
+            pesoEj != null
+              ? `${item.repeticiones}\nPeso actual: ${pesoEj} kg`
+              : item.repeticiones,
+            item.tecnica && item.tecnica !== "ninguna" ? item.tecnica : "—",
+            item.nota || "—",
+          ];
+        });
 
         autoTable(doc, {
           startY: cursorY,
@@ -126,8 +163,8 @@ export function DescargarRutinaPdf({
           columnStyles: {
             0: { cellWidth: "auto" },
             1: { cellWidth: 16, halign: "center" },
-            2: { cellWidth: 20, halign: "center" },
-            3: { cellWidth: 28 },
+            2: { cellWidth: 30, halign: "center" },
+            3: { cellWidth: 24 },
             4: { cellWidth: "auto" },
           },
           // Síncrono: logoDataUrl ya está cargado antes del loop
@@ -202,7 +239,10 @@ function slugify(s: string): string {
     .replace(/^-|-$/g, "");
 }
 
-function cargarImagen(url: string): Promise<string> {
+function cargarImagen(
+  url: string,
+  mime: "image/webp" | "image/png" = "image/webp",
+): Promise<{ dataUrl: string; w: number; h: number }> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = "anonymous";
@@ -212,7 +252,11 @@ function cargarImagen(url: string): Promise<string> {
       canvas.height = img.naturalHeight;
       const ctx = canvas.getContext("2d")!;
       ctx.drawImage(img, 0, 0);
-      resolve(canvas.toDataURL("image/webp"));
+      resolve({
+        dataUrl: canvas.toDataURL(mime),
+        w: img.naturalWidth,
+        h: img.naturalHeight,
+      });
     };
     img.onerror = reject;
     img.src = url;

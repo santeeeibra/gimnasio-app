@@ -13,8 +13,10 @@ import {
   TECNICAS,
   TECNICA_DESC,
   TECNICA_LABEL,
+  NIVEL_LABEL,
   type Ejercicio,
   type Molestia,
+  type Nivel,
   type Tecnica,
 } from "@/lib/rutina/tipos";
 
@@ -761,6 +763,7 @@ function ItemFila({
               {ej?.grupo_muscular ? (
                 <span className="mt-1 inline-block text-[10.5px] font-semibold uppercase tracking-[0.06em] text-ink-soft">
                   {GRUPO_MUSCULAR_LABEL[ej.grupo_muscular] ?? ej.grupo_muscular}
+                  {ej?.nivel ? ` · ${NIVEL_LABEL[ej.nivel as Nivel] ?? ej.nivel}` : ""}
                 </span>
               ) : null}
             </div>

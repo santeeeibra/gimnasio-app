@@ -84,6 +84,33 @@ export default async function MiRutinaPage() {
 
   const ejercicios = (ejerciciosData ?? []) as Ejercicio[];
 
+  // Datos para el PDF de descarga: peso corporal actual + último peso por ejercicio.
+  const [{ data: pesoRows }, { data: progresoRows }] = cliente
+    ? await Promise.all([
+        supabase
+          .from("registro_peso")
+          .select("peso")
+          .eq("cliente_id", cliente.id)
+          .order("fecha", { ascending: false })
+          .limit(1),
+        supabase
+          .from("registro_progreso")
+          .select("ejercicio_id, peso, fecha")
+          .eq("cliente_id", cliente.id)
+          .order("fecha", { ascending: false }),
+      ])
+    : [{ data: null }, { data: null }];
+
+  const pesoCorporal =
+    pesoRows && pesoRows.length > 0 ? Number(pesoRows[0].peso) : null;
+
+  const pesosPorEjercicio: Record<string, number> = {};
+  for (const r of (progresoRows ?? []) as { ejercicio_id: string; peso: number }[]) {
+    if (r.ejercicio_id && pesosPorEjercicio[r.ejercicio_id] === undefined) {
+      pesosPorEjercicio[r.ejercicio_id] = Number(r.peso);
+    }
+  }
+
   // SPEC modo manual: nunca es el flujo por default, siempre detrás de un
   // <details> cerrado, debajo del generador automático.
   // Controles de personalización (armado manual y modo avanzado).
@@ -221,6 +248,8 @@ export default async function MiRutinaPage() {
                 rutinaNombre={`${OBJETIVO_LABEL[rutina.objetivo as Objetivo] ?? rutina.objetivo}${rutina.nivel ? ` · ${NIVEL_LABEL[rutina.nivel as Nivel]}` : ""}${rutina.dias_por_semana ? ` · ${rutina.dias_por_semana} días` : ""}`}
                 dias={agruparPorDia((itemsData ?? []) as any[], (rutina.dias_titulos as string[] | null) ?? null)}
                 logoUrl={gymData?.logo_url ?? null}
+                pesoCorporal={pesoCorporal}
+                pesosPorEjercicio={pesosPorEjercicio}
               />
             </div>
           ) : null}

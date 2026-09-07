@@ -2,11 +2,14 @@
 
 import { useActionState, useMemo, useState } from "react";
 import { Button } from "@/components/ui";
+import { hapticoSeleccion } from "@/lib/ui/hapticos";
 import {
   GRUPO_A_ENFASIS,
   MAX_DIAS_MANUAL,
   MAX_EJERCICIOS_DIA,
   MAX_ENFASIS,
+  NIVELES,
+  NIVEL_LABEL,
   REPS_OPCIONES,
   SERIES_OPCIONES,
   TECNICAS,
@@ -14,6 +17,7 @@ import {
   TECNICA_LABEL,
   type Ejercicio,
   type Enfasis,
+  type Nivel,
   type Tecnica,
 } from "@/lib/rutina/tipos";
 import { guardarRutinaManual } from "./actions";
@@ -66,9 +70,24 @@ export function BuilderManual({ ejercicios }: { ejercicios: Ejercicio[] }) {
   } as { error?: string; ok?: string });
   const [dias, setDias] = useState<DiaManual[]>([nuevoDia(1)]);
 
+  const [filtroNivel, setFiltroNivel] = useState<"todos" | Nivel>("todos");
+
+  const ejerciciosFiltrados = useMemo(() => {
+    if (filtroNivel === "todos") return ejercicios;
+    if (filtroNivel === "principiante") {
+      return ejercicios.filter((e) => e.nivel === "principiante");
+    }
+    if (filtroNivel === "intermedio") {
+      return ejercicios.filter(
+        (e) => e.nivel === "principiante" || e.nivel === "intermedio",
+      );
+    }
+    return ejercicios;
+  }, [ejercicios, filtroNivel]);
+
   const grupos = useMemo(() => {
     const m = new Map<string, Ejercicio[]>();
-    for (const e of ejercicios) {
+    for (const e of ejerciciosFiltrados) {
       const g = e.grupo_muscular ?? "Otros";
       const arr = m.get(g) ?? [];
       arr.push(e);
@@ -80,7 +99,7 @@ export function BuilderManual({ ejercicios }: { ejercicios: Ejercicio[] }) {
         nombre,
         ejercicios: [...ejs].sort((a, b) => a.nombre.localeCompare(b.nombre)),
       }));
-  }, [ejercicios]);
+  }, [ejerciciosFiltrados]);
 
   const grupoPorId = useMemo(() => {
     const m = new Map<string, string>();
@@ -181,6 +200,48 @@ export function BuilderManual({ ejercicios }: { ejercicios: Ejercicio[] }) {
     <form action={formAction} className="stagger space-y-5">
       <input type="hidden" name="plan" value={JSON.stringify(payload)} />
 
+      {/* Selector / filtro rápido de ejercicios por nivel */}
+      <div className="rounded-[12px] border border-rule bg-paper-2 p-3 text-xs shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+          <div>
+            <span className="font-semibold text-ink flex items-center gap-1.5">
+              <span>🏷️</span> Filtrar catálogo por nivel
+            </span>
+            <p className="mt-0.5 text-[11px] text-ink-soft">
+              {filtroNivel === "todos"
+                ? "Mostrando los 74 ejercicios disponibles."
+                : filtroNivel === "principiante"
+                ? "Mostrando únicamente ejercicios seguros y guiados para principiantes."
+                : filtroNivel === "intermedio"
+                ? "Mostrando ejercicios guiados y barras libres para intermedios."
+                : "Mostrando todo el catálogo incluyendo variantes técnicas avanzadas."}
+            </p>
+          </div>
+          <div className="flex items-center gap-1 rounded-[8px] border border-rule bg-paper p-0.5 self-start sm:self-auto">
+            {(["todos", ...NIVELES] as const).map((lvl) => {
+              const activo = filtroNivel === lvl;
+              return (
+                <button
+                  key={lvl}
+                  type="button"
+                  onClick={() => {
+                    hapticoSeleccion();
+                    setFiltroNivel(lvl);
+                  }}
+                  className={`rounded-[6px] px-2.5 py-1 text-[11px] font-medium transition-all ${
+                    activo
+                      ? "bg-ink text-paper shadow-xs"
+                      : "text-ink-soft hover:text-ink"
+                  }`}
+                >
+                  {lvl === "todos" ? "Todos" : NIVEL_LABEL[lvl]}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
       {dias.map((dia, di) => (
         <section
           key={dia.key}
@@ -232,7 +293,7 @@ export function BuilderManual({ ejercicios }: { ejercicios: Ejercicio[] }) {
                       <optgroup key={g.nombre} label={g.nombre}>
                         {g.ejercicios.map((ej) => (
                           <option key={ej.id} value={ej.id}>
-                            {ej.nombre}
+                            {ej.nombre} {ej.nivel ? `(${NIVEL_LABEL[ej.nivel as Nivel] ?? ej.nivel})` : ""}
                           </option>
                         ))}
                       </optgroup>

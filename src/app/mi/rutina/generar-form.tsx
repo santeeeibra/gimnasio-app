@@ -13,6 +13,7 @@ import {
   MOLESTIA_LABEL,
   NIVELES,
   NIVEL_LABEL,
+  NIVEL_DETALLE,
   OBJETIVOS,
   OBJETIVO_LABEL,
   OBJETIVO_AYUDA,
@@ -167,6 +168,134 @@ function GuiaPrincipiante() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function SectorAyudaNivel({
+  nivelSeleccionado,
+  onSelectNivel,
+}: {
+  nivelSeleccionado: Nivel;
+  onSelectNivel: (n: Nivel) => void;
+}) {
+  const [expandido, setExpandido] = useState(false);
+  const info = NIVEL_DETALLE[nivelSeleccionado];
+
+  return (
+    <div className="sm:col-span-2 rounded-[14px] border border-rule bg-paper-2 p-3.5 shadow-xs transition-all duration-200">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="grid size-6 shrink-0 place-items-center rounded-[6px] bg-accent/15 text-accent text-xs">
+            🎯
+          </span>
+          <span className="text-xs font-semibold text-ink">
+            ¿Cómo elegir tu nivel y qué ejercicios incluye?
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            hapticoSeleccion();
+            setExpandido(!expandido);
+          }}
+          className="flex items-center gap-1 text-[11px] font-medium text-accent shrink-0 hover:underline"
+        >
+          <span>{expandido ? "Menos info" : "Ver criterios"}</span>
+          {expandido ? (
+            <ChevronUp aria-hidden className="size-3" />
+          ) : (
+            <ChevronDown aria-hidden className="size-3" />
+          )}
+        </button>
+      </div>
+
+      {/* Selector interactivo de nivel con chips/cards */}
+      <div className="mt-3 grid grid-cols-3 gap-2">
+        {NIVELES.map((n) => {
+          const activo = nivelSeleccionado === n;
+          const det = NIVEL_DETALLE[n];
+          return (
+            <button
+              key={n}
+              type="button"
+              onClick={() => {
+                hapticoSeleccion();
+                onSelectNivel(n);
+              }}
+              className={`flex flex-col items-start p-2.5 rounded-[10px] text-left transition-all duration-150 active:scale-[0.98] border ${
+                activo
+                  ? "border-ink bg-paper text-ink shadow-xs"
+                  : "border-rule/60 bg-paper/50 text-ink-soft hover:border-rule hover:text-ink"
+              }`}
+            >
+              <div className="flex w-full items-center justify-between">
+                <span className="text-xs font-semibold">{NIVEL_LABEL[n]}</span>
+                {activo ? (
+                  <span className="size-2 rounded-full bg-volt shadow-[0_0_6px_var(--color-volt)]" />
+                ) : null}
+              </div>
+              <span className="mt-0.5 text-[10px] text-ink-soft font-mono">
+                {det.tiempo}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Detalle activo enfocado en cómo se eligen los ejercicios */}
+      <div className="mt-3 rounded-[10px] border border-rule/70 bg-paper p-3 text-xs space-y-2 animate-fade-in">
+        <div className="flex items-start gap-2">
+          <span className="text-sm">📌</span>
+          <div className="min-w-0">
+            <p className="font-semibold text-ink">
+              {NIVEL_LABEL[nivelSeleccionado]}: {info.resumen}
+            </p>
+            <p className="mt-1 text-[11px] leading-relaxed text-ink-soft">
+              {info.criterioSeleccion}
+            </p>
+            <p className="mt-1 text-[10px] font-medium text-accent">
+              Seguridad: {info.seguridad}
+            </p>
+          </div>
+        </div>
+
+        <div className="pt-2 border-t border-rule/50">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-ink-soft mb-1.5">
+            Ejercicios que el motor prioriza para este nivel:
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {info.ejemplos.map((ej) => (
+              <span
+                key={ej}
+                className="inline-flex items-center rounded-[6px] border border-rule/80 bg-paper-2 px-2 py-0.5 text-[11px] font-medium text-ink"
+              >
+                {ej}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Explicación expandida de la ciencia detrás de la selección */}
+      {expandido ? (
+        <div className="mt-3 pt-3 border-t border-rule/60 text-xs text-ink-soft space-y-2 animate-fade-in">
+          <p className="font-semibold text-ink text-[11px]">
+            ¿Cómo categoriza el sistema los ejercicios según tu nivel?
+          </p>
+          <ul className="space-y-1.5 text-[11px] leading-relaxed">
+            <li>
+              • <strong className="text-ink">Principiante:</strong> Prioriza poleas y máquinas con trayectoria fija (cero riesgo de rotura técnica o compresión lumbar). Se descartan peso muerto con barra, sentadilla libre pesada y dominadas libres hasta que ganes fuerza base.
+            </li>
+            <li>
+              • <strong className="text-ink">Intermedio:</strong> Habilita barras olímpicas y mancuernas libres fundamentales (Press de banca con barra, Sentadilla libre, Remo con barra, Hip thrust con barra) para sobrecarga progresiva real.
+            </li>
+            <li>
+              • <strong className="text-ink">Avanzado:</strong> Habilita todo el catálogo incluyendo ejercicios de alta demanda estabilizadora y calistenia pesada (peso muerto libre, dominadas, fondos en paralelas, curl nórdico, rueda abdominal).
+            </li>
+          </ul>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -336,6 +465,11 @@ export function GenerarRutinaForm({
           </option>
         ))}
       </Select>
+
+      <SectorAyudaNivel
+        nivelSeleccionado={nivel}
+        onSelectNivel={(n) => setNivel(n)}
+      />
 
       <fieldset className="sm:col-span-2">
         <legend className="text-[13px] font-medium text-ink-soft mb-1.5">

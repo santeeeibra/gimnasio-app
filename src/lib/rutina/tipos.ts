@@ -39,6 +39,42 @@ export const NIVEL_LABEL: Record<Nivel, string> = {
   avanzado: "Avanzado",
 };
 
+export type InfoNivel = {
+  tiempo: string;
+  resumen: string;
+  criterioSeleccion: string;
+  seguridad: string;
+  ejemplos: string[];
+};
+
+export const NIVEL_DETALLE: Record<Nivel, InfoNivel> = {
+  principiante: {
+    tiempo: "< 6 meses entrenando o retomando",
+    resumen: "Ejercicios guiados, seguros y de fácil control motor.",
+    criterioSeleccion:
+      "El sistema selecciona exclusivamente máquinas y poleas con trayectoria fija o mancuernas con soporte. Se descartan movimientos técnicamente riesgosos o con alta compresión de columna (sin peso muerto ni dominadas libres).",
+    seguridad: "Máxima estabilidad articular · Riesgo de lesión nulo · Foco en técnica",
+    ejemplos: ["Prensa de piernas", "Jalón al pecho", "Press de pecho en máquina", "Remo en polea baja", "Sentadilla goblet"],
+  },
+  intermedio: {
+    tiempo: "6 meses a 2 años constante",
+    resumen: "Sobrecarga progresiva con barras y mancuernas libres.",
+    criterioSeleccion:
+      "Desbloquea ejercicios con barra libre y pesos libres fundamentales. El motor combina variantes compuestas clásicas con accesorios guiados para optimizar estímulo e hipertrofia.",
+    seguridad: "Estabilidad media · Exige control de postura y core",
+    ejemplos: ["Sentadilla con barra", "Press de banca con barra", "Remo con barra", "Hip thrust con barra", "Press militar"],
+  },
+  avanzado: {
+    tiempo: "+2 años con técnica sólida",
+    resumen: "Máxima demanda neuromuscular y levantamientos pesados.",
+    criterioSeleccion:
+      "Acceso irrestricto a todo el catálogo. Se priorizan movimientos de alta demanda técnica, cadenas cinéticas complejas, variantes con pausas isométricas y calistenia pesada.",
+    seguridad: "Exige dominio total de cargas axiales y autorregulación de fatiga",
+    ejemplos: ["Peso muerto convencional", "Dominadas libres", "Fondos en paralelas", "Rueda abdominal", "Sentadilla frontal"],
+  },
+};
+
+
 // Presets de equipo que se ofrecen en el cuestionario.
 export const PREFERENCIAS_EQUIPO = {
   gimnasio: [] as Equipo[], // sin restricción

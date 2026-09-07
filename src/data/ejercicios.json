@@ -185,7 +185,7 @@
     "grupo_muscular": "biceps",
     "patron": "aislamiento",
     "equipo": "barra",
-    "nivel": "principiante",
+    "nivel": "intermedio",
     "descripcion": "Codos quietos al costado, sin mover el tronco.",
     "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Barbell_Curl/0.jpg"
   },
@@ -415,7 +415,7 @@
     "grupo_muscular": "gemelos",
     "patron": "aislamiento",
     "equipo": "mancuernas",
-    "nivel": "principiante",
+    "nivel": "intermedio",
     "descripcion": "Sobre un escalón para ganar recorrido.",
     "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Standing_Dumbbell_Calf_Raise/0.jpg"
   },
@@ -455,7 +455,7 @@
     "grupo_muscular": "core",
     "patron": "core_anti_extension",
     "equipo": "peso_corporal",
-    "nivel": "intermedio",
+    "nivel": "avanzado",
     "descripcion": "Sube las piernas sin balanceo, controla la bajada.",
     "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Hanging_Leg_Raise/0.jpg"
   },
@@ -525,7 +525,7 @@
     "grupo_muscular": "gemelos",
     "patron": "aislamiento",
     "equipo": "peso_corporal",
-    "nivel": "principiante",
+    "nivel": "intermedio",
     "descripcion": "Sobre un escalón, una pierna, rango completo con pausa arriba.",
     "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Dumbbell_Seated_One-Leg_Calf_Raise/0.jpg"
   },
@@ -605,7 +605,7 @@
     "grupo_muscular": "hombros",
     "patron": "empuje_vertical",
     "equipo": "peso_corporal",
-    "nivel": "principiante",
+    "nivel": "intermedio",
     "descripcion": "Cuerpo en V invertida, baja la coronilla hacia el suelo flexionando los codos y empuja hacia arriba.",
     "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Pushups/0.jpg"
   },
@@ -698,5 +698,46 @@
     "nivel": "intermedio",
     "descripcion": "De pie en polea, rotación diagonal controlada del torso resistiendo con oblicuos y zona media.",
     "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Standing_Cable_Wood_Chop/0.jpg"
+  },
+  {
+    "slug": "press-banca-pausa",
+    "nombre": "Press de banca con pausa isométrica",
+    "grupo_muscular": "pecho",
+    "patron": "empuje_horizontal",
+    "equipo": "barra",
+    "nivel": "avanzado",
+    "descripcion": "Pausa estricta de 2 segundos en el esternón sin apoyar el peso; elimina inercia y maximiza tensión mecánica.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Barbell_Bench_Press_-_Medium_Grip/0.jpg"
+  },
+  {
+    "slug": "press-militar-estricto",
+    "nombre": "Press militar estricto de pie",
+    "grupo_muscular": "hombros",
+    "patron": "empuje_vertical",
+    "equipo": "barra",
+    "nivel": "avanzado",
+    "descripcion": "De pie sin impulso de piernas ni hiperextensión lumbar; demanda máxima estabilización axial de core y glúteos.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Standing_Military_Press/0.jpg"
+  },
+  {
+    "slug": "curl-predicador-barra-z",
+    "nombre": "Curl predicador con barra Z",
+    "grupo_muscular": "biceps",
+    "patron": "aislamiento",
+    "equipo": "barra",
+    "nivel": "avanzado",
+    "descripcion": "Aislamiento estricto en banco Scott; sobrecarga máxima en la porción distal y elongación sin balanceo.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Preacher_Curl/0.jpg"
+  },
+  {
+    "slug": "sentadilla-frontal-barra",
+    "nombre": "Sentadilla frontal con barra",
+    "grupo_muscular": "cuadriceps",
+    "patron": "dominante_rodilla",
+    "equipo": "barra",
+    "nivel": "avanzado",
+    "descripcion": "Barra sobre hombros anteriores; requiere verticalidad torácica estricta y flexión profunda de rodillas sin colapso lumbar.",
+    "imagen_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Front_Barbell_Squat/0.jpg"
   }
 ]
+
