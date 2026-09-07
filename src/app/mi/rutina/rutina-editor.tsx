@@ -293,7 +293,9 @@ export function RutinaEditor({
 
   // Progreso de series completadas hoy (persistido en localStorage por día)
   const LS_SETS_PREFIX = "gym.rutina-sets.v1";
+  const LS_GUIA_VISTA_KEY = "gym.guia-serie.vista";
   const [setsCompletados, setSetsCompletados] = useState<Record<string, number[]>>({});
+  const [guiaVista, setGuiaVista] = useState<boolean>(true);
 
   useEffect(() => {
     try {
@@ -308,7 +310,28 @@ export function RutinaEditor({
     }
   }, [activo]);
 
+  useEffect(() => {
+    try {
+      const vista = localStorage.getItem(LS_GUIA_VISTA_KEY);
+      if (!vista) {
+        setGuiaVista(false);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  function descartarGuia() {
+    setGuiaVista(true);
+    try {
+      localStorage.setItem(LS_GUIA_VISTA_KEY, "true");
+    } catch {
+      /* ignore */
+    }
+  }
+
   function toggleSet(itemId: string, setIndex: number) {
+    if (!guiaVista) descartarGuia();
     setSetsCompletados((prev) => {
       const actuales = prev[itemId] ?? [];
       const existe = actuales.includes(setIndex);
@@ -545,9 +568,16 @@ export function RutinaEditor({
                   <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-ink-soft">
                     Ejercicios del día
                   </span>
-                  <span className="text-[11px] text-ink-soft">
-                    Tildá cada serie al terminar
-                  </span>
+                  {!guiaVista && seriesHechasActivo === 0 ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-[11px] font-semibold text-accent animate-pulse">
+                      <span className="size-1.5 rounded-full bg-accent" />
+                      Tildá cada serie al terminar
+                    </span>
+                  ) : (
+                    <span className="text-[11px] text-ink-soft">
+                      Tildá cada serie al terminar
+                    </span>
+                  )}
                 </div>
                 <ul className="stagger-in divide-y divide-rule overflow-hidden rounded-[16px] border border-rule bg-paper-2 shadow-sm">
                   {dia.items.map((item, i) => (
@@ -565,6 +595,7 @@ export function RutinaEditor({
                       }
                       clienteId={clienteId}
                       creadoPor={creadoPor}
+                      mostrarGuiaSerie={!guiaVista && seriesHechasActivo === 0 && i === 0}
                     />
                   ))}
                 </ul>
@@ -628,6 +659,7 @@ function ItemFila({
   onToggleSet,
   clienteId,
   creadoPor,
+  mostrarGuiaSerie = false,
 }: {
   item: ItemEditable;
   indice: number;
@@ -639,6 +671,7 @@ function ItemFila({
   onToggleSet: (setIndex: number) => void;
   clienteId?: string;
   creadoPor?: 'cliente' | 'dueno';
+  mostrarGuiaSerie?: boolean;
 }) {
   const [series, setSeries] = useState(String(item.series));
   const [reps, setReps] = useState(item.repeticiones);
@@ -852,33 +885,49 @@ function ItemFila({
             <div className="flex flex-wrap items-center gap-1.5">
               {Array.from({ length: Math.min(numSeries, 8) }).map((_, sIdx) => {
                 const hecho = setsCompletados.includes(sIdx);
+                const esObjetivoGuia = mostrarGuiaSerie && sIdx === 0 && !hecho;
                 return (
-                  <button
-                    key={sIdx}
-                    type="button"
-                    onClick={() => {
-                      if (!hecho) {
-                        const segs = extraerSegundosDescanso(item.nota);
-                        if (typeof window !== "undefined") {
-                          window.dispatchEvent(
-                            new CustomEvent("timer:iniciar", {
-                              detail: { segundos: segs },
-                            }),
-                          );
+                  <div key={sIdx} className="relative">
+                    {esObjetivoGuia ? (
+                      <div
+                        role="tooltip"
+                        className="absolute -top-8 left-1/2 -translate-x-1/2 z-20 whitespace-nowrap rounded-[8px] bg-accent px-2 py-0.5 text-[10.5px] font-bold text-accent-ink shadow-md pointer-events-none animate-bounce flex items-center"
+                      >
+                        <span>Tildá al terminar</span>
+                        <span
+                          className="absolute -bottom-1 left-1/2 -translate-x-1/2 size-2 rotate-45 bg-accent"
+                          aria-hidden
+                        />
+                      </div>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!hecho) {
+                          const segs = extraerSegundosDescanso(item.nota);
+                          if (typeof window !== "undefined") {
+                            window.dispatchEvent(
+                              new CustomEvent("timer:iniciar", {
+                                detail: { segundos: segs },
+                              }),
+                            );
+                          }
                         }
-                      }
-                      onToggleSet(sIdx);
-                    }}
-                    aria-label={`Serie ${sIdx + 1} de ${numSeries} ${hecho ? "completada" : "pendiente"}`}
-                    className={`grid size-11 min-w-[44px] place-items-center rounded-[10px] border text-xs font-bold transition-all duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${
-                      hecho
-                        ? "border-accent bg-accent text-accent-ink shadow-sm"
-                        : "border-rule bg-paper-2 text-ink-soft hover:border-ink/40"
-                    }`}
-                    style={{ fontFamily: "var(--font-hero)" }}
-                  >
-                    {hecho ? "✓" : sIdx + 1}
-                  </button>
+                        onToggleSet(sIdx);
+                      }}
+                      aria-label={`Serie ${sIdx + 1} de ${numSeries} ${hecho ? "completada" : "pendiente"}`}
+                      className={`grid size-11 min-w-[44px] place-items-center rounded-[10px] border text-xs font-bold transition-all duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${
+                        hecho
+                          ? "border-accent bg-accent text-accent-ink shadow-sm"
+                          : esObjetivoGuia
+                          ? "border-accent bg-paper-2 text-ink ring-2 ring-accent ring-offset-2 ring-offset-paper animate-pulse"
+                          : "border-rule bg-paper-2 text-ink-soft hover:border-ink/40"
+                      }`}
+                      style={{ fontFamily: "var(--font-hero)" }}
+                    >
+                      {hecho ? "✓" : sIdx + 1}
+                    </button>
+                  </div>
                 );
               })}
             </div>
