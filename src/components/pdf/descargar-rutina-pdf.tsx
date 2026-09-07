@@ -72,9 +72,9 @@ export function DescargarRutinaPdf({
       let textoY = margen + 6;
       if (sysLogoDataUrl) {
         try {
-          // Escala respetando la proporción real del PNG (evita deformarlo).
-          const maxW = 56;
-          const maxH = 15;
+          // Escala generosa respetando proporción panorámica (~5.8:1)
+          const maxW = 76;
+          const maxH = 20;
           let w = maxW;
           let h = maxW / sysLogoAspect;
           if (h > maxH) {
@@ -82,7 +82,7 @@ export function DescargarRutinaPdf({
             w = maxH * sysLogoAspect;
           }
           doc.addImage(sysLogoDataUrl, "PNG", margen, margen, w, h);
-          textoY = margen + h + 6;
+          textoY = margen + h + 7;
         } catch {
           /* sin logo */
         }
