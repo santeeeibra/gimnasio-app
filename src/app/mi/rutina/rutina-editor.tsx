@@ -648,6 +648,139 @@ function DiaTabs({
   );
 }
 
+function BadgeEquipo({
+  equipo,
+  nombre,
+}: {
+  equipo?: string | null;
+  nombre?: string;
+}) {
+  const eq = (equipo || "").toLowerCase();
+  const nom = (nombre || "").toLowerCase();
+
+  const esBarra = eq === "barra" || nom.includes("barra");
+  const esMancuerna =
+    eq === "mancuerna" || eq === "mancuernas" || nom.includes("mancuerna");
+  const esMaquina =
+    eq === "maquina" ||
+    nom.includes("maquina") ||
+    nom.includes("máquina") ||
+    nom.includes("prensa");
+  const esPolea = eq === "polea" || nom.includes("polea");
+  const esCorporal =
+    eq === "peso_corporal" ||
+    eq === "corporal" ||
+    nom.includes("corporal") ||
+    nom.includes("flexiones") ||
+    nom.includes("dominadas") ||
+    nom.includes("plancha");
+
+  if (esBarra) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-[6px] border border-accent/40 bg-accent/10 px-1.5 py-0.5 text-[10px] font-bold text-accent tracking-normal">
+        <svg
+          viewBox="0 0 24 24"
+          width="11"
+          height="11"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.4"
+          strokeLinecap="round"
+          aria-hidden
+        >
+          <path d="M2 12h20M6 7v10M18 7v10M4 9v6M20 9v6" />
+        </svg>
+        Con barra
+      </span>
+    );
+  }
+
+  if (esMancuerna) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-[6px] border border-rule bg-paper px-1.5 py-0.5 text-[10px] font-medium text-ink-soft tracking-normal">
+        <svg
+          viewBox="0 0 24 24"
+          width="11"
+          height="11"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.4"
+          strokeLinecap="round"
+          aria-hidden
+        >
+          <path d="M6 8v8M18 8v8M4 10v4M20 10v4M6 12h12" />
+        </svg>
+        Mancuernas
+      </span>
+    );
+  }
+
+  if (esMaquina) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-[6px] border border-rule bg-paper px-1.5 py-0.5 text-[10px] font-medium text-ink-soft tracking-normal">
+        <svg
+          viewBox="0 0 24 24"
+          width="11"
+          height="11"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          aria-hidden
+        >
+          <rect x="4" y="4" width="16" height="16" rx="2" />
+          <path d="M9 9h6v6H9z" />
+        </svg>
+        Máquina
+      </span>
+    );
+  }
+
+  if (esPolea) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-[6px] border border-rule bg-paper px-1.5 py-0.5 text-[10px] font-medium text-ink-soft tracking-normal">
+        <svg
+          viewBox="0 0 24 24"
+          width="11"
+          height="11"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          aria-hidden
+        >
+          <circle cx="12" cy="7" r="4" />
+          <path d="M12 11v10M8 21h8" />
+        </svg>
+        Polea
+      </span>
+    );
+  }
+
+  if (esCorporal) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-[6px] border border-rule bg-paper px-1.5 py-0.5 text-[10px] font-medium text-ink-soft tracking-normal">
+        <svg
+          viewBox="0 0 24 24"
+          width="11"
+          height="11"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          aria-hidden
+        >
+          <circle cx="12" cy="7" r="4" />
+          <path d="M5 21v-2a7 7 0 0 1 14 0v2" />
+        </svg>
+        Corporal
+      </span>
+    );
+  }
+
+  return null;
+}
+
 function ItemFila({
   item,
   indice,
@@ -793,12 +926,15 @@ function ItemFila({
                   {ej?.nombre ?? "Ejercicio"}
                 </p>
               </div>
-              {ej?.grupo_muscular ? (
-                <span className="mt-1 inline-block text-[10.5px] font-semibold uppercase tracking-[0.06em] text-ink-soft">
-                  {GRUPO_MUSCULAR_LABEL[ej.grupo_muscular] ?? ej.grupo_muscular}
-                  {ej?.nivel ? ` · ${NIVEL_LABEL[ej.nivel as Nivel] ?? ej.nivel}` : ""}
-                </span>
-              ) : null}
+              <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                {ej?.grupo_muscular ? (
+                  <span className="inline-block text-[10.5px] font-semibold uppercase tracking-[0.06em] text-ink-soft">
+                    {GRUPO_MUSCULAR_LABEL[ej.grupo_muscular] ?? ej.grupo_muscular}
+                    {ej?.nivel ? ` · ${NIVEL_LABEL[ej.nivel as Nivel] ?? ej.nivel}` : ""}
+                  </span>
+                ) : null}
+                <BadgeEquipo equipo={ej?.equipo} nombre={ej?.nombre} />
+              </div>
             </div>
             <div className="flex items-center gap-1 -mr-1 -mt-1">
               <BotonPedirAyuda
