@@ -1,4 +1,4 @@
-﻿# Protocolo de Alta Velocidad y Ahorro de Tokens — SysGym (GEMINI.md)
+# Protocolo de Alta Velocidad y Ahorro de Tokens — SysGym (GEMINI.md)
 
 > **Objetivo fundamental**: Tiempo de respuesta < 60s por tarea, consumo mínimo de tokens y máxima precisión quirúrgica. Cero burocracia, cero subagentes innecesarios.
 
@@ -56,3 +56,20 @@ En cualquier cambio de interfaz, aplicar siempre sin preguntar:
 1. **`sysgym-ux-patterns`**: Feedback sensorial con `src/lib/ui/hapticos.ts` (Acoustic Haptics + Taptic Engine + audio sintetizado).
 2. **`apple-design-skill`**: Mobile-first, targets táctiles ≥44px, curvaturas squircle (`rounded-[10px]`, `rounded-[12px]`).
 3. **`60fps-animation`**: Animaciones exclusivas sobre GPU (`transform` y `opacity`).
+
+---
+
+## 4. Asistencia y Dinámica de Trabajo (Perfil No-Programador)
+
+El usuario no memoriza rutas técnicas ni archivos de código. El agente asume el 100% de la carga de búsqueda y verificación técnica:
+
+1. **Localización por Pantalla o URL**:
+   * Encontrar los archivos a partir de textos visibles entre comillas, títulos de pantalla, nombres de botones o URLs que mencione el usuario (mediante `grep_search` o `find_by_name`).
+   * NUNCA exigirle al usuario que sepa qué archivo tocar.
+2. **Recordatorio Activo de Tips**:
+   * Si el usuario describe un cambio sin indicar pantalla o texto, recordarle al instante:
+     > *💡 Tip rápido: Decime la URL (ej. `/mi/rutina`) o un texto exacto que veas en esa pantalla y voy directo en 5 segundos.*
+   * Recordarle que puede pegar errores o capturas de pantalla directamente si algo falla.
+3. **Autonomía y Verificación**:
+   * Ejecutar directo con diffs limpios y verificar tipados (`npx tsc --noEmit`) sin obligarlo a validar comandos técnicos.
+

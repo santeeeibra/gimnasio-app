@@ -4,7 +4,17 @@ import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Select, linkClasses } from "@/components/ui";
 import { hapticoSeleccion } from "@/lib/ui/hapticos";
-import { HelpCircle, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  HelpCircle,
+  ChevronDown,
+  ChevronUp,
+  ShieldCheck,
+  Dumbbell,
+  Flame,
+  Sparkles,
+  Layers,
+  Activity,
+} from "lucide-react";
 import {
   ENFASIS,
   ENFASIS_LABEL,
@@ -172,6 +182,67 @@ function GuiaPrincipiante() {
   );
 }
 
+const NIVEL_UI_CONFIG: Record<
+  Nivel,
+  {
+    badge: string;
+    subtitulo: string;
+    icon: typeof ShieldCheck;
+    colorClasses: {
+      activeBorder: string;
+      activeBg: string;
+      activeGlow: string;
+      iconColor: string;
+      iconBg: string;
+      dotColor: string;
+      badgeActive: string;
+    };
+  }
+> = {
+  principiante: {
+    badge: "Base segura",
+    subtitulo: "< 6 meses",
+    icon: ShieldCheck,
+    colorClasses: {
+      activeBorder: "border-emerald-500/70 ring-1 ring-emerald-500/40",
+      activeBg: "bg-gradient-to-b from-emerald-500/10 via-paper to-paper",
+      activeGlow: "shadow-[0_0_20px_rgba(16,231,160,0.18)]",
+      iconColor: "text-emerald-400",
+      iconBg: "bg-emerald-500/15 border-emerald-500/30",
+      dotColor: "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]",
+      badgeActive: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+    },
+  },
+  intermedio: {
+    badge: "Sobrecarga",
+    subtitulo: "6m – 2 años",
+    icon: Dumbbell,
+    colorClasses: {
+      activeBorder: "border-volt/70 ring-1 ring-volt/40",
+      activeBg: "bg-gradient-to-b from-volt/10 via-paper to-paper",
+      activeGlow: "shadow-[0_0_20px_rgba(205,233,74,0.22)]",
+      iconColor: "text-volt",
+      iconBg: "bg-volt/15 border-volt/30",
+      dotColor: "bg-volt shadow-[0_0_8px_var(--color-volt)]",
+      badgeActive: "bg-volt/20 text-volt border-volt/30",
+    },
+  },
+  avanzado: {
+    badge: "Alto impacto",
+    subtitulo: "+2 años",
+    icon: Flame,
+    colorClasses: {
+      activeBorder: "border-amber-400/70 ring-1 ring-amber-400/40",
+      activeBg: "bg-gradient-to-b from-amber-500/10 via-paper to-paper",
+      activeGlow: "shadow-[0_0_20px_rgba(251,191,36,0.22)]",
+      iconColor: "text-amber-400",
+      iconBg: "bg-amber-500/15 border-amber-500/30",
+      dotColor: "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]",
+      badgeActive: "bg-amber-500/20 text-amber-300 border-amber-500/30",
+    },
+  },
+};
+
 function SectorAyudaNivel({
   nivelSeleccionado,
   onSelectNivel,
@@ -181,40 +252,55 @@ function SectorAyudaNivel({
 }) {
   const [expandido, setExpandido] = useState(false);
   const info = NIVEL_DETALLE[nivelSeleccionado];
+  const activeConfig = NIVEL_UI_CONFIG[nivelSeleccionado];
+  const ActiveIcon = activeConfig.icon;
 
   return (
-    <div className="sm:col-span-2 rounded-[14px] border border-rule bg-paper-2 p-3.5 shadow-xs transition-all duration-200">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="grid size-6 shrink-0 place-items-center rounded-[6px] bg-accent/15 text-accent text-xs">
-            🎯
-          </span>
-          <span className="text-xs font-semibold text-ink">
-            ¿Cómo elegir tu nivel y qué ejercicios incluye?
-          </span>
+    <div className="sm:col-span-2 relative overflow-hidden rounded-[20px] border border-white/10 bg-paper-2/90 p-4 shadow-xl backdrop-blur-xl transition-all duration-200 ring-1 ring-white/5">
+      {/* Resplandor superior sutil estilo Liquid Glass */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+
+      {/* Header del sector */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-[10px] border border-volt/30 bg-volt/10 text-volt shadow-[0_0_12px_rgba(205,233,74,0.18)]">
+            <Layers className="size-4.5" />
+          </div>
+          <div>
+            <h3 className="font-display text-[13px] font-bold tracking-tight text-ink">
+              Guía de Nivel Biomecánico
+            </h3>
+            <p className="text-[11px] text-ink-soft">
+              Filtra ejercicios según control motor y seguridad articular
+            </p>
+          </div>
         </div>
+
         <button
           type="button"
           onClick={() => {
             hapticoSeleccion();
             setExpandido(!expandido);
           }}
-          className="flex items-center gap-1 text-[11px] font-medium text-accent shrink-0 hover:underline"
+          className="group inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-rule/70 bg-paper/60 px-3 py-1 text-[11px] font-semibold text-ink-soft hover:text-ink hover:border-volt/40 hover:bg-paper transition-all duration-150 active:scale-95 shadow-xs shrink-0"
         >
           <span>{expandido ? "Menos info" : "Ver criterios"}</span>
-          {expandido ? (
-            <ChevronUp aria-hidden className="size-3" />
-          ) : (
-            <ChevronDown aria-hidden className="size-3" />
-          )}
+          <ChevronDown
+            aria-hidden
+            className={`size-3.5 text-ink-soft transition-transform duration-200 group-hover:text-ink ${
+              expandido ? "rotate-180" : ""
+            }`}
+          />
         </button>
       </div>
 
-      {/* Selector interactivo de nivel con chips/cards */}
-      <div className="mt-3 grid grid-cols-3 gap-2">
+      {/* Selector interactivo de nivel en 3 tarjetas táctiles ergonómicas (≥44pt) */}
+      <div className="mt-3.5 grid grid-cols-3 gap-2">
         {NIVELES.map((n) => {
           const activo = nivelSeleccionado === n;
-          const det = NIVEL_DETALLE[n];
+          const conf = NIVEL_UI_CONFIG[n];
+          const Icon = conf.icon;
+
           return (
             <button
               key={n}
@@ -223,53 +309,99 @@ function SectorAyudaNivel({
                 hapticoSeleccion();
                 onSelectNivel(n);
               }}
-              className={`flex flex-col items-start p-2.5 rounded-[10px] text-left transition-all duration-150 active:scale-[0.98] border ${
+              className={`relative flex min-h-[82px] flex-col justify-between p-3 rounded-[14px] text-left transition-all duration-200 active:scale-[0.96] border cursor-pointer ${
                 activo
-                  ? "border-ink bg-paper text-ink shadow-xs"
-                  : "border-rule/60 bg-paper/50 text-ink-soft hover:border-rule hover:text-ink"
+                  ? `${conf.colorClasses.activeBorder} ${conf.colorClasses.activeBg} ${conf.colorClasses.activeGlow} text-ink`
+                  : "border-rule/60 bg-paper/50 text-ink-soft hover:border-rule hover:bg-paper/80 hover:text-ink"
               }`}
             >
+              {/* Fila superior: Ícono y punto de estado */}
               <div className="flex w-full items-center justify-between">
-                <span className="text-xs font-semibold">{NIVEL_LABEL[n]}</span>
+                <div
+                  className={`flex size-6.5 items-center justify-center rounded-[8px] border transition-colors ${
+                    activo
+                      ? `${conf.colorClasses.iconBg} ${conf.colorClasses.iconColor}`
+                      : "border-rule/70 bg-paper-2 text-ink-soft/70"
+                  }`}
+                >
+                  <Icon className="size-3.5 stroke-[2.2]" />
+                </div>
                 {activo ? (
-                  <span className="size-2 rounded-full bg-volt shadow-[0_0_6px_var(--color-volt)]" />
+                  <span className={`size-2 rounded-full ${conf.colorClasses.dotColor}`} />
                 ) : null}
               </div>
-              <span className="mt-0.5 text-[10px] text-ink-soft font-mono">
-                {det.tiempo}
-              </span>
+
+              {/* Fila inferior: Título del nivel y badge de experiencia */}
+              <div className="mt-2">
+                <span className="block font-display text-xs font-bold leading-tight">
+                  {NIVEL_LABEL[n]}
+                </span>
+                <span className="mt-0.5 block font-mono text-[10px] tabular-nums text-ink-soft">
+                  {conf.subtitulo}
+                </span>
+              </div>
             </button>
           );
         })}
       </div>
 
-      {/* Detalle activo enfocado en cómo se eligen los ejercicios */}
-      <div className="mt-3 rounded-[10px] border border-rule/70 bg-paper p-3 text-xs space-y-2 animate-fade-in">
-        <div className="flex items-start gap-2">
-          <span className="text-sm">📌</span>
-          <div className="min-w-0">
-            <p className="font-semibold text-ink">
-              {NIVEL_LABEL[nivelSeleccionado]}: {info.resumen}
+      {/* Detalle activo con estética Apple HIG Liquid Glass */}
+      <div
+        className={`relative mt-3.5 rounded-[16px] border ${activeConfig.colorClasses.activeBorder} bg-paper/90 p-3.5 text-xs backdrop-blur-md shadow-xs transition-all duration-200 animate-fade-in`}
+      >
+        {/* Cabecera del detalle */}
+        <div className="flex items-start gap-2.5">
+          <div
+            className={`flex size-8 shrink-0 items-center justify-center rounded-[10px] border ${activeConfig.colorClasses.iconBg} ${activeConfig.colorClasses.iconColor}`}
+          >
+            <ActiveIcon className="size-4 stroke-[2.2]" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="font-display text-xs font-bold text-ink">
+                {NIVEL_LABEL[nivelSeleccionado]}
+              </span>
+              <span
+                className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider ${activeConfig.colorClasses.badgeActive}`}
+              >
+                {activeConfig.badge}
+              </span>
+            </div>
+            <p className="mt-0.5 text-[11px] font-medium text-ink leading-snug">
+              {info.resumen}
             </p>
             <p className="mt-1 text-[11px] leading-relaxed text-ink-soft">
               {info.criterioSeleccion}
             </p>
-            <p className="mt-1 text-[10px] font-medium text-accent">
-              Seguridad: {info.seguridad}
-            </p>
           </div>
         </div>
 
-        <div className="pt-2 border-t border-rule/50">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-ink-soft mb-1.5">
-            Ejercicios que el motor prioriza para este nivel:
-          </p>
+        {/* Badge de seguridad articular */}
+        <div className="mt-3 flex items-center gap-2 rounded-[10px] border border-rule/60 bg-paper-2/90 px-2.5 py-1.5 text-[11px]">
+          <Activity className={`size-3.5 shrink-0 ${activeConfig.colorClasses.iconColor}`} />
+          <span className="text-ink-soft leading-tight">
+            <strong className="font-semibold text-ink">Seguridad:</strong> {info.seguridad}
+          </span>
+        </div>
+
+        {/* Ejercicios priorizados en pills refinados */}
+        <div className="mt-3 pt-3 border-t border-rule/50">
+          <div className="flex items-center justify-between mb-2">
+            <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-ink-soft">
+              <Sparkles className="size-3 text-volt" />
+              Ejercicios que el motor prioriza para este nivel:
+            </span>
+            <span className="font-mono text-[9px] text-ink-soft/70">
+              {info.ejemplos.length} variantes
+            </span>
+          </div>
           <div className="flex flex-wrap gap-1.5">
             {info.ejemplos.map((ej) => (
               <span
                 key={ej}
-                className="inline-flex items-center rounded-[6px] border border-rule/80 bg-paper-2 px-2 py-0.5 text-[11px] font-medium text-ink"
+                className="inline-flex items-center gap-1.5 rounded-full border border-rule/80 bg-paper-2/90 px-2.5 py-1 text-[11px] font-medium text-ink shadow-2xs hover:border-volt/40 transition-colors"
               >
+                <span className={`size-1.5 rounded-full ${activeConfig.colorClasses.dotColor}`} />
                 {ej}
               </span>
             ))}
@@ -277,23 +409,36 @@ function SectorAyudaNivel({
         </div>
       </div>
 
-      {/* Explicación expandida de la ciencia detrás de la selección */}
+      {/* Drawer expandido con los 3 criterios del motor */}
       {expandido ? (
-        <div className="mt-3 pt-3 border-t border-rule/60 text-xs text-ink-soft space-y-2 animate-fade-in">
-          <p className="font-semibold text-ink text-[11px]">
+        <div className="mt-3.5 pt-3 border-t border-rule/60 text-xs space-y-2 animate-fade-in">
+          <p className="font-display text-xs font-bold text-ink flex items-center gap-1.5">
+            <HelpCircle className="size-3.5 text-volt" />
             ¿Cómo categoriza el sistema los ejercicios según tu nivel?
           </p>
-          <ul className="space-y-1.5 text-[11px] leading-relaxed">
-            <li>
-              • <strong className="text-ink">Principiante:</strong> Prioriza poleas y máquinas con trayectoria fija (cero riesgo de rotura técnica o compresión lumbar). Se descartan peso muerto con barra, sentadilla libre pesada y dominadas libres hasta que ganes fuerza base.
-            </li>
-            <li>
-              • <strong className="text-ink">Intermedio:</strong> Habilita barras olímpicas y mancuernas libres fundamentales (Press de banca con barra, Sentadilla libre, Remo con barra, Hip thrust con barra) para sobrecarga progresiva real.
-            </li>
-            <li>
-              • <strong className="text-ink">Avanzado:</strong> Habilita todo el catálogo incluyendo ejercicios de alta demanda estabilizadora y calistenia pesada (peso muerto libre, dominadas, fondos en paralelas, curl nórdico, rueda abdominal).
-            </li>
-          </ul>
+          <div className="grid gap-2">
+            {NIVELES.map((n) => {
+              const c = NIVEL_UI_CONFIG[n];
+              const I = c.icon;
+              const d = NIVEL_DETALLE[n];
+              return (
+                <div
+                  key={n}
+                  className="rounded-[12px] border border-rule/50 bg-paper/60 p-2.5 text-[11px] flex gap-2.5 items-start"
+                >
+                  <div
+                    className={`flex size-6 shrink-0 items-center justify-center rounded-[6px] border ${c.colorClasses.iconBg} ${c.colorClasses.iconColor} mt-0.5`}
+                  >
+                    <I className="size-3 stroke-[2.2]" />
+                  </div>
+                  <div>
+                    <span className="font-semibold text-ink">{NIVEL_LABEL[n]}:</span>{" "}
+                    <span className="text-ink-soft">{d.criterioSeleccion}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       ) : null}
     </div>
