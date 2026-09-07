@@ -199,8 +199,8 @@ export function DialVerticalProgreso({
     lastYRef.current = e.clientY;
     lastTimeRef.current = now;
 
-    // Arrastrar hacia arriba sube el peso, hacia abajo baja
-    const deltaKg = (-dy / (PY_PER_STEP * 2)) * 0.5;
+    // Arrastrar hacia arriba aumenta el peso, hacia abajo disminuye
+    const deltaKg = (dy / (PY_PER_STEP * 2)) * 0.5;
     updateWeight(weightRef.current + deltaKg);
   };
 
@@ -218,7 +218,7 @@ export function DialVerticalProgreso({
   const onWheel = (e: React.WheelEvent) => {
     iniciarAudioHaptico();
     e.preventDefault();
-    const deltaKg = (-e.deltaY / (PY_PER_STEP * 2)) * 0.25;
+    const deltaKg = (e.deltaY / (PY_PER_STEP * 2)) * 0.25;
     updateWeight(weightRef.current + deltaKg);
   };
 
