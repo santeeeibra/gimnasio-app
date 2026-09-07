@@ -54,12 +54,14 @@ export function MercadoPagoAjustesCard({
 
   return (
     <div className="card-cut card-cut-lg mt-6 border border-rule bg-paper-2 p-6">
-      <div className="flex items-center justify-between gap-3 mb-1">
-        <h2 className="text-lg flex items-center gap-2">
-          Cobro automático con
-          <MercadoPagoLogo className="h-5 w-auto shrink-0" />
+      <div className="flex items-start justify-between gap-3 mb-1">
+        <h2 className="text-lg flex flex-wrap items-center gap-2 font-semibold">
+          <span>Cobro automático con</span>
+          <MercadoPagoLogo className="h-5 w-auto shrink-0" showWordmark />
         </h2>
-        <BadgeElite />
+        <div className="shrink-0 pt-0.5">
+          <BadgeElite />
+        </div>
       </div>
       <p className="text-sm text-ink-soft mb-4">
         Permite a tus socios adherirse al débito automático mensual de su cuota.
@@ -156,10 +158,10 @@ export function MercadoPagoAjustesCard({
             <div>
               <a
                 href="/api/mercadopago/iniciar"
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-[10px] bg-ink px-5 text-sm font-medium text-paper transition-[transform,filter] duration-150 hover:brightness-125 active:scale-[0.97]"
+                className="inline-flex h-11 items-center justify-center gap-2.5 rounded-[10px] bg-ink px-5 text-sm font-semibold text-paper transition-[transform,filter] duration-150 hover:brightness-125 active:scale-[0.97]"
               >
-                Conectar
-                <MercadoPagoLogo className="h-4 w-auto shrink-0" />
+                <span>Conectar</span>
+                <MercadoPagoLogo className="h-5 w-auto shrink-0" />
               </a>
             </div>
           )}

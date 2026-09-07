@@ -44,7 +44,7 @@ export function PagarMpButton({
     <div className="rounded-[14px] border border-rule bg-paper-2 p-5 shadow-sm">
       <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-ink-soft">
         Cobro automático con
-        <MercadoPagoLogo className="h-4 w-auto shrink-0" />
+        <MercadoPagoLogo className="h-4 w-auto shrink-0" showWordmark />
       </p>
       <p className="mt-1 font-display text-2xl font-extrabold text-ink">
         {monto.toLocaleString("es-AR", {
