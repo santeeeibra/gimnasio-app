@@ -69,18 +69,23 @@ export function DescargarRutinaPdf({
       dibujarMarcaAgua();
 
       // Logo SysGym arriba del todo (banner horizontal). El resto va debajo.
-      let textoY = margen + 7;
+      let textoY = margen + 6;
       if (sysLogoDataUrl) {
         try {
           // Escala respetando la proporción real del PNG (evita deformarlo).
-          const maxW = 52;
-          const maxH = 22;
+          const maxW = 56;
+          const maxH = 15;
           let w = maxW;
           let h = maxW / sysLogoAspect;
-          if (h > maxH) { h = maxH; w = maxH * sysLogoAspect; }
+          if (h > maxH) {
+            h = maxH;
+            w = maxH * sysLogoAspect;
+          }
           doc.addImage(sysLogoDataUrl, "PNG", margen, margen, w, h);
           textoY = margen + h + 6;
-        } catch { /* sin logo */ }
+        } catch {
+          /* sin logo */
+        }
       }
 
       doc.setFont("helvetica", "bold");
@@ -242,18 +247,73 @@ function slugify(s: string): string {
 function cargarImagen(
   url: string,
   mime: "image/webp" | "image/png" = "image/webp",
+  trim = true,
 ): Promise<{ dataUrl: string; w: number; h: number }> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      const ctx = canvas.getContext("2d")!;
+      const origCanvas = document.createElement("canvas");
+      origCanvas.width = img.naturalWidth;
+      origCanvas.height = img.naturalHeight;
+      const ctx = origCanvas.getContext("2d")!;
       ctx.drawImage(img, 0, 0);
+
+      if (!trim) {
+        return resolve({
+          dataUrl: origCanvas.toDataURL(mime),
+          w: img.naturalWidth,
+          h: img.naturalHeight,
+        });
+      }
+
+      try {
+        const imgData = ctx.getImageData(0, 0, origCanvas.width, origCanvas.height);
+        const { data, width, height } = imgData;
+        let minX = width, maxX = 0, minY = height, maxY = 0;
+
+        for (let y = 0; y < height; y++) {
+          for (let x = 0; x < width; x++) {
+            const idx = (y * width + x) * 4;
+            const r = data[idx];
+            const g = data[idx + 1];
+            const b = data[idx + 2];
+            const a = data[idx + 3];
+            const esFondo = a < 20 || (r > 242 && g > 242 && b > 242);
+            if (!esFondo) {
+              if (x < minX) minX = x;
+              if (x > maxX) maxX = x;
+              if (y < minY) minY = y;
+              if (y > maxY) maxY = y;
+            }
+          }
+        }
+
+        if (maxX > minX && maxY > minY) {
+          const pad = 4;
+          const cropX = Math.max(0, minX - pad);
+          const cropY = Math.max(0, minY - pad);
+          const cropW = Math.min(width - cropX, maxX - minX + pad * 2);
+          const cropH = Math.min(height - cropY, maxY - minY + pad * 2);
+
+          const trimCanvas = document.createElement("canvas");
+          trimCanvas.width = cropW;
+          trimCanvas.height = cropH;
+          const trimCtx = trimCanvas.getContext("2d")!;
+          trimCtx.drawImage(origCanvas, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+
+          return resolve({
+            dataUrl: trimCanvas.toDataURL(mime),
+            w: cropW,
+            h: cropH,
+          });
+        }
+      } catch {
+        /* fallback al canvas original */
+      }
+
       resolve({
-        dataUrl: canvas.toDataURL(mime),
+        dataUrl: origCanvas.toDataURL(mime),
         w: img.naturalWidth,
         h: img.naturalHeight,
       });
