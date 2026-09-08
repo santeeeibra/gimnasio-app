@@ -14,6 +14,8 @@ import {
   Sparkles,
   Layers,
   Activity,
+  X,
+  SlidersHorizontal,
 } from "lucide-react";
 import {
   ENFASIS,
@@ -489,6 +491,10 @@ export function GenerarRutinaForm({
   const [zonasDolor, setZonasDolor] = useState<Molestia[]>(
     defaults?.zonasDolor ?? [],
   );
+  const [modalOpcionesOpen, setModalOpcionesOpen] = useState(false);
+  const [preferenciaEquipo, setPreferenciaEquipo] = useState<string>(
+    defaults?.preferencia ?? PREFS[0],
+  );
   const [dias, setDias] = useState(String(defaults?.dias ?? 3));
   const [objetivo, setObjetivo] = useState<Objetivo>(
     defaults?.objetivo ?? "hipertrofia",
@@ -616,91 +622,162 @@ export function GenerarRutinaForm({
         onSelectNivel={(n) => setNivel(n)}
       />
 
-      <fieldset className="sm:col-span-2">
-        <legend className="text-[13px] font-medium text-ink-soft mb-1.5">
-          Zona a enfocar{" "}
-          <span className="font-normal text-ink-soft/70">
-            (opcional · hasta {MAX_ENFASIS})
-          </span>
-        </legend>
-        <div className="flex flex-wrap gap-2">
-          {ENFASIS.map((e) => {
-            const on = enfasis.includes(e);
-            return (
-              <label key={e} className="cursor-pointer touch-manipulation">
-                <input
-                  type="checkbox"
-                  name="enfasis"
-                  value={e}
-                  checked={on}
-                  onChange={() => toggleEnfasis(e)}
-                  className="peer sr-only"
-                />
-                <span className="inline-flex h-10 items-center rounded-[5px] border border-rule px-3 text-sm transition-colors duration-150 [transition-timing-function:var(--ease-out)] peer-checked:border-volt peer-checked:bg-volt peer-checked:text-volt-ink peer-focus-visible:shadow-[0_0_0_3px_rgb(22_24_29_/_0.12)]">
-                  {ENFASIS_LABEL[e]}
-                </span>
-              </label>
-            );
-          })}
-        </div>
-        <p className="mt-1.5 text-xs text-ink-soft">
-          Se agregan series extra para esa zona.
-        </p>
-      </fieldset>
+      {/* INPUTS OCULTOS PARA EL SUBMIT DE NAVEGADOR */}
+      <input type="hidden" name="preferencia" value={preferenciaEquipo} />
 
-      <fieldset className="sm:col-span-2">
-        <legend className="text-[13px] font-medium text-ink-soft mb-1.5">
-          Evitar dolor en{" "}
-          <span className="font-normal text-ink-soft/70">(opcional)</span>
-        </legend>
-        <div className="flex flex-wrap gap-2">
-          {MOLESTIAS.map((m) => {
-            const on = zonasDolor.includes(m);
-            return (
-              <label key={m} className="cursor-pointer touch-manipulation">
-                <input
-                  type="checkbox"
-                  name="zonasDolor"
-                  value={m}
-                  checked={on}
-                  onChange={() => toggleDolor(m)}
-                  className="peer sr-only"
-                />
-                <span className="inline-flex h-10 items-center rounded-[5px] border border-rule px-3 text-sm transition-colors duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 peer-checked:border-danger peer-checked:bg-[color:var(--danger-weak)] peer-checked:text-ink peer-focus-visible:shadow-[0_0_0_3px_rgb(22_24_29_/_0.12)]">
-                  {MOLESTIA_LABEL[m]}
-                </span>
-              </label>
-            );
-          })}
-        </div>
-        <p className="mt-1.5 text-xs leading-snug text-ink-soft">
-          Sacamos del plan los ejercicios que suelen cargar esa zona.
-        </p>
-      </fieldset>
-
-      <fieldset className="sm:col-span-2">
-        <legend className="text-[13px] font-medium text-ink-soft mb-1.5">
-          Equipamiento disponible
-        </legend>
-        <div className="flex flex-wrap gap-2">
-          {PREFS.map((p, i) => (
-            <label key={p} className="cursor-pointer touch-manipulation">
-              <input
-                type="radio"
-                name="preferencia"
-                value={p}
-                defaultChecked={
-                  defaults?.preferencia ? defaults.preferencia === p : i === 0
-                }
-                className="peer sr-only"
-              />
-              <span className="inline-flex h-10 items-center rounded-[5px] border border-rule px-3 text-sm transition-colors duration-150 [transition-timing-function:var(--ease-out)] peer-checked:border-ink peer-checked:bg-ink peer-checked:text-paper peer-focus-visible:shadow-[0_0_0_3px_rgb(22_24_29_/_0.12)]">
-                {PREFERENCIA_EQUIPO_LABEL[p]}
+      <div className="sm:col-span-2">
+        <button
+          type="button"
+          onClick={() => {
+            hapticoSeleccion();
+            setModalOpcionesOpen(true);
+          }}
+          className="w-full flex items-center justify-between p-3.5 rounded-[12px] border border-rule bg-paper-2 hover:bg-paper-3 active:scale-[0.99] transition-all text-xs text-ink font-medium"
+        >
+          <div className="flex items-center gap-2.5">
+            <SlidersHorizontal className="size-4 text-accent" />
+            <span>Opciones opcionales: Enfoque, molestias y equipamiento</span>
+          </div>
+          <div className="flex items-center gap-2">
+            {enfasis.length + zonasDolor.length > 0 ? (
+              <span className="px-2 py-0.5 rounded-full bg-accent text-accent-contrast font-bold text-[10px]">
+                {enfasis.length + zonasDolor.length} activos
               </span>
-            </label>
-          ))}
+            ) : (
+              <span className="text-ink-soft text-[11px]">Personalizar</span>
+            )}
+          </div>
+        </button>
+      </div>
+
+      {/* MODAL SUPERPUESTO DE OPCIONES */}
+      {modalOpcionesOpen ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Opciones opcionales"
+          onClick={() => setModalOpcionesOpen(false)}
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-[color:var(--scrim)] p-3 sm:p-4 backdrop-blur-sm animate-fade-in"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-lg rounded-[22px] border border-rule bg-paper p-5 sm:p-6 shadow-2xl flex flex-col gap-5 max-h-[85vh] overflow-y-auto"
+          >
+            <div className="flex items-start justify-between gap-3 border-b border-rule pb-3">
+              <div>
+                <h2 className="text-lg font-bold text-ink leading-tight">
+                  Preferencias opcionales
+                </h2>
+                <p className="text-xs text-ink-soft mt-0.5">
+                  Ajustá la zona a enfocar, molestias articulares y equipo disponible.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setModalOpcionesOpen(false)}
+                className="size-9 shrink-0 inline-flex items-center justify-center rounded-[10px] border border-rule bg-paper-2 text-ink-soft hover:text-ink hover:bg-paper active:scale-90 transition-all"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <fieldset className="space-y-2">
+              <legend className="text-[13px] font-semibold text-ink mb-1.5">
+                Zona a enfocar{" "}
+                <span className="font-normal text-ink-soft/70 text-xs">
+                  (hasta {MAX_ENFASIS})
+                </span>
+              </legend>
+              <div className="flex flex-wrap gap-2">
+                {ENFASIS.map((e) => {
+                  const on = enfasis.includes(e);
+                  return (
+                    <label key={e} className="cursor-pointer touch-manipulation">
+                      <input
+                        type="checkbox"
+                        name="enfasis"
+                        value={e}
+                        checked={on}
+                        onChange={() => toggleEnfasis(e)}
+                        className="peer sr-only"
+                      />
+                      <span className="inline-flex h-10 items-center rounded-[8px] border border-rule px-3 text-xs font-medium transition-colors peer-checked:border-accent peer-checked:bg-accent peer-checked:text-accent-contrast">
+                        {ENFASIS_LABEL[e]}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-ink-soft">
+                Se agregan series extra para esa zona muscular.
+              </p>
+            </fieldset>
+
+            <fieldset className="space-y-2">
+              <legend className="text-[13px] font-semibold text-ink mb-1.5">
+                Evitar dolor en{" "}
+                <span className="font-normal text-ink-soft/70 text-xs">
+                  (molestias articulares)
+                </span>
+              </legend>
+              <div className="flex flex-wrap gap-2">
+                {MOLESTIAS.map((m) => {
+                  const on = zonasDolor.includes(m);
+                  return (
+                    <label key={m} className="cursor-pointer touch-manipulation">
+                      <input
+                        type="checkbox"
+                        name="zonasDolor"
+                        value={m}
+                        checked={on}
+                        onChange={() => toggleDolor(m)}
+                        className="peer sr-only"
+                      />
+                      <span className="inline-flex h-10 items-center rounded-[8px] border border-rule px-3 text-xs font-medium transition-colors peer-checked:border-danger peer-checked:bg-[color:var(--danger-weak)] peer-checked:text-ink">
+                        {MOLESTIA_LABEL[m]}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-ink-soft">
+                Sacamos del plan los ejercicios que cargan esa articulación.
+              </p>
+            </fieldset>
+
+            <fieldset className="space-y-2">
+              <legend className="text-[13px] font-semibold text-ink mb-1.5">
+                Equipamiento disponible
+              </legend>
+              <div className="flex flex-wrap gap-2">
+                {PREFS.map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setPreferenciaEquipo(p)}
+                    className={`inline-flex h-10 items-center rounded-[8px] border px-3 text-xs font-medium transition-all ${
+                      preferenciaEquipo === p
+                        ? "border-ink bg-ink text-paper"
+                        : "border-rule bg-paper-2 text-ink hover:bg-paper-3"
+                    }`}
+                  >
+                    {PREFERENCIA_EQUIPO_LABEL[p]}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+
+            <button
+              type="button"
+              onClick={() => setModalOpcionesOpen(false)}
+              className="w-full h-11 rounded-[12px] bg-accent text-accent-contrast text-sm font-semibold hover:opacity-95 transition-opacity mt-2"
+            >
+              Listo
+            </button>
+          </div>
         </div>
-      </fieldset>
+      ) : null}
 
       {mostrarAvanzado ? (
         <fieldset className="sm:col-span-2 rounded-[6px] border border-rule bg-paper-2 p-4">

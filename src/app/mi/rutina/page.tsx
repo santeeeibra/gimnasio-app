@@ -28,6 +28,8 @@ import { BuilderManual } from "./builder-manual";
 import { BannerMotivacional } from "@/components/rutinas/banner-motivacional";
 import { DescargarRutinaPdf } from "@/components/pdf/descargar-rutina-pdf";
 import { BotonActualizar } from "@/components/ui/boton-actualizar";
+import { ExplicacionModal } from "@/components/rutina/explicacion-modal";
+import { ModalAvanzadoAfinarPlan } from "./modal-avanzado";
 
 export const dynamic = "force-dynamic";
 
@@ -68,6 +70,8 @@ export default async function MiRutinaPage() {
         .eq("cliente_id", cliente.id)
         .maybeSingle()
     : { data: null };
+
+  const prefs = (rutina?.preferencias as Prefs) ?? null;
 
   const [{ data: itemsData }, { data: ejerciciosData }] = await Promise.all([
     rutina
@@ -147,18 +151,11 @@ export default async function MiRutinaPage() {
   );
 
   const linkAvanzado = (
-    <Link
-      href="/mi/rutina/avanzado"
-      className="flex w-full items-center justify-between rounded-[12px] border border-rule bg-paper-2 p-3 text-sm font-medium text-ink transition-all duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper-3 hover:border-ink/20 active:scale-[0.99] shadow-sm"
-    >
-      <div className="flex items-center gap-3 min-w-0">
-        <span className="grid size-8 shrink-0 place-items-center rounded-[8px] border border-rule bg-paper text-accent">
-          <SlidersHorizontal aria-hidden className="size-4" />
-        </span>
-        <span className="truncate">Modo avanzado — afinar el plan</span>
-      </div>
-      <ChevronRight aria-hidden className="size-4 shrink-0 text-ink-soft" />
-    </Link>
+    <ModalAvanzadoAfinarPlan
+      rutina={rutina}
+      clienteSexo={clienteSexo}
+      prefs={prefs}
+    />
   );
 
   const regenerarDetails = rutina ? (
@@ -284,38 +281,10 @@ export default async function MiRutinaPage() {
             const pasos = p?.explicacion ?? [];
             if (rutina.origen === "manual" || pasos.length === 0) return null;
             return (
-              <details className="group rounded-[14px] border border-rule bg-paper-2 p-4 shadow-sm">
-                <summary
-                  className="flex w-full cursor-pointer select-none list-none items-center justify-between text-sm font-medium text-ink transition-colors [&::-webkit-details-marker]:hidden"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <span className="grid size-7 shrink-0 place-items-center rounded-[8px] bg-accent/15 text-accent text-xs">
-                      💡
-                    </span>
-                    <span className="font-semibold text-ink">¿Por qué está armada así tu rutina?</span>
-                  </div>
-                  <div className="flex items-center gap-1 text-xs font-medium text-accent">
-                    <span className="group-open:hidden">Ver explicación</span>
-                    <span className="hidden group-open:inline">Cerrar</span>
-                    <ChevronRight aria-hidden className="size-4 shrink-0 transition-transform duration-150 [transition-timing-function:var(--ease-out)] group-open:rotate-90 text-accent" />
-                  </div>
-                </summary>
-                <div className="mt-3 space-y-2 text-sm leading-snug animate-fade-in">
-                  {p?.explicacionGeneral ? (
-                    <p className="text-ink-soft">{p.explicacionGeneral}</p>
-                  ) : null}
-                  <ol className="space-y-2">
-                    {pasos.map((t, i) => (
-                      <li key={i} className="flex gap-2">
-                        <span className="shrink-0 font-display text-ink-soft">
-                          Día {i + 1}
-                        </span>
-                        <span>{t}</span>
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-              </details>
+              <ExplicacionModal
+                explicacionGeneral={p?.explicacionGeneral}
+                pasos={pasos}
+              />
             );
           })()}
 
