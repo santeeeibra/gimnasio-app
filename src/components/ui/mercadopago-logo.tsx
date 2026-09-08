@@ -12,13 +12,30 @@ export function MercadoPagoLogo({
   title?: string;
 }) {
   const icon = (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src="/brand/mercadopago-icon.png"
-      alt={title}
-      className={`inline-block object-contain shrink-0 align-middle ${className}`}
-      loading="eager"
-    />
+    <span
+      className={`inline-flex items-center justify-center shrink-0 overflow-hidden ${className}`}
+      style={{ aspectRatio: "3 / 2" }}
+      aria-hidden="true"
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/brand/mercadopago-icon.png"
+        alt={title}
+        width={30}
+        height={20}
+        className="pointer-events-none select-none"
+        style={{
+          width: "100%",
+          height: "100%",
+          maxHeight: "100%",
+          maxWidth: "100%",
+          objectFit: "contain",
+          display: "block",
+        }}
+        loading="eager"
+        decoding="async"
+      />
+    </span>
   );
 
   if (!showWordmark) {
@@ -26,7 +43,7 @@ export function MercadoPagoLogo({
   }
 
   return (
-    <span className="inline-flex items-center gap-1.5 align-middle select-none">
+    <span className="inline-flex items-center gap-1.5 align-middle select-none shrink-0">
       {icon}
       <span className="font-bold tracking-tight text-[#009EE3]">
         Mercado Pago

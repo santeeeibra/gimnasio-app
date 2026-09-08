@@ -54,9 +54,9 @@ export function MpConnectCard({
 
   return (
     <div className="card-cut border border-rule bg-paper-2 p-5">
-      <h2 className="mb-1 text-lg flex items-center gap-2">
-        Cobros automáticos con
-        <MercadoPagoLogo className="h-5 w-auto shrink-0" />
+      <h2 className="mb-1 text-lg flex flex-wrap items-center gap-2 font-semibold">
+        <span>Cobros automáticos con</span>
+        <MercadoPagoLogo className="h-5 w-auto shrink-0" showWordmark />
       </h2>
       <p className="mb-4 text-sm text-ink-soft">
         Vinculá tu cuenta de Mercado Pago y tus socios van a poder pagar la
@@ -132,9 +132,9 @@ export function MpConnectCard({
       ) : (
         <a
           href="/api/mp-connect/iniciar"
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-[5px] bg-ink px-4 text-sm font-medium text-paper transition-[transform,filter] duration-150 [transition-timing-function:var(--ease-out)] hover:brightness-125 active:scale-[0.97]"
+          className="inline-flex h-11 items-center justify-center gap-2.5 rounded-[10px] bg-ink px-5 text-sm font-semibold text-paper transition-[transform,filter] duration-150 [transition-timing-function:var(--ease-out)] hover:brightness-125 active:scale-[0.97]"
         >
-          Vincular
+          <span>Vincular</span>
           <MercadoPagoLogo className="h-4 w-auto shrink-0" />
         </a>
       )}
