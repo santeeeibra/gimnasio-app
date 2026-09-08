@@ -2,8 +2,9 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireDueno } from "@/lib/auth";
 import { cupoSocios } from "@/lib/plataforma/cupo";
-import { AltaForm } from "./alta-form";
-import { ClienteRow, type ClienteVista } from "./cliente-row";
+import { NuevoClienteModal } from "./nuevo-cliente-modal";
+import { type ClienteVista } from "./cliente-row";
+import { ListadoClientes } from "./listado-clientes";
 import { CacheAlVuelo } from "@/components/offline/cache-al-vuelo";
 import { ConflictosOffline } from "@/components/offline/conflictos";
 
@@ -46,7 +47,7 @@ export default async function ClientesPage() {
   );
 
   return (
-    <div className="stagger space-y-10">
+    <div className="stagger space-y-8">
       <CacheAlVuelo
         clave="clientes:lista"
         data={clientes.map((c) => ({
@@ -57,50 +58,24 @@ export default async function ClientesPage() {
           plan: c.plan?.nombre ?? null,
         }))}
       />
-      <div>
-        <h1 className="text-2xl mb-1">Clientes</h1>
-        <p className="text-sm text-ink-soft">{clientes.length} en total</p>
+      <div className="flex items-center justify-between gap-4 border-b border-rule pb-4">
+        <div>
+          <h1 className="text-2xl mb-1 font-bold">Clientes</h1>
+          <p className="text-sm text-ink-soft">{clientes.length} en total</p>
+        </div>
+        <NuevoClienteModal
+          planes={planes}
+          cupo={cupo}
+          gimnasioId={dueno.gimnasio_id}
+        />
       </div>
 
       <ConflictosOffline variante="card" />
 
-      <div className="card-cut card-cut-lg border border-rule bg-paper-2 p-5">
-        <div className="mb-4 flex items-baseline justify-between gap-3">
-          <h2 className="text-lg">Nuevo cliente</h2>
-          {cupo.max != null ? (
-            <span
-              className={`text-xs ${cupo.ok ? "text-ink-soft" : "text-danger"}`}
-            >
-              {cupo.usados} / {cupo.max} socios
-            </span>
-          ) : null}
-        </div>
-        {planes.length === 0 ? (
-          <p className="text-sm text-ink-soft">
-            Primero creá al menos un plan en la sección Planes.
-          </p>
-        ) : (
-          <AltaForm
-            planes={planes}
-            full={!cupo.ok}
-            gimnasioId={dueno.gimnasio_id}
-          />
-        )}
-      </div>
-
-      {clientes.length === 0 ? (
-        <p className="text-sm text-ink-soft">Todavía no hay clientes cargados.</p>
-      ) : (
-        <ul className="card-cut border border-rule divide-y divide-rule bg-paper-2 overflow-hidden">
-          {clientes.map((c) => (
-            <ClienteRow
-              key={c.id}
-              cliente={c}
-              pruebaVencida={!!c.en_prueba && conIngreso.has(c.id)}
-            />
-          ))}
-        </ul>
-      )}
+      <ListadoClientes
+        clientes={clientes}
+        idsConIngreso={[...conIngreso]}
+      />
     </div>
   );
 }

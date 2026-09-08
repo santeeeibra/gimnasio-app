@@ -41,6 +41,8 @@ import { guardarPesoSocio, obtenerPesosSocio } from "@/lib/peso/actions";
 import { DescargarRutinaPdf } from "@/components/pdf/descargar-rutina-pdf";
 import type { DiaEditable } from "@/app/mi/rutina/rutina-editor";
 
+import { RegistrarPagoModal } from "./registrar-pago-modal";
+
 export default async function ClienteDetallePage({
   params,
 }: {
@@ -178,6 +180,11 @@ export default async function ClienteDetallePage({
               </p>
             </div>
           </div>
+          <RegistrarPagoModal
+            clienteId={c.id}
+            planes={planes}
+            planActual={c.plan_id}
+          />
         </div>
       </div>
 

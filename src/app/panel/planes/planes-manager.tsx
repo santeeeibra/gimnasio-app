@@ -5,6 +5,9 @@ import { pillClasses } from "@/components/ui";
 import { PlanForm } from "./plan-form";
 import { alternarPlan, eliminarPlan, type DescuentoPlan } from "./actions";
 
+import { Plus, X } from "lucide-react";
+import { useHapticos } from "@/lib/ui/hapticos";
+
 export interface PlanItem {
   id: string;
   nombre: string;
@@ -20,69 +23,108 @@ interface PlanesManagerProps {
 
 export function PlanesManager({ planes }: PlanesManagerProps) {
   const [editandoPlanId, setEditandoPlanId] = useState<string | null>(null);
-  const [mostrarNuevoForm, setMostrarNuevoForm] = useState(planes.length === 0);
+  const [mostrarNuevoForm, setMostrarNuevoForm] = useState(false);
+  const hapticos = useHapticos();
 
   const planEnEdicion = planes.find((p) => p.id === editandoPlanId) ?? null;
 
   return (
     <div className="space-y-6">
-      {/* FORMULARIO DE EDICIÓN O CREACIÓN */}
-      {planEnEdicion ? (
-        <div className="card-cut card-cut-lg border border-accent/40 bg-paper-2 p-5 shadow-lg">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-lg font-semibold text-ink">
-                Modificar plan: {planEnEdicion.nombre}
-              </h2>
-              <p className="text-xs text-ink-soft mt-0.5">
-                Ajustá el precio base, nombre o porcentajes de descuento.
-              </p>
-            </div>
-            <button
-              onClick={() => setEditandoPlanId(null)}
-              className="text-xs text-ink-soft hover:text-ink px-2 py-1 rounded border border-rule"
-            >
-              Cerrar edición
-            </button>
-          </div>
-          <PlanForm
-            planInicial={planEnEdicion}
-            onCancel={() => setEditandoPlanId(null)}
-          />
-        </div>
-      ) : mostrarNuevoForm ? (
-        <div className="card-cut card-cut-lg border border-rule bg-paper-2 p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-lg font-semibold text-ink">Nuevo plan</h2>
-              <p className="text-xs text-ink-soft mt-0.5">
-                Por defecto configurado a 30 días corridos con descuentos en 0%.
-              </p>
-            </div>
-            {planes.length > 0 ? (
-              <button
-                onClick={() => setMostrarNuevoForm(false)}
-                className="text-xs text-ink-soft hover:text-ink px-2 py-1 rounded border border-rule"
-              >
-                Cancelar
-              </button>
-            ) : null}
-          </div>
-          <PlanForm onCancel={() => setMostrarNuevoForm(false)} />
-        </div>
-      ) : (
-        <div className="flex justify-between items-center">
-          <span className="text-xs text-ink-soft font-medium uppercase tracking-wider">
-            Tus planes ({planes.length})
-          </span>
-          <button
-            onClick={() => setMostrarNuevoForm(true)}
-            className="text-xs font-semibold px-3 py-1.5 rounded-[5px] bg-paper-3 border border-rule hover:border-ink text-ink transition-colors"
+      {/* BOTÓN SUPERIOR Y MODALES */}
+      <div className="flex justify-between items-center border-b border-rule pb-4">
+        <span className="text-xs text-ink-soft font-medium uppercase tracking-wider">
+          Tus planes ({planes.length})
+        </span>
+        <button
+          onClick={() => {
+            hapticos.medio();
+            setMostrarNuevoForm(true);
+          }}
+          className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-[10px] bg-accent text-accent-contrast shadow-sm hover:opacity-95 active:scale-95 transition-all"
+        >
+          <Plus className="size-4" />
+          <span>Crear nuevo plan</span>
+        </button>
+      </div>
+
+      {/* MODAL CREAR PLAN */}
+      {mostrarNuevoForm ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          onClick={() => {
+            hapticos.suave();
+            setMostrarNuevoForm(false);
+          }}
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-[color:var(--scrim)] p-3 sm:p-4 backdrop-blur-sm animate-fade-in"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-lg rounded-[22px] border border-rule bg-paper p-5 sm:p-6 shadow-2xl flex flex-col gap-4 max-h-[85vh] overflow-y-auto"
           >
-            + Crear otro plan
-          </button>
+            <div className="flex items-start justify-between gap-3 border-b border-rule pb-3">
+              <div>
+                <h2 className="text-xl font-bold text-ink leading-tight">Nuevo plan</h2>
+                <p className="text-xs text-ink-soft mt-0.5">
+                  Por defecto configurado a 30 días corridos con descuentos configurables.
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  hapticos.suave();
+                  setMostrarNuevoForm(false);
+                }}
+                className="size-9 shrink-0 inline-flex items-center justify-center rounded-[10px] border border-rule bg-paper-2 text-ink-soft hover:text-ink hover:bg-paper active:scale-90 transition-all"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+            <PlanForm onCancel={() => setMostrarNuevoForm(false)} />
+          </div>
         </div>
-      )}
+      ) : null}
+
+      {/* MODAL EDITAR PLAN */}
+      {planEnEdicion ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          onClick={() => {
+            hapticos.suave();
+            setEditandoPlanId(null);
+          }}
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-[color:var(--scrim)] p-3 sm:p-4 backdrop-blur-sm animate-fade-in"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-lg rounded-[22px] border border-rule bg-paper p-5 sm:p-6 shadow-2xl flex flex-col gap-4 max-h-[85vh] overflow-y-auto"
+          >
+            <div className="flex items-start justify-between gap-3 border-b border-rule pb-3">
+              <div>
+                <h2 className="text-xl font-bold text-ink leading-tight">
+                  Modificar plan: {planEnEdicion.nombre}
+                </h2>
+                <p className="text-xs text-ink-soft mt-0.5">
+                  Ajustá el precio base, nombre o porcentajes de descuento.
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  hapticos.suave();
+                  setEditandoPlanId(null);
+                }}
+                className="size-9 shrink-0 inline-flex items-center justify-center rounded-[10px] border border-rule bg-paper-2 text-ink-soft hover:text-ink hover:bg-paper active:scale-90 transition-all"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+            <PlanForm
+              planInicial={planEnEdicion}
+              onCancel={() => setEditandoPlanId(null)}
+            />
+          </div>
+        </div>
+      ) : null}
 
       {/* LISTADO DE PLANES */}
       {planes.length === 0 ? (
