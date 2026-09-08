@@ -10,6 +10,7 @@ import {
   obtenerPedidosActivos,
   type PedidoPanel,
 } from "@/app/panel/asistencia/actions";
+import { hapticoExito, hapticoImpactoMedio } from "@/lib/ui/hapticos";
 
 function tiempoTranscurrido(fechaIso: string): string {
   const diffSeg = Math.floor((Date.now() - new Date(fechaIso).getTime()) / 1000);
@@ -29,8 +30,16 @@ export function WidgetAsistenciaSala({
   gimnasioId: string;
 }) {
   const [pedidos, setPedidos] = useState<PedidoPanel[]>(iniciales);
+  const [atendiendoIds, setAtendiendoIds] = useState<Set<string>>(new Set());
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
+
+  // Sincronizar si el Server Component revalida y pasa nuevos iniciales
+  useEffect(() => {
+    if (iniciales) {
+      setPedidos(iniciales);
+    }
+  }, [iniciales]);
 
   // Polling y suscripción Realtime a nuevos pedidos
   useEffect(() => {
@@ -73,22 +82,41 @@ export function WidgetAsistenciaSala({
   }
 
   function handleEnCamino(id: string) {
+    hapticoImpactoMedio();
     setPendingId(id);
+    setPedidos((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, estado: "en_camino" } : p))
+    );
     startTransition(async () => {
-      await marcarEnCamino(id);
-      setPedidos((prev) =>
-        prev.map((p) => (p.id === id ? { ...p, estado: "en_camino" } : p))
-      );
+      const res = await marcarEnCamino(id);
+      if (!res.ok) {
+        const fres = await obtenerPedidosActivos();
+        setPedidos(fres.pedidos);
+      }
       setPendingId(null);
     });
   }
 
   function handleAtendido(id: string) {
-    setPendingId(id);
-    startTransition(async () => {
-      await marcarAtendido(id);
+    hapticoExito();
+    // Microinteracción fluida: transición de salida a 60fps
+    setAtendiendoIds((prev) => new Set(prev).add(id));
+
+    setTimeout(() => {
       setPedidos((prev) => prev.filter((p) => p.id !== id));
-      setPendingId(null);
+      setAtendiendoIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }, 200);
+
+    startTransition(async () => {
+      const res = await marcarAtendido(id);
+      if (!res.ok) {
+        const fres = await obtenerPedidosActivos();
+        setPedidos(fres.pedidos);
+      }
     });
   }
 
@@ -120,11 +148,14 @@ export function WidgetAsistenciaSala({
           const foto = p.cliente?.foto_url;
           const esPending = pendingId === p.id;
           const enCamino = p.estado === "en_camino";
+          const estaSaliendo = atendiendoIds.has(p.id);
 
           return (
             <div
               key={p.id}
-              className="py-3 first:pt-1 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+              className={`py-3 first:pt-1 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all duration-200 [transition-timing-function:var(--ease-out)] ${
+                estaSaliendo ? "opacity-0 -translate-y-2 pointer-events-none" : "opacity-100 translate-y-0"
+              }`}
             >
               <div className="flex items-start gap-3 min-w-0">
                 {foto ? (

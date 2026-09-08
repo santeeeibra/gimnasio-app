@@ -80,6 +80,23 @@ async function correrCron() {
     avisosMorosidad++;
   }
 
+  // ─── Aviso preventivo fijo: 3 días antes (solo socio, texto propio) ───
+  let avisos3d = 0;
+  for (const c of (clientes ?? []) as Row[]) {
+    if (diasRestantes(c.fecha_vencimiento) !== 3) continue;
+    // Si el gimnasio ya tiene el aviso de morosidad configurado en 3 días,
+    // ese bloque ya cubrió al socio: no duplicar.
+    if ((diasAvisoPorGym.get(c.gimnasio_id) ?? 5) === 3) continue;
+
+    await enviarPush([c.profile_id], {
+      title: "Cuota por vencer",
+      body: "Tu cuota vence en 3 días. Podés renovar desde tu panel o en recepción para no cortar tu racha 💳",
+      url: "/mi",
+      tag: `cuota-3d-${c.fecha_vencimiento}`,
+    });
+    avisos3d++;
+  }
+
   // ─── Trials vencidos (gimnasios en prueba > 14 días desde creado_at) y
   //     planes de plataforma vencidos (gimnasios activos). Se corre siempre,
   //     no solo cuando hay cuotas de socios por vencer. ───
@@ -91,7 +108,7 @@ async function correrCron() {
   );
 
   if (afectados.length === 0) {
-    return NextResponse.json({ ok: true, avisos: 0, avisosMorosidad });
+    return NextResponse.json({ ok: true, avisos: 0, avisosMorosidad, avisos3d });
   }
 
   // Dueños por gimnasio (una sola consulta).
@@ -159,5 +176,5 @@ async function correrCron() {
       .lt("creado_at", hace60ISO),
   ]);
 
-  return NextResponse.json({ ok: true, avisos, avisosMorosidad });
+  return NextResponse.json({ ok: true, avisos, avisosMorosidad, avisos3d });
 }

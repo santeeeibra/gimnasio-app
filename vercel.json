@@ -5,6 +5,10 @@
       "schedule": "0 12 * * *"
     },
     {
+      "path": "/api/cron/timer-push",
+      "schedule": "* * * * *"
+    },
+    {
       "path": "/api/cron/monitor-db",
       "schedule": "0 6 * * *"
     }

@@ -61,9 +61,9 @@ export async function obtenerPedidosActivos(): Promise<{
 
 export async function marcarEnCamino(pedidoId: string): Promise<{ ok: boolean; error?: string }> {
   const dueno = await requireDueno();
-  const supabase = await createClient();
+  const admin = createAdminClient();
 
-  const { data: pedido, error } = await supabase
+  const { data: pedido, error } = await admin
     .from("pedidos_asistencia")
     .update({ estado: "en_camino" })
     .eq("id", pedidoId)
@@ -102,18 +102,23 @@ export async function marcarEnCamino(pedidoId: string): Promise<{ ok: boolean; e
 
 export async function marcarAtendido(pedidoId: string): Promise<{ ok: boolean; error?: string }> {
   const dueno = await requireDueno();
-  const supabase = await createClient();
+  // Mutación con service_role: la autorización ya la hace requireDueno() y el
+  // scope lo fija el .eq("gimnasio_id"). Se evita que una policy RLS anule el
+  // UPDATE en silencio (0 filas afectadas, sin error) y el pedido reaparezca
+  // como "pendiente" en obtenerPedidosActivos().
+  const admin = createAdminClient();
 
-  const { error } = await supabase
+  const { data, error } = await admin
     .from("pedidos_asistencia")
     .update({
       estado: "atendido",
       atendido_at: new Date().toISOString(),
     })
     .eq("id", pedidoId)
-    .eq("gimnasio_id", dueno.gimnasio_id);
+    .eq("gimnasio_id", dueno.gimnasio_id)
+    .select("id");
 
-  if (error) {
+  if (error || !data?.length) {
     return { ok: false, error: "No se pudo marcar como atendido." };
   }
 

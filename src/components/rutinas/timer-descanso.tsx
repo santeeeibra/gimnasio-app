@@ -44,6 +44,35 @@ function guardar(p: Persistido) {
   }
 }
 
+// Push diferido: si el alumno bloquea el teléfono entre series, el aviso local
+// (beep + vibración) no corre. Registramos un push en el server que dispara un
+// cron cuando el descanso termina. Fire-and-forget: nunca frena la UI.
+function programarPushDescanso(segundos: number) {
+  try {
+    fetch("/api/rutina/timer-push", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ segundos }),
+      keepalive: true,
+    }).catch(() => {});
+  } catch {
+    /* sin red / SSR: el timer local sigue funcionando */
+  }
+}
+
+function cancelarPushDescanso() {
+  try {
+    fetch("/api/rutina/timer-push", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ cancelar: true }),
+      keepalive: true,
+    }).catch(() => {});
+  } catch {
+    /* idem */
+  }
+}
+
 export function TimerDescanso() {
   const [presetSeg, setPresetSeg] = useState(60);
   const [segundosRestantes, setSegundosRestantes] = useState(60);
@@ -55,6 +84,62 @@ export function TimerDescanso() {
   const finEnRef = useRef<number | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const wakeLockRef = useRef<any>(null);
+
+  // Screen WakeLock: Mantiene la pantalla encendida y previene el bloqueo automático
+  // del celular durante el descanso. Se libera apenas el timer termina, pausa o resetea.
+  useEffect(() => {
+    let activo = true;
+
+    async function solicitarWakeLock() {
+      if (
+        typeof navigator !== "undefined" &&
+        "wakeLock" in navigator &&
+        !wakeLockRef.current
+      ) {
+        try {
+          const wl = await (navigator as any).wakeLock.request("screen");
+          if (!activo) {
+            wl.release().catch(() => {});
+            return;
+          }
+          wakeLockRef.current = wl;
+          wl.addEventListener("release", () => {
+            wakeLockRef.current = null;
+          });
+        } catch {
+          /* batería baja o permiso restringido por el SO: no bloquear */
+        }
+      }
+    }
+
+    function soltarWakeLock() {
+      if (wakeLockRef.current) {
+        wakeLockRef.current.release().catch(() => {});
+        wakeLockRef.current = null;
+      }
+    }
+
+    if (estado === "corriendo") {
+      solicitarWakeLock();
+    } else {
+      soltarWakeLock();
+    }
+
+    const handleVisibilidad = () => {
+      if (document.visibilityState === "visible" && estado === "corriendo") {
+        solicitarWakeLock();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilidad);
+
+    return () => {
+      activo = false;
+      document.removeEventListener("visibilitychange", handleVisibilidad);
+      soltarWakeLock();
+    };
+  }, [estado]);
 
   // Hidratar desde localStorage al montar. Si el descanso corría, recalcula el
   // remanente contra el reloj real (sobrevive navegación entre apartados y
@@ -117,6 +202,7 @@ export function TimerDescanso() {
         setEstado("corriendo");
         setAlertFinalizado(false);
         setJustStarted(true);
+        programarPushDescanso(segs);
         hapticoImpactoMedio();
         setTimeout(() => setJustStarted(false), 500);
       }
@@ -141,8 +227,10 @@ export function TimerDescanso() {
         setEstado("detenido");
         finEnRef.current = null;
         if (intervalRef.current) clearInterval(intervalRef.current);
+        cancelarPushDescanso(); // el aviso local ya sonó; no dupliques por push
         reproducirBeep();
         vibrarFinalizado();
+        dispararNotificacionLocal();
         setAlertFinalizado(true);
         setSegundosRestantes(presetSeg);
         setTimeout(() => setAlertFinalizado(false), 2800);
@@ -190,6 +278,38 @@ export function TimerDescanso() {
     }
   }
 
+  function dispararNotificacionLocal() {
+    try {
+      if (
+        typeof window !== "undefined" &&
+        "Notification" in window &&
+        Notification.permission === "granted"
+      ) {
+        if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
+          navigator.serviceWorker.ready
+            .then((reg) => {
+              reg.showNotification("¡Descanso terminado! 💪", {
+                body: "A darle a la siguiente serie",
+                icon: "/icon-192.png",
+                badge: "/icon-192.png",
+                tag: "timer-descanso",
+                vibrate: [150, 70, 150],
+              } as any);
+            })
+            .catch(() => {});
+        } else {
+          new Notification("¡Descanso terminado! 💪", {
+            body: "A darle a la siguiente serie",
+            icon: "/icon-192.png",
+            tag: "timer-descanso",
+          });
+        }
+      }
+    } catch {
+      /* Notificaciones bloqueadas o sin soporte: no interferir con el timer */
+    }
+  }
+
   function vibrarInicio() {
     hapticoImpactoMedio();
     if ("vibrate" in navigator) {
@@ -202,6 +322,7 @@ export function TimerDescanso() {
     setEstado("corriendo");
     setJustStarted(true);
     setAlertFinalizado(false);
+    programarPushDescanso(segundosRestantes);
     vibrarInicio();
     setTimeout(() => setJustStarted(false), 500);
   }
@@ -213,6 +334,7 @@ export function TimerDescanso() {
     }
     finEnRef.current = null;
     setEstado("pausado");
+    cancelarPushDescanso();
     if (intervalRef.current) clearInterval(intervalRef.current);
   }
 
@@ -221,6 +343,7 @@ export function TimerDescanso() {
     setEstado("corriendo");
     setJustStarted(true);
     setAlertFinalizado(false);
+    programarPushDescanso(segundosRestantes);
     vibrarInicio();
     setTimeout(() => setJustStarted(false), 500);
   }
@@ -229,6 +352,7 @@ export function TimerDescanso() {
     finEnRef.current = null;
     setEstado("detenido");
     setAlertFinalizado(false);
+    cancelarPushDescanso();
     if (intervalRef.current) clearInterval(intervalRef.current);
     setSegundosRestantes(presetSeg);
   }
@@ -240,6 +364,7 @@ export function TimerDescanso() {
     finEnRef.current = null;
     if (estado !== "detenido") {
       setEstado("detenido");
+      cancelarPushDescanso();
       if (intervalRef.current) clearInterval(intervalRef.current);
     }
   }

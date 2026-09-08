@@ -12,6 +12,7 @@ import { RachaConstancia } from "@/components/mi/racha-constancia";
 import { DatosTransferencia } from "@/components/mi/datos-transferencia";
 import { CacheAlVuelo } from "@/components/offline/cache-al-vuelo";
 import { BotonInstalarApp } from "@/components/pwa/boton-instalar-app";
+import { BotonActualizar } from "@/components/ui/boton-actualizar";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -106,6 +107,7 @@ export default async function MiPage() {
           Hola, {profile.nombre.split(" ")[0]}
         </h1>
         <div className="flex shrink-0 items-center gap-2">
+          <BotonActualizar variante="icono" />
           <VerTutorialDeNuevo className={pillClasses.neutra} label="Tutorial" />
           <form action={logout}>
             <button className={pillClasses.destructiva}>Salir</button>

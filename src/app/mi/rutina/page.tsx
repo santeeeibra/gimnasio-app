@@ -27,6 +27,7 @@ import { RutinaEditor, type DiaEditable } from "./rutina-editor";
 import { BuilderManual } from "./builder-manual";
 import { BannerMotivacional } from "@/components/rutinas/banner-motivacional";
 import { DescargarRutinaPdf } from "@/components/pdf/descargar-rutina-pdf";
+import { BotonActualizar } from "@/components/ui/boton-actualizar";
 
 export const dynamic = "force-dynamic";
 
@@ -216,10 +217,13 @@ export default async function MiRutinaPage() {
   return (
     <main className="stagger max-w-md mx-auto px-5 pt-6 pb-64 space-y-6">
       <div>
-        <Link href="/mi" className={pillClasses.neutra}>
-          <ChevronLeft aria-hidden strokeWidth={2} className="size-4" />
-          Volver
-        </Link>
+        <div className="flex items-center justify-between gap-2">
+          <Link href="/mi" className={pillClasses.neutra}>
+            <ChevronLeft aria-hidden strokeWidth={2} className="size-4" />
+            Volver
+          </Link>
+          <BotonActualizar variante="pill" label="Actualizar" />
+        </div>
         {/* §6: acción secundaria de la sección va en la fila del encabezado
             (justify-between), nunca como hijo suelto del stack con ml-auto. */}
         <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
