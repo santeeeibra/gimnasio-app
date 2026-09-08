@@ -21,6 +21,9 @@ import { BotonInstalarApp } from "@/components/pwa/boton-instalar-app";
 import { verificarPlanGimnasio } from "@/lib/plataforma/plan-gate";
 import { BloqueoEliteGate, BadgeElite } from "@/components/ui/bloqueo-elite-gate";
 
+import { AjustesSeccionModal } from "./ajustes-seccion-modal";
+import { Palette, Landmark, Bell, Smartphone, QrCode, KeyRound, HelpCircle } from "lucide-react";
+
 const ESTADO_LABEL: Record<string, string> = {
   prueba: "En prueba",
   activo: "Activo",
@@ -78,37 +81,40 @@ export default async function AjustesPage({
     : null;
 
   return (
-    <div className="stagger">
-      <h1 className="text-2xl mb-2">Ajustes</h1>
-      <p className="text-sm text-ink-soft mb-6">
-        Tu plan, el aviso de vencimiento y el tema del gimnasio.
-      </p>
+    <div className="stagger space-y-6">
+      <div>
+        <h1 className="text-2xl mb-1 font-bold">Ajustes del gimnasio</h1>
+        <p className="text-sm text-ink-soft">
+          Configuración general, marca, cobros y preferencias.
+        </p>
+      </div>
 
-      <div className="card-cut card-cut-lg border border-rule bg-paper-2 p-6">
+      {/* CARD TU PLAN Y ESTADO */}
+      <div className="card-cut card-cut-lg border border-rule bg-paper-2 p-5 shadow-sm">
         <div className="flex items-start justify-between gap-3">
-          <h2 className="text-lg">Tu plan</h2>
+          <h2 className="text-base font-bold text-ink">Tu plan en SysGym</h2>
           <Link
             href="/panel/plan"
-            className={`shrink-0 text-sm ${linkClasses.inline}`}
+            className={`shrink-0 text-xs font-semibold ${linkClasses.inline}`}
           >
-            Ver y pagar →
+            Ver y pagar plan →
           </Link>
         </div>
 
         <dl className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-sm">
           <div className="flex gap-2">
-            <dt className="text-ink-soft">Estado</dt>
-            <dd className={estado === "solo_lectura" ? "text-danger" : undefined}>
+            <dt className="text-ink-soft">Estado:</dt>
+            <dd className={`font-semibold ${estado === "solo_lectura" ? "text-danger" : "text-ink"}`}>
               {ESTADO_LABEL[estado] ?? estado}
             </dd>
           </div>
           <div className="flex gap-2">
-            <dt className="text-ink-soft">Plan</dt>
-            <dd>{planNombre ?? "Básico"}</dd>
+            <dt className="text-ink-soft">Plan:</dt>
+            <dd className="font-semibold text-ink">{planNombre ?? "Básico"}</dd>
           </div>
           <div className="flex gap-2">
-            <dt className="text-ink-soft">Socios</dt>
-            <dd className={cupo.ok ? undefined : "text-danger"}>
+            <dt className="text-ink-soft">Socios:</dt>
+            <dd className={`font-semibold ${cupo.ok ? "text-ink" : "text-danger"}`}>
               {cupo.max == null
                 ? `${cupo.usados}`
                 : `${cupo.usados} / ${cupo.max}`}
@@ -116,163 +122,159 @@ export default async function AjustesPage({
           </div>
           {vence ? (
             <div className="flex gap-2">
-              <dt className="text-ink-soft">Vence</dt>
-              <dd
-                className={
-                  venceDias !== null && venceDias <= 7
-                    ? "text-warn"
-                    : undefined
-                }
-              >
+              <dt className="text-ink-soft">Vence:</dt>
+              <dd className={venceDias !== null && venceDias <= 7 ? "text-warn font-semibold" : undefined}>
                 {vence}
               </dd>
             </div>
           ) : null}
         </dl>
-
-        {estado === "solo_lectura" ? (
-          <p className="mt-3 text-sm text-danger">
-            Tu gimnasio está en solo lectura. Pagá el plan para reactivarlo.
-          </p>
-        ) : !cupo.ok ? (
-          <p className="mt-3 text-sm text-danger">
-            Llegaste al tope de socios de tu plan.
-          </p>
-        ) : estado === "prueba" ? (
-          <p className="mt-3 text-sm text-ink-soft">
-            Estás en período de prueba. Activá tu plan cuando quieras.
-          </p>
-        ) : venceDias !== null && venceDias <= 7 ? (
-          <p className="mt-3 text-sm text-warn">
-            Tu plan vence pronto. Registrá el pago para no quedar en solo
-            lectura.
-          </p>
-        ) : null}
       </div>
 
-      <div className="mt-6">
+      {/* ACCESOS RÁPIDOS */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <BotonInstalarApp variant="card" />
-      </div>
-
-      <div className="mt-6">
         <VerTutorialDeNuevo />
       </div>
 
       {gym?.slug ? <LinkAccesoCard slug={gym.slug} /> : null}
 
-      {gym ? (
-        <div className="card-cut card-cut-lg mt-6 border border-rule bg-paper-2 p-6">
-          <div className="flex items-center justify-between gap-3 mb-1">
-            <h2 className="text-lg">Aviso de vencimiento</h2>
-            <BadgeElite />
-          </div>
-          <p className="text-sm text-ink-soft mb-4">
-            Mandamos un push automático al socio unos días antes de que se le
-            venza la cuota, para que la renueve a tiempo.
-          </p>
-          <BloqueoEliteGate
-            bloqueado={!planInfo.permiteAvisosMorosidad}
-            titulo="Avisos Automáticos de Morosidad"
-            descripcion="Notificá a tus socios por WhatsApp y Push antes de que venza su cuota para reducir la morosidad y cobrar a tiempo."
-            beneficios={[
-              "Push y WhatsApp automatizados",
-              "Días de anticipación configurables",
-              "Reducción directa de la cartera morosa",
-            ]}
-          >
-            <AvisoMorosidadForm
-              gimnasioId={gym.id}
-              diasAviso={gym.dias_aviso_morosidad ?? 5}
-            />
-          </BloqueoEliteGate>
-        </div>
-      ) : null}
-
-      {gym ? (
-        <div className="card-cut card-cut-lg mt-6 border border-rule bg-paper-2 p-6">
-          <div className="flex items-center justify-between gap-3 mb-1">
-            <h2 className="text-lg">Pantalla de reposo del check-in</h2>
-            <BadgeElite />
-          </div>
-          <p className="text-sm text-ink-soft mb-4">
-            Cuando nadie toca la pantalla de check-in por un rato, aparece un
-            fondo ambiental oscuro con la hora. Cualquier toque vuelve al DNI.
-          </p>
-          <BloqueoEliteGate
-            bloqueado={!planInfo.permiteReposoCheckin}
-            titulo="Pantalla de Reposo de Terminal"
-            descripcion="Transformá la tablet de recepción en un reloj de marca elegante con el logo de tu gimnasio cuando no está en uso."
-            beneficios={[
-              "Diseño ambiental continuo",
-              "Reloj digital de gran formato",
-              "Despertar instantáneo al tocar",
-            ]}
-          >
-            <ReposoCheckinForm
-              gimnasioId={gym.id}
-              reposo={parseTema(gym.tema).reposoCheckin}
-            />
-          </BloqueoEliteGate>
-        </div>
-      ) : null}
-
-      {gym ? (
-        <div className="card-cut card-cut-lg mt-6 border border-rule bg-paper-2 p-6">
-          <h2 className="text-lg mb-1">Datos para transferir</h2>
-          <p className="text-sm text-ink-soft mb-4">
-            El socio los ve en la app, con un botón para copiar. Si dejás todo
-            vacío, no se muestra nada.
-          </p>
-          <DatosPagoForm
-            gimnasioId={gym.id}
-            alias={gym.pago_alias ?? null}
-            cbu={gym.pago_cbu ?? null}
-            titular={gym.pago_titular ?? null}
-          />
-        </div>
-      ) : null}
-
-      <MercadoPagoAjustesCard
-        elite={cobroAuto.elite}
-        vinculado={cobroAuto.vinculado}
-        userId={cobroAuto.userId}
-        vinculadoAt={cobroAuto.vinculadoAt}
-        configurado={connectConfigurado()}
-        aviso={sp?.mp ?? null}
-      />
-
-      <div className="card-cut card-cut-lg mt-6 border border-rule bg-paper-2 p-6">
-        <h2 className="text-lg mb-1">Email para recuperar tu contraseña</h2>
-        <p className="text-sm text-ink-soft mb-4">
-          Si alguna vez te olvidás la clave, te mandamos el enlace a este mail.
-          Cargalo ahora así lo tenés listo.
-        </p>
-        <EmailRecuperacionForm
-          email={miPerfil?.email_recuperacion ?? null}
-        />
-      </div>
-
-      <div className="card-cut card-cut-lg mt-6 border border-rule bg-paper-2 p-6">
-        <h2 className="text-lg mb-1">Contactar soporte</h2>
-        <p className="text-sm text-ink-soft mb-4">
-          ¿Algo no anda o necesitás una mano? Escribinos y te respondemos.
-        </p>
-        <ContactarSoporteForm />
-      </div>
-
-      <div className="card-cut card-cut-lg mt-6 border border-rule bg-paper-2 p-6">
-        <h2 className="text-lg mb-4">Tema del gimnasio</h2>
-        <p className="text-sm text-ink-soft mb-4">
-          Colores y tipografía. Se aplican en tu panel y en la app de tus
-          clientes.
-        </p>
+      {/* SECCIONES EN GRILLA CON MODALES */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+        {/* TEMA Y MARCA */}
         {gym ? (
-          <AjustesForm
-            gimnasioId={gym.id}
-            tema={parseTema(gym.tema)}
-            logoUrl={gym.logo_url ?? null}
-          />
+          <AjustesSeccionModal
+            titulo="Tema y marca"
+            subtitulo="Personalizá los colores, logo y estilo visual de tu gimnasio."
+            icon={Palette}
+            resumen={
+              <p className="text-[11px] text-ink-soft font-mono">
+                Estilo actual: {parseTema(gym.tema).estiloVisual ?? "Minimal"}
+              </p>
+            }
+          >
+            <AjustesForm
+              gimnasioId={gym.id}
+              tema={parseTema(gym.tema)}
+              logoUrl={gym.logo_url ?? null}
+            />
+          </AjustesSeccionModal>
         ) : null}
+
+        {/* DATOS DE TRANSFERENCIA */}
+        {gym ? (
+          <AjustesSeccionModal
+            titulo="Datos para transferir"
+            subtitulo="Alias, CBU y Titular visibles en la app del socio para pagos directos."
+            icon={Landmark}
+            resumen={
+              <p className="text-[11px] text-ink-soft font-mono">
+                {gym.pago_alias ? `Alias: ${gym.pago_alias}` : "Sin datos de transferencia"}
+              </p>
+            }
+          >
+            <DatosPagoForm
+              gimnasioId={gym.id}
+              alias={gym.pago_alias ?? null}
+              cbu={gym.pago_cbu ?? null}
+              titular={gym.pago_titular ?? null}
+            />
+          </AjustesSeccionModal>
+        ) : null}
+
+        {/* AVISOS DE MOROSIDAD */}
+        {gym ? (
+          <AjustesSeccionModal
+            titulo="Aviso de vencimiento"
+            subtitulo="Recordatorios automáticos por Push/WhatsApp antes de que venza la cuota."
+            badge={<BadgeElite />}
+            icon={Bell}
+            resumen={
+              <p className="text-[11px] text-ink-soft font-mono">
+                Aviso: {gym.dias_aviso_morosidad ?? 5} días antes
+              </p>
+            }
+          >
+            <BloqueoEliteGate
+              bloqueado={!planInfo.permiteAvisosMorosidad}
+              titulo="Avisos Automáticos de Morosidad"
+              descripcion="Notificá a tus socios por WhatsApp y Push antes de que venza su cuota para reducir la morosidad y cobrar a tiempo."
+              beneficios={[
+                "Push y WhatsApp automatizados",
+                "Días de anticipación configurables",
+                "Reducción directa de la cartera morosa",
+              ]}
+            >
+              <AvisoMorosidadForm
+                gimnasioId={gym.id}
+                diasAviso={gym.dias_aviso_morosidad ?? 5}
+              />
+            </BloqueoEliteGate>
+          </AjustesSeccionModal>
+        ) : null}
+
+        {/* PANTALLA DE REPOSO CHECK-IN */}
+        {gym ? (
+          <AjustesSeccionModal
+            titulo="Reposo del Check-in"
+            subtitulo="Fondo ambiental con reloj digital para la tablet de recepción."
+            badge={<BadgeElite />}
+            icon={Smartphone}
+          >
+            <BloqueoEliteGate
+              bloqueado={!planInfo.permiteReposoCheckin}
+              titulo="Pantalla de Reposo de Terminal"
+              descripcion="Transformá la tablet de recepción en un reloj de marca elegante con el logo de tu gimnasio cuando no está en uso."
+              beneficios={[
+                "Diseño ambiental continuo",
+                "Reloj digital de gran formato",
+                "Despertar instantáneo al tocar",
+              ]}
+            >
+              <ReposoCheckinForm
+                gimnasioId={gym.id}
+                reposo={parseTema(gym.tema).reposoCheckin}
+              />
+            </BloqueoEliteGate>
+          </AjustesSeccionModal>
+        ) : null}
+
+        {/* EMAIL DE RECUPERACIÓN */}
+        <AjustesSeccionModal
+          titulo="Email de recuperación"
+          subtitulo="Correo seguro para recuperar la contraseña en caso de olvido."
+          icon={KeyRound}
+          resumen={
+            <p className="text-[11px] text-ink-soft font-mono">
+              {miPerfil?.email_recuperacion ?? "Sin email registrado"}
+            </p>
+          }
+        >
+          <EmailRecuperacionForm
+            email={miPerfil?.email_recuperacion ?? null}
+          />
+        </AjustesSeccionModal>
+
+        {/* CONTACTAR SOPORTE */}
+        <AjustesSeccionModal
+          titulo="Contactar soporte"
+          subtitulo="Canal directo con el equipo técnico de SysGym."
+          icon={HelpCircle}
+        >
+          <ContactarSoporteForm />
+        </AjustesSeccionModal>
+      </div>
+
+      {/* MERCADO PAGO INTEGRACIÓN */}
+      <div className="pt-2">
+        <MercadoPagoAjustesCard
+          elite={cobroAuto.elite}
+          vinculado={cobroAuto.vinculado}
+          userId={cobroAuto.userId}
+          vinculadoAt={cobroAuto.vinculadoAt}
+          configurado={connectConfigurado()}
+          aviso={sp?.mp ?? null}
+        />
       </div>
     </div>
   );
