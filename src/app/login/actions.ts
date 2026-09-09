@@ -72,7 +72,8 @@ export async function login(
     .single();
 
   if (profile?.debe_cambiar_clave) {
-    redirect("/cambiar-clave");
+    // Al dueño se le da a elegir en /bienvenida; al cliente se lo fuerza como antes.
+    redirect(profile.rol === "dueno" ? "/bienvenida" : "/cambiar-clave");
   }
 
   redirect(profile?.rol === "dueno" ? "/panel" : "/mi");

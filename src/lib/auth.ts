@@ -42,7 +42,10 @@ export async function getSessionProfile(): Promise<Profile | null> {
 export async function requireProfile(): Promise<Profile> {
   const profile = await getSessionProfile();
   if (!profile) redirect("/login");
-  if (profile.debe_cambiar_clave) redirect("/cambiar-clave");
+  if (profile.debe_cambiar_clave) {
+    // Al dueño se le da a elegir en /bienvenida; al cliente se lo fuerza como antes.
+    redirect(profile.rol === "dueno" ? "/bienvenida" : "/cambiar-clave");
+  }
   return profile;
 }
 
