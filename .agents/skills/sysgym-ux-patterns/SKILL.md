@@ -140,3 +140,55 @@ import { iniciarAudioHaptico } from "@/lib/ui/hapticos";
 <main onPointerDown={() => iniciarAudioHaptico()} ...>
 ```
 Esto inicializa silenciosamente el contexto de audio y desbloquea el hardware de sonido y Taptic Engine para toda la sesión del usuario.
+
+---
+
+## 7. Acordeón Interactivo Compacto (Guías y Explicaciones Largas)
+
+Para evitar bloques extensos de texto en pantalla vertical en dispositivos móviles (ej: explicaciones de rutina, guías para no expertos, desgloses teóricos):
+
+### Reglas de Diseño y UX
+1. **Contención Inicial**: Nunca renderizar 5+ párrafos continuos en secuencia vertical que empujen el formulario o la pantalla principal.
+2. **Estructura de Tarjetas de 1 Línea**:
+   - Botón disparador principal (`💡 ¿Cómo armamos tu rutina?`) con toggle `abierta` e indicador háptico (`hapticoSeleccion()`).
+   - Lista interna de items renderizados como tarjetas compactas de 1 línea con badge numérico (`span rounded-full bg-accent/15`), título en `text-xs` y `ChevronDown` animado (`rotate-180`).
+3. **Despliegue Bajo Demanda**:
+   - Control de estado local (`itemAbierto: number | null`).
+   - Al seleccionar un item, se despliega solo su texto explicativo con `animate-fade-in` e iluminación de acento en el icono, disparando `hapticoSeleccion()`.
+4. **Ahorro de Espacio**: Reduce el scroll vertical en un **75%**, manteniendo la interfaz limpia y accesible.
+
+---
+
+## 8. Sticky Floating Bar (Barra Flotante de Progreso del Día)
+
+Para el seguimiento de entrenamientos activos sin restar área visible:
+- **Ubicación**: Flotante sobre la barra de navegación inferior (`sticky` o `fixed bottom-16 sm:bottom-4`).
+- **Superficie Liquid Glass**: `bg-paper-2/85 backdrop-blur-xl border border-rule/50 shadow-lg rounded-[16px]`.
+- **Información Compacta**: Porcentaje de avance en tiempo real con barra o micro-anillo SVG, tiempo transcurrido con `font-mono tabular-nums`.
+
+---
+
+## 9. Timer Descanso Flotante & Minimizable (Persistent HUD)
+
+Cronómetro de descansos que no interrumpe la navegación del usuario:
+- **Estados**: Desplegado (vista completa de segundos y ajuste rápido +10s / -10s) vs Minimizado (píldora flotante compacta `rounded-full`).
+- **Alerta Sensorial**: Dispara `hapticoTimerFin()` + sonido de doble campana sintetizado mediante Web Audio API al llegar a 0.
+- **Tipografía**: Siempre `font-mono tabular-nums` para evitar temblor o layout shift durante el conteo.
+
+---
+
+## 10. Anillos de Actividad & Racha (Apple Fitness Rings)
+
+Visualización de progreso diario y constancia de entrenamiento:
+- **Renderizado SVG**: Círculos superpuestos utilizando `strokeDasharray` y `strokeDashoffset` con transiciones CSS aceleradas por GPU.
+- **Indicadores de Constancia**: Días completados representados por cápsulas/dots con estado activo en color de acento (`bg-accent text-accent-contrast shadow-sm`) e inactivas amortiguadas.
+
+---
+
+## 11. Gate de Bloqueo Elite (Glassmorphism Access Gate)
+
+Para restringir módulos avanzados o planes sin degradar la estética:
+- **Capa de Desenfoque**: `backdrop-blur-md bg-paper/60 absolute inset-0 z-20 flex items-center justify-center`.
+- **Tarjeta Elevada**: Esquinas squircle `rounded-[22px]`, borde suave `border border-rule/60`, insignia brillante `Sparkles` / `Flame` y botón CTA con degradado distintivo.
+
+

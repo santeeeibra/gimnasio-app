@@ -54,18 +54,18 @@ export default async function AjustesPage({
         "id, slug, nombre, tema, logo_url, dias_aviso_morosidad, estado, plan_plataforma_vence_el, pago_alias, pago_cbu, pago_titular",
       )
       .eq("id", profile.gimnasio_id)
-      .single(),
+      .maybeSingle(),
     cupoSocios(db, profile.gimnasio_id),
     db
       .from("gimnasios")
       .select("plan:planes_plataforma(nombre)")
       .eq("id", profile.gimnasio_id)
-      .single(),
+      .maybeSingle(),
     supabase
       .from("profiles")
       .select("email_recuperacion")
       .eq("id", profile.id)
-      .single(),
+      .maybeSingle(),
     estadoCobroAutomatico(db, profile.gimnasio_id),
     (searchParams ?? Promise.resolve({})) as Promise<{ mp?: string }>,
     verificarPlanGimnasio(db, profile.gimnasio_id),

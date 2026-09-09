@@ -81,8 +81,37 @@ function Porque({ clave }: { clave: ClaveTeoria }) {
   );
 }
 
+const GUIA_ITEMS = [
+  {
+    num: 1,
+    titulo: "Por qué no te ponemos 30 series por día",
+    texto: "El mito de «más es mejor» te frena. La ciencia deportiva (Dr. Brad Schoenfeld) demostró que después de 6 a 8 series exigentes por músculo en una sesión, el cuerpo ya no crea más masa muscular y solo acumula cansancio inútil (volumen basura). Menos series con más energía te darán el doble de resultados en menos tiempo.",
+  },
+  {
+    num: 2,
+    titulo: "Por qué cada músculo se entrena 2 veces por semana",
+    texto: "Repartir el esfuerzo en 2 días activa el crecimiento muscular dos veces en la semana en lugar de una sola. Llegás a cada ejercicio fresco y con fuerza, levantando más peso de forma segura.",
+  },
+  {
+    num: 3,
+    titulo: "Por qué los ejercicios pesados van al principio",
+    texto: "Los ejercicios con barra, mancuerna o máquinas compuestas reclutan las fibras más potentes. Si los hiciéramos al final cansado, tu técnica se rompería. Dejamos los ejercicios de brazos o accesorios para el cierre.",
+  },
+  {
+    num: 4,
+    titulo: "Por qué no vas al fallo total en cada serie (RIR 1–2)",
+    texto: "Llegar a no poder mover la barra agota el sistema nervioso y multiplica el riesgo de lesión sin darte más músculo. Dejar 1 o 2 repeticiones en reserva (RIR 1–2) estimula el 100% del crecimiento y te permite volver a entrenar con energía al día siguiente.",
+  },
+  {
+    num: 5,
+    titulo: "Si te duele algo, cuidamos tus articulaciones",
+    texto: "Si marcás dolor en rodilla, hombro o cintura baja, el motor no te deja sin entrenar: reemplaza los movimientos agresivos por variantes biomecánicas seguras (respaldos, poleas, ángulos ergonómicos) recomendadas por preparadores de élite (Charles Glass, Joan Pradells).",
+  },
+];
+
 function GuiaPrincipiante() {
   const [abierta, setAbierta] = useState(false);
+  const [itemAbierto, setItemAbierto] = useState<number | null>(null);
 
   return (
     <div className="sm:col-span-2 mb-1">
@@ -118,66 +147,46 @@ function GuiaPrincipiante() {
       </button>
 
       {abierta && (
-        <div className="mt-2.5 rounded-[14px] border border-rule bg-paper-2 p-4 text-xs text-ink-soft space-y-3 animate-fade-in shadow-sm">
-          <div className="flex gap-2.5 items-start">
-            <span className="grid size-5 shrink-0 place-items-center rounded-full bg-accent/15 text-[11px] font-bold text-accent">
-              1
-            </span>
-            <div>
-              <p className="font-semibold text-ink">Por qué no te ponemos 30 series por día</p>
-              <p className="mt-0.5 leading-relaxed">
-                El mito de «más es mejor» te frena. La ciencia deportiva (Dr. Brad Schoenfeld) demostró que después de 6 a 8 series exigentes por músculo en una sesión, el cuerpo ya no crea más masa muscular y solo acumula cansancio inútil (volumen basura). Menos series con más energía te darán el doble de resultados en menos tiempo.
-              </p>
-            </div>
-          </div>
+        <div className="mt-2.5 rounded-[14px] border border-rule bg-paper-2 p-2 text-xs text-ink-soft space-y-1.5 animate-fade-in shadow-sm">
+          {GUIA_ITEMS.map((item) => {
+            const isOpen = itemAbierto === item.num;
+            return (
+              <div
+                key={item.num}
+                className="rounded-[10px] border border-rule/60 bg-paper/60 transition-colors overflow-hidden"
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    hapticoSeleccion();
+                    setItemAbierto(isOpen ? null : item.num);
+                  }}
+                  className="flex w-full items-center justify-between gap-2.5 p-2.5 text-left active:bg-accent/5"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="grid size-5 shrink-0 place-items-center rounded-full bg-accent/15 text-[11px] font-bold text-accent">
+                      {item.num}
+                    </span>
+                    <p className="font-semibold text-ink text-xs truncate">
+                      {item.titulo}
+                    </p>
+                  </div>
+                  <ChevronDown
+                    aria-hidden
+                    className={`size-4 text-ink-soft shrink-0 transition-transform duration-200 ${
+                      isOpen ? "rotate-180 text-accent" : ""
+                    }`}
+                  />
+                </button>
 
-          <div className="flex gap-2.5 items-start">
-            <span className="grid size-5 shrink-0 place-items-center rounded-full bg-accent/15 text-[11px] font-bold text-accent">
-              2
-            </span>
-            <div>
-              <p className="font-semibold text-ink">Por qué cada músculo se entrena 2 veces por semana</p>
-              <p className="mt-0.5 leading-relaxed">
-                Repartir el esfuerzo en 2 días activa el crecimiento muscular dos veces en la semana en lugar de una sola. Llegás a cada ejercicio fresco y con fuerza, levantando más peso de forma segura.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex gap-2.5 items-start">
-            <span className="grid size-5 shrink-0 place-items-center rounded-full bg-accent/15 text-[11px] font-bold text-accent">
-              3
-            </span>
-            <div>
-              <p className="font-semibold text-ink">Por qué los ejercicios pesados van al principio</p>
-              <p className="mt-0.5 leading-relaxed">
-                Los ejercicios con barra, mancuerna o máquinas compuestas reclutan las fibras más potentes. Si los hiciéramos al final cansado, tu técnica se rompería. Dejamos los ejercicios de brazos o accesorios para el cierre.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex gap-2.5 items-start">
-            <span className="grid size-5 shrink-0 place-items-center rounded-full bg-accent/15 text-[11px] font-bold text-accent">
-              4
-            </span>
-            <div>
-              <p className="font-semibold text-ink">Por qué no vas al fallo total en cada serie (RIR 1–2)</p>
-              <p className="mt-0.5 leading-relaxed">
-                Llegar a no poder mover la barra agota el sistema nervioso y multiplica el riesgo de lesión sin darte más músculo. Dejar 1 o 2 repeticiones en reserva (RIR 1–2) estimula el 100% del crecimiento y te permite volver a entrenar con energía al día siguiente.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex gap-2.5 items-start">
-            <span className="grid size-5 shrink-0 place-items-center rounded-full bg-accent/15 text-[11px] font-bold text-accent">
-              5
-            </span>
-            <div>
-              <p className="font-semibold text-ink">Si te duele algo, cuidamos tus articulaciones</p>
-              <p className="mt-0.5 leading-relaxed">
-                Si marcás dolor en rodilla, hombro o cintura baja, el motor no te deja sin entrenar: reemplaza los movimientos agresivos por variantes biomecánicas seguras (respaldos, poleas, ángulos ergonómicos) recomendadas por preparadores de élite (Charles Glass, Joan Pradells).
-              </p>
-            </div>
-          </div>
+                {isOpen && (
+                  <div className="px-3 pb-3 pt-1 text-xs text-ink-soft leading-relaxed border-t border-rule/30 animate-fade-in">
+                    {item.texto}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
