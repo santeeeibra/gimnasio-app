@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireDueno, claveInicial } from "@/lib/auth";
 import { Panel, linkClasses, pillClasses } from "@/components/ui";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, CreditCard, Sparkles, AlertCircle } from "lucide-react";
 import { AccesoSocio } from "./acceso-socio";
 import { EditarDatos } from "./editar-datos";
 import { diasRestantes, estadoDesdeDias, ESTADO_LABEL } from "@/lib/cuota";
@@ -42,6 +42,7 @@ import { DescargarRutinaPdf } from "@/components/pdf/descargar-rutina-pdf";
 import type { DiaEditable } from "@/app/mi/rutina/rutina-editor";
 
 import { RegistrarPagoModal } from "./registrar-pago-modal";
+import { ClienteTabsSeccion } from "./cliente-tabs-seccion";
 
 export default async function ClienteDetallePage({
   params,
@@ -158,13 +159,14 @@ export default async function ClienteDetallePage({
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
+      {/* Header Fijo con Acciones Rápidas */}
       <div>
         <Link href="/panel/clientes" className={pillClasses.neutra}>
           <ChevronLeft aria-hidden strokeWidth={2} className="size-4" />
-          Clientes
+          Volver a clientes
         </Link>
-        <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-rule/50 pb-4">
+        <div className="mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-rule/50 pb-4">
           <div className="flex flex-col sm:flex-row sm:items-center gap-4">
             <FotoSocioUploader
               gimnasioId={dueno.gimnasio_id}
@@ -173,288 +175,275 @@ export default async function ClienteDetallePage({
               nombre={c.profile?.nombre ?? "Socio"}
             />
             <div>
-              <h1 className="text-2xl font-bold tracking-tight text-ink">{c.profile?.nombre}</h1>
-              <p className="text-sm text-ink-soft">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-2xl font-bold tracking-tight text-ink">{c.profile?.nombre}</h1>
+                <span
+                  className={`px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider ${
+                    estado === "vencido"
+                      ? "bg-danger/15 text-danger border border-danger/30"
+                      : estado === "por_vencer"
+                        ? "bg-warn/15 text-warn border border-warn/30"
+                        : "bg-ok/15 text-ok border border-ok/30"
+                  }`}
+                >
+                  {ESTADO_LABEL[estado]}
+                </span>
+              </div>
+              <p className="text-sm text-ink-soft mt-0.5">
                 DNI {c.profile?.dni}
                 {c.profile?.telefono ? ` · ${c.profile.telefono}` : ""}
               </p>
             </div>
           </div>
-          <RegistrarPagoModal
-            clienteId={c.id}
-            planes={planes}
-            planActual={c.plan_id}
-          />
+          <div className="flex items-center gap-2">
+            <RegistrarPagoModal
+              clienteId={c.id}
+              planes={planes}
+              planActual={c.plan_id}
+            />
+          </div>
         </div>
       </div>
 
-      <Panel className="p-5">
-        <div className="flex flex-wrap gap-x-10 gap-y-3">
-          <div>
-            <p className="text-xs text-ink-soft">Estado</p>
-            <p
-              className={`text-lg font-display ${
-                estado === "vencido"
-                  ? "text-danger"
-                  : estado === "por_vencer"
-                    ? "text-warn"
-                    : "text-ok"
-              }`}
-            >
-              {ESTADO_LABEL[estado]}
+      {/* Banner Guía del Ciclo del Socio (Smart Next-Step Guidance) */}
+      {c.en_prueba ? (
+        <div className="p-4 rounded-[12px] bg-brand/10 border border-brand/30 flex items-start gap-3">
+          <Sparkles className="size-5 text-brand shrink-0 mt-0.5" />
+          <div className="text-sm">
+            <p className="font-medium text-ink">Socio en Día de Prueba</p>
+            <p className="text-ink-soft text-xs mt-0.5">
+              Registrá un pago a la izquierda para activar su plan definitivo y deshabilitar el pase de prueba.
             </p>
           </div>
-          <div>
-            <p className="text-xs text-ink-soft">Plan</p>
-            <p className="text-lg">{c.plan?.nombre ?? "sin plan"}</p>
-          </div>
-          <div>
-            <p className="text-xs text-ink-soft">Vence</p>
-            <p className="text-lg">
-              {c.fecha_vencimiento ?? "—"}
-              {dias !== null ? (
-                <span className="text-sm text-ink-soft">
-                  {" "}
-                  ({dias < 0 ? `hace ${Math.abs(dias)} d` : dias === 0 ? "vence hoy" : `en ${dias} d`})
-                </span>
-              ) : null}
-            </p>
-          </div>
-          {bloqueado ? (
-            <div>
-              <p className="text-xs text-ink-soft">Acceso</p>
-              <p className="text-lg font-display text-danger">
-                Pendiente de pago
-              </p>
-            </div>
-          ) : null}
-          {c.en_prueba ? (
-            <div>
-              <p className="text-xs text-ink-soft">Día de prueba</p>
-              <p
-                className={`text-lg font-display ${
-                  pruebaVencida ? "text-danger" : "text-ink"
-                }`}
-              >
-                {pruebaVencida ? "Vencida — falta cobrar" : "En prueba"}
-              </p>
-            </div>
-          ) : null}
         </div>
-        {c.en_prueba ? (
-          <p className="mt-3 text-sm text-ink-soft">
-            Registrá un pago abajo para convertir al cliente: se le asigna el
-            plan y se apaga el día de prueba.
-          </p>
-        ) : null}
-      </Panel>
+      ) : estado === "vencido" ? (
+        <div className="p-4 rounded-[12px] bg-danger/10 border border-danger/30 flex items-start gap-3">
+          <AlertCircle className="size-5 text-danger shrink-0 mt-0.5" />
+          <div className="text-sm">
+            <p className="font-medium text-danger">Cuota Vencida</p>
+            <p className="text-ink-soft text-xs mt-0.5">
+              El socio {dias !== null && dias < 0 ? `lleva ${Math.abs(dias)} días vencido` : "no tiene cuota al día"}. Usá el panel de Registrar Pago para renovarlo.
+            </p>
+          </div>
+        </div>
+      ) : null}
 
-      <Panel className="p-5">
-        <h2 className="text-lg mb-4">Acceso</h2>
-        <AccesoSocio
-          clienteId={c.id}
-          gimnasio={gym?.nombre ?? ""}
-          slug={gym?.slug ?? ""}
-          dni={c.profile?.dni ?? ""}
-          claveInicial={claveInicial(c.profile?.dni ?? "")}
-          yaCambio={c.profile?.debe_cambiar_clave === false}
-          bloqueado={bloqueado}
-        />
+      {/* LAYOUT DE 2 COLUMNAS PARA PC (lg:grid-cols-12) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        {/* COLUMNA IZQUIERDA (PAGOS & CAJA - PRIORIDAD 1) - 5 Cols en PC */}
+        <div className="lg:col-span-5 space-y-6">
+          {/* Card Resumen de Cuota */}
+          <Panel className="p-5 space-y-3">
+            <div className="flex items-center justify-between border-b border-rule/50 pb-3">
+              <h2 className="text-sm font-semibold text-ink uppercase tracking-wider flex items-center gap-2">
+                <CreditCard className="size-4 text-brand" />
+                Estado de Cuota
+              </h2>
+              <span className="text-xs text-ink-soft font-mono">ID: {c.id.slice(0, 8)}</span>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="text-xs text-ink-soft">Plan contratado</p>
+                <p className="font-medium text-ink">{c.plan?.nombre ?? "Sin plan"}</p>
+              </div>
+              <div>
+                <p className="text-xs text-ink-soft">Vencimiento</p>
+                <p className="font-medium text-ink">
+                  {c.fecha_vencimiento ?? "—"}
+                  {dias !== null && (
+                    <span className="block text-xs text-ink-soft">
+                      ({dias < 0 ? `venció hace ${Math.abs(dias)}d` : dias === 0 ? "vence hoy" : `en ${dias} días`})
+                    </span>
+                  )}
+                </p>
+              </div>
+            </div>
+          </Panel>
 
-        <div className="mt-5">
-          <EditarDatos
-            clienteId={c.id}
-            nombre={c.profile?.nombre ?? ""}
-            dni={c.profile?.dni ?? ""}
-            telefono={c.profile?.telefono ?? null}
-            email={(c.email as string | null) ?? null}
-            sexo={(c.sexo as Sexo | null) ?? null}
+          {/* Card Formulario Directo Registrar Pago */}
+          <Panel className="p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-semibold text-ink flex items-center gap-2">
+                <span>⚡ Registrar Pago</span>
+              </h2>
+            </div>
+            <PagoForm
+              clienteId={c.id}
+              planes={planes}
+              planActual={c.plan_id}
+            />
+          </Panel>
+
+          {/* Card Historial de Pagos */}
+          <div className="space-y-3">
+            <h2 className="text-base font-semibold text-ink px-1">Historial de Pagos</h2>
+            {pagos.length === 0 ? (
+              <Panel className="p-4 text-center text-sm text-ink-soft">
+                Sin pagos registrados aún.
+              </Panel>
+            ) : (
+              <ul className="border border-rule rounded-[12px] divide-y divide-rule text-sm overflow-hidden bg-surface">
+                {pagos.map((p) => {
+                  const ref: string | null = p.comprobante_ref ?? null;
+                  const esUrl =
+                    ref && (ref.startsWith("http://") || ref.startsWith("https://"));
+                  return (
+                    <li
+                      key={p.id}
+                      className="px-4 py-3 flex flex-col gap-1 hover:bg-surface-elevated/30 transition-colors"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-ink">
+                          {p.fecha_pago} · {p.plan?.nombre ?? "—"}
+                        </span>
+                        <span className="font-semibold text-ok">
+                          ${p.monto}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs text-ink-soft">
+                        <span>Cubre hasta {p.cubre_hasta}</span>
+                        {ref ? (
+                          esUrl ? (
+                            <a
+                              href={ref}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-brand underline underline-offset-2 hover:brightness-110"
+                            >
+                              🔗 Comprobante
+                            </a>
+                          ) : (
+                            <span className="truncate max-w-[120px]">Ref: {ref}</span>
+                          )
+                        ) : null}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        </div>
+
+        {/* COLUMNA DERECHA (Pills / Tabs de Gestión: Acceso, Rutina, Peso) - 7 Cols en PC */}
+        <div className="lg:col-span-7">
+          <ClienteTabsSeccion
+            tieneRutina={!!rutina}
+            accesoContent={
+              <Panel className="p-5">
+                <h2 className="text-lg font-semibold text-ink mb-4">Credenciales y Datos de Acceso</h2>
+                <AccesoSocio
+                  clienteId={c.id}
+                  gimnasio={gym?.nombre ?? ""}
+                  slug={gym?.slug ?? ""}
+                  dni={c.profile?.dni ?? ""}
+                  claveInicial={claveInicial(c.profile?.dni ?? "")}
+                  yaCambio={c.profile?.debe_cambiar_clave === false}
+                  bloqueado={bloqueado}
+                />
+
+                <div className="mt-6 pt-5 border-t border-rule/50">
+                  <h3 className="text-sm font-semibold text-ink mb-3">Editar Datos Personales</h3>
+                  <EditarDatos
+                    clienteId={c.id}
+                    nombre={c.profile?.nombre ?? ""}
+                    dni={c.profile?.dni ?? ""}
+                    telefono={c.profile?.telefono ?? null}
+                    email={(c.email as string | null) ?? null}
+                    sexo={(c.sexo as Sexo | null) ?? null}
+                  />
+                </div>
+              </Panel>
+            }
+            rutinaContent={
+              <Panel className="p-5">
+                <div className="flex items-center justify-between gap-3 mb-4">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-lg font-semibold text-ink">Rutina de Entrenamiento</h2>
+                    {rutina ? (
+                      <span className="rounded-full border border-rule px-2.5 py-0.5 text-[11px] uppercase tracking-wider text-ink-soft">
+                        {esManual ? "A mano" : "IA / Algoritmo"}
+                      </span>
+                    ) : null}
+                  </div>
+                  {rutina && (
+                    <DescargarRutinaPdf
+                      clienteNombre={c.profile?.nombre ?? ""}
+                      gimnasioNombre={gym?.nombre ?? ""}
+                      rutinaNombre={`${esManual ? "Manual" : (OBJETIVO_LABEL[rutina.objetivo as Objetivo] ?? rutina.objetivo)}${rutina.nivel ? ` · ${NIVEL_LABEL[rutina.nivel as Nivel] ?? rutina.nivel}` : ""}${rutina.dias_por_semana ? ` · ${rutina.dias_por_semana} días` : ""}`}
+                      dias={agruparPorDia(rutinaItems, rutina.dias_titulos as string[] | null)}
+                      logoUrl={gym?.logo_url ?? null}
+                    />
+                  )}
+                </div>
+
+                {rutina ? (
+                  <div className="mb-4">
+                    <div className="text-xs text-ink-soft mb-3">
+                      {esManual
+                        ? "Armada a mano"
+                        : (OBJETIVO_LABEL[rutina.objetivo as Objetivo] ?? rutina.objetivo)}
+                      {rutina.nivel ? ` · ${NIVEL_LABEL[rutina.nivel as Nivel] ?? rutina.nivel}` : ""}
+                      {rutina.dias_por_semana ? ` · ${rutina.dias_por_semana} días por semana` : ""}
+                    </div>
+
+                    <ul className="space-y-2 text-sm bg-surface-dark/50 p-3.5 rounded-[10px] border border-rule/50">
+                      {[...rutinaPorDia.keys()]
+                        .sort((a, b) => a - b)
+                        .map((d) => (
+                          <li key={d} className="flex flex-col sm:flex-row sm:items-baseline gap-1">
+                            <span className="font-medium text-ink shrink-0">
+                              {(rutina.dias_titulos as string[] | null)?.[d - 1] ?? `Día ${d}`}:
+                            </span>
+                            <span className="text-ink-soft text-xs sm:text-sm">
+                              {(rutinaPorDia.get(d) ?? []).join(", ")}
+                            </span>
+                          </li>
+                        ))}
+                    </ul>
+                  </div>
+                ) : (
+                  <p className="mt-2 mb-4 text-sm text-ink-soft">
+                    El socio no tiene rutina asignada todavía. Podés generarle una a medida a continuación.
+                  </p>
+                )}
+
+                <RutinaPanelDueno
+                  clienteId={c.id}
+                  tieneRutina={!!rutina}
+                  clienteSexo={(c.sexo as Sexo | null) ?? null}
+                  defaults={
+                    rutina
+                      ? {
+                          objetivo: rutina.objetivo as Objetivo,
+                          nivel: (rutina.nivel as Nivel) ?? undefined,
+                          dias: rutina.dias_por_semana ?? undefined,
+                          preferencia: (rutina.preferencias as Prefs)?.equipo ?? undefined,
+                          sexo: (rutina.preferencias as Prefs)?.sexo ?? undefined,
+                          enfasis: (rutina.preferencias as Prefs)?.enfasis ?? undefined,
+                          zonasDolor:
+                            (rutina.preferencias as Prefs)?.zonasDolor ?? undefined,
+                        }
+                      : undefined
+                  }
+                />
+              </Panel>
+            }
+            pesoContent={
+              <Panel className="p-5">
+                <h2 className="text-lg font-semibold text-ink mb-4">Evolución de Peso Corporal</h2>
+                <CardPeso
+                  clienteId={c.id}
+                  creadoPor="dueno"
+                  action={guardarPesoSocio.bind(null, c.id)}
+                  fetchRegistros={obtenerPesosSocio.bind(null, c.id)}
+                />
+              </Panel>
+            }
           />
         </div>
-      </Panel>
-
-      <Panel className="p-5">
-        <div className="flex items-baseline justify-between gap-3">
-          <div className="flex min-w-0 items-baseline gap-2">
-            <h2 className="text-lg">Rutina</h2>
-            {rutina ? (
-              <span className="shrink-0 rounded-full border border-rule px-2 py-0.5 text-[11px] uppercase tracking-[0.08em] text-ink-soft">
-                {esManual ? "A mano" : "Generada"}
-              </span>
-            ) : null}
-          </div>
-          {rutina ? (
-            <span className="text-xs text-ink-soft">
-              {esManual
-                ? "Armada a mano"
-                : (OBJETIVO_LABEL[rutina.objetivo as Objetivo] ??
-                  rutina.objetivo)}
-              {rutina.nivel
-                ? ` · ${NIVEL_LABEL[rutina.nivel as Nivel] ?? rutina.nivel}`
-                : ""}
-              {rutina.dias_por_semana ? ` · ${rutina.dias_por_semana} días` : ""}
-            </span>
-          ) : null}
-          {rutina && (
-            <DescargarRutinaPdf
-              clienteNombre={c.profile?.nombre ?? ""}
-              gimnasioNombre={gym?.nombre ?? ""}
-              rutinaNombre={`${esManual ? "Manual" : (OBJETIVO_LABEL[rutina.objetivo as Objetivo] ?? rutina.objetivo)}${rutina.nivel ? ` · ${NIVEL_LABEL[rutina.nivel as Nivel] ?? rutina.nivel}` : ""}${rutina.dias_por_semana ? ` · ${rutina.dias_por_semana} días` : ""}`}
-              dias={agruparPorDia(rutinaItems, rutina.dias_titulos as string[] | null)}
-              logoUrl={gym?.logo_url ?? null}
-            />
-          )}
-        </div>
-
-        {rutina && !esManual && (rutina.preferencias as Prefs)?.avanzado ? (
-          (() => {
-            const av = (rutina.preferencias as Prefs)!.avanzado!;
-            const chips = [
-              av.split !== "auto" ? SPLIT_LABEL[av.split] : null,
-              av.rango !== "estandar" ? RANGO_LABEL[av.rango] : null,
-              av.volumen !== "estandar" ? VOLUMEN_LABEL[av.volumen] : null,
-              av.rir !== "2-3" ? RIR_LABEL[av.rir] : null,
-              av.tecnicaAislamientos !== "ninguna"
-                ? `Aislam.: ${TECNICA_LABEL[av.tecnicaAislamientos]}`
-                : null,
-              ...av.evitar.map((m) => `Evita ${m}`),
-            ].filter(Boolean) as string[];
-            if (chips.length === 0) return null;
-            return (
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                {chips.map((c) => (
-                  <span
-                    key={c}
-                    className="rounded-full border border-rule px-2 py-0.5 text-[11px] text-ink-soft"
-                  >
-                    {c}
-                  </span>
-                ))}
-              </div>
-            );
-          })()
-        ) : null}
-
-        {rutina ? (
-          <ul className="mt-3 mb-4 space-y-2 text-sm">
-            {[...rutinaPorDia.keys()]
-              .sort((a, b) => a - b)
-              .map((d) => (
-                <li key={d}>
-                  <span className="font-medium">
-                    {(rutina.dias_titulos as string[] | null)?.[d - 1] ??
-                      `Día ${d}`}
-                  </span>
-                  <span className="text-ink-soft">
-                    {" — "}
-                    {(rutinaPorDia.get(d) ?? []).join(", ")}
-                  </span>
-                </li>
-              ))}
-          </ul>
-        ) : (
-          <p className="mt-2 mb-4 text-sm text-ink-soft">
-            Sin rutina todavía. El cliente también puede generarla desde su panel.
-          </p>
-        )}
-
-        {rutina && !esManual && (rutina.preferencias as Prefs)?.explicacionGeneral ? (
-          <details className="mb-4 text-xs text-ink-soft">
-            <summary
-              className={`w-fit cursor-pointer select-none ${linkClasses.inline}`}
-            >
-              Por qué está armada así
-            </summary>
-            <p className="mt-1.5 leading-snug">
-              {(rutina.preferencias as Prefs)!.explicacionGeneral}
-            </p>
-          </details>
-        ) : null}
-
-        <RutinaPanelDueno
-          clienteId={c.id}
-          tieneRutina={!!rutina}
-          clienteSexo={(c.sexo as Sexo | null) ?? null}
-          defaults={
-            rutina
-              ? {
-                  objetivo: rutina.objetivo as Objetivo,
-                  nivel: (rutina.nivel as Nivel) ?? undefined,
-                  dias: rutina.dias_por_semana ?? undefined,
-                  preferencia: (rutina.preferencias as Prefs)?.equipo ?? undefined,
-                  sexo: (rutina.preferencias as Prefs)?.sexo ?? undefined,
-                  enfasis: (rutina.preferencias as Prefs)?.enfasis ?? undefined,
-                  zonasDolor:
-                    (rutina.preferencias as Prefs)?.zonasDolor ?? undefined,
-                }
-              : undefined
-          }
-        />
-      </Panel>
-
-      <Panel className="p-5">
-        <h2 className="text-lg mb-4">Peso corporal</h2>
-        <CardPeso
-          clienteId={c.id}
-          creadoPor="dueno"
-          action={guardarPesoSocio.bind(null, c.id)}
-          fetchRegistros={obtenerPesosSocio.bind(null, c.id)}
-        />
-      </Panel>
-
-      <Panel className="p-5">
-        <h2 className="text-lg mb-4">Registrar un pago</h2>
-        <PagoForm
-          clienteId={c.id}
-          planes={planes}
-          planActual={c.plan_id}
-        />
-      </Panel>
-
-      <div>
-        <h2 className="text-lg mb-3">Historial de pagos</h2>
-        {pagos.length === 0 ? (
-          <p className="text-sm text-ink-soft">Sin pagos registrados.</p>
-        ) : (
-          <ul className="border border-rule rounded-[6px] divide-y divide-rule text-sm">
-            {pagos.map((p) => {
-              const ref: string | null = p.comprobante_ref ?? null;
-              const esUrl =
-                ref && (ref.startsWith("http://") || ref.startsWith("https://"));
-              return (
-                <li
-                  key={p.id}
-                  className="px-4 py-3 flex flex-col gap-0.5"
-                >
-                  <div className="flex items-center justify-between">
-                    <span>
-                      {p.fecha_pago} · {p.plan?.nombre ?? "—"}
-                    </span>
-                    <span className="text-ink-soft">
-                      ${p.monto} · cubre hasta {p.cubre_hasta}
-                    </span>
-                  </div>
-                  {ref ? (
-                    esUrl ? (
-                      <a
-                        href={ref}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-ink-soft underline underline-offset-2 truncate hover:text-ink"
-                      >
-                        🔗 Ver comprobante
-                      </a>
-                    ) : (
-                      <p className="text-xs text-ink-soft truncate">
-                        Ref: {ref}
-                      </p>
-                    )
-                  ) : null}
-                </li>
-              );
-            })}
-          </ul>
-        )}
       </div>
     </div>
   );
