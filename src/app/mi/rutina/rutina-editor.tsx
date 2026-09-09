@@ -29,6 +29,7 @@ import { LogroDiaCompletado } from "@/components/rutinas/logro-dia-completado";
 import { BotonPedirAyuda } from "@/components/rutinas/boton-pedir-ayuda";
 import { DialVerticalProgreso } from "@/components/progreso/dial-vertical-progreso";
 import { HistorialEjercicio } from "@/components/progreso/historial-ejercicio";
+import type { ColoresImagen } from "@/lib/logros/imagen";
 import {
   guardarProgresoCliente,
   guardarProgresoSocio,
@@ -275,12 +276,19 @@ export function RutinaEditor({
   mostrarTecnica = false,
   clienteId,
   creadoPor,
+  gimnasioNombre,
+  logoUrl,
+  colores,
 }: {
   dias: DiaEditable[];
   ejercicios: Ejercicio[];
   mostrarTecnica?: boolean;
   clienteId?: string;
   creadoPor?: 'cliente' | 'dueno';
+  /** Para el <CartelLogro> de récord (sólo se pasa en la vista del alumno). */
+  gimnasioNombre?: string;
+  logoUrl?: string | null;
+  colores?: ColoresImagen;
 }) {
   const [visor, setVisor] = useState<Ejercicio | null>(null);
   const [activo, setActivo] = useState(dias[0]?.numero ?? 1);
@@ -597,6 +605,9 @@ export function RutinaEditor({
                       }
                       clienteId={clienteId}
                       creadoPor={creadoPor}
+                      gimnasioNombre={gimnasioNombre}
+                      logoUrl={logoUrl}
+                      colores={colores}
                       mostrarGuiaSerie={!guiaVista && seriesHechasActivo === 0 && i === 0}
                     />
                   ))}
@@ -795,6 +806,9 @@ function ItemFila({
   onToggleSet,
   clienteId,
   creadoPor,
+  gimnasioNombre,
+  logoUrl,
+  colores,
   mostrarGuiaSerie = false,
 }: {
   item: ItemEditable;
@@ -808,6 +822,9 @@ function ItemFila({
   onToggleSet: (setIndex: number) => void;
   clienteId?: string;
   creadoPor?: 'cliente' | 'dueno';
+  gimnasioNombre?: string;
+  logoUrl?: string | null;
+  colores?: ColoresImagen;
   mostrarGuiaSerie?: boolean;
 }) {
   const [series, setSeries] = useState(String(item.series));
@@ -990,6 +1007,10 @@ function ItemFila({
               <DialVerticalProgreso
                 ejercicioId={item.ejercicio.id}
                 tipoEquipo={tipoEquipo}
+                ejercicioNombre={ej?.nombre ?? item.ejercicio.nombre}
+                gimnasioNombre={creadoPor === "dueno" ? undefined : gimnasioNombre}
+                logoUrl={logoUrl}
+                colores={creadoPor === "dueno" ? undefined : colores}
                 action={
                   creadoPor === "dueno"
                     ? guardarProgresoSocio.bind(null, clienteId)

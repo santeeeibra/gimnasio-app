@@ -9,6 +9,9 @@ import { AnilloProgreso } from "@/components/anillo-progreso";
 import { pillClasses } from "@/components/ui";
 import { ChevronRight, CreditCard, Dumbbell, Inbox, MessageSquare, Palette, User } from "lucide-react";
 import { RachaConstancia } from "@/components/mi/racha-constancia";
+import { RachaSeccion } from "@/components/logros/racha-seccion";
+import { obtenerRachaCliente } from "@/lib/logros/actions";
+import { parseTema } from "@/lib/tema";
 import { DatosTransferencia } from "@/components/mi/datos-transferencia";
 import { CacheAlVuelo } from "@/components/offline/cache-al-vuelo";
 import { BotonInstalarApp } from "@/components/pwa/boton-instalar-app";
@@ -24,7 +27,7 @@ export default async function MiPage() {
   const [{ data: gym }, { data }, { count: noLeidos }] = await Promise.all([
     supabase
       .from("gimnasios")
-      .select("estado, pago_alias, pago_cbu, pago_titular")
+      .select("estado, pago_alias, pago_cbu, pago_titular, nombre, logo_url, tema")
       .eq("id", profile.gimnasio_id)
       .single(),
     supabase
@@ -74,6 +77,17 @@ export default async function MiPage() {
       racha = { dias, total: entradas.length };
     }
   }
+  // Racha de constancia (feature "Compartir logros"): días consecutivos
+  // entrenando, con card compartible en los hitos. Distinta de <RachaConstancia>.
+  const rachaLogro = c?.id ? await obtenerRachaCliente() : null;
+  const temaGym = parseTema(gym?.tema);
+  const coloresLogro = {
+    paper: temaGym.paper,
+    ink: temaGym.ink,
+    volt: temaGym.volt,
+    voltInk: temaGym.voltInk,
+  };
+
   const dias = diasRestantes(c?.fecha_vencimiento ?? null);
   const estado = estadoDesdeDias(dias);
   const duracionTotal = c?.plan?.duracion_dias ?? 30; // fallback a 30 si no hay plan
@@ -172,6 +186,15 @@ export default async function MiPage() {
 
       {racha ? (
         <RachaConstancia dias={racha.dias} total={racha.total} />
+      ) : null}
+
+      {rachaLogro ? (
+        <RachaSeccion
+          racha={rachaLogro}
+          gimnasioNombre={gym?.nombre ?? ""}
+          logoUrl={gym?.logo_url ?? null}
+          colores={coloresLogro}
+        />
       ) : null}
 
       {estado !== "al_dia" ? (

@@ -3,8 +3,15 @@
 import { revalidatePath } from "next/cache";
 import { requireProfile, requireDueno } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { evaluarRecordCliente } from "@/lib/logros/actions";
+import type { ResultadoRecord } from "@/lib/logros/tipos";
 
-export type ProgresoState = { error?: string; ok?: string };
+export type ProgresoState = {
+  error?: string;
+  ok?: string;
+  /** Set sólo por `guardarProgresoCliente` cuando el peso guardado es récord. */
+  record?: ResultadoRecord;
+};
 
 async function resolverClienteId(): Promise<{
   supabase: Awaited<ReturnType<typeof createClient>>;
@@ -63,7 +70,16 @@ export async function guardarProgresoCliente(
   if (error) return { error: "No se pudo guardar el progreso." };
 
   revalidatePath("/mi/rutina");
-  return { ok: "✓" };
+
+  // Detección de récord (no bloquea el guardado si falla).
+  let record: ResultadoRecord | undefined;
+  try {
+    record = await evaluarRecordCliente(ejercicioId, pesoRaw);
+  } catch {
+    record = undefined;
+  }
+
+  return { ok: "✓", record };
 }
 
 // ── Acción del dueño ─────────────────────────────────────────────────────────

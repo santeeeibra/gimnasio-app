@@ -15,6 +15,10 @@ import {
   hapticoExito,
   hapticoError,
 } from "@/lib/ui/hapticos";
+import { CartelLogro } from "@/components/logros/cartel-logro";
+import { tituloRecord } from "@/lib/logros/compartir";
+import type { ColoresImagen } from "@/lib/logros/imagen";
+import type { ResultadoRecord } from "@/lib/logros/tipos";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DialVerticalProgreso — Dial vertical de regla estilo iOS para cada ejercicio
@@ -32,12 +36,21 @@ export function DialVerticalProgreso({
   fetchUltimoPeso,
   tipoEquipo = "otro",
   esCorporal: esCorporalLegacy,
+  ejercicioNombre,
+  gimnasioNombre,
+  logoUrl,
+  colores,
 }: {
   ejercicioId: string;
   action: (prev: ProgresoState, fd: FormData) => Promise<ProgresoState>;
   fetchUltimoPeso: (eid: string) => Promise<{ peso: number; reps: number | null } | null>;
   tipoEquipo?: TipoEquipoDial;
   esCorporal?: boolean;
+  /** Datos para el <CartelLogro> de récord. Si faltan, no se ofrece compartir. */
+  ejercicioNombre?: string;
+  gimnasioNombre?: string;
+  logoUrl?: string | null;
+  colores?: ColoresImagen;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -61,6 +74,7 @@ export function DialVerticalProgreso({
 
   const [state, formAction, pending] = useActionState(action, {});
   const [feedbackOk, setFeedbackOk] = useState(false);
+  const [logro, setLogro] = useState<ResultadoRecord | null>(null);
 
   // Cargar último peso registrado como punto de partida
   useEffect(() => {
@@ -243,6 +257,9 @@ export function DialVerticalProgreso({
     if (state.ok) {
       hapticoExito();
       setFeedbackOk(true);
+      if (state.record?.esRecord && colores && gimnasioNombre) {
+        setLogro(state.record);
+      }
       const t = setTimeout(() => setFeedbackOk(false), 2000);
       return () => clearTimeout(t);
     } else if (state.error) {
@@ -251,6 +268,23 @@ export function DialVerticalProgreso({
   }, [state]);
 
   return (
+    <>
+    {logro && colores && gimnasioNombre && (
+      <CartelLogro
+        tipo="record"
+        titulo={tituloRecord(logro.pesoKg, ejercicioNombre ?? "tu ejercicio")}
+        subtitulo={
+          logro.pesoAnteriorKg != null
+            ? `Tu marca anterior era ${logro.pesoAnteriorKg} kg`
+            : undefined
+        }
+        gimnasioNombre={gimnasioNombre}
+        logoUrl={logoUrl ?? null}
+        colores={colores}
+        whatsapp={{ pesoKg: logro.pesoKg, ejercicio: ejercicioNombre ?? "" }}
+        onCerrar={() => setLogro(null)}
+      />
+    )}
     <form
       action={formAction}
       className="flex flex-col items-center w-[68px] rounded-[10px] border border-rule/70 bg-paper-2/90 p-1 select-none"
@@ -345,5 +379,6 @@ export function DialVerticalProgreso({
         </p>
       )}
     </form>
+    </>
   );
 }

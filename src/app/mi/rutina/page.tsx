@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { parseTema } from "@/lib/tema";
 import {
   NIVEL_LABEL,
   OBJETIVO_LABEL,
@@ -56,10 +57,18 @@ export default async function MiRutinaPage() {
   const { data: gymData } = cliente
     ? await supabase
         .from("gimnasios")
-        .select("nombre, logo_url")
+        .select("nombre, logo_url, tema")
         .eq("id", cliente.gimnasio_id ?? "")
         .maybeSingle()
     : { data: null };
+
+  const temaGym = parseTema(gymData?.tema);
+  const coloresLogro = {
+    paper: temaGym.paper,
+    ink: temaGym.ink,
+    volt: temaGym.volt,
+    voltInk: temaGym.voltInk,
+  };
 
   const { data: rutina } = cliente
     ? await supabase
@@ -297,6 +306,9 @@ export default async function MiRutinaPage() {
             mostrarTecnica={rutina.origen === "manual"}
             clienteId={cliente?.id}
             creadoPor="cliente"
+            gimnasioNombre={gymData?.nombre ?? ""}
+            logoUrl={gymData?.logo_url ?? null}
+            colores={coloresLogro}
           />
         </>
       )}
