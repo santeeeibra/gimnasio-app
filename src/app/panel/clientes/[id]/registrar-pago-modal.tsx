@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { CreditCard, X } from "lucide-react";
 import { PagoForm, type PlanConDescuentos } from "./pago-form";
 import { useHapticos } from "@/lib/ui/hapticos";
@@ -15,7 +16,12 @@ export function RegistrarPagoModal({
   planActual: string | null;
 }) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const hapticos = useHapticos();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleOpen = () => {
     hapticos.medio();
@@ -38,13 +44,13 @@ export function RegistrarPagoModal({
         <span>Registrar pago</span>
       </button>
 
-      {open ? (
+      {mounted && open ? createPortal(
         <div
           role="dialog"
           aria-modal="true"
           aria-label="Registrar pago"
           onClick={handleClose}
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-[color:var(--scrim)] p-3 sm:p-4 backdrop-blur-sm animate-fade-in"
+          className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-[color:var(--scrim)] p-3 sm:p-4 backdrop-blur-sm animate-fade-in"
         >
           <div
             onClick={(e) => e.stopPropagation()}
@@ -78,7 +84,8 @@ export function RegistrarPagoModal({
               planActual={planActual}
             />
           </div>
-        </div>
+        </div>,
+        document.body
       ) : null}
     </>
   );

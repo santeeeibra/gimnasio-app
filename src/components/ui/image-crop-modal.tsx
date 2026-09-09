@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { X, ZoomIn, ZoomOut, RotateCw, Check, Circle, Square, RefreshCw } from "lucide-react";
 import { Spinner } from "@/components/ui";
 
@@ -42,6 +43,11 @@ export function ImageCropModal({
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [rotation, setRotation] = useState(0);
   const [isInteracting, setIsInteracting] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Referencias mutables para cálculo táctil y mouse fluido sin saltos
   const panRef = useRef(pan);
@@ -638,15 +644,15 @@ export function ImageCropModal({
     setRotation(0);
   };
 
-  if (!isOpen) return null;
+  if (!mounted || !isOpen) return null;
 
-  return (
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
       aria-label="Recortar foto"
       onClick={onCancel}
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-[color:var(--scrim)] p-3 sm:p-4 backdrop-blur-sm animate-fade-in"
+      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-[color:var(--scrim)] p-3 sm:p-4 backdrop-blur-sm animate-fade-in"
     >
       <div
         onClick={(e) => e.stopPropagation()}
@@ -831,6 +837,7 @@ export function ImageCropModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

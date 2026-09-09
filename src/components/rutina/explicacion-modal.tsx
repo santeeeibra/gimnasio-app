@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X, Sparkles, ChevronRight } from "lucide-react";
 import { useHapticos } from "@/lib/ui/hapticos";
 
@@ -12,7 +13,12 @@ export function ExplicacionModal({
   pasos: string[];
 }) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const hapticos = useHapticos();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   if (pasos.length === 0 && !explicacionGeneral) return null;
 
@@ -31,10 +37,10 @@ export function ExplicacionModal({
       <button
         type="button"
         onClick={handleOpen}
-        className="w-full flex items-center justify-between p-3.5 rounded-[14px] border border-rule bg-paper-2 hover:bg-paper-3 active:scale-[0.99] transition-all shadow-sm group"
+        className="w-full flex items-center justify-between gap-3 p-3.5 rounded-[14px] border border-accent/30 bg-accent/5 hover:bg-accent/10 active:scale-[0.99] transition-all cursor-pointer group"
       >
-        <div className="flex items-center gap-3 min-w-0">
-          <span className="grid size-8 shrink-0 place-items-center rounded-[10px] bg-accent/15 text-accent">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <span className="grid size-7 shrink-0 place-items-center rounded-[8px] bg-accent/20 text-accent">
             <Sparkles className="size-4" />
           </span>
           <span className="text-sm font-semibold text-ink text-left truncate">
@@ -47,13 +53,13 @@ export function ExplicacionModal({
         </div>
       </button>
 
-      {open ? (
+      {mounted && open ? createPortal(
         <div
           role="dialog"
           aria-modal="true"
           aria-label="Explicación de tu rutina"
           onClick={handleClose}
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-[color:var(--scrim)] p-3 sm:p-4 backdrop-blur-sm animate-fade-in"
+          className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-[color:var(--scrim)] p-3 sm:p-4 backdrop-blur-sm animate-fade-in"
         >
           <div
             onClick={(e) => e.stopPropagation()}
@@ -70,7 +76,7 @@ export function ExplicacionModal({
                     ¿Por qué está armada así?
                   </h2>
                   <p className="text-xs text-ink-soft">
-                    Fundamento científico y lógica del plan.
+                    Fundamento científico y estructura recomendada
                   </p>
                 </div>
               </div>
@@ -86,15 +92,15 @@ export function ExplicacionModal({
             </div>
 
             {/* Contenido */}
-            <div className="space-y-3 py-1 text-sm leading-snug">
+            <div className="space-y-4 text-sm leading-relaxed text-ink">
               {explicacionGeneral ? (
-                <div className="p-3.5 rounded-[12px] bg-accent/5 border border-accent/20 text-ink-soft text-xs leading-relaxed">
-                  {explicacionGeneral}
+                <div className="p-3.5 rounded-[14px] bg-paper-2 border border-rule">
+                  <p className="text-xs text-ink-soft whitespace-pre-wrap">{explicacionGeneral}</p>
                 </div>
               ) : null}
 
               {pasos.length > 0 ? (
-                <ol className="space-y-2.5 pt-1">
+                <ol className="space-y-2">
                   {pasos.map((t, i) => (
                     <li
                       key={i}
@@ -110,7 +116,8 @@ export function ExplicacionModal({
               ) : null}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       ) : null}
     </>
   );

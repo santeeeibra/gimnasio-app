@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { pillClasses } from "@/components/ui";
 import { PlanForm } from "./plan-form";
 import { alternarPlan, eliminarPlan, type DescuentoPlan } from "./actions";
@@ -22,19 +23,23 @@ interface PlanesManagerProps {
 }
 
 export function PlanesManager({ planes }: PlanesManagerProps) {
-  const [editandoPlanId, setEditandoPlanId] = useState<string | null>(null);
   const [mostrarNuevoForm, setMostrarNuevoForm] = useState(false);
+  const [editandoPlanId, setEditandoPlanId] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
   const hapticos = useHapticos();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const planEnEdicion = planes.find((p) => p.id === editandoPlanId) ?? null;
 
   return (
-    <div className="space-y-6">
-      {/* BOTÓN SUPERIOR Y MODALES */}
-      <div className="flex justify-between items-center border-b border-rule pb-4">
-        <span className="text-xs text-ink-soft font-medium uppercase tracking-wider">
-          Tus planes ({planes.length})
-        </span>
+    <div className="space-y-4">
+      {/* HEADER DE SECCIÓN */}
+      <div className="flex items-center justify-between gap-3 border-b border-rule pb-3">
+        <h2 className="text-lg font-bold text-ink">Planes vigentes</h2>
+
         <button
           onClick={() => {
             hapticos.medio();
@@ -48,7 +53,7 @@ export function PlanesManager({ planes }: PlanesManagerProps) {
       </div>
 
       {/* MODAL CREAR PLAN */}
-      {mostrarNuevoForm ? (
+      {mounted && mostrarNuevoForm ? createPortal(
         <div
           role="dialog"
           aria-modal="true"
@@ -56,7 +61,7 @@ export function PlanesManager({ planes }: PlanesManagerProps) {
             hapticos.suave();
             setMostrarNuevoForm(false);
           }}
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-[color:var(--scrim)] p-3 sm:p-4 backdrop-blur-sm animate-fade-in"
+          className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-[color:var(--scrim)] p-3 sm:p-4 backdrop-blur-sm animate-fade-in"
         >
           <div
             onClick={(e) => e.stopPropagation()}
@@ -81,11 +86,12 @@ export function PlanesManager({ planes }: PlanesManagerProps) {
             </div>
             <PlanForm onCancel={() => setMostrarNuevoForm(false)} />
           </div>
-        </div>
+        </div>,
+        document.body
       ) : null}
 
       {/* MODAL EDITAR PLAN */}
-      {planEnEdicion ? (
+      {mounted && planEnEdicion ? createPortal(
         <div
           role="dialog"
           aria-modal="true"
@@ -93,7 +99,7 @@ export function PlanesManager({ planes }: PlanesManagerProps) {
             hapticos.suave();
             setEditandoPlanId(null);
           }}
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-[color:var(--scrim)] p-3 sm:p-4 backdrop-blur-sm animate-fade-in"
+          className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-[color:var(--scrim)] p-3 sm:p-4 backdrop-blur-sm animate-fade-in"
         >
           <div
             onClick={(e) => e.stopPropagation()}
@@ -123,7 +129,8 @@ export function PlanesManager({ planes }: PlanesManagerProps) {
               onCancel={() => setEditandoPlanId(null)}
             />
           </div>
-        </div>
+        </div>,
+        document.body
       ) : null}
 
       {/* LISTADO DE PLANES */}

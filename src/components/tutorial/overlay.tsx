@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { linkClasses } from "@/components/ui";
 
 export type Paso = {
@@ -21,8 +22,13 @@ export function Overlay({
   onClose: () => void;
 }) {
   const [i, setI] = useState(0);
+  const [mounted, setMounted] = useState(false);
   const ultimo = i === pasos.length - 1;
   const paso = pasos[i];
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const avanzar = useCallback(() => {
     setI((n) => (n >= pasos.length - 1 ? n : n + 1));
@@ -49,13 +55,15 @@ export function Overlay({
   const demo =
     typeof paso.demo === "function" ? paso.demo({ avanzar }) : paso.demo;
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
       aria-label="Tutorial"
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-end justify-center bg-[color:var(--scrim)] p-4 animate-fade-in sm:items-center"
+      className="fixed inset-0 z-[100] flex items-end justify-center bg-[color:var(--scrim)] p-4 animate-fade-in sm:items-center"
     >
       <div
         onClick={(e) => e.stopPropagation()}
@@ -117,6 +125,7 @@ export function Overlay({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

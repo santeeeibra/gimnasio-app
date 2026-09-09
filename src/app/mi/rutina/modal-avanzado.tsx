@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { SlidersHorizontal, X } from "lucide-react";
 import { GenerarRutinaForm, type AvanzadoDefaults } from "./generar-form";
 import { generarMiRutinaAvanzada } from "./actions";
@@ -23,7 +24,12 @@ export function ModalAvanzadoAfinarPlan({
   } | null;
 }) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const hapticos = useHapticos();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleOpen = () => {
     hapticos.medio();
@@ -40,7 +46,7 @@ export function ModalAvanzadoAfinarPlan({
       <button
         type="button"
         onClick={handleOpen}
-        className="flex w-full items-center justify-between rounded-[12px] border border-rule bg-paper-2 p-3 text-sm font-medium text-ink transition-all duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper-3 hover:border-ink/20 active:scale-[0.99] shadow-sm"
+        className="inline-flex h-11 w-full items-center justify-between gap-2 rounded-[12px] border border-rule bg-paper-2 px-3.5 text-xs font-medium text-ink transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.98] hover:bg-paper hover:border-ink/30 shadow-xs cursor-pointer"
       >
         <div className="flex items-center gap-3 min-w-0">
           <span className="grid size-8 shrink-0 place-items-center rounded-[8px] border border-rule bg-paper text-accent">
@@ -51,13 +57,13 @@ export function ModalAvanzadoAfinarPlan({
         <span className="text-xs font-semibold text-accent shrink-0">Abrir</span>
       </button>
 
-      {open ? (
+      {mounted && open ? createPortal(
         <div
           role="dialog"
           aria-modal="true"
           aria-label="Modo avanzado — afinar el plan"
           onClick={handleClose}
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-[color:var(--scrim)] p-3 sm:p-4 backdrop-blur-sm animate-fade-in"
+          className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-[color:var(--scrim)] p-3 sm:p-4 backdrop-blur-sm animate-fade-in"
         >
           <div
             onClick={(e) => e.stopPropagation()}
@@ -73,8 +79,8 @@ export function ModalAvanzadoAfinarPlan({
                   <h2 className="text-lg font-bold text-ink leading-tight">
                     Modo avanzado
                   </h2>
-                  <p className="text-xs text-ink-soft mt-0.5">
-                    Ajustes de estructura (split), repeticiones, volumen y RIR.
+                  <p className="text-xs text-ink-soft">
+                    Personalizá series, RIR, tempo y técnica por grupo muscular.
                   </p>
                 </div>
               </div>
@@ -89,7 +95,7 @@ export function ModalAvanzadoAfinarPlan({
               </button>
             </div>
 
-            {/* Generador Avanzado Form */}
+            {/* Formulario */}
             <div className="py-1">
               <GenerarRutinaForm
                 action={generarMiRutinaAvanzada}
@@ -109,7 +115,8 @@ export function ModalAvanzadoAfinarPlan({
               />
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       ) : null}
     </>
   );

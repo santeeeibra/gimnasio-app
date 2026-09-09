@@ -9,12 +9,21 @@ export function JitterPoster() {
       
       {/* ── Video Player Completo de Jitter ── */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden bg-[#0a0a0c]">
+        {/* Imagen de fondo de alta definición (fallback si la reproducción de video se retrasa o bloquea en móvil/PC) */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/images/login-poster.png"
+          alt="SysGym Motion"
+          className="absolute inset-0 w-full h-full object-cover object-center scale-[1.01] contrast-[1.05] brightness-[0.98]"
+        />
         <video
           autoPlay
           loop
           muted
           playsInline
-          className="w-full h-full object-cover object-center scale-[1.01] group-hover:scale-[1.04] transition-transform duration-700 ease-out filter contrast-[1.05] brightness-[0.98]"
+          preload="auto"
+          poster="/images/login-poster.png"
+          className="relative z-10 w-full h-full object-cover object-center scale-[1.01] group-hover:scale-[1.04] transition-transform duration-700 ease-out filter contrast-[1.05] brightness-[0.98]"
         >
           <source src="/images/login-poster.mp4" type="video/mp4" />
         </video>

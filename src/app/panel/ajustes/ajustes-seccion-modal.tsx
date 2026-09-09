@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState, useEffect, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { X, ChevronRight } from "lucide-react";
 import { useHapticos } from "@/lib/ui/hapticos";
 
@@ -20,7 +21,12 @@ export function AjustesSeccionModal({
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const hapticos = useHapticos();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleOpen = () => {
     hapticos.medio();
@@ -59,13 +65,13 @@ export function AjustesSeccionModal({
         </button>
       </div>
 
-      {open ? (
+      {mounted && open ? createPortal(
         <div
           role="dialog"
           aria-modal="true"
           aria-label={titulo}
           onClick={handleClose}
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-[color:var(--scrim)] p-3 sm:p-4 backdrop-blur-sm animate-fade-in"
+          className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-[color:var(--scrim)] p-3 sm:p-4 backdrop-blur-sm animate-fade-in"
         >
           <div
             onClick={(e) => e.stopPropagation()}
@@ -94,7 +100,8 @@ export function AjustesSeccionModal({
             {/* Contenido del Formulario */}
             <div className="py-1">{children}</div>
           </div>
-        </div>
+        </div>,
+        document.body
       ) : null}
     </>
   );
