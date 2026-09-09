@@ -116,7 +116,7 @@ export function ModalAvanzadoAfinarPlan({
             </div>
           </div>
         </div>,
-        document.body
+        document.getElementById("portal-root") ?? document.body
       ) : null}
     </>
   );

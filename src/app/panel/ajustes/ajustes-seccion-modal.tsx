@@ -101,7 +101,7 @@ export function AjustesSeccionModal({
             <div className="py-1">{children}</div>
           </div>
         </div>,
-        document.body
+        document.getElementById("portal-root") ?? document.body
       ) : null}
     </>
   );

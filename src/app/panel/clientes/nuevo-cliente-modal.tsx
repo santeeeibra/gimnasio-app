@@ -93,7 +93,7 @@ export function NuevoClienteModal({
             )}
           </div>
         </div>,
-        document.body
+        document.getElementById("portal-root") ?? document.body
       ) : null}
     </>
   );

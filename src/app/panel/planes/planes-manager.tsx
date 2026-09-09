@@ -87,7 +87,7 @@ export function PlanesManager({ planes }: PlanesManagerProps) {
             <PlanForm onCancel={() => setMostrarNuevoForm(false)} />
           </div>
         </div>,
-        document.body
+        document.getElementById("portal-root") ?? document.body
       ) : null}
 
       {/* MODAL EDITAR PLAN */}
@@ -130,7 +130,7 @@ export function PlanesManager({ planes }: PlanesManagerProps) {
             />
           </div>
         </div>,
-        document.body
+        document.getElementById("portal-root") ?? document.body
       ) : null}
 
       {/* LISTADO DE PLANES */}

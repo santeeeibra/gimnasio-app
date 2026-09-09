@@ -110,6 +110,7 @@ export default async function MiLayout({
       </div>
       <MiBottomNav />
       <Tutorial rol="cliente" />
+      <div id="portal-root" />
     </div>
   );
 }
