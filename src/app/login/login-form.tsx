@@ -11,6 +11,7 @@ import {
   ArrowRight,
   ShieldCheck,
 } from "lucide-react";
+import { JitterPoster } from "./jitter-poster";
 import { login, type LoginState } from "./actions";
 import {
   iniciarAudioHaptico,
@@ -104,47 +105,23 @@ export function LoginForm({
         className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:3.5rem_3.5rem] [mask-image:radial-gradient(ellipse_75%_65%_at_50%_10%,#000_65%,transparent_100%)]"
       />
 
-      {/* ── Encabezado / Hero Unificado ── */}
-      <header className="relative z-10 shrink-0 pt-10 pb-4 px-6 md:pt-14 md:pb-8">
-        <div className="max-w-md mx-auto">
-          {/* Badges píldora */}
-          <div className="flex flex-wrap items-center gap-2 mb-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 backdrop-blur-md text-[11px] font-bold tracking-widest uppercase text-volt shadow-[0_2px_10px_rgba(0,0,0,0.4)]">
-              <span className="size-1.5 rounded-full bg-volt animate-pulse" />
-              Gestión de gimnasio
-            </div>
-            <a
-              href="/promo-video/index.html"
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/25 hover:bg-emerald-500/35 border border-emerald-400/50 text-[11px] font-bold tracking-wide uppercase text-emerald-300 backdrop-blur-md transition-all active:scale-95 shadow-[0_0_15px_rgba(34,197,94,0.3)]"
-            >
-              🎬 Ver Video Promo
-            </a>
+      {/* ── Contenedor Principal Unificado con Animación Jitter ── */}
+      <div className="relative z-10 flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 flex items-center justify-center">
+        <div className="w-full grid lg:grid-cols-12 gap-8 items-stretch">
+          
+          {/* Columna Izquierda: Póster Animado estilo Jitter Video */}
+          <div className="lg:col-span-7 flex flex-col justify-center">
+            <JitterPoster />
           </div>
 
-          <h1 className="font-display tracking-tight leading-[0.95] text-[clamp(2.2rem,7.5vw,3.2rem)] font-black">
-            <span className="text-white block">Tu cuota,</span>
-            <span className="text-volt block drop-shadow-[0_0_24px_rgba(205,233,74,0.4)]">
-              tu rutina,
-            </span>
-            <span className="text-white block">tus avisos.</span>
-          </h1>
-
-          <p className="mt-3 text-slate-300 text-[14px] sm:text-[15px] leading-relaxed max-w-sm">
-            Todo lo de tu gimnasio en un lugar. Sin planillas de papel ni grupos
-            de WhatsApp perdidos.
-          </p>
-        </div>
-      </header>
-
-      {/* ── Módulo de Entrada (Card Sólido de Alto Contraste) ── */}
-      <section className="relative z-10 flex-1 px-4 sm:px-6 pb-8 flex items-center">
-        <div className="w-full max-w-md mx-auto">
-          <div className="relative overflow-hidden rounded-[28px] border border-white/[0.16] bg-[#161922] shadow-[0_24px_70px_rgba(0,0,0,0.85)] p-6 sm:p-8">
-            {/* Specular hairline superior */}
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/40 to-transparent"
-            />
+          {/* Columna Derecha: Módulo de Entrada (Card Sólido de Alto Contraste) */}
+          <div className="lg:col-span-5 flex flex-col justify-center">
+            <div className="relative overflow-hidden rounded-[28px] border border-white/[0.16] bg-[#161922] shadow-[0_24px_70px_rgba(0,0,0,0.85)] p-6 sm:p-8">
+              {/* Specular hairline superior */}
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/40 to-transparent"
+              />
 
             <form
               action={formAction}
@@ -386,7 +363,8 @@ export function LoginForm({
             </form>
           </div>
         </div>
-      </section>
+      </div>
+    </div>
 
       {/* ── Pie de página sutil ── */}
       <footer className="relative z-10 shrink-0 pb-6 pt-2 text-center text-xs text-slate-400">
