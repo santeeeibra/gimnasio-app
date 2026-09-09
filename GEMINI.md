@@ -56,6 +56,7 @@ En cualquier cambio de interfaz, aplicar siempre sin preguntar:
 1. **`sysgym-ux-patterns`**: Feedback sensorial con `src/lib/ui/hapticos.ts` (Acoustic Haptics + Taptic Engine + audio sintetizado).
 2. **`apple-design-skill`**: Mobile-first, targets táctiles ≥44px, curvaturas squircle (`rounded-[10px]`, `rounded-[12px]`).
 3. **`60fps-animation`**: Animaciones exclusivas sobre GPU (`transform` y `opacity`).
+4. **`sysgym-mascot-skill`**: Mascota oficial (Pulpo Volt `#10e7a0` en `<PulpoCard />` con fondo fijo, cero cajas blancas y cero solapamientos en UI).
 
 ---
 
