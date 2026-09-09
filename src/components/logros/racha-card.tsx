@@ -3,11 +3,16 @@
 /**
  * Card de racha de constancia en /mi.
  *
- * ESTRUCTURA MÍNIMA — props + gate de visibilidad. Sin estilos ni animación;
- * el diseño final lo hace otra herramienta.
+ * Diseño nativo estilo iOS / SysGym:
+ * - Mascota <Pulpo> dentro de su tarjeta con fondo oscuro fijo (zinc-950).
+ * - Números tabulares monospaciados para días seguidos.
+ * - Micro-interacciones hápticas en acciones de compartir.
  */
 
 import { RACHA_MINIMA_VISIBLE, type ResultadoRacha } from "@/lib/logros/tipos";
+import { PulpoCard } from "@/components/mascota/pulpo";
+import { hapticoImpactoMedio, iniciarAudioHaptico } from "@/lib/ui/hapticos";
+import { Share2, Flame, ShieldCheck } from "lucide-react";
 
 export type RachaCardProps = {
   racha: ResultadoRacha;
@@ -18,15 +23,62 @@ export type RachaCardProps = {
 export function RachaCard({ racha, onCompartir }: RachaCardProps) {
   if (racha.dias < RACHA_MINIMA_VISIBLE) return null;
 
+  function handleCompartir() {
+    iniciarAudioHaptico();
+    hapticoImpactoMedio();
+    onCompartir?.();
+  }
+
   return (
-    <div data-logro="racha">
-      <p>🔥 {racha.dias} días seguidos entrenando</p>
-      {racha.conPerdon && <p>Te salvó el día de perdón</p>}
-      {racha.enHito && (
-        <button type="button" onClick={onCompartir}>
-          Compartir
-        </button>
-      )}
+    <div
+      data-logro="racha"
+      className="relative w-full rounded-[16px] border border-emerald-500/25 bg-zinc-900/90 p-4 shadow-xl backdrop-blur-xl transition-all duration-200"
+    >
+      <div className="flex items-center justify-between gap-3.5">
+        {/* Mascota en tarjeta de fondo fijo (Regla SysGym) */}
+        <PulpoCard
+          size={52}
+          pose="festejo"
+          cardClassName="flex-shrink-0 w-16 h-16 !p-1.5 !rounded-[14px] border-emerald-500/30"
+        />
+
+        {/* Información de la racha */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-emerald-400">
+            <Flame className="w-4 h-4 text-orange-500 animate-pulse fill-orange-500" />
+            <span>Racha activa</span>
+          </div>
+
+          <p className="mt-0.5 text-lg font-bold text-white tracking-tight flex items-baseline gap-1.5">
+            <span className="font-mono tabular-nums text-2xl font-black text-emerald-400">
+              {racha.dias}
+            </span>
+            <span className="text-zinc-300 text-sm font-medium">
+              {racha.dias === 1 ? "día seguido" : "días seguidos"}
+            </span>
+          </p>
+
+          {racha.conPerdon && (
+            <div className="mt-1.5 inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/15 px-2.5 py-0.5 text-[11px] font-semibold text-amber-300">
+              <ShieldCheck className="w-3 h-3 text-amber-400" />
+              <span>Día de perdón aplicado</span>
+            </div>
+          )}
+        </div>
+
+        {/* Botón de compartir en hitos */}
+        {racha.enHito && (
+          <button
+            type="button"
+            onClick={handleCompartir}
+            className="flex-shrink-0 h-11 px-3.5 rounded-[12px] bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/20 active:scale-[0.97] transition-all cursor-pointer"
+          >
+            <Share2 className="w-4 h-4 stroke-[2.5]" />
+            <span>Compartir</span>
+          </button>
+        )}
+      </div>
     </div>
   );
 }
+
