@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import type { ComponentProps } from "react";
+import { hapticoSeleccion } from "@/lib/ui/hapticos";
 
 /** Círculo de carga. Hereda el color del texto (`currentColor`), así sirve
  *  sobre cualquier variante de botón o superficie. */
@@ -153,6 +156,72 @@ export function Select({
       </span>
       {hint ? (
         <span className="block text-xs text-ink-soft mt-1">{hint}</span>
+      ) : null}
+    </label>
+  );
+}
+
+/**
+ * Switch on/off estilo iOS/banking. NO es un checkbox de selección múltiple:
+ * usarlo solo para estados binarios (activar/desactivar una opción).
+ * Envía como `<input type="checkbox" name>` normal → funciona con FormData y
+ * server actions. Soporta uso controlado (`checked` + `onCheckedChange`/`onChange`)
+ * y no controlado (`defaultChecked` + `name`). Dispara háptico de selección.
+ */
+export function Toggle({
+  label,
+  hint,
+  className = "",
+  onChange,
+  onCheckedChange,
+  disabled,
+  ...props
+}: ComponentProps<"input"> & {
+  label?: string;
+  hint?: string;
+  onCheckedChange?: (checked: boolean) => void;
+}) {
+  return (
+    <label
+      className={`flex items-start gap-3 select-none touch-manipulation ${
+        disabled ? "opacity-50" : "cursor-pointer"
+      } ${className}`}
+    >
+      <span className="relative mt-0.5 inline-flex shrink-0">
+        <input
+          type="checkbox"
+          role="switch"
+          disabled={disabled}
+          onChange={(e) => {
+            hapticoSeleccion();
+            onCheckedChange?.(e.currentTarget.checked);
+            onChange?.(e);
+          }}
+          className="peer sr-only"
+          {...props}
+        />
+        <span
+          aria-hidden
+          className="block h-[30px] w-[50px] rounded-full border border-rule bg-paper-3 transition-colors duration-200 [transition-timing-function:var(--ease-out)] peer-checked:border-volt peer-checked:bg-volt peer-focus-visible:ring-2 peer-focus-visible:ring-ink/25"
+        />
+        <span
+          aria-hidden
+          className="pointer-events-none absolute left-[3px] top-[3px] size-[24px] rounded-full bg-paper shadow-[0_1px_3px_rgb(0_0_0_/_0.28)] transition-transform duration-200 [transition-timing-function:var(--ease-spring)] peer-checked:translate-x-[20px] peer-active:scale-95"
+        />
+      </span>
+      {label || hint ? (
+        <span className="min-w-0">
+          {label ? (
+            <span className="block text-sm font-medium text-ink">{label}</span>
+          ) : null}
+          {hint ? (
+            <span
+              className={`block text-xs text-ink-soft ${label ? "mt-0.5" : ""}`}
+            >
+              {hint}
+            </span>
+          ) : null}
+        </span>
       ) : null}
     </label>
   );

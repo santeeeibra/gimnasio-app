@@ -56,7 +56,7 @@ export default async function PanelLayout({
           logo={gym?.logo_url ?? null}
           esSuper={esSuper}
         />
-        <main className="w-full max-w-7xl xl:max-w-[1440px] flex-1 p-4 sm:p-6 pb-24 md:p-8 md:pb-10">
+        <main className="w-full max-w-7xl xl:max-w-[1440px] flex-1 p-4 sm:p-6 pb-28 md:p-8 md:pb-10">
           <PullToRefresh>{children}</PullToRefresh>
         </main>
       </div>

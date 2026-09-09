@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import { diasRestantes, estadoDesdeDias } from "@/lib/cuota";
+import { hapticoImpactoSuave } from "@/lib/ui/hapticos";
 import { RenovarBtn } from "./renovar-btn";
 
 export type ClienteVista = {
@@ -13,16 +16,27 @@ export type ClienteVista = {
   plan: { nombre: string } | null;
 };
 
-const RAIL: Record<string, string> = {
-  al_dia: "border-l-rule",
-  por_vencer: "border-l-volt",
-  vencido: "border-l-danger",
-};
-
 const TONE: Record<string, string> = {
   al_dia: "text-ink-soft",
   por_vencer: "text-ink",
   vencido: "text-danger",
+};
+
+/** Chip de estado de cuota: jerarquía visual fuerte, color del tema. */
+const CHIP: Record<string, string> = {
+  al_dia: "bg-ok/12 text-ok border border-ok/30",
+  por_vencer: "bg-volt/25 text-ink border border-volt/50",
+  vencido: "bg-danger text-paper border border-danger",
+  en_prueba: "bg-paper-3 text-ink-soft border border-rule",
+  prueba_vencida: "bg-danger text-paper border border-danger",
+};
+
+const CHIP_LABEL: Record<string, string> = {
+  al_dia: "Al día",
+  por_vencer: "Por vencer",
+  vencido: "Vencido",
+  en_prueba: "En prueba",
+  prueba_vencida: "Prueba vencida",
 };
 
 function contador(dias: number | null) {
@@ -44,10 +58,13 @@ export function ClienteRow({
   const estado = estadoDesdeDias(dias);
   const { kicker, valor } = contador(dias);
   const enPrueba = !!cliente.en_prueba;
-  // Atajo de renovación: solo cuando ya está por vencer/vencido y tiene un plan
-  // asignado (para no ensuciar la lista de los que están al día).
-  const puedeRenovar =
-    !enPrueba && !!cliente.plan_id && estado !== "al_dia";
+  const puedeRenovar = !enPrueba && !!cliente.plan_id && estado !== "al_dia";
+
+  const chipKey = pruebaVencida
+    ? "prueba_vencida"
+    : enPrueba
+      ? "en_prueba"
+      : estado;
 
   const iniciales = cliente.profile?.nombre
     ? cliente.profile.nombre
@@ -60,58 +77,65 @@ export function ClienteRow({
     : "👤";
 
   return (
-    <li className={`flex items-stretch border-l-[3px] ${RAIL[estado]}`}>
+    <li className="overflow-hidden rounded-[18px] border border-rule bg-paper-2 shadow-[0_1px_2px_rgb(0_0_0_/_0.05)] transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.99]">
       <Link
         href={`/panel/clientes/${cliente.id}`}
-        className="flex flex-1 items-center justify-between gap-4 px-4 py-3.5 transition-colors duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper active:bg-paper"
+        onClick={() => hapticoImpactoSuave()}
+        className="block p-4 transition-colors duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper/50 active:bg-paper/50"
       >
-        <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-center gap-3">
           {cliente.foto_url ? (
             /* eslint-disable-next-line @next/next/no-img-element */
             <img
               src={cliente.foto_url}
               alt=""
-              className="size-10 rounded-full object-cover shrink-0 border border-rule bg-paper-2"
+              className="size-11 shrink-0 rounded-full border border-rule bg-paper-2 object-cover"
             />
           ) : (
-            <span className="size-10 rounded-full bg-paper-3 text-ink-soft border border-rule grid place-items-center text-xs font-semibold shrink-0 uppercase tracking-wider">
+            <span className="grid size-11 shrink-0 place-items-center rounded-full border border-rule bg-paper-3 text-xs font-semibold uppercase tracking-wider text-ink-soft">
               {iniciales}
             </span>
           )}
 
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <p className="truncate text-[15px] font-medium">
-                {cliente.profile?.nombre ?? "—"}
-              </p>
-              {pruebaVencida ? (
-                <span className="shrink-0 rounded-full border border-danger px-2 py-0.5 text-[11px] font-medium leading-none text-danger">
-                  Prueba vencida
-                </span>
-              ) : enPrueba ? (
-                <span className="shrink-0 rounded-full border border-rule px-2 py-0.5 text-[11px] font-medium leading-none text-ink-soft">
-                  En prueba
-                </span>
-              ) : null}
-            </div>
-            <p className="mt-0.5 truncate text-xs text-ink-soft">
-              DNI {cliente.profile?.dni} · {cliente.plan?.nombre ?? "sin plan"}
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[15px] font-medium leading-tight">
+              {cliente.profile?.nombre ?? "—"}
+            </p>
+            <p className="mt-1 truncate text-xs text-ink-soft">
+              DNI {cliente.profile?.dni ?? "—"} ·{" "}
+              {cliente.plan?.nombre ?? "sin plan"}
             </p>
           </div>
         </div>
-        <div className="shrink-0 text-right">
-          <p className="text-[11px] uppercase tracking-[0.08em] text-ink-soft">
-            {kicker}
-          </p>
-          <p
-            className={`font-display text-2xl leading-none tracking-tight ${TONE[estado]}`}
+
+        <div className="mt-3.5 flex items-end justify-between gap-3">
+          <span
+            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.06em] leading-none ${CHIP[chipKey]}`}
           >
-            {valor}
-          </p>
+            <span
+              aria-hidden
+              className="size-1.5 rounded-full bg-current opacity-80"
+            />
+            {CHIP_LABEL[chipKey]}
+          </span>
+
+          <span className="shrink-0 text-right">
+            <span className="block text-[10px] uppercase tracking-[0.08em] text-ink-soft">
+              {kicker}
+            </span>
+            <span
+              className={`font-display text-xl leading-none tracking-tight ${TONE[estado]}`}
+            >
+              {valor}
+            </span>
+          </span>
         </div>
       </Link>
+
       {puedeRenovar && cliente.plan_id ? (
-        <RenovarBtn clienteId={cliente.id} planId={cliente.plan_id} />
+        <div className="flex justify-end border-t border-rule bg-paper/40 px-3 py-2">
+          <RenovarBtn clienteId={cliente.id} planId={cliente.plan_id} />
+        </div>
       ) : null}
     </li>
   );

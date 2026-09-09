@@ -3,7 +3,7 @@
 import { useActionState, useState } from "react";
 import { actualizarReposoCheckin, type AjustesState } from "./actions";
 import { Radios } from "./radios";
-import { Button } from "@/components/ui";
+import { Button, Toggle } from "@/components/ui";
 import type { ReposoCheckin } from "@/lib/tema";
 
 const INPUT_CLS =
@@ -31,23 +31,13 @@ export function ReposoCheckinForm({
     <form action={formAction} className="space-y-5">
       <input type="hidden" name="gimnasio_id" value={gimnasioId} />
 
-      <label className="flex items-start gap-3 cursor-pointer">
-        <input
-          type="checkbox"
-          name="activo"
-          checked={activo}
-          onChange={(e) => setActivo(e.target.checked)}
-          className="size-[18px] shrink-0 mt-0.5 accent-[var(--accent)]"
-        />
-        <span className="min-w-0">
-          <span className="block text-sm font-medium text-ink">
-            Activar pantalla de reposo
-          </span>
-          <span className="block text-xs text-ink-soft mt-0.5">
-            Si lo apagás, la pantalla de check-in siempre muestra el DNI.
-          </span>
-        </span>
-      </label>
+      <Toggle
+        name="activo"
+        checked={activo}
+        onCheckedChange={setActivo}
+        label="Activar pantalla de reposo"
+        hint="Si lo apagás, la pantalla de check-in siempre muestra el DNI."
+      />
 
       <div
         className={`space-y-5 transition-opacity duration-150 [transition-timing-function:var(--ease-out)] ${
@@ -92,24 +82,22 @@ export function ReposoCheckinForm({
         </label>
 
         <div className="space-y-2">
-          <label className="flex items-center gap-3 cursor-pointer p-3 rounded-[5px] border border-rule bg-paper-2">
-            <input
-              type="checkbox"
+          <div className="rounded-[10px] border border-rule bg-paper-2 p-3">
+            <Toggle
               name="mostrarReloj"
               defaultChecked={reposo.mostrarReloj}
-              className="size-[18px] shrink-0 accent-[var(--accent)]"
+              label="Mostrar la hora"
+              className="items-center"
             />
-            <span className="text-sm text-ink">Mostrar la hora</span>
-          </label>
-          <label className="flex items-center gap-3 cursor-pointer p-3 rounded-[5px] border border-rule bg-paper-2">
-            <input
-              type="checkbox"
+          </div>
+          <div className="rounded-[10px] border border-rule bg-paper-2 p-3">
+            <Toggle
               name="mostrarLogo"
               defaultChecked={reposo.mostrarLogo}
-              className="size-[18px] shrink-0 accent-[var(--accent)]"
+              label="Mostrar el logo del gimnasio"
+              className="items-center"
             />
-            <span className="text-sm text-ink">Mostrar el logo del gimnasio</span>
-          </label>
+          </div>
         </div>
 
         <Radios

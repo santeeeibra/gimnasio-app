@@ -30,12 +30,20 @@ export async function login(
   const admin = createAdminClient();
   const { data: gym } = await admin
     .from("gimnasios")
-    .select("slug, nombre")
+    .select("slug, nombre, estado")
     .or(`slug.eq.${gimnasio},nombre.ilike.${gimnasio}`)
     .limit(1)
     .maybeSingle();
 
   if (!gym) return { error: "No encontramos ese gimnasio." };
+
+  // Gimnasio suspendido por soporte: se corta acá, antes de generar sesión.
+  if (gym.estado === "suspendido") {
+    return {
+      error:
+        "Este gimnasio está suspendido temporalmente. Escribinos a soporte para reactivarlo.",
+    };
+  }
 
   const supabase = await createClient();
   const { data: authData, error } = await supabase.auth.signInWithPassword({

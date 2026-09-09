@@ -3,18 +3,22 @@
 import { useActionState } from "react";
 import { cambiarEstadoGimnasio } from "../../actions";
 import { Button } from "@/components/ui";
+import { hapticoImpactoMedio, hapticoError } from "@/lib/ui/hapticos";
 
 const OPCIONES: { value: string; label: string }[] = [
   { value: "prueba", label: "Prueba" },
   { value: "activo", label: "Activo" },
   { value: "solo_lectura", label: "Solo lectura" },
+  { value: "suspendido", label: "Suspendido (corta el login)" },
 ];
 
 export function EstadoForm({
   gimnasioId,
+  gimnasioNombre,
   estadoActual,
 }: {
   gimnasioId: string;
+  gimnasioNombre: string;
   estadoActual: string | null;
 }) {
   const [state, formAction, pending] = useActionState(
@@ -23,7 +27,26 @@ export function EstadoForm({
   );
 
   return (
-    <form action={formAction} className="flex flex-wrap items-center gap-2">
+    <form
+      action={formAction}
+      onSubmit={(e) => {
+        const estado = new FormData(e.currentTarget).get("estado");
+        if (estado === "suspendido") {
+          const ok = window.confirm(
+            `¿Suspender "${gimnasioNombre || "este gimnasio"}"?\n\n` +
+              "Corta el acceso de login del dueño Y de todos los socios: " +
+              'van a ver "contactá a soporte". El dueño NO puede revertirlo solo.',
+          );
+          if (!ok) {
+            e.preventDefault();
+            hapticoError();
+            return;
+          }
+        }
+        hapticoImpactoMedio();
+      }}
+      className="flex flex-wrap items-center gap-2"
+    >
       <input type="hidden" name="gimnasio_id" value={gimnasioId} />
       <select
         name="estado"

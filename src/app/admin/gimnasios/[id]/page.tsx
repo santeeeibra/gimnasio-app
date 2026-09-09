@@ -7,6 +7,7 @@ import { entrarComoAction } from "../../impersonar-actions";
 import { Button, linkClasses, pillClasses } from "@/components/ui";
 import { cupoExcedido, cupoTexto } from "@/lib/plataforma/planes";
 import { EstadoForm } from "./estado-form";
+import { NotaInternaForm } from "./nota-interna-form";
 import { PlanPlataformaForm } from "./plan-plataforma-form";
 import { PagosPlataforma, type PagoPlataformaRow } from "./pagos-plataforma";
 import { DisparadoresSocio } from "./disparadores-socio";
@@ -27,7 +28,7 @@ export default async function AdminGimnasioDetalle({
   const { data: gym } = await db
     .from("gimnasios")
     .select(
-      "id, nombre, slug, estado, dias_aviso_morosidad, creado_at, plan_plataforma_vence_el, plan:planes_plataforma(id, nombre, max_socios, precio_mensual)",
+      "id, nombre, slug, estado, nota_interna, dias_aviso_morosidad, creado_at, plan_plataforma_vence_el, plan:planes_plataforma(id, nombre, max_socios, precio_mensual)",
     )
     .eq("id", id)
     .single();
@@ -187,10 +188,28 @@ export default async function AdminGimnasioDetalle({
           Estado del gimnasio
         </h2>
         <p className="mb-4 text-xs text-ink-soft">
-          <code>solo_lectura</code> bloquea toda escritura del dueño y los socios
-          (para probar el modo trial vencido).
+          <code>solo_lectura</code> bloquea la escritura del dueño y los socios
+          (trial vencido, deja leer). <code>suspendido</code> corta el login
+          completo de dueño y socios.
         </p>
-        <EstadoForm gimnasioId={gym.id} estadoActual={gym.estado} />
+        <EstadoForm
+          gimnasioId={gym.id}
+          gimnasioNombre={gym.nombre ?? ""}
+          estadoActual={gym.estado}
+        />
+      </div>
+
+      <div className="card-cut mb-8 border border-rule bg-paper-2 p-5">
+        <h2 className="mb-1 text-sm uppercase tracking-[0.14em] text-ink-soft">
+          Nota interna
+        </h2>
+        <p className="mb-4 text-xs text-ink-soft">
+          Privada del equipo de soporte. El dueño nunca la ve.
+        </p>
+        <NotaInternaForm
+          gimnasioId={gym.id}
+          notaActual={gym.nota_interna ?? ""}
+        />
       </div>
 
       <div className="card-cut mb-8 border border-rule bg-paper-2 p-5">

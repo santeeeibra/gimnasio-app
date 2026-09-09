@@ -46,6 +46,21 @@ export async function requireProfile(): Promise<Profile> {
     // Al dueño se le da a elegir en /bienvenida; al cliente se lo fuerza como antes.
     redirect(profile.rol === "dueno" ? "/bienvenida" : "/cambiar-clave");
   }
+
+  // Gate de gimnasio suspendido: corta el acceso de dueño y socios (el login
+  // ya lo bloquea al generar sesión; esto cubre las sesiones ya abiertas).
+  // El superadmin impersonando (cookie STASH) conserva el acceso para depurar.
+  const jar = await cookies();
+  if (!jar.get("sb-super-stash")?.value) {
+    const db = createAdminClient();
+    const { data: gym } = await db
+      .from("gimnasios")
+      .select("estado")
+      .eq("id", profile.gimnasio_id)
+      .maybeSingle();
+    if (gym?.estado === "suspendido") redirect("/suspendido");
+  }
+
   return profile;
 }
 

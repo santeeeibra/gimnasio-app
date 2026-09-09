@@ -31,6 +31,7 @@ type AccionAdmin =
   | "activar_gimnasio_disponible"
   | "crear_gimnasio"
   | "resetear_clave"
+  | "actualizar_nota_interna"
   | "importar_socios";
 
 // Traduce (action, meta) a un texto legible para la notificación al

@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useMemo, useState } from "react";
 import { actualizarTema, type AjustesState } from "./actions";
-import { Button, linkClasses } from "@/components/ui";
+import { Button, Toggle, linkClasses } from "@/components/ui";
 import {
   CAMPOS_COLOR,
   DEFAULT_TEMA,
@@ -600,34 +600,11 @@ export function AjustesForm({
         <div className="space-y-4">
           {/* Checkbox de confirmación */}
           {resultado.hayFallos && !bloqueos.bloqueado ? (
-            <label className="flex items-start gap-3 cursor-pointer group active:scale-[0.99] transition-transform duration-150 [transition-timing-function:var(--ease-out)]">
-              <div className="relative size-[18px] shrink-0 mt-0.5">
-                <input
-                  type="checkbox"
-                  checked={confirmarBajoContraste}
-                  onChange={(e) => setConfirmarBajoContraste(e.target.checked)}
-                  className="peer sr-only"
-                />
-                <div className="size-[18px] rounded-[4px] border border-rule peer-checked:bg-ink peer-checked:border-ink transition-colors duration-150 [transition-timing-function:var(--ease-out)]" />
-                {confirmarBajoContraste ? (
-                  <svg
-                    className="absolute inset-0 m-auto size-3 text-paper pointer-events-none"
-                    fill="none"
-                    viewBox="0 0 12 12"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <polyline points="2,6 5,9 10,3" />
-                  </svg>
-                ) : null}
-              </div>
-              <span className="text-sm text-ink-soft">
-                Entiendo que algunas combinaciones pueden costar leerse y quiero
-                guardar igual
-              </span>
-            </label>
+            <Toggle
+              checked={confirmarBajoContraste}
+              onCheckedChange={setConfirmarBajoContraste}
+              hint="Entiendo que algunas combinaciones pueden costar leerse y quiero guardar igual"
+            />
           ) : null}
 
           {confirmarBajoContraste && resultado.hayFallos ? (

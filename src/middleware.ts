@@ -5,6 +5,7 @@ type CookieToSet = { name: string; value: string; options: CookieOptions };
 
 const PUBLIC_PATHS = [
   "/login",
+  "/suspendido",
   "/reset-clave",
   "/_next",
   "/favicon.ico",

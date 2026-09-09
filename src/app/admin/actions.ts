@@ -8,7 +8,7 @@ import { registrarAccionAdmin } from "@/lib/admin/audit";
 import { aprobarPagoPlataforma } from "@/lib/plataforma/aprobar-pago";
 import { rechazarPagoPlataforma as ejecutarRechazoPagoPlataforma } from "@/lib/plataforma/rechazar-pago";
 
-const ESTADOS = ["prueba", "activo", "solo_lectura"] as const;
+const ESTADOS = ["prueba", "activo", "solo_lectura", "suspendido"] as const;
 type EstadoGym = (typeof ESTADOS)[number];
 
 // Cambia gimnasios.estado desde la consola de soporte (para probar el modo
@@ -37,7 +37,35 @@ export async function cambiarEstadoGimnasio(
     estado,
   });
   revalidatePath(`/admin/gimnasios/${gimnasioId}`);
+  revalidatePath("/admin/gimnasios");
   return { ok: true, msg: `Estado cambiado a "${estado}".` };
+}
+
+// Nota interna del superadmin sobre un gimnasio. Solo se lee/escribe desde
+// /admin (service_role); el dueño nunca la ve. Superadmin, auditado.
+export async function actualizarNotaInterna(
+  _prev: { ok: boolean; msg: string } | null,
+  formData: FormData,
+): Promise<{ ok: boolean; msg: string }> {
+  const admin = await requireSuperadmin();
+  const gimnasioId = String(formData.get("gimnasio_id") ?? "");
+  const notaRaw = String(formData.get("nota_interna") ?? "").trim();
+  if (!gimnasioId) return { ok: false, msg: "Falta el gimnasio." };
+  const nota = notaRaw.slice(0, 1000) || null;
+
+  const db = createAdminClient();
+  const { error } = await db
+    .from("gimnasios")
+    .update({ nota_interna: nota })
+    .eq("id", gimnasioId);
+  if (error) return { ok: false, msg: error.message };
+
+  await registrarAccionAdmin(admin.id, "actualizar_nota_interna", gimnasioId, {
+    tiene_nota: nota != null,
+  });
+  revalidatePath(`/admin/gimnasios/${gimnasioId}`);
+  revalidatePath("/admin/gimnasios");
+  return { ok: true, msg: nota ? "Nota guardada." : "Nota borrada." };
 }
 
 // ── Planes de plataforma (PLAN_PLANES_PLATAFORMA.md, fase 2) ──

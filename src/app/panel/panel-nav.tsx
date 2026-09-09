@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logout } from "@/app/actions";
 import { pillClasses } from "@/components/ui";
+import { hapticoSeleccion } from "@/lib/ui/hapticos";
 import {
   CreditCard,
   Inbox,
@@ -195,41 +196,44 @@ export function PanelTopbar({
   );
 }
 
-/** Mobile: navegación fija abajo, siempre a 1 tap. */
+/**
+ * Mobile: barra flotante con blur, despegada de los bordes. Primer paso del
+ * rediseño de navegación a ventanas superpuestas (pedido reunión de ventas
+ * 08/09): la nav queda como capa fija y las secciones podrán abrirse encima.
+ */
 export function PanelBottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="md:hidden fixed bottom-0 inset-x-0 z-20 flex border-t border-rule bg-paper/95 backdrop-blur-sm pb-[env(safe-area-inset-bottom)]">
-      {NAV_MOBILE.map((item) => {
-        const active = isActive(pathname, item.href);
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            prefetch={true}
-            aria-current={active ? "page" : undefined}
-            className={`relative flex-1 flex min-h-14 flex-col items-center justify-center gap-1 py-2 text-[11px] tracking-tight touch-manipulation active:scale-95 transition-[transform,color] duration-150 [transition-timing-function:var(--ease-out)] ${
-              active ? "text-ink" : "text-ink-soft"
-            }`}
-          >
-            <span
-              aria-hidden
-              className={`absolute top-0 h-0.5 w-8 rounded-full transition-colors duration-150 [transition-timing-function:var(--ease-out)] ${
-                active ? "bg-volt" : "bg-transparent"
+    <div className="md:hidden pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center px-3 pb-[calc(env(safe-area-inset-bottom,0px)+0.55rem)] pt-2">
+      <nav className="pointer-events-auto flex w-full max-w-md items-stretch gap-0.5 rounded-[22px] border border-rule/70 bg-paper/70 p-1.5 shadow-[0_10px_34px_rgb(0_0_0_/_0.18)] backdrop-blur-xl backdrop-saturate-150">
+        {NAV_MOBILE.map((item) => {
+          const active = isActive(pathname, item.href);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              prefetch={true}
+              onClick={() => hapticoSeleccion()}
+              aria-current={active ? "page" : undefined}
+              className={`relative flex min-h-[52px] flex-1 flex-col items-center justify-center gap-1 rounded-[16px] px-0.5 py-1.5 text-[10px] tracking-tight touch-manipulation transition-[transform,background-color,color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-90 ${
+                active
+                  ? "bg-ink text-paper"
+                  : "text-ink-soft hover:text-ink"
               }`}
-            />
-            <item.Icono
-              aria-hidden
-              strokeWidth={active ? 2.2 : 1.8}
-              className="size-5"
-            />
-            <span className={active ? "font-medium" : undefined}>
-              {item.corto ?? item.label}
-            </span>
-          </Link>
-        );
-      })}
-    </nav>
+            >
+              <item.Icono
+                aria-hidden
+                strokeWidth={active ? 2.2 : 1.8}
+                className="size-5 shrink-0"
+              />
+              <span className={active ? "font-semibold" : undefined}>
+                {item.corto ?? item.label}
+              </span>
+            </Link>
+          );
+        })}
+      </nav>
+    </div>
   );
 }
