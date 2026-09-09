@@ -1,19 +1,12 @@
 "use client";
 
 /**
- * Splash de arranque en frío (cold start). Cubre la pantalla con la mascota
- * feliz + el nombre "SysGym" sobre el fondo del tema del gimnasio, y hace
- * fade al contenido real después de ~1s.
- *
- * Sólo se ve una vez por sesión: un flag en `sessionStorage` evita que
- * reaparezca en cada navegación interna (SPA) o re-render de layout. Al abrir
- * la app de cero (pestaña/PWA nueva) el flag no existe → se muestra.
- *
- * Fondo y texto usan tokens de tema (`--paper` / `--ink` / `--app-font-display`).
- * La mascota tiene color de marca fijo.
+ * Splash de arranque en frío (cold start).
+ * Cubre la pantalla con la mascota en su tarjeta de fondo fijo + el nombre "SysGym".
  */
 
 import { useEffect, useState } from "react";
+import { PulpoCard } from "@/components/mascota/pulpo";
 
 const FLAG = "sysgym:splash:v1";
 const VISIBLE_MS = 1000;
@@ -36,20 +29,15 @@ export function SplashScreen() {
     try {
       sessionStorage.setItem(FLAG, "1");
     } catch {
-      /* modo privado: se mostrará de nuevo, no es crítico */
+      /* modo privado */
     }
 
-    const reduce = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const visibleMs = reduce ? 500 : VISIBLE_MS;
 
     setFase("visible");
     const tSalida = window.setTimeout(() => setFase("saliendo"), visibleMs);
-    const tFin = window.setTimeout(
-      () => setFase("idle"),
-      visibleMs + FADE_MS,
-    );
+    const tFin = window.setTimeout(() => setFase("idle"), visibleMs + FADE_MS);
     return () => {
       window.clearTimeout(tSalida);
       window.clearTimeout(tFin);
@@ -65,17 +53,19 @@ export function SplashScreen() {
       role="status"
       aria-label="Abriendo SysGym"
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/mascota/expresiones/01_feliz.png"
-        alt=""
-        className="splash-screen__mascota"
-        decoding="async"
-        draggable={false}
-      />
-      <span className="splash-screen__nombre">SysGym</span>
+      <div className="flex flex-col items-center justify-center gap-3">
+        <PulpoCard
+          size={110}
+          pose="festejo"
+          cardClassName="!p-5 !rounded-[24px] shadow-2xl border-emerald-500/40 animate-in zoom-in-95"
+        />
+        <span className="splash-screen__nombre text-white font-black text-xl tracking-tight">
+          SysGym
+        </span>
+      </div>
     </div>
   );
 }
 
 export default SplashScreen;
+

@@ -1,88 +1,44 @@
 "use client";
 
 /**
- * Indicador de carga oficial de SysGym: la mascota (pulpo volt-green)
- * corriendo en loop. Reemplaza los spinners genéricos (Suspense fallbacks,
- * estados de carga de Server Actions, etc.).
- *
- * Sprite swap manual con setInterval (~100ms/frame) sobre los 8 PNG de
- * `public/mascota/corriendo/`. El intervalo se limpia al desmontar.
- * Con `prefers-reduced-motion: reduce` no anima: muestra un solo frame.
- *
- * La mascota tiene color de marca FIJO — no depende del tema del gimnasio —
- * pero el layout y el texto sí usan tokens de tema.
+ * Indicador de carga oficial de SysGym: la mascota (pulpo volt-green).
+ * Reemplaza los spinners genéricos con la mascota SVG oficial sobre tarjeta
+ * de fondo oscuro fijo sin parpadeos ni cajas blancas de PNG.
  */
 
-import { useEffect, useRef, useState } from "react";
-
-const TOTAL_FRAMES = 8;
-const FRAMES = Array.from(
-  { length: TOTAL_FRAMES },
-  (_, i) => `/mascota/corriendo/frame${i + 1}.png`,
-);
-const MS_POR_FRAME = 100;
+import { PulpoCard } from "./pulpo";
 
 export type MascotaLoadingProps = {
   /** Lado del sprite en px. */
   size?: number;
-  /** Texto para lectores de pantalla (y opcionalmente visible). */
+  /** Texto para lectores de pantalla. */
   label?: string;
-  /** Muestra el label debajo de la mascota. */
   mostrarLabel?: boolean;
   className?: string;
 };
 
 export function MascotaLoading({
-  size = 64,
+  size = 48,
   label = "Cargando…",
   mostrarLabel = false,
   className = "",
 }: MascotaLoadingProps) {
-  const [frame, setFrame] = useState(0);
-  const reduceRef = useRef(false);
-
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    reduceRef.current = mq.matches;
-    if (mq.matches) return;
-
-    const id = window.setInterval(() => {
-      setFrame((f) => (f + 1) % TOTAL_FRAMES);
-    }, MS_POR_FRAME);
-    return () => window.clearInterval(id);
-  }, []);
-
   return (
     <div
       role="status"
       aria-live="polite"
       className={`flex flex-col items-center justify-center gap-2 ${className}`}
     >
-      {/* Precarga: todos los frames montados, sólo uno visible. Evita el
-          parpadeo del primer ciclo y el layout shift. */}
-      <div
-        className="relative shrink-0"
-        style={{ width: size, height: size }}
-        aria-hidden
-      >
-        {FRAMES.map((src, i) => (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            key={src}
-            src={src}
-            alt=""
-            width={size}
-            height={size}
-            decoding="async"
-            draggable={false}
-            className="absolute inset-0 h-full w-full object-contain select-none"
-            style={{ opacity: i === frame ? 1 : 0 }}
-          />
-        ))}
+      <div className="relative shrink-0 flex items-center justify-center animate-bounce duration-700">
+        <PulpoCard
+          size={size}
+          pose="festejo"
+          cardClassName="!p-2.5 !rounded-full shadow-lg border-emerald-500/40"
+        />
       </div>
 
       {mostrarLabel ? (
-        <span className="text-sm text-ink-soft">{label}</span>
+        <span className="text-xs font-bold text-emerald-400 tracking-wide">{label}</span>
       ) : (
         <span className="sr-only">{label}</span>
       )}
@@ -91,3 +47,4 @@ export function MascotaLoading({
 }
 
 export default MascotaLoading;
+

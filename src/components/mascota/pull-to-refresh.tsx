@@ -43,7 +43,7 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
         }}
       >
         <div
-          className="mt-2 rounded-full border border-rule bg-paper-2 p-1.5 shadow-sm"
+          className="mt-2 rounded-full border border-emerald-500/30 bg-zinc-950 p-1 shadow-xl backdrop-blur-xl"
           style={{
             transform: `scale(${refrescando ? 1 : 0.6 + progreso * 0.4})`,
             transition: arrastrando ? "none" : "transform 200ms var(--ease-out)",
