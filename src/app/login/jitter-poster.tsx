@@ -1,40 +1,23 @@
 "use client";
 
-import { useState } from "react";
 import { Play } from "lucide-react";
 import { hapticoImpactoSuave } from "@/lib/ui/hapticos";
 
 export function JitterPoster() {
-  const [hasVideoError, setHasVideoError] = useState(false);
-
   return (
     <div className="relative w-full h-full min-h-[440px] sm:min-h-[540px] lg:min-h-[640px] overflow-hidden rounded-[24px] sm:rounded-[32px] border border-white/20 bg-[#0a0a0c] shadow-[0_24px_80px_rgba(0,0,0,0.9)] group">
       
       {/* ── Video Player Completo de Jitter ── */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {!hasVideoError ? (
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            onError={() => setHasVideoError(true)}
-            poster="https://d1sk5dy9gxckst.cloudfront.net/thumbnails/mwq_fULsuMUf41zwX1dm4.png"
-            className="w-full h-full object-cover object-center scale-[1.01] group-hover:scale-[1.04] transition-transform duration-700 ease-out filter contrast-[1.05] brightness-[0.98]"
-          >
-            <source src="/images/login-poster.mp4" type="video/mp4" />
-          </video>
-        ) : (
-          /* eslint-disable-next-line @next/next/no-img-element */
-          <img
-            src="https://d1sk5dy9gxckst.cloudfront.net/thumbnails/mwq_fULsuMUf41zwX1dm4.png"
-            alt="Athlete Runner Kinetic Poster"
-            className="w-full h-full object-cover object-center scale-[1.01] group-hover:scale-[1.04] transition-transform duration-700 ease-out filter contrast-[1.05] brightness-[0.98]"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = "/images/login-poster.png";
-            }}
-          />
-        )}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden bg-[#0a0a0c]">
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="w-full h-full object-cover object-center scale-[1.01] group-hover:scale-[1.04] transition-transform duration-700 ease-out filter contrast-[1.05] brightness-[0.98]"
+        >
+          <source src="/images/login-poster.mp4" type="video/mp4" />
+        </video>
       </div>
 
       {/* ── Floating Badges (Header Layer) ── */}
