@@ -898,28 +898,28 @@ function ItemFila({
       const r = await editarItem(item.id, {
         series: Number(series) || item.series,
         repeticiones: reps,
-        tecnica: tecnica === "ninguna" ? null : tecnica,
+        nota: item.nota,
       });
-      if (r.ok) {
-        flash("Guardado");
-        onSeriesGuardadas(Number(series) || item.series);
-      } else {
-        flash(r.error ?? "Error al guardar");
+      flash(r.error ?? "Guardado ✓");
+      if (!r.error) {
+        item.series = Number(series) || item.series;
+        item.repeticiones = reps.trim() || item.repeticiones;
+        onSeriesGuardadas(item.series);
       }
     });
   }
 
-  function cambiar(nuevoEj: Ejercicio) {
-    setConfirmacionSolape(null);
+  function cambiar(nuevo: Ejercicio) {
     startTransition(async () => {
-      const r = await reemplazarEjercicioItem(item.id, nuevoEj.id);
-      if (r.ok) {
-        setEj(nuevoEj);
-        setAbrirCambio(false);
-        flash("Ejercicio cambiado");
-      } else {
-        flash(r.error ?? "Error");
+      const r = await sustituirEjercicio(item.id, nuevo.id);
+      if (r.error) {
+        flash(r.error);
+        return;
       }
+      setEj(nuevo);
+      setAbrirCambio(false);
+      setConfirmacionSolape(null);
+      flash("Ejercicio cambiado ✓");
     });
   }
 

@@ -11,6 +11,7 @@ import { MiBottomNav } from "./mi-nav";
 import { Tutorial } from "@/components/tutorial/tutorial";
 import { ImpersonationBanner } from "@/components/impersonation/banner";
 import { OfflineProvider } from "@/components/offline/provider";
+import { SplashScreen } from "@/components/mascota/splash-screen";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -84,6 +85,7 @@ export default async function MiLayout({
     >
       <ImpersonationBanner />
       <OfflineProvider />
+      <SplashScreen />
       {gym?.logo_url ? (
         <header className="sticky top-0 z-30 flex items-center gap-2.5 border-b border-rule bg-paper/95 backdrop-blur-md px-5 pb-2.5 pt-[calc(env(safe-area-inset-top,0px)+0.625rem)]">
           <span className="size-8 shrink-0 overflow-hidden rounded-[6px] border border-rule bg-paper-2">

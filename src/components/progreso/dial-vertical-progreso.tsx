@@ -15,6 +15,7 @@ import {
   hapticoExito,
   hapticoError,
 } from "@/lib/ui/hapticos";
+import { CartelLogro, type CartelLogroProps } from "@/components/logros/cartel-logro";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DialVerticalProgreso — Dial vertical de regla estilo iOS para cada ejercicio
@@ -51,6 +52,7 @@ export function DialVerticalProgreso({
 
   const [state, formAction, pending] = useActionState(action, {});
   const [feedbackOk, setFeedbackOk] = useState(false);
+  const [cartelLogroData, setCartelLogroData] = useState<CartelLogroProps | null>(null);
 
   // Cargar último peso registrado como punto de partida
   useEffect(() => {
@@ -231,7 +233,19 @@ export function DialVerticalProgreso({
 
   useEffect(() => {
     if (state.ok) {
-      hapticoExito();
+      if (state.record?.esRecord) {
+        setCartelLogroData({
+          tipo: "record",
+          titulo: `¡Nuevo Récord Personal!`,
+          subtitulo: `Superaste tu marca en ${state.record.ejercicioNombre ?? "este ejercicio"} alcanzando ${state.record.pesoKg} kg (anterior: ${state.record.pesoAnteriorKg ?? 0} kg).`,
+          gimnasioNombre: state.record.gimnasioNombre ?? "Mi Gimnasio",
+          colores: { paper: "#09090b", ink: "#ffffff", volt: "#10e7a0", voltInk: "#09090b" },
+          whatsapp: { pesoKg: state.record.pesoKg, ejercicio: state.record.ejercicioNombre ?? "Ejercicio" },
+          onCerrar: () => setCartelLogroData(null),
+        });
+      } else {
+        hapticoExito();
+      }
       setFeedbackOk(true);
       const t = setTimeout(() => setFeedbackOk(false), 2000);
       return () => clearTimeout(t);
@@ -241,72 +255,75 @@ export function DialVerticalProgreso({
   }, [state]);
 
   return (
-    <form
-      action={formAction}
-      className="flex flex-col items-center w-[68px] rounded-[10px] border border-rule/70 bg-paper-2/90 p-1 select-none"
-    >
-      <input type="hidden" name="ejercicio_id" value={ejercicioId} />
-      <input type="hidden" name="peso" value={peso} />
+    <>
+      <form
+        action={formAction}
+        className="flex flex-col items-center w-[68px] rounded-[10px] border border-rule/70 bg-paper-2/90 p-1 select-none"
+      >
+        <input type="hidden" name="ejercicio_id" value={ejercicioId} />
+        <input type="hidden" name="peso" value={peso} />
 
-      {/* Valor digital en naranja ámbar */}
-      <div className="flex flex-col items-center leading-none pt-0.5">
-        {esCorporal && (
-          <span className="text-[8px] font-extrabold uppercase tracking-wider text-[#ff9f0a] bg-[#ff9f0a]/20 px-1 py-0.5 rounded-[4px] mb-0.5">
-            Lastre
-          </span>
-        )}
-        <div className="flex items-baseline justify-center gap-0.5">
-          <span
-            className="text-[13px] font-bold text-[#ff9f0a] tabular-nums"
-            style={{
-              fontFamily: "var(--font-hero, system-ui)",
-              textShadow: "0 0 10px rgba(255, 159, 10, 0.35)",
-            }}
-          >
-            {esCorporal ? `${peso > 0 ? "+" : ""}${peso % 1 === 0 ? peso : peso.toFixed(1)}` : (peso % 1 === 0 ? peso : peso.toFixed(1))}
-          </span>
-          <span className="text-[9px] font-semibold text-[#ff9f0a]/70">kg</span>
+        {/* Valor digital en naranja ámbar */}
+        <div className="flex flex-col items-center leading-none pt-0.5">
+          {esCorporal && (
+            <span className="text-[8px] font-extrabold uppercase tracking-wider text-[#ff9f0a] bg-[#ff9f0a]/20 px-1 py-0.5 rounded-[4px] mb-0.5">
+              Lastre
+            </span>
+          )}
+          <div className="flex items-baseline justify-center gap-0.5">
+            <span
+              className="text-[13px] font-bold text-[#ff9f0a] tabular-nums"
+              style={{
+                fontFamily: "var(--font-hero, system-ui)",
+                textShadow: "0 0 10px rgba(255, 159, 10, 0.35)",
+              }}
+            >
+              {esCorporal ? `${peso > 0 ? "+" : ""}${peso % 1 === 0 ? peso : peso.toFixed(1)}` : (peso % 1 === 0 ? peso : peso.toFixed(1))}
+            </span>
+            <span className="text-[9px] font-semibold text-[#ff9f0a]/70">kg</span>
+          </div>
         </div>
-      </div>
 
-      {/* Dial vertical de regla con fade en bordes */}
-      <div
-        ref={containerRef}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
-        onWheel={onWheel}
-        className="relative w-full h-[88px] cursor-grab active:cursor-grabbing touch-none my-0.5"
-        style={{
-          maskImage:
-            "linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%)",
-          WebkitMaskImage:
-            "linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%)",
-        }}
-      >
-        <canvas ref={canvasRef} className="block w-full h-full" />
-      </div>
+        {/* Dial vertical de regla con fade en bordes */}
+        <div
+          ref={containerRef}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerCancel={onPointerUp}
+          onWheel={onWheel}
+          className="relative w-full h-[88px] cursor-grab active:cursor-grabbing touch-none my-0.5"
+          style={{
+            maskImage:
+              "linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%)",
+            WebkitMaskImage:
+              "linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%)",
+          }}
+        >
+          <canvas ref={canvasRef} className="block w-full h-full" />
+        </div>
 
-      {/* Botón guardar rápido de 1 tap */}
-      <button
-        type="submit"
-        disabled={pending}
-        aria-label="Guardar peso de este ejercicio"
-        className={`w-full h-6 rounded-[6px] text-[10px] font-bold tracking-tight transition-all duration-150 flex items-center justify-center gap-1 active:scale-95 disabled:opacity-50 ${
-          feedbackOk
-            ? "bg-ok text-ok-ink border border-ok"
-            : "bg-[#ff9f0a]/20 hover:bg-[#ff9f0a]/30 border border-[#ff9f0a]/40 text-[#ff9f0a]"
-        }`}
-      >
-        {pending ? (
-          <Spinner className="size-3 text-[#ff9f0a]" />
-        ) : feedbackOk ? (
-          <span>✓ Listo</span>
-        ) : (
-          <span>Guardar</span>
-        )}
-      </button>
-    </form>
+        {/* Botón guardar rápido de 1 tap */}
+        <button
+          type="submit"
+          disabled={pending}
+          aria-label="Guardar peso de este ejercicio"
+          className={`w-full h-6 rounded-[6px] text-[10px] font-bold tracking-tight transition-all duration-150 flex items-center justify-center gap-1 active:scale-95 disabled:opacity-50 ${
+            feedbackOk
+              ? "bg-ok text-ok-ink border border-ok"
+              : "bg-[#ff9f0a]/20 hover:bg-[#ff9f0a]/30 border border-[#ff9f0a]/40 text-[#ff9f0a]"
+          }`}
+        >
+          {pending ? (
+            <Spinner className="size-3 text-[#ff9f0a]" />
+          ) : feedbackOk ? (
+            <span>✓ Listo</span>
+          ) : (
+            <span>Guardar</span>
+          )}
+        </button>
+      </form>
+      {cartelLogroData && <CartelLogro {...cartelLogroData} />}
+    </>
   );
 }

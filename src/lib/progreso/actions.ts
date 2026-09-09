@@ -3,8 +3,19 @@
 import { revalidatePath } from "next/cache";
 import { requireProfile, requireDueno } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { evaluarRecordCliente } from "@/lib/logros/actions";
 
-export type ProgresoState = { error?: string; ok?: string };
+export type ProgresoState = {
+  error?: string;
+  ok?: string;
+  record?: {
+    esRecord: boolean;
+    pesoKg: number;
+    pesoAnteriorKg: number | null;
+    ejercicioNombre?: string;
+    gimnasioNombre?: string;
+  };
+};
 
 async function resolverClienteId(): Promise<{
   supabase: Awaited<ReturnType<typeof createClient>>;
@@ -45,6 +56,9 @@ export async function guardarProgresoCliente(
     return { error: "Las reps deben ser un número positivo." };
   }
 
+  // Evaluar si el peso a cargar supera el récord anterior
+  const recordInfo = await evaluarRecordCliente(ejercicioId, pesoRaw);
+
   const { error } = await supabase
     .from("registro_progreso")
     .upsert(
@@ -62,8 +76,28 @@ export async function guardarProgresoCliente(
 
   if (error) return { error: "No se pudo guardar el progreso." };
 
+  let ejercicioNombre = "Ejercicio";
+  let gimnasioNombre = "Mi Gimnasio";
+
+  if (recordInfo.esRecord) {
+    const [{ data: ejData }, { data: gymData }] = await Promise.all([
+      supabase.from("ejercicios").select("nombre").eq("id", ejercicioId).maybeSingle(),
+      supabase.from("gimnasios").select("nombre").eq("id", gimnasioId).maybeSingle(),
+    ]);
+
+    if (ejData?.nombre) ejercicioNombre = ejData.nombre;
+    if (gymData?.nombre) gimnasioNombre = gymData.nombre;
+  }
+
   revalidatePath("/mi/rutina");
-  return { ok: "✓" };
+  return {
+    ok: "✓",
+    record: {
+      ...recordInfo,
+      ejercicioNombre,
+      gimnasioNombre,
+    },
+  };
 }
 
 // ── Acción del dueño ─────────────────────────────────────────────────────────

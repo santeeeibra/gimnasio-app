@@ -9,6 +9,8 @@ import { AnilloProgreso } from "@/components/anillo-progreso";
 import { pillClasses } from "@/components/ui";
 import { ChevronRight, CreditCard, Dumbbell, Inbox, MessageSquare, Palette, User } from "lucide-react";
 import { RachaConstancia } from "@/components/mi/racha-constancia";
+import { RachaCard } from "@/components/logros/racha-card";
+import { obtenerRachaCliente } from "@/lib/logros/actions";
 import { DatosTransferencia } from "@/components/mi/datos-transferencia";
 import { CacheAlVuelo } from "@/components/offline/cache-al-vuelo";
 import { BotonInstalarApp } from "@/components/pwa/boton-instalar-app";
@@ -21,7 +23,7 @@ export default async function MiPage() {
   const profile = await requireProfile();
   const supabase = await createClient();
 
-  const [{ data: gym }, { data }, { count: noLeidos }] = await Promise.all([
+  const [{ data: gym }, { data }, { count: noLeidos }, rachaCalculada] = await Promise.all([
     supabase
       .from("gimnasios")
       .select("estado, pago_alias, pago_cbu, pago_titular")
@@ -37,6 +39,7 @@ export default async function MiPage() {
       .select("id", { count: "exact", head: true })
       .eq("profile_id", profile.id)
       .eq("leido", false),
+    obtenerRachaCliente(),
   ]);
 
   const estadoGimnasio = gym?.estado ?? "prueba";
@@ -169,6 +172,8 @@ export default async function MiPage() {
           </div>
         </div>
       </div>
+
+      <RachaCard racha={rachaCalculada} />
 
       {racha ? (
         <RachaConstancia dias={racha.dias} total={racha.total} />

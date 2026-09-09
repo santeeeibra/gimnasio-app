@@ -5,6 +5,7 @@ import { PanelSidebar, PanelTopbar, PanelBottomNav } from "./panel-nav";
 import { Tutorial } from "@/components/tutorial/tutorial";
 import { ImpersonationBanner } from "@/components/impersonation/banner";
 import { OfflineProvider } from "@/components/offline/provider";
+import { SplashScreen } from "@/components/mascota/splash-screen";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -39,6 +40,7 @@ export default async function PanelLayout({
         <ImpersonationBanner />
       </div>
       <OfflineProvider />
+      <SplashScreen />
 
       <PanelSidebar
         nombre={gym?.nombre}

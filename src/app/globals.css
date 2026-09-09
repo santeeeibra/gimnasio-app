@@ -1039,3 +1039,54 @@ textarea {
 
 
 
+
+/* ============================================================
+   Splash screen (cold start). Overlay a pantalla completa con la
+   mascota; sólo se ve una vez por sesión. Compositor-only (opacity).
+   Ver src/components/mascota/splash-screen.tsx.
+   ============================================================ */
+.splash-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  background: var(--paper);
+  color: var(--ink);
+  opacity: 1;
+  transition: opacity 400ms var(--ease-out);
+  padding: env(safe-area-inset-top, 0px) 1.5rem env(safe-area-inset-bottom, 0px);
+}
+.splash-screen[data-leaving="true"] {
+  opacity: 0;
+}
+.splash-screen__mascota {
+  width: clamp(112px, 34vw, 160px);
+  height: auto;
+  animation: splash-mascota-in 420ms var(--ease-out) both;
+}
+.splash-screen__nombre {
+  font-family: var(--app-font-display);
+  font-size: 1.5rem;
+  letter-spacing: -0.01em;
+  animation: splash-mascota-in 420ms var(--ease-out) 80ms both;
+}
+@keyframes splash-mascota-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .splash-screen__mascota,
+  .splash-screen__nombre {
+    animation: none;
+  }
+}
