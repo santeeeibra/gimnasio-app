@@ -28,34 +28,37 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
 
   const arrastrando = fase === "pulling";
   const refrescando = fase === "refreshing";
+  const esIdle = fase === "idle";
 
   return (
     <div className="relative">
-      <div
-        aria-hidden={fase === "idle"}
-        className="pointer-events-none absolute inset-x-0 top-0 z-40 flex justify-center"
-        style={{
-          transform: `translateY(${Math.max((refrescando ? 48 : distancia) - 44, -44)}px)`,
-          opacity: fase === "idle" ? 0 : 1,
-          transition: arrastrando
-            ? "none"
-            : "transform 220ms var(--ease-out), opacity 200ms var(--ease-out)",
-        }}
-      >
+      {!esIdle && (
         <div
-          className="mt-2 rounded-full border border-emerald-500/30 bg-zinc-950 p-1 shadow-xl backdrop-blur-xl"
+          aria-hidden={esIdle}
+          className="pointer-events-none absolute inset-x-0 top-0 z-40 flex justify-center"
           style={{
-            transform: `scale(${refrescando ? 1 : 0.6 + progreso * 0.4})`,
-            transition: arrastrando ? "none" : "transform 200ms var(--ease-out)",
+            transform: `translateY(${Math.max((refrescando ? 52 : distancia) - 44, -44)}px)`,
+            opacity: Math.min(1, progreso * 1.5),
+            transition: arrastrando
+              ? "none"
+              : "transform 220ms var(--ease-out), opacity 200ms var(--ease-out)",
           }}
         >
-          <MascotaLoading size={32} label="Actualizando…" />
+          <div
+            className="mt-1"
+            style={{
+              transform: `scale(${refrescando ? 1 : 0.5 + progreso * 0.5})`,
+              transition: arrastrando ? "none" : "transform 200ms var(--ease-out)",
+            }}
+          >
+            <MascotaLoading size={32} label="Actualizando…" />
+          </div>
         </div>
-      </div>
+      )}
 
       <div
         style={{
-          transform: `translateY(${refrescando ? 48 : distancia}px)`,
+          transform: `translateY(${refrescando ? 52 : distancia}px)`,
           transition: arrastrando ? "none" : "transform 220ms var(--ease-out)",
         }}
       >
