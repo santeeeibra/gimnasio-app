@@ -95,12 +95,12 @@ export function AjustesForm({
   }, [draft]);
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[1fr_460px]">
+    <div className="min-w-0 space-y-6">
       <form action={formAction} className="min-w-0 space-y-6">
         <input type="hidden" name="gimnasio_id" value={gimnasioId} />
 
-        {/* Vista previa compacta, pegada a los controles en móvil */}
-        <div className="lg:hidden sticky top-0 z-10 -mx-6 -mt-6 border-b border-rule bg-paper-2 px-6 pb-3 pt-4">
+        {/* Vista previa compacta, sticky arriba mientras se editan los controles */}
+        <div className="sticky top-0 z-10 -mt-1 rounded-[12px] border border-rule bg-paper-2 p-3">
           <MiniPreview tema={draft} />
         </div>
 
@@ -633,7 +633,8 @@ export function AjustesForm({
         </div>
       </form>
 
-      <div className="hidden lg:block lg:sticky lg:top-4 self-start">
+      {/* Preview completo al pie: dentro del modal va en una sola columna */}
+      <div className="border-t border-rule pt-5">
         <TemaPreviewCompleto tema={draft} />
       </div>
     </div>

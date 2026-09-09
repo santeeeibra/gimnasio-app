@@ -12,6 +12,8 @@
 | Alta de clientes (manual, sin auto-registro) | `src/app/panel/clientes/alta-form.tsx`, `altaCliente` en `clientes/actions.ts` | ✅ HECHO — el alta NO registra pago (2026-09-03), se saca el checkbox "Pago recibido"; el dueño cobra desde la ficha del socio |
 | Editar datos del socio ya creado | `panel/clientes/[id]/editar-datos.tsx`, `editarCliente` en `clientes/actions.ts` | ✅ código (2026-09-03) — migraciones aplicadas, falta probar end-to-end |
 | Ingresos — pagos por mes + PIN + buscador por socio | `src/app/panel/ingresos/*`, `api/panel/ingresos/route.ts` | ✅ código + migración `0008` aplicada — buscador por nombre 2026-09-03; falta probar |
+| Ingresos — fix "Olvidé mi PIN" + desactivar PIN | `panel/ingresos/configurar-pin/actions.ts` (`resetearPinConContrasena` ahora usa `signInWithPassword`, NO `updateUser({password})`; nuevo `desactivarPinIngresos`), `desactivar-pin-form.tsx`, `configurar-pin-form.tsx` set `pin_ingresos_desactivado:false`, `page.tsx` (redirige a configurar solo si `pin_ingresos` null **y** `pin_ingresos_desactivado` false; link "Activar PIN de nuevo"), `listado-ingresos.tsx` (prop `pinRequerido`) | ✅ código + typecheck + build + browser (2026-09-09). Necesita migración `0039` (`gimnasios.pin_ingresos_desactivado`). Pre-migración degrada sin romper (lecturas/escrituras del flag best-effort) |
+| Gestión de gimnasios (dev /admin) — suspender, nota interna, acciones rápidas, buscador, vencimiento | `supabase/migrations/0039_gestion_gimnasios_dev.sql`, `admin/actions.ts` (`ESTADOS`+`suspendido`, `actualizarNotaInterna`), `admin/gimnasios/lista-gimnasios.tsx` (buscador client-side + iconos por fila: entrar como dueño / reset clave / ver errores + chip de vencimiento + indicador de nota), `admin/gimnasios/[id]/estado-form.tsx` (opción Suspendido + `confirm()`), `admin/gimnasios/[id]/nota-interna-form.tsx`, `admin/errores/page.tsx` (filtro `?gimnasio_id=`), gate en `login/actions.ts` + `lib/auth.ts` (`requireProfile` → `/suspendido`), `src/app/suspendido/page.tsx` | ✅ código + typecheck + `next build` (2026-09-09). **Falta aplicar `0039`** (check `estado` +`suspendido`, `gimnasios.nota_interna`, `gimnasios.pin_ingresos_desactivado`, `gimnasio_permite_escritura()` excluye `suspendido`). Falta probar /admin en browser con login superadmin |
 | Planes y cuotas | tabla `planes`, `recalcular_estado_cuota()` | ✅ HECHO (cron pendiente) |
 | Rutinas — motor de reglas | `src/lib/rutina/motor.ts` | ✅ COMPLETO — refactor a "presupuesto cerrado" 4 fases (2026-09-03): techo fijo de series/día por nivel, trueque de énfasis sin sumar ranuras + guard de afinidad de día, `repartirSeries` por peso de rol. Sin `aplicarEnfasis`/`ajustarSeries` |
 | Rutinas — tipos/constantes | `src/lib/rutina/tipos.ts` (SEXOS, ENFASIS, SERIES/REPS) | ✅ HECHO — `EntradaMotor.zonasDolor?` agregado 2026-09-03 |
@@ -77,6 +79,13 @@
 `0001`–`0019` aplicadas en Supabase. Se aplicaron `0006`–`0019` con
 `node scripts/aplicar-migraciones.mjs` (runner con `pg` + `DATABASE_URL`).
 Ya no hay pantallas bloqueadas por columnas faltantes.
+
+**Pendiente: `0039_gestion_gimnasios_dev.sql`** (2026-09-09) — check de
+`gimnasios.estado` +`suspendido`, `gimnasios.nota_interna`,
+`gimnasios.pin_ingresos_desactivado`, y `gimnasio_permite_escritura()` que
+además excluye `suspendido`. Idempotente. Hasta aplicarla: el detalle/lista de
+`/admin/gimnasios` fallan al leer `nota_interna`, y "Desactivar PIN" en
+`/panel/ingresos` devuelve error sin romper la sección.
 
 ### Otros
 

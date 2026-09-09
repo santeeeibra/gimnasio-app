@@ -28,12 +28,23 @@ export default async function AdminGimnasioDetalle({
   const { data: gym } = await db
     .from("gimnasios")
     .select(
-      "id, nombre, slug, estado, nota_interna, dias_aviso_morosidad, creado_at, plan_plataforma_vence_el, plan:planes_plataforma(id, nombre, max_socios, precio_mensual)",
+      "id, nombre, slug, estado, dias_aviso_morosidad, creado_at, plan_plataforma_vence_el, plan:planes_plataforma(id, nombre, max_socios, precio_mensual)",
     )
     .eq("id", id)
     .single();
 
   if (!gym) notFound();
+
+  // Columna de 0039: aparte para no tumbar el detalle si falta la migración.
+  let notaInterna = "";
+  {
+    const { data } = await db
+      .from("gimnasios")
+      .select("nota_interna")
+      .eq("id", id)
+      .single();
+    notaInterna = data?.nota_interna ?? "";
+  }
 
   const [
     { data: clientes },
@@ -206,10 +217,7 @@ export default async function AdminGimnasioDetalle({
         <p className="mb-4 text-xs text-ink-soft">
           Privada del equipo de soporte. El dueño nunca la ve.
         </p>
-        <NotaInternaForm
-          gimnasioId={gym.id}
-          notaActual={gym.nota_interna ?? ""}
-        />
+        <NotaInternaForm gimnasioId={gym.id} notaActual={notaInterna} />
       </div>
 
       <div className="card-cut mb-8 border border-rule bg-paper-2 p-5">

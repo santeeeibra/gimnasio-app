@@ -84,13 +84,20 @@ export async function configurarPin(
   const nuevoHash = hashPin(pinNuevo);
   const { error } = await supabase
     .from("gimnasios")
-    .update({ pin_ingresos: nuevoHash, pin_ingresos_desactivado: false })
+    .update({ pin_ingresos: nuevoHash })
     .eq("id", dueno.gimnasio_id);
 
   if (error) {
     console.error("[ingresos] configurarPin — guardar PIN:", error);
     return { error: `No se pudo guardar el PIN (${error.message}).` };
   }
+
+  // Best-effort: si venía desactivado a propósito, reactivarlo. Columna de
+  // 0039; si la migración no está aplicada, el PIN igual quedó guardado.
+  await supabase
+    .from("gimnasios")
+    .update({ pin_ingresos_desactivado: false })
+    .eq("id", dueno.gimnasio_id);
 
   revalidatePath("/panel/ingresos");
   return { ok: "PIN configurado correctamente." };
@@ -133,15 +140,21 @@ export async function resetearPinConContrasena(contrasena: string): Promise<bool
     );
     if (!ok) return false;
 
-    // Contraseña correcta: borrar el PIN para forzar reconfiguración.
-    // Se deja pin_ingresos_desactivado en false para que la sección vuelva a
-    // pedir uno nuevo (esto es un "olvidé el PIN", no un "apagalo").
+    // Contraseña correcta: borrar el PIN para forzar reconfiguración
+    // (esto es un "olvidé el PIN", no un "apagalo").
     const { error: updateError } = await supabase
       .from("gimnasios")
-      .update({ pin_ingresos: null, pin_ingresos_desactivado: false })
+      .update({ pin_ingresos: null })
       .eq("id", dueno.gimnasio_id);
 
     if (updateError) return false;
+
+    // Best-effort (columna de 0039): asegurar que no quede marcado como
+    // desactivado a propósito, así la sección vuelve a pedir un PIN nuevo.
+    await supabase
+      .from("gimnasios")
+      .update({ pin_ingresos_desactivado: false })
+      .eq("id", dueno.gimnasio_id);
 
     revalidatePath("/panel/ingresos");
     return true;
@@ -181,9 +194,17 @@ export async function desactivarPinIngresos(credencial: string): Promise<boolean
       if (!okPin && !okPass) return false;
     }
 
+    // El flag primero: si la migración 0039 no está aplicada, esto falla y
+    // no dejamos la sección en un estado raro (PIN null sin flag => reconfig).
+    const { error: flagError } = await supabase
+      .from("gimnasios")
+      .update({ pin_ingresos_desactivado: true })
+      .eq("id", dueno.gimnasio_id);
+    if (flagError) return false;
+
     const { error: updateError } = await supabase
       .from("gimnasios")
-      .update({ pin_ingresos: null, pin_ingresos_desactivado: true })
+      .update({ pin_ingresos: null })
       .eq("id", dueno.gimnasio_id);
     if (updateError) return false;
 

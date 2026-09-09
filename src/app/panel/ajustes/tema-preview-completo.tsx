@@ -35,7 +35,7 @@ export function TemaPreviewCompleto({ tema }: { tema: Tema }) {
         data-estilo-visual={tema.estiloVisual}
         data-theme-polarity={polaridadTema(tema)}
         data-motion={resolverMotion(tema)}
-        className="rounded-lg border-2 border-[color:var(--rule)] overflow-hidden bg-[color:var(--paper)] shadow-lg h-[calc(100vh-8rem)] max-h-[600px] flex flex-col"
+        className="rounded-lg border-2 border-[color:var(--rule)] overflow-hidden bg-[color:var(--paper)] shadow-lg h-[60vh] max-h-[460px] flex flex-col"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 bg-[color:var(--paper-2)] border-b border-[color:var(--rule)]">

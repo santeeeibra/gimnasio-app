@@ -16,7 +16,6 @@ type Gym = {
   estado: string | null;
   creado_at: string | null;
   plan_plataforma_vence_el: string | null;
-  nota_interna: string | null;
 };
 
 export default async function AdminGimnasiosPage() {
@@ -34,7 +33,7 @@ export default async function AdminGimnasiosPage() {
     db
       .from("gimnasios")
       .select(
-        "id, nombre, slug, estado, creado_at, plan_plataforma_vence_el, nota_interna",
+        "id, nombre, slug, estado, creado_at, plan_plataforma_vence_el",
       )
       .order("creado_at", { ascending: true }),
     db.from("clientes").select("gimnasio_id, estado_cuota, en_prueba"),
@@ -44,6 +43,21 @@ export default async function AdminGimnasiosPage() {
       .select("id, nombre, gimnasio_id")
       .eq("rol", "dueno"),
   ]);
+
+  // Columna de 0039: aparte y tolerante para no tumbar la lista si la
+  // migración todavía no corrió.
+  const conNota = new Set<string>();
+  {
+    const { data: notas } = await db
+      .from("gimnasios")
+      .select("id, nota_interna");
+    for (const n of (notas ?? []) as {
+      id: string;
+      nota_interna: string | null;
+    }[]) {
+      if (n.nota_interna && n.nota_interna.trim()) conNota.add(n.id);
+    }
+  }
 
   const duenoPorGym = new Map<string, { id: string; nombre: string | null }>();
   for (const d of (duenos ?? []) as {
@@ -103,7 +117,7 @@ export default async function AdminGimnasiosPage() {
       venceEl: g.plan_plataforma_vence_el,
       duenoId: dueno?.id ?? null,
       duenoNombre: dueno?.nombre ?? null,
-      tieneNota: Boolean(g.nota_interna && g.nota_interna.trim()),
+      tieneNota: conNota.has(g.id),
     };
   });
 

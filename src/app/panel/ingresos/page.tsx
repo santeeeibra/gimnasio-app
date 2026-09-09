@@ -12,11 +12,21 @@ export default async function IngresosPage() {
 
   const { data: gym } = await supabase
     .from("gimnasios")
-    .select("pin_ingresos, pin_ingresos_desactivado, logo_url, nombre")
+    .select("pin_ingresos, logo_url, nombre")
     .eq("id", dueno.gimnasio_id)
     .single();
 
-  const pinDesactivado = gym?.pin_ingresos_desactivado === true;
+  // Columna de 0039: se lee aparte para no romper la sección si la migración
+  // todavía no se aplicó (queda como "no desactivado").
+  let pinDesactivado = false;
+  {
+    const { data } = await supabase
+      .from("gimnasios")
+      .select("pin_ingresos_desactivado")
+      .eq("id", dueno.gimnasio_id)
+      .single();
+    pinDesactivado = data?.pin_ingresos_desactivado === true;
+  }
 
   // Solo se obliga a configurar PIN si no hay uno Y no se desactivó a propósito.
   if (!gym?.pin_ingresos && !pinDesactivado) {
