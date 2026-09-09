@@ -17,6 +17,8 @@ const PUBLIC_PATHS = [
   "/manifest.webmanifest",
   "/icon-",
   "/badge-",
+  "/images",
+  "/promo-video",
 ];
 
 export async function middleware(request: NextRequest) {
