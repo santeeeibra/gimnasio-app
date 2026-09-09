@@ -58,8 +58,6 @@ export function DialVerticalProgreso({
   const esCorporal = tipoEquipo === "corporal" || Boolean(esCorporalLegacy);
   const esBarra = tipoEquipo === "barra";
   const esMancuerna = tipoEquipo === "mancuerna";
-  const esPolea = tipoEquipo === "polea";
-  const esMaquina = tipoEquipo === "maquina";
 
   const pesoInicial = esCorporal ? 0 : 20;
   const [peso, setPeso] = useState<number>(pesoInicial);
@@ -185,25 +183,41 @@ export function DialVerticalProgreso({
     [draw]
   );
 
-  const startMomentum = useCallback(() => {
+  // Sin inercia: al soltar, snap inmediato al 0,5 más cercano del valor real
+  // donde quedó el dedo. Antes el "flywheel" seguía girando y pasaba de largo
+  // (soltabas en 15 y caía en 15,5).
+  const snapAlSoltar = useCallback(() => {
     if (animIdRef.current) cancelAnimationFrame(animIdRef.current);
-
-    const step = () => {
-      velocityRef.current *= 0.92;
-
-      if (Math.abs(velocityRef.current) > 0.08) {
-        const deltaKg = (velocityRef.current / (PY_PER_STEP * 2)) * 0.5;
-        updateWeight(weightRef.current + deltaKg);
-        animIdRef.current = requestAnimationFrame(step);
-      } else {
-        const snap = Math.round(weightRef.current * 2) / 2;
-        updateWeight(snap);
-        velocityRef.current = 0;
-      }
-    };
-
-    animIdRef.current = requestAnimationFrame(step);
+    velocityRef.current = 0;
+    updateWeight(Math.round(weightRef.current * 2) / 2);
   }, [updateWeight]);
+
+  // Ajuste fino ±1 kg (botones). Redondea primero a 0,5 para no arrastrar
+  // decimales del dial.
+  const holdRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const nudge = useCallback(
+    (delta: number) => {
+      iniciarAudioHaptico();
+      // "+" te lleva al kg entero de arriba, "−" al de abajo: si venías de un
+      // 13,5 del dial, "+" = 14 y "−" = 13 (no 14,5 / 12,5).
+      const w = weightRef.current;
+      const base = delta > 0 ? Math.floor(w) : Math.ceil(w);
+      updateWeight(base + delta);
+    },
+    [updateWeight],
+  );
+  const startHold = (delta: number) => {
+    nudge(delta);
+    if (holdRef.current) clearInterval(holdRef.current);
+    holdRef.current = setInterval(() => nudge(delta), 130);
+  };
+  const stopHold = () => {
+    if (holdRef.current) {
+      clearInterval(holdRef.current);
+      holdRef.current = null;
+    }
+  };
+  useEffect(() => () => stopHold(), []);
 
   const onPointerDown = (e: React.PointerEvent) => {
     iniciarAudioHaptico();
@@ -239,7 +253,7 @@ export function DialVerticalProgreso({
     } catch {
       /* ok */
     }
-    startMomentum();
+    snapAlSoltar();
   };
 
   const onWheel = (e: React.WheelEvent) => {
@@ -296,12 +310,17 @@ export function DialVerticalProgreso({
       <div className="flex flex-col items-center leading-none pt-0.5">
         {esCorporal && (
           <span className="text-[8px] font-extrabold uppercase tracking-wider text-[#ff9f0a] bg-[#ff9f0a]/20 px-1 py-0.5 rounded-[4px] mb-0.5">
-            Lastre
+            Peso extra
           </span>
         )}
         {esBarra && (
           <span className="text-[7.5px] font-extrabold uppercase tracking-wider text-[#ff9f0a]/90 bg-[#ff9f0a]/15 px-1 py-0.5 rounded-[4px] mb-0.5">
-            Barra+Discos
+            Sin la barra
+          </span>
+        )}
+        {esMancuerna && (
+          <span className="text-[7.5px] font-extrabold uppercase tracking-wider text-[#ff9f0a]/90 bg-[#ff9f0a]/15 px-1 py-0.5 rounded-[4px] mb-0.5">
+            Cada mancuerna
           </span>
         )}
         <div className="flex items-baseline justify-center gap-0.5">
@@ -312,7 +331,11 @@ export function DialVerticalProgreso({
               textShadow: "0 0 10px rgba(255, 159, 10, 0.35)",
             }}
           >
-            {esCorporal ? `${peso > 0 ? "+" : ""}${peso % 1 === 0 ? peso : peso.toFixed(1)}` : (peso % 1 === 0 ? peso : peso.toFixed(1))}
+            {(() => {
+              const n = peso % 1 === 0 ? peso : peso.toFixed(1);
+              const aditivo = esCorporal || esBarra || esMancuerna;
+              return aditivo && peso > 0 ? `+${n}` : `${n}`;
+            })()}
           </span>
           <span className="text-[9px] font-semibold text-[#ff9f0a]/70">kg</span>
         </div>
@@ -337,6 +360,38 @@ export function DialVerticalProgreso({
         <canvas ref={canvasRef} className="block w-full h-full" />
       </div>
 
+      {/* Ajuste fino ±1 kg: el dial es el movimiento grueso, estos clavan el valor */}
+      <div className="flex w-full gap-1 my-0.5">
+        <button
+          type="button"
+          aria-label="Bajar 1 kg"
+          onPointerDown={(e) => {
+            e.preventDefault();
+            startHold(-1);
+          }}
+          onPointerUp={stopHold}
+          onPointerLeave={stopHold}
+          onPointerCancel={stopHold}
+          className="flex-1 h-6 grid place-items-center rounded-[6px] border border-[#ff9f0a]/30 bg-[#ff9f0a]/10 text-[#ff9f0a] text-[14px] font-bold leading-none transition-transform duration-150 active:scale-90 touch-none"
+        >
+          −
+        </button>
+        <button
+          type="button"
+          aria-label="Subir 1 kg"
+          onPointerDown={(e) => {
+            e.preventDefault();
+            startHold(1);
+          }}
+          onPointerUp={stopHold}
+          onPointerLeave={stopHold}
+          onPointerCancel={stopHold}
+          className="flex-1 h-6 grid place-items-center rounded-[6px] border border-[#ff9f0a]/30 bg-[#ff9f0a]/10 text-[#ff9f0a] text-[14px] font-bold leading-none transition-transform duration-150 active:scale-90 touch-none"
+        >
+          +
+        </button>
+      </div>
+
       {/* Botón guardar rápido de 1 tap */}
       <button
         type="submit"
@@ -357,27 +412,6 @@ export function DialVerticalProgreso({
         )}
       </button>
 
-      {/* Micro-aclaración biomecánica debajo de Guardar (ubicación exacta señalada por el usuario) */}
-      {esCorporal && (
-        <p className="mt-1 text-[8px] font-medium leading-[1.15] text-center text-ink-soft opacity-80 select-none">
-          Lastre extra<br />(cinturón)
-        </p>
-      )}
-      {esBarra && (
-        <p className="mt-1 text-[8px] font-medium leading-[1.15] text-center text-ink-soft opacity-80 select-none">
-          Barra +<br />discos
-        </p>
-      )}
-      {esMancuerna && (
-        <p className="mt-1 text-[8px] font-medium leading-[1.15] text-center text-ink-soft opacity-80 select-none">
-          Por<br />mancuerna
-        </p>
-      )}
-      {(esPolea || esMaquina) && (
-        <p className="mt-1 text-[8px] font-medium leading-[1.15] text-center text-ink-soft opacity-80 select-none">
-          Carga en<br />placas
-        </p>
-      )}
     </form>
     </>
   );
