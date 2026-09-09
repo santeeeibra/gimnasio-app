@@ -103,11 +103,11 @@ export function ListaGimnasios({ filas }: { filas: FilaGym[] }) {
             return (
               <li
                 key={g.id}
-                className="flex items-center gap-2 px-3 py-3 sm:px-5 sm:py-4"
+                className="flex flex-col gap-2 px-3 py-3 sm:flex-row sm:items-center sm:gap-2 sm:px-5 sm:py-4"
               >
                 <Link
                   href={`/admin/gimnasios/${g.id}`}
-                  className="-my-3 flex min-w-0 flex-1 items-center gap-3 py-3 hover:opacity-80"
+                  className="flex min-w-0 flex-1 items-center gap-3 hover:opacity-80"
                 >
                   <span
                     className={`size-2.5 shrink-0 rounded-full ${SEMAFORO_COLOR[g.nivel]}`}
@@ -142,7 +142,7 @@ export function ListaGimnasios({ filas }: { filas: FilaGym[] }) {
                   </span>
                 </Link>
 
-                <div className="flex shrink-0 items-center gap-1">
+                <div className="flex shrink-0 items-center gap-1 self-end sm:self-auto">
                   {g.duenoId ? (
                     <form action={entrarComoAction}>
                       <input
