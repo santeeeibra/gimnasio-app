@@ -8,14 +8,14 @@ export function AjustesSeccionModal({
   titulo,
   subtitulo,
   badge,
-  icon: Icon,
+  icon,
   resumen,
   children,
 }: {
   titulo: string;
   subtitulo: string;
   badge?: ReactNode;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: ReactNode;
   resumen?: ReactNode;
   children: ReactNode;
 }) {
@@ -39,7 +39,7 @@ export function AjustesSeccionModal({
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <div className="size-8 rounded-[10px] bg-paper-3 border border-rule grid place-items-center text-ink shrink-0">
-                <Icon className="size-4" />
+                {icon}
               </div>
               <h2 className="text-base font-semibold text-ink leading-tight">{titulo}</h2>
             </div>

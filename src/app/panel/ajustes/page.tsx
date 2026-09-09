@@ -146,7 +146,7 @@ export default async function AjustesPage({
           <AjustesSeccionModal
             titulo="Tema y marca"
             subtitulo="Personalizá los colores, logo y estilo visual de tu gimnasio."
-            icon={Palette}
+            icon={<Palette className="size-4" />}
             resumen={
               <p className="text-[11px] text-ink-soft font-mono">
                 Estilo actual: {parseTema(gym.tema).estiloVisual ?? "Minimal"}
@@ -166,7 +166,7 @@ export default async function AjustesPage({
           <AjustesSeccionModal
             titulo="Datos para transferir"
             subtitulo="Alias, CBU y Titular visibles en la app del socio para pagos directos."
-            icon={Landmark}
+            icon={<Landmark className="size-4" />}
             resumen={
               <p className="text-[11px] text-ink-soft font-mono">
                 {gym.pago_alias ? `Alias: ${gym.pago_alias}` : "Sin datos de transferencia"}
@@ -188,7 +188,7 @@ export default async function AjustesPage({
             titulo="Aviso de vencimiento"
             subtitulo="Recordatorios automáticos por Push/WhatsApp antes de que venza la cuota."
             badge={<BadgeElite />}
-            icon={Bell}
+            icon={<Bell className="size-4" />}
             resumen={
               <p className="text-[11px] text-ink-soft font-mono">
                 Aviso: {gym.dias_aviso_morosidad ?? 5} días antes
@@ -219,7 +219,7 @@ export default async function AjustesPage({
             titulo="Reposo del Check-in"
             subtitulo="Fondo ambiental con reloj digital para la tablet de recepción."
             badge={<BadgeElite />}
-            icon={Smartphone}
+            icon={<Smartphone className="size-4" />}
           >
             <BloqueoEliteGate
               bloqueado={!planInfo.permiteReposoCheckin}
@@ -243,7 +243,7 @@ export default async function AjustesPage({
         <AjustesSeccionModal
           titulo="Email de recuperación"
           subtitulo="Correo seguro para recuperar la contraseña en caso de olvido."
-          icon={KeyRound}
+          icon={<KeyRound className="size-4" />}
           resumen={
             <p className="text-[11px] text-ink-soft font-mono">
               {miPerfil?.email_recuperacion ?? "Sin email registrado"}
@@ -259,7 +259,7 @@ export default async function AjustesPage({
         <AjustesSeccionModal
           titulo="Contactar soporte"
           subtitulo="Canal directo con el equipo técnico de SysGym."
-          icon={HelpCircle}
+          icon={<HelpCircle className="size-4" />}
         >
           <ContactarSoporteForm />
         </AjustesSeccionModal>
