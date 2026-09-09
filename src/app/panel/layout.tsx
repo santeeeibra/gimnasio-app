@@ -6,6 +6,7 @@ import { Tutorial } from "@/components/tutorial/tutorial";
 import { ImpersonationBanner } from "@/components/impersonation/banner";
 import { OfflineProvider } from "@/components/offline/provider";
 import { SplashScreen } from "@/components/mascota/splash-screen";
+import { PullToRefresh } from "@/components/mascota/pull-to-refresh";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -56,7 +57,7 @@ export default async function PanelLayout({
           esSuper={esSuper}
         />
         <main className="w-full max-w-5xl flex-1 p-6 pb-24 md:p-10 md:pb-10">
-          {children}
+          <PullToRefresh>{children}</PullToRefresh>
         </main>
       </div>
 

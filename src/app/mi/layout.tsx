@@ -12,6 +12,7 @@ import { Tutorial } from "@/components/tutorial/tutorial";
 import { ImpersonationBanner } from "@/components/impersonation/banner";
 import { OfflineProvider } from "@/components/offline/provider";
 import { SplashScreen } from "@/components/mascota/splash-screen";
+import { PullToRefresh } from "@/components/mascota/pull-to-refresh";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -104,7 +105,9 @@ export default async function MiLayout({
       ) : (
         <div className="h-[env(safe-area-inset-top,0px)]" />
       )}
-      <div className="pb-20 md:pb-0">{children}</div>
+      <div className="pb-20 md:pb-0">
+        <PullToRefresh>{children}</PullToRefresh>
+      </div>
       <MiBottomNav />
       <Tutorial rol="cliente" />
     </div>
