@@ -28,23 +28,26 @@ export function DialVerticalProgreso({
   ejercicioId,
   action,
   fetchUltimoPeso,
+  esCorporal = false,
 }: {
   ejercicioId: string;
   action: (prev: ProgresoState, fd: FormData) => Promise<ProgresoState>;
   fetchUltimoPeso: (eid: string) => Promise<{ peso: number; reps: number | null } | null>;
+  esCorporal?: boolean;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const [peso, setPeso] = useState<number>(20);
-  const weightRef = useRef(20);
+  const pesoInicial = esCorporal ? 0 : 20;
+  const [peso, setPeso] = useState<number>(pesoInicial);
+  const weightRef = useRef(pesoInicial);
   const isDraggingRef = useRef(false);
   const startYRef = useRef(0);
   const lastYRef = useRef(0);
   const lastTimeRef = useRef(0);
   const velocityRef = useRef(0);
   const animIdRef = useRef<number | null>(null);
-  const lastEmittedRef = useRef(20);
+  const lastEmittedRef = useRef(pesoInicial);
 
   const [state, formAction, pending] = useActionState(action, {});
   const [feedbackOk, setFeedbackOk] = useState(false);
@@ -52,7 +55,7 @@ export function DialVerticalProgreso({
   // Cargar último peso registrado como punto de partida
   useEffect(() => {
     fetchUltimoPeso(ejercicioId).then((r) => {
-      if (r && r.peso > 0) {
+      if (r && r.peso !== undefined && r.peso !== null) {
         setPeso(r.peso);
         weightRef.current = r.peso;
         lastEmittedRef.current = r.peso;
@@ -246,17 +249,24 @@ export function DialVerticalProgreso({
       <input type="hidden" name="peso" value={peso} />
 
       {/* Valor digital en naranja ámbar */}
-      <div className="flex items-baseline justify-center gap-0.5 pt-0.5 leading-none">
-        <span
-          className="text-[13px] font-bold text-[#ff9f0a] tabular-nums"
-          style={{
-            fontFamily: "var(--font-hero, system-ui)",
-            textShadow: "0 0 10px rgba(255, 159, 10, 0.35)",
-          }}
-        >
-          {peso % 1 === 0 ? peso : peso.toFixed(1)}
-        </span>
-        <span className="text-[9px] font-semibold text-[#ff9f0a]/70">kg</span>
+      <div className="flex flex-col items-center leading-none pt-0.5">
+        {esCorporal && (
+          <span className="text-[8px] font-extrabold uppercase tracking-wider text-[#ff9f0a] bg-[#ff9f0a]/20 px-1 py-0.5 rounded-[4px] mb-0.5">
+            Lastre
+          </span>
+        )}
+        <div className="flex items-baseline justify-center gap-0.5">
+          <span
+            className="text-[13px] font-bold text-[#ff9f0a] tabular-nums"
+            style={{
+              fontFamily: "var(--font-hero, system-ui)",
+              textShadow: "0 0 10px rgba(255, 159, 10, 0.35)",
+            }}
+          >
+            {esCorporal ? `${peso > 0 ? "+" : ""}${peso % 1 === 0 ? peso : peso.toFixed(1)}` : (peso % 1 === 0 ? peso : peso.toFixed(1))}
+          </span>
+          <span className="text-[9px] font-semibold text-[#ff9f0a]/70">kg</span>
+        </div>
       </div>
 
       {/* Dial vertical de regla con fade en bordes */}

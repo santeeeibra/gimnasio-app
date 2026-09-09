@@ -783,6 +783,66 @@ function BadgeEquipo({
   return null;
 }
 
+function obtenerGuiaPesoInfo(equipo?: string | null, nombre?: string | null): {
+  tipo: "barra" | "corporal" | "mancuerna" | "polea" | "maquina" | "otro";
+  textoCorto: string;
+  textoDetallado: string;
+} {
+  const eq = (equipo || "").toLowerCase();
+  const nom = (nombre || "").toLowerCase();
+
+  const esBarra = eq === "barra" || nom.includes("barra");
+  const esCorporal =
+    eq === "peso_corporal" ||
+    eq === "corporal" ||
+    nom.includes("corporal") ||
+    nom.includes("fondos") ||
+    nom.includes("flexiones") ||
+    nom.includes("dominadas") ||
+    nom.includes("plancha");
+  const esMancuerna =
+    eq === "mancuerna" || eq === "mancuernas" || nom.includes("mancuerna");
+  const esPolea = eq === "polea" || nom.includes("polea");
+
+  if (esBarra) {
+    return {
+      tipo: "barra",
+      textoCorto: "Barra + Discos",
+      textoDetallado: "Sumá el peso de la barra (ej. 20 kg) + los discos cargados.",
+    };
+  }
+
+  if (esCorporal) {
+    return {
+      tipo: "corporal",
+      textoCorto: "Peso extra",
+      textoDetallado: "Solo el peso adicional / lastre cargado (0 kg = solo tu cuerpo).",
+    };
+  }
+
+  if (esMancuerna) {
+    return {
+      tipo: "mancuerna",
+      textoCorto: "Por mancuerna",
+      textoDetallado: "Peso de 1 sola mancuerna (ej. 15 kg por mano).",
+    };
+  }
+
+  if (esPolea) {
+    return {
+      tipo: "polea",
+      textoCorto: "Peso placas",
+      textoDetallado: "Número de placa o peso total seleccionado en la polea.",
+    };
+  }
+
+  return {
+    tipo: "otro",
+    textoCorto: "Peso total",
+    textoDetallado: "Peso total utilizado en el ejercicio.",
+  };
+}
+
 function ItemFila({
   item,
   indice,
@@ -838,28 +898,28 @@ function ItemFila({
       const r = await editarItem(item.id, {
         series: Number(series) || item.series,
         repeticiones: reps,
-        nota: item.nota,
+        tecnica: tecnica === "ninguna" ? null : tecnica,
       });
-      flash(r.error ?? "Guardado ✓");
-      if (!r.error) {
-        item.series = Number(series) || item.series;
-        item.repeticiones = reps.trim() || item.repeticiones;
-        onSeriesGuardadas(item.series);
+      if (r.ok) {
+        flash("Guardado");
+        onSeriesGuardadas(Number(series) || item.series);
+      } else {
+        flash(r.error ?? "Error al guardar");
       }
     });
   }
 
-  function cambiar(nuevo: Ejercicio) {
+  function cambiar(nuevoEj: Ejercicio) {
+    setConfirmacionSolape(null);
     startTransition(async () => {
-      const r = await sustituirEjercicio(item.id, nuevo.id);
-      if (r.error) {
-        flash(r.error);
-        return;
+      const r = await reemplazarEjercicioItem(item.id, nuevoEj.id);
+      if (r.ok) {
+        setEj(nuevoEj);
+        setAbrirCambio(false);
+        flash("Ejercicio cambiado");
+      } else {
+        flash(r.error ?? "Error");
       }
-      setEj(nuevo);
-      setAbrirCambio(false);
-      setConfirmacionSolape(null);
-      flash("Ejercicio cambiado ✓");
     });
   }
 
@@ -954,27 +1014,43 @@ function ItemFila({
   return (
     <li className="p-4 transition-colors duration-150">
       <div className="flex items-start gap-3">
-        <div className="flex flex-col items-center gap-2 shrink-0 w-[68px]">
+        <div className="flex flex-col items-center gap-1.5 shrink-0 w-[68px]">
           <ExThumb ej={ej} onOpen={() => ej && onVer(ej)} />
-          {clienteId && item.ejercicio && (
-            <DialVerticalProgreso
-              ejercicioId={item.ejercicio.id}
-              action={
-                creadoPor === "dueno"
-                  ? guardarProgresoSocio.bind(null, clienteId)
-                  : guardarProgresoCliente
-              }
-              fetchUltimoPeso={async (eid) => {
-                const registros =
-                  creadoPor === "dueno"
-                    ? await obtenerProgresoSocio(clienteId, eid, 1)
-                    : await obtenerProgresoCliente(eid, 1);
-                return registros[0]
-                  ? { peso: registros[0].peso, reps: registros[0].reps }
-                  : null;
-              }}
-            />
-          )}
+          {clienteId && item.ejercicio && (() => {
+            const equipoStr = ej?.equipo ?? item.ejercicio.equipo;
+            const nombreStr = ej?.nombre ?? item.ejercicio.nombre;
+            const info = obtenerGuiaPesoInfo(equipoStr, nombreStr);
+            const esCorporalItem = info.tipo === "corporal";
+
+            return (
+              <>
+                <DialVerticalProgreso
+                  ejercicioId={item.ejercicio.id}
+                  esCorporal={esCorporalItem}
+                  action={
+                    creadoPor === "dueno"
+                      ? guardarProgresoSocio.bind(null, clienteId)
+                      : guardarProgresoCliente
+                  }
+                  fetchUltimoPeso={async (eid) => {
+                    const registros =
+                      creadoPor === "dueno"
+                        ? await obtenerProgresoSocio(clienteId, eid, 1)
+                        : await obtenerProgresoCliente(eid, 1);
+                    return registros[0]
+                      ? { peso: registros[0].peso, reps: registros[0].reps }
+                      : null;
+                  }}
+                />
+                <span
+                  title={info.textoDetallado}
+                  className="w-full text-center rounded-[6px] border border-amber-500/30 bg-amber-500/10 px-0.5 py-0.5 text-[8.5px] font-extrabold text-amber-400 leading-tight select-none cursor-help transition-opacity hover:opacity-100"
+                >
+                  💡 {info.textoCorto}
+                </span>
+              </>
+            );
+          })()}
         </div>
 
         <div className="min-w-0 flex-1">
