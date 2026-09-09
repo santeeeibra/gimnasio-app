@@ -31,9 +31,11 @@ const norm = (s: string) =>
 export function ListadoIngresos({
   gimnasioNombre,
   logoUrl,
+  pinRequerido = true,
 }: {
   gimnasioNombre: string;
   logoUrl: string | null;
+  pinRequerido?: boolean;
 }) {
   const [verificado, setVerificado] = useState(false);
   const [pagos, setPagos] = useState<Pago[]>([]);
@@ -41,14 +43,19 @@ export function ListadoIngresos({
   const [q, setQ] = useState("");
   const [mesFiltro, setMesFiltro] = useState<string>(""); // 'YYYY-MM' o ''
 
-  // Verificar si el PIN fue ingresado
+  // Verificar si el PIN fue ingresado (o entrar directo si no se requiere PIN)
   useEffect(() => {
+    if (!pinRequerido) {
+      setVerificado(true);
+      cargarPagos();
+      return;
+    }
     const verificadoSession = sessionStorage.getItem("pin_ingresos_verificado");
     if (verificadoSession === "true") {
       setVerificado(true);
       cargarPagos();
     }
-  }, []);
+  }, [pinRequerido]);
 
   const cargarPagos = async () => {
     try {

@@ -1,5 +1,7 @@
+import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireSuperadmin } from "@/lib/auth";
+import { linkClasses } from "@/components/ui";
 import {
   ORIGEN_LABEL,
   haceCuanto,
@@ -16,16 +18,25 @@ type Fila = {
   creado_en: string;
 };
 
-export default async function AdminErroresPage() {
+export default async function AdminErroresPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ gimnasio_id?: string }>;
+}) {
   await requireSuperadmin();
   const db = createAdminClient();
 
+  const { gimnasio_id: gimnasioId } = await searchParams;
+
+  let erroresQuery = db
+    .from("errores_app")
+    .select("id, gimnasio_id, origen, mensaje, creado_en")
+    .order("creado_en", { ascending: false })
+    .limit(30);
+  if (gimnasioId) erroresQuery = erroresQuery.eq("gimnasio_id", gimnasioId);
+
   const [{ data: errores }, { data: gyms }] = await Promise.all([
-    db
-      .from("errores_app")
-      .select("id, gimnasio_id, origen, mensaje, creado_en")
-      .order("creado_en", { ascending: false })
-      .limit(30),
+    erroresQuery,
     db.from("gimnasios").select("id, nombre"),
   ]);
 
@@ -47,6 +58,19 @@ export default async function AdminErroresPage() {
       <p className="mb-8 text-sm text-ink-soft">
         Los últimos 30 problemas que registró la app. Sirven para el semáforo de
         la lista de gimnasios.
+        {gimnasioId ? (
+          <>
+            {" "}
+            Filtrado por{" "}
+            <span className="text-ink">
+              {nombrePorGym.get(gimnasioId) ?? "un gimnasio"}
+            </span>
+            .{" "}
+            <Link href="/admin/errores" className={linkClasses.inline}>
+              Ver todos
+            </Link>
+          </>
+        ) : null}
       </p>
 
       {lista.length === 0 ? (

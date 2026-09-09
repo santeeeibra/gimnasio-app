@@ -5,6 +5,7 @@ import { Panel, pillClasses } from "@/components/ui";
 import { ChevronLeft } from "lucide-react";
 import { ConfigurarPinForm } from "../configurar-pin-form";
 import { RecuperarPinForm } from "../recuperar-pin-form";
+import { DesactivarPinForm } from "../desactivar-pin-form";
 
 export default async function ConfigurarPinPage() {
   const dueno = await requireDueno();
@@ -35,13 +36,16 @@ export default async function ConfigurarPinPage() {
             : "Elegí un PIN de 4 a 6 dígitos para proteger la sección de ingresos. Solo vos podrás ver los pagos y totales mensuales."}
         </p>
         <ConfigurarPinForm tienePinActual={tienePinActual} />
-        
+
         {tienePinActual && (
           <>
             <hr className="my-6 border-rule" />
             <RecuperarPinForm />
           </>
         )}
+
+        <hr className="my-6 border-rule" />
+        <DesactivarPinForm tienePinActual={tienePinActual} />
       </Panel>
     </div>
   );

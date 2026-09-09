@@ -2,9 +2,10 @@ import Link from "next/link";
 import { requireSuperadmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { registrarAccionAdmin } from "@/lib/admin/audit";
-import { SEMAFORO_COLOR, SEMAFORO_TITULO, semaforo } from "@/lib/admin/errores";
+import { semaforo } from "@/lib/admin/errores";
 import { linkClasses } from "@/components/ui";
 import { ActivarGimnasioForm } from "./activar-form";
+import { ListaGimnasios, type FilaGym } from "./lista-gimnasios";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,8 @@ type Gym = {
   slug: string | null;
   estado: string | null;
   creado_at: string | null;
+  plan_plataforma_vence_el: string | null;
+  nota_interna: string | null;
 };
 
 export default async function AdminGimnasiosPage() {
@@ -22,15 +25,36 @@ export default async function AdminGimnasiosPage() {
 
   const hace24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
-  const [{ data: gyms }, { data: clientes }, { data: errores24h }] =
-    await Promise.all([
-      db
-        .from("gimnasios")
-        .select("id, nombre, slug, estado, creado_at")
-        .order("creado_at", { ascending: true }),
-      db.from("clientes").select("gimnasio_id, estado_cuota, en_prueba"),
-      db.from("errores_app").select("gimnasio_id").gte("creado_en", hace24h),
-    ]);
+  const [
+    { data: gyms },
+    { data: clientes },
+    { data: errores24h },
+    { data: duenos },
+  ] = await Promise.all([
+    db
+      .from("gimnasios")
+      .select(
+        "id, nombre, slug, estado, creado_at, plan_plataforma_vence_el, nota_interna",
+      )
+      .order("creado_at", { ascending: true }),
+    db.from("clientes").select("gimnasio_id, estado_cuota, en_prueba"),
+    db.from("errores_app").select("gimnasio_id").gte("creado_en", hace24h),
+    db
+      .from("profiles")
+      .select("id, nombre, gimnasio_id")
+      .eq("rol", "dueno"),
+  ]);
+
+  const duenoPorGym = new Map<string, { id: string; nombre: string | null }>();
+  for (const d of (duenos ?? []) as {
+    id: string;
+    nombre: string | null;
+    gimnasio_id: string;
+  }[]) {
+    if (!duenoPorGym.has(d.gimnasio_id)) {
+      duenoPorGym.set(d.gimnasio_id, { id: d.id, nombre: d.nombre });
+    }
+  }
 
   await registrarAccionAdmin(admin.id, "listar_gyms", null, {
     total: gyms?.length ?? 0,
@@ -62,6 +86,26 @@ export default async function AdminGimnasiosPage() {
   }
 
   const lista = (gyms ?? []) as Gym[];
+
+  const filas: FilaGym[] = lista.map((g) => {
+    const stats = porGym.get(g.id) ?? { total: 0, vencidos: 0 };
+    const nErrores = erroresPorGym.get(g.id) ?? 0;
+    const dueno = duenoPorGym.get(g.id) ?? null;
+    return {
+      id: g.id,
+      nombre: g.nombre ?? "",
+      slug: g.slug ?? "",
+      estado: g.estado ?? "",
+      nivel: semaforo(nErrores),
+      nErrores,
+      socios: stats.total,
+      vencidos: stats.vencidos,
+      venceEl: g.plan_plataforma_vence_el,
+      duenoId: dueno?.id ?? null,
+      duenoNombre: dueno?.nombre ?? null,
+      tieneNota: Boolean(g.nota_interna && g.nota_interna.trim()),
+    };
+  });
 
   return (
     <div className="stagger">
@@ -128,49 +172,7 @@ export default async function AdminGimnasiosPage() {
         </div>
       ) : null}
 
-      {lista.length === 0 ? (
-        <p className="text-sm text-ink-soft">No hay gimnasios.</p>
-      ) : (
-        <ul className="card-cut border border-rule divide-y divide-rule bg-paper-2 overflow-hidden">
-          {lista.map((g) => {
-            const stats = porGym.get(g.id) ?? { total: 0, vencidos: 0 };
-            const nErrores = erroresPorGym.get(g.id) ?? 0;
-            const nivel = semaforo(nErrores);
-            return (
-              <li key={g.id}>
-                <Link
-                  href={`/admin/gimnasios/${g.id}`}
-                  className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-paper"
-                >
-                  <span className="flex min-w-0 items-center gap-3">
-                    <span
-                      className={`size-2.5 shrink-0 rounded-full ${SEMAFORO_COLOR[nivel]}`}
-                      title={SEMAFORO_TITULO[nivel]}
-                      aria-label={SEMAFORO_TITULO[nivel]}
-                    />
-                    <span className="min-w-0">
-                      <span className="block truncate text-base">
-                        {g.nombre ?? "(sin nombre)"}
-                      </span>
-                      <span className="block truncate text-xs text-ink-soft">
-                        {g.slug ?? "—"} · {g.estado ?? "—"}
-                        {nErrores > 0
-                          ? ` · ${nErrores} error${nErrores === 1 ? "" : "es"} 24 h`
-                          : ""}
-                      </span>
-                    </span>
-                  </span>
-                  <span className="shrink-0 text-right text-xs text-ink-soft">
-                    {stats.total} socios
-                    <br />
-                    {stats.vencidos} vencidos
-                  </span>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      )}
+      <ListaGimnasios filas={filas} />
     </div>
   );
 }
