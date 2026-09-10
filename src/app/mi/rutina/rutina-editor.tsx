@@ -411,6 +411,9 @@ export function RutinaEditor({
           totalSeries={totalSeriesActivo}
           volumenKilos={volumenKilosActivo}
           tiempoMin={tiempoMinActivo}
+          gimnasioNombre={gimnasioNombre}
+          logoUrl={logoUrl}
+          colores={colores}
           onClose={() => setLogroAbierto(false)}
         />
       )}

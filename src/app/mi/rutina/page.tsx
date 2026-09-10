@@ -21,7 +21,7 @@ type Prefs = {
   zonasDolor?: Molestia[];
 } | null;
 import { pillClasses } from "@/components/ui";
-import { ChevronLeft, ChevronRight, Plus, RotateCcw, SlidersHorizontal } from "lucide-react";
+import { ChevronLeft, ChevronRight, CreditCard, Plus, RotateCcw, SlidersHorizontal } from "lucide-react";
 import { generarMiRutina } from "./actions";
 import { GenerarRutinaForm } from "./generar-form";
 import { RutinaEditor, type DiaEditable } from "./rutina-editor";
@@ -49,7 +49,7 @@ export default async function MiRutinaPage() {
 
   const { data: cliente } = await supabase
     .from("clientes")
-    .select("id, sexo, gimnasio_id")
+    .select("id, sexo, gimnasio_id, estado_cuota, acceso_habilitado, en_prueba, fecha_vencimiento")
     .eq("profile_id", profile.id)
     .maybeSingle();
 
@@ -58,7 +58,7 @@ export default async function MiRutinaPage() {
   const { data: gymData } = cliente
     ? await supabase
         .from("gimnasios")
-        .select("nombre, logo_url, tema")
+        .select("nombre, logo_url, tema, tipo_cuenta, estado, pago_alias, pago_cbu, pago_titular")
         .eq("id", cliente.gimnasio_id ?? "")
         .maybeSingle()
     : { data: null };
@@ -70,6 +70,12 @@ export default async function MiRutinaPage() {
     volt: temaGym.volt,
     voltInk: temaGym.voltInk,
   };
+
+  const esIndividual = gymData?.tipo_cuenta === "individual";
+  const cuotaVencida =
+    !esIndividual &&
+    (cliente?.estado_cuota === "vencido" || cliente?.acceso_habilitado === false) &&
+    !cliente?.en_prueba;
 
   const { data: rutina } = cliente
     ? await supabase
@@ -251,7 +257,7 @@ export default async function MiRutinaPage() {
               </p>
             ) : null}
           </div>
-          {rutina && cliente ? (
+          {rutina && cliente && !cuotaVencida ? (
             <div className="shrink-0 flex flex-wrap items-center gap-2">
               <BotonGoogleCalendar
                 tituloPlan={`${OBJETIVO_LABEL[rutina.objetivo as Objetivo] ?? rutina.objetivo}${rutina.nivel ? ` · ${NIVEL_LABEL[rutina.nivel as Nivel]}` : ""}`}
@@ -277,7 +283,40 @@ export default async function MiRutinaPage() {
 
       <BannerMotivacional />
 
-      {!rutina ? (
+      {cuotaVencida ? (
+        <div className="rounded-[20px] border border-danger/30 bg-paper-2 p-6 text-center shadow-xl space-y-4 animate-scale-in">
+          <div className="mx-auto grid size-16 place-items-center rounded-full bg-danger/10 text-danger">
+            <CreditCard className="size-8" />
+          </div>
+          <div className="space-y-1">
+            <span className="inline-block rounded-full bg-danger/15 px-3 py-1 text-xs font-bold uppercase tracking-wider text-danger">
+              Cuota vencida · Acceso pausado
+            </span>
+            <h2 className="text-xl font-bold tracking-tight text-ink font-display pt-1">
+              Tu cuota en {gymData?.nombre ?? "el gimnasio"} está vencida
+            </h2>
+            <p className="text-sm text-ink-soft max-w-sm mx-auto">
+              Renová tu cuota ahora para continuar con tu entrenamiento y registrar tus series. Al acreditarse el pago, tu rutina se habilita de inmediato.
+            </p>
+          </div>
+
+          <div className="pt-2 max-w-xs mx-auto space-y-2">
+            <Link
+              href="/mi/pagos"
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-[12px] bg-accent font-bold text-sm text-accent-ink shadow-md shadow-accent/20 transition-transform active:scale-[0.98] hover:opacity-95"
+            >
+              <CreditCard className="size-4" />
+              <span>Pagar cuota con Mercado Pago</span>
+            </Link>
+            <Link
+              href="/mi"
+              className="flex h-10 w-full items-center justify-center rounded-[10px] text-xs font-medium text-ink-soft hover:text-ink transition-colors"
+            >
+              Ver datos de transferencia o volver
+            </Link>
+          </div>
+        </div>
+      ) : !rutina ? (
         <>
           <p className="text-sm text-ink-soft">
             Respondé estas preguntas y armamos tu plan. Después podés ajustar

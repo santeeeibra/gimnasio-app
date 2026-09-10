@@ -603,11 +603,12 @@ function notaRir(rir: OpcionesAvanzadas["rir"], rol: Rol): string {
 
 // ── Fase 2 · Presupuesto cerrado de series por día ──
 // Techo TOTAL de series del día (evita junk volume según Schoenfeld et al. 2017 y Baz-Valle 2022).
-// El máximo por sesión queda acotado a 16–22 series totales.
+// El presupuesto asegura al menos 3 series por ejercicio (18 series para 6 ranuras), evitando
+// que los ejercicios secundarios/aislamientos se degraden a 2 series en hipertrofia/fuerza.
 const PRESUPUESTO_DIA: Record<Nivel, number> = {
-  principiante: 16,
-  intermedio: 18,
-  avanzado: 20,
+  principiante: 18,
+  intermedio: 19,
+  avanzado: 21,
 };
 
 // Modo avanzado: el volumen semanal elegido escala el presupuesto del día.
@@ -623,7 +624,7 @@ const FACTOR_VOLUMEN: Record<string, number> = {
 // cerca del fallo, más volumen se sostiene. Sin avanzado → "2-3" no aplica
 // (factor 1) porque el flujo simple no expone este control.
 const FACTOR_ESFUERZO: Record<string, number> = {
-  "2-3": 0.75, // Suave → resta volumen (queda por debajo del techo por rol)
+  "2-3": 0.85, // Suave → factor adaptado para no recortar por debajo de series efectivas
   "1-2": 1, // Exigente → volumen pleno
   "0-1": 1, // Al límite → volumen pleno
 };
@@ -631,7 +632,7 @@ const FACTOR_ESFUERZO: Record<string, number> = {
 // Fase 2 · ajustarPorSexo: fisiología del ejercicio (Roberts et al. 2020; Hunter 2014):
 // las mujeres toleran igual o mayor volumen relativo que los hombres y se recuperan
 // más rápido. En intermedias y avanzadas se respeta el volumen pleno. En principiantes
-// se aplica una adaptación inicial suave (-2 series en el total del día, piso 2 por ranura).
+// se sostiene el volumen efectivo de base (piso de 3 series por ranura, 18 series en 6 ejercicios).
 function ajustarPorSexo(
   total: number,
   sexo: Sexo,
@@ -648,10 +649,10 @@ function ajustarPorSexo(
     }
     return total;
   }
-  const final = Math.max(2 * nRanuras, total - 2);
+  const final = Math.max(3 * nRanuras, total);
   if (trace) {
     trace.push(
-      `Sexo mujer (principiante): ajuste suave de adaptación (-2 series en el día: ${total} → ${final} series).`,
+      `Sexo mujer (principiante): volumen efectivo sostenido (evidencia: Roberts et al. 2020; piso 3 series por ejercicio: ${final} series).`,
     );
   }
   return final;
@@ -677,32 +678,40 @@ function resolverMaxPorRol(
   };
 }
 
+// Piso por rol: para hipertrofia y fuerza el piso es 3 series por ejercicio.
+// Solo en esquemas que explícitamente prescriben 2 series (resistencia o bajar grasa en aislamiento)
+// se permite 2 series.
+function resolverMinPorRol(esquema: EsquemaObj): Record<Rol, number> {
+  return {
+    primario: Math.min(3, esquema.primario.series),
+    secundario: Math.min(3, esquema.secundario.series),
+    aislamiento: Math.min(3, esquema.aislamiento.series),
+  };
+}
+
 // Fase 4 · Reparte el presupuesto de series entre las ranuras del día en
-// proporción al peso de cada rol (primario > secundario > aislamiento), con piso
-// 2 y un TECHO DURO POR ROL (`maxPorRol`, que sale de ESQUEMA: p. ej. hipertrofia
-// primario 4 / secundario 3). Ese techo es inquebrantable e independiente del
-// nivel: ningún primario de hipertrofia pasa de 4 ni un secundario de 3, aunque
-// el presupuesto del día alcance para más (el sobrante se descarta). La suma
-// resultante es min(presupuesto, Σ techos), recortada al piso 2·n. No depende de
-// `seed`: el desempate es por orden de ranura → salida determinista sin seed.
+// proporción al peso de cada rol (primario > secundario > aislamiento), respetando
+// el piso por rol (minPorRol, mínimo 3 series en hipertrofia y fuerza) y el TECHO DURO
+// POR ROL (maxPorRol). Evita que los últimos ejercicios se degraden a 2 series.
 function repartirSeries(
   roles: Rol[],
   presupuesto: number,
   maxPorRol: Record<Rol, number>,
+  minPorRol?: Record<Rol, number>,
 ): number[] {
   const n = roles.length;
   if (n === 0) return [];
-  const MIN = 2;
+  const minPorRanura = roles.map((r) => minPorRol?.[r] ?? 3);
   // Techo por ranura = el valor de ESQUEMA para ese rol (nunca menor al piso).
-  const cap = roles.map((r) => Math.max(MIN, maxPorRol[r] || MIN));
+  const cap = roles.map((r, i) => Math.max(minPorRanura[i], maxPorRol[r] || minPorRanura[i]));
   const techoTotal = cap.reduce((a, b) => a + b, 0);
-  // El objetivo nunca supera la suma de los techos duros: si el presupuesto es
-  // mayor, se recorta acá (así el +volumen del nivel no rompe el tope por rol).
-  const objetivo = Math.max(MIN * n, Math.min(techoTotal, presupuesto));
+  const pisoTotal = minPorRanura.reduce((a, b) => a + b, 0);
+  // El objetivo nunca supera la suma de los techos duros ni baja del piso:
+  const objetivo = Math.max(pisoTotal, Math.min(techoTotal, presupuesto));
   const sumaPeso = roles.reduce((s, r) => s + (maxPorRol[r] || 1), 0);
   const series = roles.map((r, i) =>
     Math.max(
-      MIN,
+      minPorRanura[i],
       Math.min(cap[i], Math.round(((maxPorRol[r] || 1) / sumaPeso) * objetivo)),
     ),
   );
@@ -722,7 +731,7 @@ function repartirSeries(
         series[i]++;
         diff--;
         movido = true;
-      } else if (diff < 0 && series[i] > MIN) {
+      } else if (diff < 0 && series[i] > minPorRanura[i]) {
         series[i]--;
         diff++;
         movido = true;
@@ -1296,6 +1305,7 @@ export function generarPlan(
       ranuras.map((r) => r.rol),
       presupuesto,
       resolverMaxPorRol(esquema, avanzado?.volumen),
+      resolverMinPorRol(esquema),
     );
 
     // Firewall B/C: rastreo por día para el bloqueo axial (¿ya entró un lift de
@@ -1495,7 +1505,7 @@ export function validarYRepararPlan(
 
     if (totalSeries > MAX_TOTAL_SESION) {
       for (let i = itemsLimpios.length - 1; i >= 0 && totalSeries > MAX_TOTAL_SESION; i--) {
-        while (itemsLimpios[i].series > 2 && totalSeries > MAX_TOTAL_SESION) {
+        while (itemsLimpios[i].series > 3 && totalSeries > MAX_TOTAL_SESION) {
           itemsLimpios[i].series--;
           totalSeries--;
         }

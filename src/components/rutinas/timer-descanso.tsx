@@ -216,6 +216,8 @@ export function TimerDescanso() {
 
   // Countdown: el valor sale siempre de `finEnRef` (reloj real), así no hay
   // drift aunque el tab estuviera en segundo plano.
+  const ultimoBeepRef = useRef<number | null>(null);
+
   useEffect(() => {
     if (estado !== "corriendo") return;
 
@@ -223,12 +225,20 @@ export function TimerDescanso() {
       const fin = finEnRef.current;
       if (fin == null) return;
       const rem = Math.round((fin - Date.now()) / 1000);
+
+      // Beeps de aviso previo en los últimos 3 segundos (3, 2, 1)
+      if (rem <= 3 && rem >= 1 && ultimoBeepRef.current !== rem) {
+        ultimoBeepRef.current = rem;
+        reproducirBeepCountdown(rem);
+      }
+
       if (rem <= 0) {
+        ultimoBeepRef.current = null;
         setEstado("detenido");
         finEnRef.current = null;
         if (intervalRef.current) clearInterval(intervalRef.current);
         cancelarPushDescanso(); // el aviso local ya sonó; no dupliques por push
-        reproducirBeep();
+        reproducirAlarmaFinal();
         vibrarFinalizado();
         dispararNotificacionLocal();
         setAlertFinalizado(true);
@@ -247,27 +257,68 @@ export function TimerDescanso() {
     };
   }, [estado, presetSeg]);
 
-  function reproducirBeep() {
+  function reproducirBeepCountdown(seg: number) {
     try {
       if (!audioCtxRef.current) {
-        audioCtxRef.current = new AudioContext();
+        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+        if (AudioCtx) audioCtxRef.current = new AudioCtx();
       }
       const ctx = audioCtxRef.current;
+      if (!ctx) return;
+      if (ctx.state === "suspended") ctx.resume();
+
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
 
       osc.connect(gain);
       gain.connect(ctx.destination);
 
-      osc.frequency.value = 880; // A5
+      // Frecuencias ascendentes: 3 -> 440Hz, 2 -> 494Hz, 1 -> 587Hz
+      const freq = seg === 3 ? 440 : seg === 2 ? 493.88 : 587.33;
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
       osc.type = "sine";
-      gain.gain.setValueAtTime(0.3, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+
+      gain.gain.setValueAtTime(0.18, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
 
       osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 0.25);
+      osc.stop(ctx.currentTime + 0.13);
     } catch (err) {
-      console.warn("No se pudo reproducir beep:", err);
+      console.warn("No se pudo reproducir beep countdown:", err);
+    }
+  }
+
+  function reproducirAlarmaFinal() {
+    try {
+      if (!audioCtxRef.current) {
+        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+        if (AudioCtx) audioCtxRef.current = new AudioCtx();
+      }
+      const ctx = audioCtxRef.current;
+      if (!ctx) return;
+      if (ctx.state === "suspended") ctx.resume();
+
+      // Doble tono triunfal tipo campana de boxeo / timer de gym: 880Hz -> 1046.5Hz
+      const notas = [880, 1046.5];
+      notas.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        const startTime = ctx.currentTime + idx * 0.15;
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(freq, startTime);
+
+        gain.gain.setValueAtTime(0.001, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.35, startTime + 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.45);
+
+        osc.start(startTime);
+        osc.stop(startTime + 0.46);
+      });
+    } catch (err) {
+      console.warn("No se pudo reproducir alarma final:", err);
     }
   }
 

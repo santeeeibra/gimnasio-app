@@ -198,11 +198,20 @@ export default async function MiPage() {
       ) : null}
 
       {estado !== "al_dia" ? (
-        <DatosTransferencia
-          alias={gym?.pago_alias ?? null}
-          cbu={gym?.pago_cbu ?? null}
-          titular={gym?.pago_titular ?? null}
-        />
+        <div className="space-y-3">
+          <Link
+            href="/mi/pagos"
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-[12px] bg-accent font-bold text-sm text-accent-ink shadow-md shadow-accent/20 transition-transform active:scale-[0.98] hover:opacity-95"
+          >
+            <CreditCard className="size-4" />
+            <span>Pagar cuota online con Mercado Pago</span>
+          </Link>
+          <DatosTransferencia
+            alias={gym?.pago_alias ?? null}
+            cbu={gym?.pago_cbu ?? null}
+            titular={gym?.pago_titular ?? null}
+          />
+        </div>
       ) : null}
 
       <ul className="stagger-in card-cut overflow-hidden border border-rule bg-paper-2 divide-y divide-rule">

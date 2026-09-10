@@ -15,8 +15,8 @@ export type Nivel = (typeof NIVELES)[number];
 export type Equipo = (typeof EQUIPOS)[number];
 
 export const OBJETIVO_LABEL: Record<Objetivo, string> = {
-  fuerza: "Fuerza",
-  hipertrofia: "Masa muscular",
+  fuerza: "Fuerza (cargas altas)",
+  hipertrofia: "Hipertrofia (masa muscular)",
   tonificar: "Tonificar / marcar",
   resistencia: "Resistencia",
   bajar_grasa: "Bajar grasa",

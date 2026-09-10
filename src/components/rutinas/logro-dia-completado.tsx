@@ -77,6 +77,47 @@ export function LogroDiaCompletado({
     }
   }, [abierto]);
 
+  async function handleCompartir() {
+    iniciarAudioHaptico();
+    hapticoImpactoMedio();
+    setCompartiendo(true);
+
+    try {
+      const dataUrl = await generarImagenDiaCompletado({
+        diaTitulo,
+        totalSeries,
+        volumenKilos,
+        tiempoMin,
+        gimnasioNombre: gimnasioNombre || "SysGym",
+        logoUrl,
+        colores,
+      });
+
+      // Si el navegador soporta Web Share API con archivos (iOS Safari / Android Chrome)
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      const file = new File([blob], "entrenamiento-hoy.png", { type: "image/png" });
+
+      if (typeof navigator !== "undefined" && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: "¡Día completado! 💥",
+          text: `Hoy completé ${totalSeries} series (~${volumenKilos.toLocaleString("es-AR")} kg) de ${diaTitulo} en ${gimnasioNombre || "SysGym"} 💪`,
+        });
+        return;
+      }
+
+      // Fallback: Descarga directa + abrir WhatsApp
+      descargarDataUrl(dataUrl, `entrenamiento-${new Date().toISOString().slice(0, 10)}.png`);
+      const textoWa = `¡Terminé mi entrenamiento de hoy en ${gimnasioNombre || "SysGym"}! 💥 ${totalSeries} series y ~${volumenKilos.toLocaleString("es-AR")} kg levantados.`;
+      window.open(linkWhatsAppLogro(textoWa), "_blank", "noopener");
+    } catch (err) {
+      console.warn("No se pudo compartir:", err);
+    } finally {
+      setCompartiendo(false);
+    }
+  }
+
   if (!abierto || typeof document === "undefined") return null;
 
   return createPortal(
@@ -185,10 +226,45 @@ export function LogroDiaCompletado({
           </div>
         </div>
 
+        {/* Botón principal: Compartir en Historias / WhatsApp */}
+        <button
+          type="button"
+          disabled={compartiendo}
+          onClick={handleCompartir}
+          className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-[12px] bg-accent text-sm font-bold text-accent-ink shadow-md shadow-accent/20 transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:opacity-60"
+        >
+          {compartiendo ? (
+            <>
+              <div className="size-4 animate-spin rounded-full border-2 border-accent-ink border-t-transparent" />
+              <span>Generando tarjeta...</span>
+            </>
+          ) : (
+            <>
+              <svg
+                viewBox="0 0 24 24"
+                width="16"
+                height="16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                <polyline points="16 6 12 2 8 6" />
+                <line x1="12" y1="2" x2="12" y2="15" />
+              </svg>
+              <span>Compartir Historia / WhatsApp</span>
+            </>
+          )}
+        </button>
+
+        {/* Botón secundario: Cerrar */}
         <button
           type="button"
           onClick={onClose}
-          className="mt-6 flex h-12 w-full items-center justify-center rounded-[12px] bg-accent text-sm font-bold text-accent-ink shadow-md transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+          className="mt-2 flex h-10 w-full items-center justify-center rounded-[10px] text-xs font-semibold text-ink-soft hover:text-ink transition-colors"
         >
           A descansar
         </button>

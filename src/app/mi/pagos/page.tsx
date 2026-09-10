@@ -73,9 +73,29 @@ export default async function MisPagosPage() {
       </div>
 
       {cubiertoHasta ? (
-        <div className="rounded-[14px] border border-rule bg-paper-2 p-5 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-wider text-ink-soft">Tu cuota está paga hasta</p>
-          <p className="font-display text-2xl font-extrabold text-ink mt-1">{fecha(cubiertoHasta)}</p>
+        <div
+          className={`rounded-[14px] border p-5 shadow-sm ${
+            new Date(cubiertoHasta + "T23:59:59") < new Date()
+              ? "border-danger/40 bg-danger/5"
+              : "border-rule bg-paper-2"
+          }`}
+        >
+          <p
+            className={`text-xs font-semibold uppercase tracking-wider ${
+              new Date(cubiertoHasta + "T23:59:59") < new Date() ? "text-danger" : "text-ink-soft"
+            }`}
+          >
+            {new Date(cubiertoHasta + "T23:59:59") < new Date()
+              ? "Tu cuota venció el"
+              : "Tu cuota está paga hasta"}
+          </p>
+          <p
+            className={`font-display text-2xl font-extrabold mt-1 ${
+              new Date(cubiertoHasta + "T23:59:59") < new Date() ? "text-danger" : "text-ink"
+            }`}
+          >
+            {fecha(cubiertoHasta)}
+          </p>
         </div>
       ) : null}
 
