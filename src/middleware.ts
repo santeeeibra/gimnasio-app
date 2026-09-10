@@ -5,6 +5,8 @@ type CookieToSet = { name: string; value: string; options: CookieOptions };
 
 const PUBLIC_PATHS = [
   "/login",
+  "/registrarse",
+  "/demo",
   "/inicio",
   "/suspendido",
   "/reset-clave",
