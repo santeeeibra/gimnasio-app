@@ -11,28 +11,16 @@ const NAV: { v: DemoVista; label: string; Icono: typeof House }[] = [
   { v: "peso", label: "Peso", Icono: Scale },
 ];
 
-/** Mismo lenguaje visual que `MiBottomNav`, pero cambia de vista en memoria. */
+/**
+ * Mobile y Desktop: pill flotante despegada de los bordes con backdrop-blur,
+ * sombra y esquinas squircle. Mismo lenguaje que `PanelBottomNav`.
+ */
 export function DemoNav() {
   const { vista, ir } = useDemoVista();
-  const activeIdx = Math.max(
-    NAV.findIndex((item) => item.v === vista),
-    0,
-  );
 
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-40 border-t border-rule bg-paper/95 backdrop-blur-sm pb-[env(safe-area-inset-bottom)]">
-      <div className="relative mx-auto flex max-w-md">
-        <span
-          aria-hidden
-          className="pointer-events-none absolute top-0 flex justify-center transition-transform duration-300 [transition-timing-function:var(--ease-in-out)]"
-          style={{
-            width: `${100 / NAV.length}%`,
-            transform: `translateX(${activeIdx * 100}%)`,
-          }}
-        >
-          <span className="h-0.5 w-8 rounded-full bg-volt" />
-        </span>
-
+    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] pt-2">
+      <nav className="pointer-events-auto flex w-full max-w-[380px] items-stretch gap-1 rounded-[22px] border border-rule/80 bg-paper/80 p-1.5 shadow-[0_12px_36px_rgba(0,0,0,0.28)] backdrop-blur-xl backdrop-saturate-150">
         {NAV.map((item) => {
           const active = item.v === vista;
           return (
@@ -44,22 +32,24 @@ export function DemoNav() {
                 ir(item.v);
               }}
               aria-current={active ? "page" : undefined}
-              className={`relative flex-1 flex min-h-14 flex-col items-center justify-center gap-1 py-2 text-[11px] tracking-tight touch-manipulation active:scale-95 transition-[transform,color] duration-150 [transition-timing-function:var(--ease-out)] ${
-                active ? "text-ink" : "text-ink-soft"
+              className={`relative flex min-h-[52px] flex-1 flex-col items-center justify-center gap-1 rounded-[16px] px-1 py-1.5 text-[11px] tracking-tight touch-manipulation transition-[transform,background-color,color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-90 ${
+                active
+                  ? "bg-ink text-paper shadow-sm"
+                  : "text-ink-soft hover:text-ink hover:bg-paper-2/40"
               }`}
             >
               <item.Icono
                 aria-hidden
                 strokeWidth={active ? 2.2 : 1.8}
-                className="size-5"
+                className="size-5 shrink-0"
               />
-              <span className={active ? "font-medium" : undefined}>
+              <span className={active ? "font-semibold" : undefined}>
                 {item.label}
               </span>
             </button>
           );
         })}
-      </div>
-    </nav>
+      </nav>
+    </div>
   );
 }

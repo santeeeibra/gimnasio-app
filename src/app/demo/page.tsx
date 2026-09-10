@@ -70,7 +70,7 @@ function aEditable(plan: PlanGenerado): DiaEditable[] {
 export default function DemoPage() {
   const { vista } = useDemoVista();
   return (
-    <main className="mx-auto max-w-md px-5 pt-6">
+    <main className="w-full px-5 pt-6 pb-4 md:pt-8">
       {vista === "inicio" && <DemoInicio />}
       {vista === "rutina" && <DemoRutina />}
       {vista === "peso" && <DemoPeso />}
@@ -85,21 +85,25 @@ function DemoInicio() {
   const [wall, setWall] = useState(false);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <div>
         <p className="text-[13px] text-ink-soft">Hola 👋</p>
-        <h1 className="font-display text-2xl">Tu gimnasio</h1>
+        <h1 className="font-display text-2xl font-semibold tracking-tight text-ink">
+          Tu gimnasio
+        </h1>
       </div>
 
-      <div className="rounded-[16px] border border-rule bg-paper-2 p-4">
-        <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-ink-soft">
+      <div className="rounded-[16px] border border-rule bg-paper-2 p-4.5 shadow-sm">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-soft">
           Tu cuota
         </p>
-        <p className="mt-1 font-display text-lg text-[color:var(--ok)]">Al día</p>
-        <p className="text-[13px] text-ink-soft">Vence en 24 días</p>
+        <p className="mt-1 font-display text-xl font-semibold text-[color:var(--ok)]">
+          Al día
+        </p>
+        <p className="mt-0.5 text-[13px] text-ink-soft">Vence en 24 días</p>
       </div>
 
-      <ul className="divide-y divide-rule overflow-hidden rounded-[16px] border border-rule bg-paper-2">
+      <ul className="divide-y divide-rule overflow-hidden rounded-[16px] border border-rule bg-paper-2 shadow-sm">
         <li>
           <button
             type="button"
@@ -107,13 +111,13 @@ function DemoInicio() {
               hapticoSeleccion();
               ir("rutina");
             }}
-            className="flex w-full items-center gap-3 p-4 text-left transition-colors active:bg-paper-3"
+            className="flex w-full items-center gap-3.5 p-4 text-left min-h-14 transition-[background-color] duration-150 [transition-timing-function:var(--ease-out)] active:bg-paper-3"
           >
-            <span className="grid size-9 shrink-0 place-items-center rounded-[8px] border border-rule bg-paper text-accent">
-              <Dumbbell className="size-4" />
+            <span className="grid size-10 shrink-0 place-items-center rounded-[10px] border border-rule bg-paper text-accent shadow-xs">
+              <Dumbbell className="size-5" />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-sm font-medium">Tu rutina</span>
+              <span className="block text-sm font-semibold text-ink">Tu rutina</span>
               <span className="block text-[13px] text-ink-soft">
                 Generá y ajustá tu plan
               </span>
@@ -128,13 +132,13 @@ function DemoInicio() {
               hapticoImpactoMedio();
               setWall(true);
             }}
-            className="flex w-full items-center gap-3 p-4 text-left transition-colors active:bg-paper-3"
+            className="flex w-full items-center gap-3.5 p-4 text-left min-h-14 transition-[background-color] duration-150 [transition-timing-function:var(--ease-out)] active:bg-paper-3"
           >
-            <span className="grid size-9 shrink-0 place-items-center rounded-[8px] border border-rule bg-paper text-accent">
-              <MessageSquare className="size-4" />
+            <span className="grid size-10 shrink-0 place-items-center rounded-[10px] border border-rule bg-paper text-accent shadow-xs">
+              <MessageSquare className="size-5" />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-sm font-medium">Mensajes</span>
+              <span className="block text-sm font-semibold text-ink">Mensajes</span>
               <span className="block text-[13px] text-ink-soft">
                 Escribite con los profes
               </span>
@@ -144,9 +148,9 @@ function DemoInicio() {
         </li>
       </ul>
 
-      <p className="text-center text-[13px] text-ink-soft">
+      <p className="px-2 text-center text-[13px] text-ink-soft leading-snug">
         Estás viendo una demo. Tocá{" "}
-        <span className="font-medium text-ink">Rutina</span> abajo para probar el
+        <span className="font-semibold text-ink">Rutina</span> abajo para probar el
         generador.
       </p>
 
@@ -163,27 +167,35 @@ function DemoInicio() {
 
 /* ───────────────────────── Rutina (generador + editor) ─────────────────── */
 
-function ChipRow<T extends string | number>({
+function SelectorChips<T extends string | number>({
   label,
   opciones,
   valor,
   onChange,
   render,
+  gridCols = "grid-cols-2",
+  fullLast = false,
+  isMono = false,
 }: {
   label: string;
   opciones: readonly T[];
   valor: T;
   onChange: (v: T) => void;
   render: (v: T) => string;
+  gridCols?: string;
+  fullLast?: boolean;
+  isMono?: boolean;
 }) {
   return (
     <div>
-      <span className="mb-2 block text-[11px] font-medium uppercase tracking-[0.08em] text-ink-soft">
+      <span className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-soft">
         {label}
       </span>
-      <div className="flex flex-wrap gap-2">
-        {opciones.map((op) => {
+      <div className={`grid ${gridCols} gap-2`}>
+        {opciones.map((op, idx) => {
           const activo = op === valor;
+          const isLastAndOdd =
+            fullLast && idx === opciones.length - 1 && opciones.length % 2 !== 0;
           return (
             <button
               key={String(op)}
@@ -192,13 +204,15 @@ function ChipRow<T extends string | number>({
                 hapticoSeleccion();
                 onChange(op);
               }}
-              className={`h-10 min-w-10 flex-1 rounded-[10px] border px-3 text-xs font-medium transition-all duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.98] ${
+              className={`flex min-h-11 w-full items-center justify-center rounded-[12px] border px-3 py-2 text-center text-xs font-medium transition-[transform,background-color,border-color,color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.98] ${
+                isLastAndOdd ? "col-span-2" : ""
+              } ${isMono ? "tabular-nums font-mono" : ""} ${
                 activo
-                  ? "border-accent bg-accent/10 text-accent"
-                  : "border-rule bg-paper text-ink-soft hover:text-ink"
+                  ? "border-accent bg-accent/10 font-semibold text-accent shadow-xs"
+                  : "border-rule bg-paper text-ink-soft hover:border-ink/20 hover:text-ink"
               }`}
             >
-              {render(op)}
+              <span className="truncate">{render(op)}</span>
             </button>
           );
         })}
@@ -308,40 +322,47 @@ function DemoRutina() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-2xl">Tu rutina</h1>
-        <p className="text-sm text-ink-soft">
+        <h1 className="font-display text-2xl font-semibold tracking-tight text-ink">
+          Tu rutina
+        </h1>
+        <p className="mt-1 text-sm text-ink-soft leading-snug">
           Respondé y armamos tu plan con evidencia científica. Después ajustás
           series, reps y ejercicios.
         </p>
       </div>
 
-      <div className="space-y-4 rounded-[16px] border border-rule bg-paper-2 p-4">
-        <ChipRow
+      <div className="space-y-4 rounded-[16px] border border-rule bg-paper-2 p-4.5 shadow-sm">
+        <SelectorChips
           label="Objetivo"
           opciones={OBJETIVOS}
           valor={objetivo}
           onChange={setObjetivo}
           render={(o) => OBJETIVO_LABEL[o]}
+          gridCols="grid-cols-2"
+          fullLast={true}
         />
-        <ChipRow
+        <SelectorChips
           label="Nivel"
           opciones={NIVELES}
           valor={nivel}
           onChange={setNivel}
           render={(n) => NIVEL_LABEL[n]}
+          gridCols="grid-cols-3"
         />
-        <ChipRow
+        <SelectorChips
           label={`Días por semana: ${dias}`}
           opciones={[2, 3, 4, 5, 6] as const}
           valor={dias}
           onChange={setDias}
           render={(d) => String(d)}
+          gridCols="grid-cols-5"
+          isMono={true}
         />
 
         <button
           type="button"
           onClick={generar}
-          className="flex h-12 w-full items-center justify-center gap-2 rounded-[12px] bg-volt text-sm font-semibold text-volt-ink shadow-sm transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.98]"
+          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-[12px] bg-volt px-4 text-sm font-semibold text-volt-ink shadow-sm transition-[transform,filter] duration-150 [transition-timing-function:var(--ease-out)] hover:brightness-95 active:scale-[0.98]"
         >
           <Sparkles className="size-4" />
           {plan ? "Regenerar rutina" : "Generar rutina con evidencia científica"}
@@ -358,7 +379,7 @@ function DemoRutina() {
 
       {plan ? (
         <div className="space-y-4">
-          <h2 className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.08em] text-ink-soft">
+          <h2 className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-soft">
             <CheckCircle2 className="size-4 text-[color:var(--ok)]" />
             Plan armado · {plan.length} días
           </h2>
@@ -366,13 +387,13 @@ function DemoRutina() {
           {plan.map((dia, di) => (
             <div
               key={di}
-              className="space-y-3 rounded-[16px] border border-rule bg-paper-2 p-4"
+              className="space-y-3.5 rounded-[16px] border border-rule bg-paper-2 p-4.5 shadow-sm"
             >
-              <div className="flex items-center justify-between border-b border-rule pb-2">
-                <span className="font-display text-sm">
+              <div className="flex items-center justify-between border-b border-rule pb-2.5">
+                <span className="font-display text-sm font-semibold text-ink">
                   Día {di + 1}: {dia.titulo}
                 </span>
-                <span className="text-[11px] text-ink-soft">
+                <span className="text-[11px] font-mono tabular-nums text-ink-soft">
                   {dia.items.length} ejercicios
                 </span>
               </div>
@@ -386,26 +407,26 @@ function DemoRutina() {
                   return (
                     <div
                       key={it.key}
-                      className="rounded-[10px] border border-rule bg-paper p-3"
+                      className="rounded-[12px] border border-rule bg-paper p-3.5 shadow-xs"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
-                          <span className="block text-sm font-medium capitalize">
+                          <span className="block text-sm font-semibold capitalize text-ink">
                             {nombreDe(it.slug)}
                           </span>
-                          <span className="block text-[11px] capitalize text-ink-soft">
+                          <span className="block text-[11px] font-semibold uppercase tracking-wider text-ink-soft">
                             {base?.grupo_muscular ?? "cuerpo completo"}
                           </span>
                         </div>
                       </div>
 
-                      <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
                         <select
                           value={it.series}
                           onChange={(e) =>
                             editar(di, it.key, "series", e.target.value)
                           }
-                          className="h-9 appearance-none rounded-[8px] border border-rule bg-paper px-2 text-[13px] outline-none focus:border-ink"
+                          className="h-11 appearance-none rounded-[10px] border border-rule bg-paper px-3 text-[13px] font-mono tabular-nums text-ink outline-none transition-[border-color] duration-150 [transition-timing-function:var(--ease-out)] focus:border-ink cursor-pointer"
                         >
                           {SERIES_OPCIONES.map((s) => (
                             <option key={s} value={s}>
@@ -418,7 +439,7 @@ function DemoRutina() {
                           onChange={(e) =>
                             editar(di, it.key, "repeticiones", e.target.value)
                           }
-                          className="h-9 appearance-none rounded-[8px] border border-rule bg-paper px-2 text-[13px] outline-none focus:border-ink"
+                          className="h-11 appearance-none rounded-[10px] border border-rule bg-paper px-3 text-[13px] font-mono tabular-nums text-ink outline-none transition-[border-color] duration-150 [transition-timing-function:var(--ease-out)] focus:border-ink cursor-pointer"
                         >
                           {(REPS_OPCIONES.includes(
                             it.repeticiones as (typeof REPS_OPCIONES)[number],
@@ -439,7 +460,7 @@ function DemoRutina() {
                             hapticoSeleccion();
                             setSwapKey(swapKey === it.key ? null : it.key);
                           }}
-                          className="ml-auto inline-flex h-9 items-center gap-1.5 rounded-[8px] border border-rule px-2.5 text-[13px] text-ink-soft transition-colors hover:text-ink"
+                          className="ml-auto inline-flex min-h-11 items-center gap-1.5 rounded-[10px] border border-rule bg-paper px-3 text-[13px] font-medium text-ink-soft transition-[transform,color,border-color] duration-150 [transition-timing-function:var(--ease-out)] hover:border-ink/20 hover:text-ink active:scale-95"
                         >
                           <RefreshCw className="size-3.5" />
                           Cambiar
@@ -447,8 +468,8 @@ function DemoRutina() {
                       </div>
 
                       {swapKey === it.key ? (
-                        <div className="mt-2.5 space-y-1.5 border-t border-rule pt-2.5">
-                          <span className="block text-[11px] text-ink-soft">
+                        <div className="mt-3 space-y-1.5 border-t border-rule pt-3">
+                          <span className="block text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-soft">
                             Elegí un reemplazo del mismo grupo:
                           </span>
                           {alts.length ? (
@@ -460,14 +481,14 @@ function DemoRutina() {
                                   alt.slug &&
                                   cambiarEjercicio(di, it.key, alt.slug)
                                 }
-                                className="flex w-full items-center justify-between rounded-[8px] border border-rule bg-paper-2 px-2.5 py-2 text-left text-[13px] transition-colors active:bg-paper-3"
+                                className="flex min-h-11 w-full items-center justify-between rounded-[10px] border border-rule bg-paper-2 px-3 py-2 text-left text-[13px] transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.99] active:bg-paper-3"
                               >
-                                <span className="capitalize">{alt.nombre}</span>
-                                <ChevronRight className="size-3.5 shrink-0 text-ink-soft" />
+                                <span className="capitalize font-medium text-ink">{alt.nombre}</span>
+                                <ChevronRight className="size-4 shrink-0 text-ink-soft" />
                               </button>
                             ))
                           ) : (
-                            <span className="block text-[13px] text-ink-soft">
+                            <span className="block text-[13px] text-ink-soft py-1">
                               Sin alternativas para este grupo.
                             </span>
                           )}
@@ -486,7 +507,7 @@ function DemoRutina() {
               hapticoImpactoMedio();
               setWall("guardar");
             }}
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-[12px] bg-ink text-sm font-medium text-paper shadow-sm transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.98]"
+            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-[12px] bg-ink text-sm font-semibold text-paper shadow-sm transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.98]"
           >
             <RotateCcw className="size-4" />
             Guardar rutina
@@ -544,8 +565,10 @@ function DemoPeso() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-2xl">Control de peso</h1>
-        <p className="text-sm text-ink-soft">
+        <h1 className="font-display text-2xl font-semibold tracking-tight text-ink">
+          Control de peso
+        </h1>
+        <p className="mt-1 text-sm text-ink-soft leading-snug">
           Anotá tu peso y mirá la evolución. En la demo se guarda solo en esta
           pantalla.
         </p>
@@ -553,7 +576,7 @@ function DemoPeso() {
 
       <form
         onSubmit={agregar}
-        className="flex gap-2 rounded-[16px] border border-rule bg-paper-2 p-4"
+        className="flex gap-2 rounded-[16px] border border-rule bg-paper-2 p-4 shadow-sm"
       >
         <input
           type="number"
@@ -562,11 +585,11 @@ function DemoPeso() {
           placeholder="Ej: 74.8"
           value={nuevo}
           onChange={(e) => setNuevo(e.target.value)}
-          className="h-11 flex-1 rounded-[10px] border border-rule bg-paper px-3 text-[16px] outline-none focus:border-ink"
+          className="h-11 flex-1 rounded-[10px] border border-rule bg-paper px-3.5 text-[16px] tabular-nums font-mono text-ink outline-none transition-[border-color] duration-150 [transition-timing-function:var(--ease-out)] focus:border-ink placeholder:text-ink-soft/60"
         />
         <button
           type="submit"
-          className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-[10px] bg-volt px-4 text-sm font-semibold text-volt-ink transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-95"
+          className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-[10px] bg-volt px-4 text-sm font-semibold text-volt-ink shadow-sm transition-transform duration-150 [transition-timing-function:var(--ease-out)] hover:brightness-95 active:scale-95"
         >
           <Plus className="size-4" />
           Anotar
@@ -574,40 +597,50 @@ function DemoPeso() {
       </form>
 
       <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-[16px] border border-rule bg-paper-2 p-4">
-          <span className="block text-[13px] text-ink-soft">Último peso</span>
-          <div className="mt-1 flex items-baseline gap-1">
-            <span className="font-display text-2xl">{ultimo ?? "--"}</span>
-            <span className="text-xs font-medium text-ink-soft">kg</span>
+        <div className="rounded-[16px] border border-rule bg-paper-2 p-4 shadow-sm">
+          <span className="block text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-soft">
+            Último peso
+          </span>
+          <div className="mt-1.5 flex items-baseline gap-1">
+            <span className="font-display text-2xl font-bold tabular-nums font-mono text-ink">
+              {ultimo ?? "--"}
+            </span>
+            <span className="text-xs font-semibold text-ink-soft">kg</span>
           </div>
         </div>
-        <div className="rounded-[16px] border border-rule bg-paper-2 p-4">
-          <span className="block text-[13px] text-ink-soft">Evolución</span>
-          <div className="mt-1 flex items-center gap-1.5 text-sm font-medium text-[color:var(--ok)]">
-            <TrendingDown className="size-4" />
+        <div className="rounded-[16px] border border-rule bg-paper-2 p-4 shadow-sm">
+          <span className="block text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-soft">
+            Evolución
+          </span>
+          <div className="mt-1.5 flex items-center gap-1.5 text-sm font-semibold text-[color:var(--ok)] tabular-nums font-mono">
+            <TrendingDown className="size-4 shrink-0" />
             -1.3 kg / 7 días
           </div>
         </div>
       </div>
 
-      <div className="space-y-2 rounded-[16px] border border-rule bg-paper-2 p-4">
-        <span className="block text-[11px] font-medium uppercase tracking-[0.08em] text-ink-soft">
+      <div className="space-y-2 rounded-[16px] border border-rule bg-paper-2 p-4 shadow-sm">
+        <span className="block text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-soft">
           Historial
         </span>
         {historial.map((r) => (
           <div
             key={r.id}
-            className="flex items-center justify-between rounded-[10px] border border-rule bg-paper px-3 py-2.5"
+            className="flex items-center justify-between rounded-[10px] border border-rule bg-paper px-3.5 py-2.5 shadow-xs"
           >
-            <span className="text-[13px] text-ink-soft">{r.fecha}</span>
-            <span className="text-sm font-medium">{r.peso} kg</span>
+            <span className="text-[13px] font-mono text-ink-soft">{r.fecha}</span>
+            <span className="text-sm font-semibold tabular-nums font-mono text-ink">
+              {r.peso} kg
+            </span>
           </div>
         ))}
       </div>
 
-      <div className="flex items-center gap-2 rounded-[12px] border border-rule bg-paper-2 p-3 text-[13px] text-ink-soft">
+      <div className="flex items-center gap-2.5 rounded-[12px] border border-rule bg-paper-2 p-3.5 text-[13px] leading-snug text-ink-soft shadow-xs">
         <Scale className="size-4 shrink-0 text-accent" />
-        Con una cuenta, tu peso queda guardado y aparece en el PDF de tu rutina.
+        <span>
+          Con una cuenta, tu peso queda guardado y aparece en el PDF de tu rutina.
+        </span>
       </div>
     </div>
   );

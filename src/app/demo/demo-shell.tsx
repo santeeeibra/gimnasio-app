@@ -21,7 +21,7 @@ export function DemoShell({ children }: { children: React.ReactNode }) {
   const [vista, setVista] = useState<DemoVista>("inicio");
   return (
     <Ctx.Provider value={{ vista, ir: setVista }}>
-      <div className="pb-24">{children}</div>
+      <div className="flex-1 flex flex-col pb-28 sm:pb-32">{children}</div>
       <DemoNav />
     </Ctx.Provider>
   );
