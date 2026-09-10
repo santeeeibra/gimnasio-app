@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Calendar,
   CheckCircle2,
@@ -9,6 +9,7 @@ import {
   CreditCard,
   Download,
   Dumbbell,
+  HelpCircle,
   IdCard,
   Inbox,
   MessageSquare,
@@ -28,6 +29,9 @@ import {
 import catalogoEjerciciosJson from "@/data/ejercicios.json";
 import { DialVerticalProgreso } from "@/components/progreso/dial-vertical-progreso";
 import { RulerWeightPicker } from "@/components/peso/card-peso";
+import { StickyProgresoDia } from "@/components/rutinas/sticky-progreso-dia";
+import { LogroDiaCompletado } from "@/components/rutinas/logro-dia-completado";
+import { TimerDescanso } from "@/components/rutinas/timer-descanso";
 import { AnilloProgreso } from "@/components/anillo-progreso";
 import { RachaConstancia } from "@/components/mi/racha-constancia";
 import { BannerMotivacional } from "@/components/rutinas/banner-motivacional";
@@ -289,6 +293,153 @@ function deducirTipoEquipo(base: any): "corporal" | "barra" | "mancuerna" | "pol
     return "maquina";
   }
   return "otro";
+}
+
+function extraerSegundosDescanso(nota?: string): number {
+  if (!nota) return 60;
+  if (nota.includes("35s")) return 35;
+  if (nota.includes("45-60") || nota.includes("45–60")) return 60;
+  if (nota.includes("60-90") || nota.includes("60–90")) return 60;
+  if (nota.includes("90-120") || nota.includes("90–120")) return 90;
+  if (nota.includes("2-3 min") || nota.includes("2–3 min")) return 120;
+  return 60;
+}
+
+function BadgeEquipo({
+  equipo,
+  nombre,
+}: {
+  equipo?: string | null;
+  nombre?: string;
+}) {
+  const eq = (equipo || "").toLowerCase();
+  const nom = (nombre || "").toLowerCase();
+
+  const esBarra = eq === "barra" || nom.includes("barra");
+  const esMancuerna =
+    eq === "mancuerna" || eq === "mancuernas" || nom.includes("mancuerna");
+  const esMaquina =
+    eq === "maquina" ||
+    nom.includes("maquina") ||
+    nom.includes("máquina") ||
+    nom.includes("prensa");
+  const esPolea = eq === "polea" || nom.includes("polea");
+  const esCorporal =
+    eq === "peso_corporal" ||
+    eq === "corporal" ||
+    nom.includes("corporal") ||
+    nom.includes("flexiones") ||
+    nom.includes("dominadas") ||
+    nom.includes("plancha");
+
+  if (esBarra) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-[6px] border border-accent/40 bg-accent/10 px-1.5 py-0.5 text-[10px] font-bold text-accent tracking-normal">
+        <svg
+          viewBox="0 0 24 24"
+          width="11"
+          height="11"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.4"
+          strokeLinecap="round"
+          aria-hidden
+        >
+          <path d="M2 12h20M6 7v10M18 7v10M4 9v6M20 9v6" />
+        </svg>
+        Con barra
+      </span>
+    );
+  }
+
+  if (esMancuerna) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-[6px] border border-rule bg-paper px-1.5 py-0.5 text-[10px] font-medium text-ink-soft tracking-normal">
+        <svg
+          viewBox="0 0 24 24"
+          width="11"
+          height="11"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.4"
+          strokeLinecap="round"
+          aria-hidden
+        >
+          <path d="M6 8v8M18 8v8M4 10v4M20 10v4M6 12h12" />
+        </svg>
+        Mancuernas
+      </span>
+    );
+  }
+
+  if (esMaquina) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-[6px] border border-rule bg-paper px-1.5 py-0.5 text-[10px] font-medium text-ink-soft tracking-normal">
+        <svg
+          viewBox="0 0 24 24"
+          width="11"
+          height="11"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          aria-hidden
+        >
+          <rect x="4" y="4" width="16" height="16" rx="2" />
+          <path d="M9 9h6v6H9z" />
+        </svg>
+        Máquina
+      </span>
+    );
+  }
+
+  if (esPolea) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-[6px] border border-rule bg-paper px-1.5 py-0.5 text-[10px] font-medium text-ink-soft tracking-normal">
+        <svg
+          viewBox="0 0 24 24"
+          width="11"
+          height="11"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          aria-hidden
+        >
+          <circle cx="12" cy="7" r="4" />
+          <path d="M12 11v10M8 21h8" />
+        </svg>
+        Polea
+      </span>
+    );
+  }
+
+  if (esCorporal) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-[6px] border border-rule bg-paper px-1.5 py-0.5 text-[10px] font-medium text-ink-soft tracking-normal">
+        <svg
+          viewBox="0 0 24 24"
+          width="11"
+          height="11"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          aria-hidden
+        >
+          <circle cx="12" cy="7" r="4" />
+          <path d="M5 21v-2a7 7 0 0 1 14 0v2" />
+        </svg>
+        Corporal
+      </span>
+    );
+  }
+
+  return (
+    <span className="inline-flex items-center gap-1 rounded-[6px] border border-rule bg-paper px-1.5 py-0.5 text-[10px] font-medium text-ink-soft capitalize tracking-normal">
+      {equipo ? equipo.replace(/_/g, " ") : "Libre"}
+    </span>
+  );
 }
 
 function aEditable(plan: PlanGenerado): DiaEditable[] {
@@ -655,12 +806,14 @@ function DemoRutina() {
   const [setsCompletados, setSetsCompletados] = useState<Record<string, number[]>>({});
   const [usadas, setUsadas] = useState(0);
   const [wall, setWall] = useState<
-    null | "limite" | "guardar" | "pdf" | "manual" | "avanzado"
+    null | "limite" | "guardar" | "pdf" | "manual" | "avanzado" | "ayuda"
   >(null);
   const [modalExplicacion, setModalExplicacion] = useState(false);
   const [swapKey, setSwapKey] = useState<string | null>(null);
   const [feedbackActualizar, setFeedbackActualizar] = useState(false);
   const [ejercicioModal, setEjercicioModal] = useState<any | null>(null);
+  const [logroAbierto, setLogroAbierto] = useState(false);
+  const logroMostradoRef = useRef<Record<number, boolean>>({});
   const [pesosEjercicios, setPesosEjercicios] = useState<Record<string, number>>(() => {
     if (typeof window === "undefined") return {};
     try {
@@ -733,13 +886,26 @@ function DemoRutina() {
     hapticoExito();
   }, [objetivo, nivel, dias, usadas]);
 
-  function toggleSet(itemKey: string, setIndex: number) {
+  function toggleSet(itemKey: string, setIndex: number, nota?: string) {
     hapticoSeleccion();
     setSetsCompletados((prev) => {
       const actuales = prev[itemKey] ?? [];
-      const nuevo = actuales.includes(setIndex)
+      const hecho = actuales.includes(setIndex);
+      const nuevo = hecho
         ? actuales.filter((s) => s !== setIndex)
         : [...actuales, setIndex];
+
+      if (!hecho) {
+        const segs = extraerSegundosDescanso(nota);
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(
+            new CustomEvent("timer:iniciar", {
+              detail: { segundos: segs },
+            }),
+          );
+        }
+      }
+
       return { ...prev, [itemKey]: nuevo };
     });
   }
@@ -797,6 +963,15 @@ function DemoRutina() {
   const tiempoMin = Math.round(totalSeries * 2.2);
   const volumenKilos = totalSeries * 140;
 
+  useEffect(() => {
+    if (totalSeries > 0 && seriesHechas === totalSeries) {
+      if (!logroMostradoRef.current[diaActivoIdx]) {
+        logroMostradoRef.current[diaActivoIdx] = true;
+        setLogroAbierto(true);
+      }
+    }
+  }, [seriesHechas, totalSeries, diaActivoIdx]);
+
   function musculosDelDia(items: ItemEditable[]): string {
     const grupos = new Set<string>();
     for (const it of items) {
@@ -811,7 +986,7 @@ function DemoRutina() {
   const restantes = Math.max(LIMITE_GENERACIONES - usadas, 0);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6 pb-64">
       {/* Header idéntico a /mi/rutina */}
       <div>
         <div className="flex items-center justify-between gap-2">
@@ -1177,83 +1352,169 @@ function DemoRutina() {
                           </p>
                         </div>
                         <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                          <span className="rounded-[4px] border border-rule bg-paper px-1.5 py-0.5 text-[10px] font-medium text-ink-soft capitalize">
-                            {base?.equipo ? base.equipo.replace(/_/g, " ") : "Con barra"}
+                          <span className="inline-block text-[10.5px] font-semibold uppercase tracking-[0.06em] text-ink-soft">
+                            {base?.grupo_muscular ? base.grupo_muscular.replace(/_/g, " ") : "Cuerpo completo"}
+                            {base?.nivel ? ` · ${base.nivel}` : ""}
                           </span>
-                          <span className="text-[11px] text-ink-soft capitalize">
-                            {base?.grupo_muscular ?? "cuerpo completo"}
-                          </span>
+                          <BadgeEquipo equipo={base?.equipo} nombre={base?.nombre} />
                         </div>
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={() => {
-                          hapticoSeleccion();
-                          setSwapKey(swapKey === it.key ? null : it.key);
-                        }}
-                        className="inline-flex min-h-9 items-center gap-1 rounded-[8px] border border-rule bg-paper px-2.5 text-xs text-ink-soft transition-colors hover:text-ink active:scale-95"
-                      >
-                        <RefreshCw className="size-3" />
-                        Cambiar
-                      </button>
+                      <div className="flex items-center gap-1 -mr-1 -mt-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            hapticoImpactoMedio();
+                            setWall("ayuda");
+                          }}
+                          aria-label="Pedir ayuda a un profe"
+                          className="grid size-8 shrink-0 place-items-center rounded-[8px] text-ink-soft hover:text-ink hover:bg-paper active:scale-90 transition-all"
+                        >
+                          <HelpCircle className="size-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            hapticoSeleccion();
+                            setSwapKey(swapKey === it.key ? null : it.key);
+                          }}
+                          aria-expanded={swapKey === it.key}
+                          aria-label={swapKey === it.key ? "Cerrar alternativas" : "Cambiar ejercicio"}
+                          className="grid size-8 shrink-0 place-items-center rounded-[8px] text-ink-soft transition-transform duration-150 active:scale-90 active:bg-paper hover:text-ink"
+                        >
+                          {swapKey === it.key ? (
+                            <X className="size-4" />
+                          ) : (
+                            <svg
+                              viewBox="0 0 24 24"
+                              width="16"
+                              height="16"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              aria-hidden
+                            >
+                              <path d="M8 3 4 7l4 4" />
+                              <path d="M4 7h16" />
+                              <path d="m16 21 4-4-4-4" />
+                              <path d="M20 17H4" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
                     </div>
 
-                    {/* Selectores de Series / Reps y Botones interactivos de tildar serie */}
-                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-rule/60 pt-3">
-                      <div className="flex items-center gap-2">
-                        <select
-                          value={it.series}
-                          onChange={(e) =>
-                            editar(diaActivoIdx, it.key, "series", e.target.value)
-                          }
-                          className="h-9 appearance-none rounded-[8px] border border-rule bg-paper px-2 text-xs font-mono tabular-nums text-ink outline-none focus:border-ink"
+                    {/* Prescripción de series y reps idéntica a /mi/rutina */}
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                      <span className="inline-flex items-baseline gap-1 rounded-full border border-rule bg-paper px-2.5 py-0.5 text-[11px] text-ink-soft">
+                        <b
+                          className="font-[700] text-ink"
+                          style={{ fontFamily: "var(--font-hero)" }}
                         >
-                          {SERIES_OPCIONES.map((s) => (
-                            <option key={s} value={s}>
-                              {s} series
-                            </option>
-                          ))}
-                        </select>
-                        <select
-                          value={it.repeticiones}
-                          onChange={(e) =>
-                            editar(diaActivoIdx, it.key, "repeticiones", e.target.value)
-                          }
-                          className="h-9 appearance-none rounded-[8px] border border-rule bg-paper px-2 text-xs font-mono tabular-nums text-ink outline-none focus:border-ink"
+                          {it.series}
+                        </b>
+                        series
+                      </span>
+                      <span className="inline-flex items-baseline gap-1 rounded-full border border-rule bg-paper px-2.5 py-0.5 text-[11px] text-ink-soft">
+                        <b
+                          className="font-[700] text-ink"
+                          style={{ fontFamily: "var(--font-hero)" }}
                         >
-                          {(REPS_OPCIONES.includes(it.repeticiones as any)
-                            ? REPS_OPCIONES
-                            : [it.repeticiones, ...REPS_OPCIONES]
-                          ).map((r) => (
-                            <option key={r} value={r}>
-                              {r} reps
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+                          {it.repeticiones}
+                        </b>
+                        reps
+                      </span>
+                    </div>
 
-                      {/* Círculos interactivos de series */}
-                      <div className="flex items-center gap-1.5">
+                    {it.nota ? (
+                      <div className="mt-2 flex items-center gap-1.5 rounded-[8px] border border-accent/20 bg-accent/5 px-2.5 py-1 text-[11px] text-ink-soft">
+                        <span className="font-semibold text-accent shrink-0">💡 Guía:</span>
+                        <span className="truncate">{it.nota}</span>
+                      </div>
+                    ) : null}
+
+                    {/* Tracker táctil de series de hoy (mínimo 44x44px con disparo de timer automático) */}
+                    <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 rounded-[10px] border border-rule bg-paper p-2">
+                      <span className="text-[11px] font-semibold text-ink-soft">
+                        Series de hoy:
+                      </span>
+                      <div className="flex flex-wrap items-center gap-1.5">
                         {Array.from({ length: it.series }).map((_, sIdx) => {
-                          const hecha = completadas.includes(sIdx);
+                          const hecho = completadas.includes(sIdx);
                           return (
                             <button
                               key={sIdx}
                               type="button"
-                              onClick={() => toggleSet(it.key, sIdx)}
-                              className={`size-8 rounded-[8px] text-xs font-mono font-bold transition-[transform,background-color] duration-150 active:scale-90 flex items-center justify-center ${
-                                hecha
-                                  ? "bg-accent text-accent-ink shadow-xs"
-                                  : "border border-rule bg-paper text-ink-soft hover:text-ink"
+                              onClick={() => toggleSet(it.key, sIdx, it.nota)}
+                              aria-label={`Serie ${sIdx + 1} de ${it.series} ${hecho ? "completada" : "pendiente"}`}
+                              className={`grid size-11 min-w-[44px] place-items-center rounded-[10px] border text-xs font-bold transition-all duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+                                hecho
+                                  ? "border-accent bg-accent text-accent-ink shadow-sm"
+                                  : "border-rule bg-paper-2 text-ink-soft hover:border-ink/40 hover:text-ink"
                               }`}
+                              style={{ fontFamily: "var(--font-hero)" }}
                             >
-                              {hecha ? "✓" : sIdx + 1}
+                              {hecho ? "✓" : sIdx + 1}
                             </button>
                           );
                         })}
                       </div>
                     </div>
+
+                    {base?.descripcion ? (
+                      <p className="mt-2 text-xs leading-snug text-ink-soft line-clamp-2">
+                        {base.descripcion}
+                      </p>
+                    ) : null}
+
+                    {/* Ajustar plan collapsible */}
+                    <details className="group mt-2">
+                      <summary className="inline-flex w-fit cursor-pointer select-none list-none items-center gap-1 rounded-[8px] border border-rule px-2.5 py-1 text-[11px] font-medium text-ink-soft transition-all duration-150 active:scale-95 active:bg-paper [&::-webkit-details-marker]:hidden">
+                        <ChevronRight className="size-3 transition-transform duration-150 group-open:rotate-90" />
+                        <span className="group-open:hidden">Ajustar plan</span>
+                        <span className="hidden group-open:inline">Listo</span>
+                      </summary>
+                      <div className="mt-3 flex flex-wrap items-end gap-3 p-3 rounded-[10px] border border-rule bg-paper">
+                        <label className="block">
+                          <span className="block text-[11px] text-ink-soft mb-1">Series</span>
+                          <select
+                            value={it.series}
+                            onChange={(e) =>
+                              editar(diaActivoIdx, it.key, "series", e.target.value)
+                            }
+                            className="h-9 w-16 px-2 text-center rounded-[8px] border border-rule bg-paper-2 text-xs font-mono text-ink outline-none"
+                          >
+                            {SERIES_OPCIONES.map((s) => (
+                              <option key={s} value={s}>
+                                {s}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <span className="pb-2 text-ink-soft">×</span>
+                        <label className="block">
+                          <span className="block text-[11px] text-ink-soft mb-1">Reps</span>
+                          <select
+                            value={it.repeticiones}
+                            onChange={(e) =>
+                              editar(diaActivoIdx, it.key, "repeticiones", e.target.value)
+                            }
+                            className="h-9 w-24 px-2 rounded-[8px] border border-rule bg-paper-2 text-xs font-mono text-ink outline-none"
+                          >
+                            {(REPS_OPCIONES.includes(it.repeticiones as any)
+                              ? REPS_OPCIONES
+                              : [it.repeticiones, ...REPS_OPCIONES]
+                            ).map((r) => (
+                              <option key={r} value={r}>
+                                {r}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      </div>
+                    </details>
 
                     {/* Desplegable de cambio de ejercicio */}
                     {swapKey === it.key ? (
@@ -1342,6 +1603,13 @@ function DemoRutina() {
           onClose={() => setWall(null)}
         />
       ) : null}
+      {wall === "ayuda" ? (
+        <LoginWall
+          titulo="Pedí ayuda a un profe"
+          detalle="Con una cuenta activa podés solicitar asistencia en vivo para corregir la técnica o pedir que te adapten la carga de este ejercicio."
+          onClose={() => setWall(null)}
+        />
+      ) : null}
 
       {/* Modal de Explicación Científica */}
       {modalExplicacion ? (
@@ -1394,6 +1662,28 @@ function DemoRutina() {
           onClose={() => setEjercicioModal(null)}
         />
       ) : null}
+
+      {/* Barra de progreso Sticky fija que acompaña el scroll */}
+      <StickyProgresoDia
+        titulo={diaActivo.titulo}
+        seriesHechas={seriesHechas}
+        totalSeries={totalSeries}
+        pct={pct}
+        targetRefId="hero-resumen-dia"
+      />
+
+      {/* Modal / Ceremonia de logro al completar el 100% de la sesión */}
+      <LogroDiaCompletado
+        abierto={logroAbierto}
+        diaTitulo={diaActivo.titulo}
+        totalSeries={totalSeries}
+        volumenKilos={volumenKilos}
+        tiempoMin={tiempoMin}
+        onClose={() => setLogroAbierto(false)}
+      />
+
+      {/* Timer de descanso flotante interactivo (idéntico a la app logeada) */}
+      <TimerDescanso />
     </div>
   );
 }
