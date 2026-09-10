@@ -40,6 +40,7 @@ export function DialVerticalProgreso({
   gimnasioNombre,
   logoUrl,
   colores,
+  repsIniciales = 10,
 }: {
   ejercicioId: string;
   action: (prev: ProgresoState, fd: FormData) => Promise<ProgresoState>;
@@ -51,6 +52,7 @@ export function DialVerticalProgreso({
   gimnasioNombre?: string;
   logoUrl?: string | null;
   colores?: ColoresImagen;
+  repsIniciales?: number;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -61,6 +63,7 @@ export function DialVerticalProgreso({
 
   const pesoInicial = esCorporal ? 0 : 20;
   const [peso, setPeso] = useState<number>(pesoInicial);
+  const [reps, setReps] = useState<number>(repsIniciales);
   const weightRef = useRef(pesoInicial);
   const isDraggingRef = useRef(false);
   const startYRef = useRef(0);
@@ -74,13 +77,16 @@ export function DialVerticalProgreso({
   const [feedbackOk, setFeedbackOk] = useState(false);
   const [logro, setLogro] = useState<ResultadoRecord | null>(null);
 
-  // Cargar último peso registrado como punto de partida
+  // Cargar último peso y reps registrado como punto de partida
   useEffect(() => {
     fetchUltimoPeso(ejercicioId).then((r) => {
       if (r && r.peso !== undefined && r.peso !== null) {
         setPeso(r.peso);
         weightRef.current = r.peso;
         lastEmittedRef.current = r.peso;
+        if (r.reps && r.reps > 0) {
+          setReps(r.reps);
+        }
         draw();
       }
     });
@@ -392,11 +398,43 @@ export function DialVerticalProgreso({
         </button>
       </div>
 
+      {/* Selector rápido de repeticiones */}
+      <div className="flex items-center justify-between w-full h-[22px] px-1 my-0.5 rounded-[5px] border border-rule/70 bg-paper/90">
+        <button
+          type="button"
+          aria-label="Menos repeticiones"
+          onClick={(e) => {
+            e.preventDefault();
+            hapticoDial();
+            setReps((prev) => Math.max(1, prev - 1));
+          }}
+          className="text-ink-soft hover:text-ink text-[12px] font-bold px-0.5 leading-none transition-transform active:scale-90 touch-none"
+        >
+          −
+        </button>
+        <span className="text-[9.5px] font-bold text-ink tabular-nums leading-none">
+          {reps} <span className="text-[7.5px] font-medium text-ink-soft">reps</span>
+        </span>
+        <button
+          type="button"
+          aria-label="Más repeticiones"
+          onClick={(e) => {
+            e.preventDefault();
+            hapticoDial();
+            setReps((prev) => prev + 1);
+          }}
+          className="text-ink-soft hover:text-ink text-[12px] font-bold px-0.5 leading-none transition-transform active:scale-90 touch-none"
+        >
+          +
+        </button>
+      </div>
+      <input type="hidden" name="reps" value={reps} />
+
       {/* Botón guardar rápido de 1 tap */}
       <button
         type="submit"
         disabled={pending}
-        aria-label="Guardar peso de este ejercicio"
+        aria-label="Guardar peso y reps de este ejercicio"
         className={`w-full h-6 rounded-[6px] text-[10px] font-bold tracking-tight transition-all duration-150 flex items-center justify-center gap-1 active:scale-95 disabled:opacity-50 ${
           feedbackOk
             ? "bg-ok text-ok-ink border border-ok"

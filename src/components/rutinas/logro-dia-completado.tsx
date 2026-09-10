@@ -1,8 +1,17 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { hapticoRecordPersonal } from "@/lib/ui/hapticos";
+import {
+  hapticoRecordPersonal,
+  hapticoImpactoMedio,
+  iniciarAudioHaptico,
+} from "@/lib/ui/hapticos";
+import {
+  generarImagenDiaCompletado,
+  type ColoresImagen,
+} from "@/lib/logros/imagen";
+import { descargarDataUrl, linkWhatsAppLogro } from "@/lib/logros/compartir";
 
 interface LogroDiaCompletadoProps {
   abierto: boolean;
@@ -10,6 +19,9 @@ interface LogroDiaCompletadoProps {
   totalSeries: number;
   volumenKilos: number;
   tiempoMin: number;
+  gimnasioNombre?: string;
+  logoUrl?: string | null;
+  colores?: ColoresImagen;
   onClose: () => void;
 }
 
@@ -19,9 +31,13 @@ export function LogroDiaCompletado({
   totalSeries,
   volumenKilos,
   tiempoMin,
+  gimnasioNombre,
+  logoUrl,
+  colores,
   onClose,
 }: LogroDiaCompletadoProps) {
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const [compartiendo, setCompartiendo] = useState(false);
 
   useEffect(() => {
     if (!abierto) return;

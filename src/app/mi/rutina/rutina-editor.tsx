@@ -844,6 +844,39 @@ function ItemFila({
   const dirty =
     series !== String(item.series) || reps.trim() !== item.repeticiones;
 
+  const targetReps = useMemo(() => {
+    const match = item.repeticiones.match(/\d+/);
+    return match ? parseInt(match[0], 10) : 10;
+  }, [item.repeticiones]);
+
+  const [mostrarEditorSeries, setMostrarEditorSeries] = useState(false);
+  const [repsPorSerie, setRepsPorSerie] = useState<Record<number, number>>({});
+
+  useEffect(() => {
+    try {
+      const guardado = localStorage.getItem(`gym.reps-sets.${item.id}`);
+      if (guardado) {
+        setRepsPorSerie(JSON.parse(guardado));
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [item.id]);
+
+  function cambiarRepsSerie(setIndex: number, delta: number) {
+    setRepsPorSerie((prev) => {
+      const actual = prev[setIndex] ?? targetReps;
+      const nuevo = Math.max(1, actual + delta);
+      const next = { ...prev, [setIndex]: nuevo };
+      try {
+        localStorage.setItem(`gym.reps-sets.${item.id}`, JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  }
+
   function flash(t: string) {
     setMsg(t);
     if (msgTimer.current) clearTimeout(msgTimer.current);
@@ -1008,6 +1041,7 @@ function ItemFila({
                 ejercicioId={item.ejercicio.id}
                 tipoEquipo={tipoEquipo}
                 ejercicioNombre={ej?.nombre ?? item.ejercicio.nombre}
+                repsIniciales={targetReps}
                 gimnasioNombre={creadoPor === "dueno" ? undefined : gimnasioNombre}
                 logoUrl={logoUrl}
                 colores={creadoPor === "dueno" ? undefined : colores}
@@ -1132,60 +1166,148 @@ function ItemFila({
             </div>
           ) : null}
 
-          {/* Tracker táctil de series de hoy (mínimo 44x44px por botón táctil §3 WCAG) */}
-          <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 rounded-[10px] border border-rule bg-paper p-2">
-            <span className="text-[11px] font-semibold text-ink-soft">
-              Series de hoy:
-            </span>
-            <div className="flex flex-wrap items-center gap-1.5">
-              {Array.from({ length: Math.min(numSeries, 8) }).map((_, sIdx) => {
-                const hecho = setsCompletados.includes(sIdx);
-                const esObjetivoGuia = mostrarGuiaSerie && sIdx === 0 && !hecho;
-                return (
-                  <div key={sIdx} className="relative">
-                    {esObjetivoGuia ? (
-                      <div
-                        role="tooltip"
-                        className="absolute -top-8 left-1/2 -translate-x-1/2 z-20 whitespace-nowrap rounded-[8px] bg-accent px-2 py-0.5 text-[10.5px] font-bold text-accent-ink shadow-md pointer-events-none animate-bounce flex items-center"
-                      >
-                        <span>Tildá al terminar</span>
-                        <span
-                          className="absolute -bottom-1 left-1/2 -translate-x-1/2 size-2 rotate-45 bg-accent"
-                          aria-hidden
-                        />
-                      </div>
-                    ) : null}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (!hecho) {
-                          const segs = extraerSegundosDescanso(item.nota);
-                          if (typeof window !== "undefined") {
-                            window.dispatchEvent(
-                              new CustomEvent("timer:iniciar", {
-                                detail: { segundos: segs },
-                              }),
-                            );
+          {/* Tracker táctil de series de hoy con editor individual */}
+          <div className="mt-2.5 rounded-[10px] border border-rule bg-paper p-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-semibold text-ink-soft">
+                  Series de hoy:
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setMostrarEditorSeries((v) => !v)}
+                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-[6px] text-[10px] font-medium border transition-colors ${
+                    mostrarEditorSeries
+                      ? "bg-accent/15 border-accent text-accent"
+                      : "border-rule bg-paper-2 text-ink-soft hover:text-ink hover:border-ink/30"
+                  }`}
+                  aria-label="Editar reps por serie individuales"
+                  title="Editar reps por serie individuales"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="11"
+                    height="11"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden
+                  >
+                    <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                    <path d="m15 5 4 4" />
+                  </svg>
+                  <span>{mostrarEditorSeries ? "Cerrar" : "Reps"}</span>
+                </button>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-1.5">
+                {Array.from({ length: Math.min(numSeries, 8) }).map((_, sIdx) => {
+                  const hecho = setsCompletados.includes(sIdx);
+                  const esObjetivoGuia = mostrarGuiaSerie && sIdx === 0 && !hecho;
+                  const repsEstaSerie = repsPorSerie[sIdx] ?? targetReps;
+
+                  return (
+                    <div key={sIdx} className="relative">
+                      {esObjetivoGuia ? (
+                        <div
+                          role="tooltip"
+                          className="absolute -top-8 left-1/2 -translate-x-1/2 z-20 whitespace-nowrap rounded-[8px] bg-accent px-2 py-0.5 text-[10.5px] font-bold text-accent-ink shadow-md pointer-events-none animate-bounce flex items-center"
+                        >
+                          <span>Tildá al terminar</span>
+                          <span
+                            className="absolute -bottom-1 left-1/2 -translate-x-1/2 size-2 rotate-45 bg-accent"
+                            aria-hidden
+                          />
+                        </div>
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!hecho) {
+                            const segs = extraerSegundosDescanso(item.nota);
+                            if (typeof window !== "undefined") {
+                              window.dispatchEvent(
+                                new CustomEvent("timer:iniciar", {
+                                  detail: { segundos: segs },
+                                }),
+                              );
+                            }
                           }
-                        }
-                        onToggleSet(sIdx);
-                      }}
-                      aria-label={`Serie ${sIdx + 1} de ${numSeries} ${hecho ? "completada" : "pendiente"}`}
-                      className={`grid size-11 min-w-[44px] place-items-center rounded-[10px] border text-xs font-bold transition-all duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${
-                        hecho
-                          ? "border-accent bg-accent text-accent-ink shadow-sm"
-                          : esObjetivoGuia
-                          ? "border-accent bg-paper-2 text-ink ring-2 ring-accent ring-offset-2 ring-offset-paper animate-pulse"
-                          : "border-rule bg-paper-2 text-ink-soft hover:border-ink/40"
-                      }`}
-                      style={{ fontFamily: "var(--font-hero)" }}
-                    >
-                      {hecho ? "✓" : sIdx + 1}
-                    </button>
-                  </div>
-                );
-              })}
+                          onToggleSet(sIdx);
+                        }}
+                        aria-label={`Serie ${sIdx + 1} de ${numSeries} (${repsEstaSerie} reps) ${hecho ? "completada" : "pendiente"}`}
+                        className={`grid size-11 min-w-[44px] place-items-center rounded-[10px] border text-xs font-bold transition-all duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${
+                          hecho
+                            ? "border-accent bg-accent text-accent-ink shadow-sm"
+                            : esObjetivoGuia
+                            ? "border-accent bg-paper-2 text-ink ring-2 ring-accent ring-offset-2 ring-offset-paper animate-pulse"
+                            : "border-rule bg-paper-2 text-ink-soft hover:border-ink/40"
+                        }`}
+                        style={{ fontFamily: "var(--font-hero)" }}
+                      >
+                        {hecho ? (
+                          <div className="flex flex-col items-center leading-none">
+                            <span className="text-[12px]">✓</span>
+                            <span className="text-[8.5px] font-bold opacity-95">{repsEstaSerie}</span>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center leading-none">
+                            <span>{sIdx + 1}</span>
+                            <span className="text-[8.5px] font-normal text-ink-soft opacity-75">{repsEstaSerie}</span>
+                          </div>
+                        )}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
+
+            {/* Panel colapsable de edición de reps por serie individual */}
+            {mostrarEditorSeries && (
+              <div className="mt-2.5 pt-2.5 border-t border-rule/70 space-y-1.5 animate-fade-in">
+                <div className="flex items-center justify-between text-[10px] font-semibold text-ink-soft uppercase tracking-wider mb-1">
+                  <span>Serie individual</span>
+                  <span>Reps realizadas</span>
+                </div>
+                {Array.from({ length: numSeries }).map((_, sIdx) => {
+                  const repsEstaSerie = repsPorSerie[sIdx] ?? targetReps;
+                  const hecho = setsCompletados.includes(sIdx);
+                  return (
+                    <div
+                      key={sIdx}
+                      className="flex items-center justify-between py-1 px-2 rounded-[8px] bg-paper-2/50 border border-rule/50"
+                    >
+                      <span className="text-xs font-semibold text-ink flex items-center gap-1.5">
+                        <span className={`size-2 rounded-full ${hecho ? "bg-accent" : "bg-ink-soft/30"}`} />
+                        Serie {sIdx + 1}
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => cambiarRepsSerie(sIdx, -1)}
+                          className="size-7 rounded-[6px] bg-paper border border-rule grid place-items-center text-xs font-bold text-ink hover:bg-paper-2 transition-transform active:scale-90"
+                        >
+                          −
+                        </button>
+                        <span className="w-7 text-center font-bold text-xs text-ink tabular-nums">
+                          {repsEstaSerie}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => cambiarRepsSerie(sIdx, 1)}
+                          className="size-7 rounded-[6px] bg-paper border border-rule grid place-items-center text-xs font-bold text-ink hover:bg-paper-2 transition-transform active:scale-90"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {ej?.descripcion ? (

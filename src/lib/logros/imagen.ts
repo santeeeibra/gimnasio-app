@@ -119,3 +119,140 @@ export async function generarImagenLogro(
 
   return canvas.toDataURL("image/png");
 }
+
+export type OpcionesImagenDiaCompletado = {
+  diaTitulo: string;
+  totalSeries: number;
+  volumenKilos: number;
+  tiempoMin: number;
+  gimnasioNombre: string;
+  logoUrl?: string | null;
+  colores?: ColoresImagen;
+};
+
+export async function generarImagenDiaCompletado(
+  opts: OpcionesImagenDiaCompletado,
+): Promise<string> {
+  if (typeof document === "undefined") {
+    throw new Error("generarImagenDiaCompletado solo corre en el navegador.");
+  }
+
+  const W = 1080;
+  const H = 1920;
+  const volt = opts.colores?.volt || "#10e7a0";
+
+  const canvas = document.createElement("canvas");
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("No se pudo crear el canvas.");
+
+  // Fondo gradiente nocturno premium
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, "#09090b");
+  grad.addColorStop(0.5, "#121216");
+  grad.addColorStop(1, "#09090b");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Círculo resplandor de fondo
+  const glow = ctx.createRadialGradient(W / 2, 700, 50, W / 2, 700, 600);
+  glow.addColorStop(0, `${volt}25`);
+  glow.addColorStop(1, "transparent");
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 100, W, 1200);
+
+  // Logo o nombre del gimnasio en el header
+  const logo = opts.logoUrl ? await cargarImagen(opts.logoUrl) : null;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  if (logo && logo.width > 0 && logo.height > 0) {
+    const max = 220;
+    const escala = Math.min(max / logo.width, max / logo.height, 1);
+    const w = logo.width * escala;
+    const h = logo.height * escala;
+    ctx.drawImage(logo, (W - w) / 2, 220 - h / 2, w, h);
+  } else {
+    ctx.fillStyle = "#a1a1aa";
+    ctx.font = "700 36px ui-sans-serif, system-ui, sans-serif";
+    ctx.fillText(opts.gimnasioNombre.toUpperCase(), W / 2, 220);
+  }
+
+  // Badge: "SESIÓN COMPLETADA"
+  ctx.fillStyle = `${volt}20`;
+  const badgeW = 440;
+  const badgeH = 64;
+  const badgeX = (W - badgeW) / 2;
+  const badgeY = 380;
+  ctx.beginPath();
+  ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 32);
+  ctx.fill();
+
+  ctx.strokeStyle = `${volt}60`;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  ctx.fillStyle = volt;
+  ctx.font = "800 24px ui-sans-serif, system-ui, sans-serif";
+  ctx.fillText("¡SESIÓN COMPLETADA! 💥", W / 2, badgeY + badgeH / 2);
+
+  // Título del Día / Rutina
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "800 76px ui-sans-serif, system-ui, sans-serif";
+  envolverTexto(ctx, opts.diaTitulo, W / 2, 580, W - 180, 88);
+
+  // Tarjetas de Métricas (Series, Volumen, Tiempo)
+  const metricas = [
+    { valor: `${opts.totalSeries}`, label: "SERIES COMPLETADAS", icon: "⚡" },
+    { valor: `~${opts.volumenKilos.toLocaleString("es-AR")} kg`, label: "VOLUMEN TOTAL", icon: "🏋️" },
+    { valor: `~${opts.tiempoMin} min`, label: "DURACIÓN ESTIMADA", icon: "⏱️" },
+  ];
+
+  const cardW = W - 180;
+  const cardH = 140;
+  const startY = 820;
+  const gap = 30;
+
+  metricas.forEach((m, idx) => {
+    const y = startY + idx * (cardH + gap);
+
+    // Fondo tarjeta
+    ctx.fillStyle = "rgba(255, 255, 255, 0.05)";
+    ctx.beginPath();
+    ctx.roundRect((W - cardW) / 2, y, cardW, cardH, 24);
+    ctx.fill();
+
+    // Borde fino
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Icono
+    ctx.font = "44px ui-sans-serif, system-ui, sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText(m.icon, (W - cardW) / 2 + 36, y + cardH / 2);
+
+    // Valor
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "800 48px ui-sans-serif, system-ui, sans-serif";
+    ctx.fillText(m.valor, (W - cardW) / 2 + 110, y + cardH / 2 - 14);
+
+    // Label
+    ctx.fillStyle = "#a1a1aa";
+    ctx.font = "600 20px ui-sans-serif, system-ui, sans-serif";
+    ctx.fillText(m.label, (W - cardW) / 2 + 110, y + cardH / 2 + 24);
+  });
+
+  // Footer con marca de agua elegante
+  ctx.textAlign = "center";
+  ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+  ctx.font = "600 26px ui-sans-serif, system-ui, sans-serif";
+  ctx.fillText("Entrenando en " + opts.gimnasioNombre, W / 2, H - 160);
+
+  ctx.fillStyle = volt;
+  ctx.font = "800 22px ui-sans-serif, system-ui, sans-serif";
+  ctx.fillText("POTENCIADO POR SYSGYM", W / 2, H - 110);
+
+  return canvas.toDataURL("image/png");
+}

@@ -43,9 +43,13 @@ export function GraficoProgreso({ registros }: { registros: RegistroProgreso[] }
     const gW = W - padL - padR;
     const gH = H - padT - padB;
 
-    const pesos = datos.map((d) => d.peso);
-    const minP = Math.min(...pesos);
-    const maxP = Math.max(...pesos);
+    // Calcular el 1RM (Repetición Máxima) para cada punto si hay reps, sino usar peso.
+    const valoresRM = datos.map((d) => 
+      d.reps ? Math.round(d.peso * (1 + d.reps / 30)) : d.peso
+    );
+    
+    const minP = Math.min(...valoresRM);
+    const maxP = Math.max(...valoresRM);
     const rangoP = maxP - minP || 1;
 
     const toX = (i: number) => padL + (i / (datos.length - 1)) * gW;
@@ -66,12 +70,12 @@ export function GraficoProgreso({ registros }: { registros: RegistroProgreso[] }
     ctx.globalAlpha = 0.1;
     ctx.fillStyle = colorAccent;
     ctx.beginPath();
-    datos.forEach((d, i) => {
+    valoresRM.forEach((rm, i) => {
       const x = toX(i);
-      const y = toY(d.peso);
+      const y = toY(rm);
       i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
     });
-    ctx.lineTo(toX(datos.length - 1), padT + gH);
+    ctx.lineTo(toX(valoresRM.length - 1), padT + gH);
     ctx.lineTo(toX(0), padT + gH);
     ctx.closePath();
     ctx.fill();
@@ -82,29 +86,29 @@ export function GraficoProgreso({ registros }: { registros: RegistroProgreso[] }
     ctx.lineWidth = 2;
     ctx.lineJoin = "round";
     ctx.beginPath();
-    datos.forEach((d, i) => {
+    valoresRM.forEach((rm, i) => {
       const x = toX(i);
-      const y = toY(d.peso);
+      const y = toY(rm);
       i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
     });
     ctx.stroke();
 
     // Puntos
-    datos.forEach((d, i) => {
+    valoresRM.forEach((rm, i) => {
       ctx.beginPath();
-      ctx.arc(toX(i), toY(d.peso), 3, 0, Math.PI * 2);
+      ctx.arc(toX(i), toY(rm), 3, 0, Math.PI * 2);
       ctx.fillStyle = colorAccent;
       ctx.fill();
     });
 
-    // Eje Y
+    // Eje Y (Etiquetas de 1RM)
     ctx.font = "10px system-ui";
     ctx.fillStyle = colorInkSoft;
     ctx.textAlign = "right";
     ctx.fillText(`${maxP}kg`, padL - 4, padT + 4);
     ctx.fillText(`${minP}kg`, padL - 4, padT + gH + 4);
 
-    // Eje X (primera / última)
+    // Eje X (primera / última fecha)
     const fmt = (f: string) => {
       const dt = new Date(f + "T12:00:00");
       return dt.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit" });
