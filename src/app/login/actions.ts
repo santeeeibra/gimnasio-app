@@ -239,13 +239,18 @@ export async function asegurarPerfilGoogleAction(): Promise<{
   const { data: profile } = await admin
     .from("profiles")
     .select(
-      "id, rol, gimnasio_id, debe_cambiar_clave, gimnasios:gimnasio_id(slug, nombre, estado)",
+      "id, rol, gimnasio_id, debe_cambiar_clave, gimnasios:gimnasio_id(slug, nombre, estado, tipo_cuenta)",
     )
     .eq("id", user.id)
     .maybeSingle();
 
   if (profile) {
-    type GymInfo = { slug?: string; nombre?: string; estado?: string };
+    type GymInfo = {
+      slug?: string;
+      nombre?: string;
+      estado?: string;
+      tipo_cuenta?: string;
+    };
     const rawGym = profile.gimnasios as unknown;
     const gym = (Array.isArray(rawGym) ? rawGym[0] : rawGym) as GymInfo | null;
 
@@ -254,7 +259,8 @@ export async function asegurarPerfilGoogleAction(): Promise<{
       return { error: "Este gimnasio está suspendido temporalmente." };
     }
 
-    if (gym?.slug && gym?.nombre) {
+    const esGymReal = !gym?.tipo_cuenta || gym.tipo_cuenta === "gym";
+    if (esGymReal && gym?.slug && gym?.nombre) {
       try {
         const cookieStore = await cookies();
         cookieStore.set(
@@ -322,20 +328,9 @@ export async function asegurarPerfilGoogleAction(): Promise<{
       email: userEmail || null,
     });
 
-    try {
-      const cookieStore = await cookies();
-      cookieStore.set(
-        "gym_ultimo",
-        JSON.stringify({ slug, nombre }),
-        {
-          maxAge: 60 * 60 * 24 * 365,
-          path: "/",
-          sameSite: "lax",
-          httpOnly: false,
-        },
-      );
-    } catch {}
-
+    // Cuenta individual: NO se escribe la cookie gym_ultimo. Esa cookie es para
+    // socios que entran por DNI a un gimnasio real; una cuenta personal no debe
+    // aparecer como "gimnasio" en la pantalla de login.
     return { destino: "/panel" };
   }
 

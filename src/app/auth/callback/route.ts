@@ -39,13 +39,18 @@ export async function GET(request: Request) {
   const { data: profile } = await admin
     .from("profiles")
     .select(
-      "id, rol, gimnasio_id, debe_cambiar_clave, gimnasios:gimnasio_id(slug, nombre, estado)",
+      "id, rol, gimnasio_id, debe_cambiar_clave, gimnasios:gimnasio_id(slug, nombre, estado, tipo_cuenta)",
     )
     .eq("id", user.id)
     .maybeSingle();
 
   if (profile) {
-    type GymInfo = { slug?: string; nombre?: string; estado?: string };
+    type GymInfo = {
+      slug?: string;
+      nombre?: string;
+      estado?: string;
+      tipo_cuenta?: string;
+    };
     const rawGym = profile.gimnasios as unknown;
     const gym = (
       Array.isArray(rawGym) ? rawGym[0] : rawGym
@@ -70,7 +75,8 @@ export async function GET(request: Request) {
 
     const response = NextResponse.redirect(`${origin}${destino}`);
 
-    if (gym?.slug && gym?.nombre) {
+    const esGymReal = !gym?.tipo_cuenta || gym.tipo_cuenta === "gym";
+    if (esGymReal && gym?.slug && gym?.nombre) {
       response.cookies.set(
         "gym_ultimo",
         JSON.stringify({ slug: gym.slug, nombre: gym.nombre }),
@@ -126,18 +132,10 @@ export async function GET(request: Request) {
       email: userEmail || null,
     });
 
-    const response = NextResponse.redirect(`${origin}/panel`);
-    response.cookies.set(
-      "gym_ultimo",
-      JSON.stringify({ slug, nombre }),
-      {
-        maxAge: 60 * 60 * 24 * 365,
-        path: "/",
-        sameSite: "lax",
-        httpOnly: false,
-      },
-    );
-    return response;
+    // Cuenta individual: NO se escribe la cookie gym_ultimo. Esa cookie es para
+    // socios que entran por DNI a un gimnasio real; una cuenta personal no debe
+    // aparecer como "gimnasio" en la pantalla de login.
+    return NextResponse.redirect(`${origin}/panel`);
   }
 
   // Fallback si hubo error de inserción
