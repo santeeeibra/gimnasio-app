@@ -8,7 +8,14 @@ import { ListadoClientes } from "./listado-clientes";
 import { CacheAlVuelo } from "@/components/offline/cache-al-vuelo";
 import { ConflictosOffline } from "@/components/offline/conflictos";
 
-export default async function ClientesPage() {
+export default async function ClientesPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ eliminado?: string }>;
+}) {
+  const params = await searchParams;
+  const fueEliminado = params?.eliminado === "1";
+
   const dueno = await requireDueno();
   const supabase = await createClient();
   const adminDb = createAdminClient();
@@ -47,7 +54,12 @@ export default async function ClientesPage() {
   );
 
   return (
-    <div className="stagger space-y-8">
+    <div className="stagger space-y-8 max-w-6xl lg:max-w-7xl mx-auto">
+      {fueEliminado && (
+        <div className="p-4 rounded-[14px] bg-ok/15 border border-ok/30 text-ok text-sm font-semibold flex items-center gap-2 animate-fade-in shadow-sm">
+          <span>✅ Cliente eliminado definitivamente.</span>
+        </div>
+      )}
       <CacheAlVuelo
         clave="clientes:lista"
         data={clientes.map((c) => ({

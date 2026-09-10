@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { requireDueno, dniAEmail, claveInicial } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -500,3 +501,122 @@ export async function guardarFotoSocio(
 
   return {};
 }
+
+/**
+ * Elimina definitivamente a un cliente y todos sus registros vinculados
+ * (rutina_items, rutinas, mensaje_destinatarios, registros_entrada, pagos, cliente y auth user).
+ */
+export async function eliminarClienteDefinitivo(
+  clienteId: string,
+): Promise<{ error?: string }> {
+  const dueno = await requireDueno();
+
+  if (!clienteId) {
+    return { error: "Falta el identificador del socio." };
+  }
+
+  const admin = createAdminClient();
+
+  // 1. Verificar pertenencia al gimnasio del dueño logueado
+  const { data: cli, error: fetchErr } = await admin
+    .from("clientes")
+    .select("id, gimnasio_id, profile_id, profile:profiles(id)")
+    .eq("id", clienteId)
+    .maybeSingle();
+
+  if (fetchErr || !cli) {
+    return { error: "Socio no encontrado." };
+  }
+
+  if (cli.gimnasio_id !== dueno.gimnasio_id) {
+    return { error: "No tenés permiso para eliminar este socio." };
+  }
+
+  const profileId = (cli as any).profile?.id || cli.profile_id;
+  if (!profileId) {
+    return { error: "No se encontró el usuario de acceso del socio." };
+  }
+
+  try {
+    // 2. Borrar en este orden (con service_role):
+    // a. rutina_items de las rutinas del cliente
+    const { data: rutinas } = await admin
+      .from("rutinas")
+      .select("id")
+      .eq("cliente_id", clienteId);
+
+    if (rutinas && rutinas.length > 0) {
+      const rutinaIds = rutinas.map((r) => r.id);
+      const { error: errItems } = await admin
+        .from("rutina_items")
+        .delete()
+        .in("rutina_id", rutinaIds);
+      if (errItems) {
+        return { error: `Error al borrar los ejercicios de la rutina: ${errItems.message}` };
+      }
+
+      // b. rutinas del cliente
+      const { error: errRutinas } = await admin
+        .from("rutinas")
+        .delete()
+        .eq("cliente_id", clienteId);
+      if (errRutinas) {
+        return { error: `Error al borrar las rutinas del socio: ${errRutinas.message}` };
+      }
+    }
+
+    // c. mensaje_destinatarios del cliente
+    const { error: errMensajes } = await admin
+      .from("mensaje_destinatarios")
+      .delete()
+      .eq("profile_id", profileId);
+    if (errMensajes) {
+      return { error: `Error al borrar mensajes del socio: ${errMensajes.message}` };
+    }
+
+    // d. registros_entrada del cliente
+    const { error: errRegistros } = await admin
+      .from("registros_entrada")
+      .delete()
+      .eq("cliente_id", clienteId);
+    if (errRegistros) {
+      return { error: `Error al borrar registros de ingreso: ${errRegistros.message}` };
+    }
+
+    // e. pagos del cliente
+    const { error: errPagos } = await admin
+      .from("pagos")
+      .delete()
+      .eq("cliente_id", clienteId);
+    if (errPagos) {
+      return { error: `Error al borrar el historial de pagos: ${errPagos.message}` };
+    }
+
+    // f. Tablas secundarias si existieran
+    await admin.from("progreso_ejercicios").delete().eq("cliente_id", clienteId);
+    await admin.from("asistencia_pedidos").delete().eq("cliente_id", clienteId);
+    await admin.from("buzon_sugerencias").delete().eq("cliente_id", clienteId);
+
+    // g. fila en clientes
+    const { error: errCliente } = await admin
+      .from("clientes")
+      .delete()
+      .eq("id", clienteId);
+    if (errCliente) {
+      return { error: `Error al borrar la ficha del socio: ${errCliente.message}` };
+    }
+
+    // h. usuario de auth (profile se borra por cascade o via auth deleteUser)
+    const { error: errAuth } = await admin.auth.admin.deleteUser(profileId);
+    if (errAuth) {
+      return { error: `Error al borrar el usuario de acceso: ${errAuth.message}` };
+    }
+  } catch (err: any) {
+    await registrarError(dueno.gimnasio_id, "alta_cliente", err);
+    return { error: err?.message || "Ocurrió un error inesperado al eliminar el cliente." };
+  }
+
+  revalidatePath("/panel/clientes");
+  redirect("/panel/clientes?eliminado=1");
+}
+

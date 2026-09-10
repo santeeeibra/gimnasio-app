@@ -163,7 +163,7 @@ export function ListadoClientes({
           <p className="text-xs text-neutral-400">Probá borrando la búsqueda o seleccionando "Todos".</p>
         </div>
       ) : (
-        <ul className="space-y-2.5">
+        <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {clientesFiltrados.map((c) => (
             <ClienteRow
               key={c.id}

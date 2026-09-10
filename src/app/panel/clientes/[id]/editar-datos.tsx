@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { editarCliente } from "../actions";
 import { Button, Field, Select, linkClasses } from "@/components/ui";
 import { SEXOS, SEXO_LABEL, type Sexo } from "@/lib/rutina/tipos";
+import { BajaClienteModal } from "./baja-cliente-modal";
 
 export function EditarDatos({
   clienteId,
@@ -23,14 +24,16 @@ export function EditarDatos({
   const [state, action, pending] = useActionState(editarCliente, {});
 
   return (
-    <details className="group border-t border-rule pt-4">
-      <summary
-        className={`w-fit cursor-pointer select-none text-sm ${linkClasses.inline}`}
-      >
-        Editar datos del socio
-      </summary>
+    <div className="border-t border-rule pt-4">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <details className="group flex-1">
+          <summary
+            className={`w-fit cursor-pointer select-none text-sm ${linkClasses.inline}`}
+          >
+            Editar datos del socio
+          </summary>
 
-      <form action={action} className="mt-4 grid gap-4 sm:grid-cols-2">
+          <form action={action} className="mt-4 grid gap-4 sm:grid-cols-2">
         <input type="hidden" name="cliente_id" value={clienteId} />
         <Field
           label="Nombre y apellido"
@@ -102,5 +105,9 @@ export function EditarDatos({
         </div>
       </form>
     </details>
+
+        <BajaClienteModal clienteId={clienteId} nombre={nombre} dni={dni} />
+      </div>
+    </div>
   );
 }

@@ -159,7 +159,7 @@ export default async function ClienteDetallePage({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-6xl lg:max-w-7xl mx-auto">
       {/* Header Fijo con Acciones Rápidas */}
       <div>
         <Link href="/panel/clientes" className={pillClasses.neutra}>
@@ -229,10 +229,10 @@ export default async function ClienteDetallePage({
       ) : null}
 
       {/* LAYOUT DE 2 COLUMNAS PARA PC (lg:grid-cols-12) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
         
         {/* COLUMNA IZQUIERDA (PAGOS & CAJA - PRIORIDAD 1) - 5 Cols en PC */}
-        <div className="lg:col-span-5 space-y-6">
+        <div className="lg:col-span-5 space-y-6 lg:space-y-8">
           {/* Card Resumen de Cuota */}
           <Panel className="p-5 space-y-3">
             <div className="flex items-center justify-between border-b border-rule/50 pb-3">
