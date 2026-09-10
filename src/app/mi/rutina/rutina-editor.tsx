@@ -29,6 +29,7 @@ import { LogroDiaCompletado } from "@/components/rutinas/logro-dia-completado";
 import { BotonPedirAyuda } from "@/components/rutinas/boton-pedir-ayuda";
 import { DialVerticalProgreso } from "@/components/progreso/dial-vertical-progreso";
 import { HistorialEjercicio } from "@/components/progreso/historial-ejercicio";
+import { EquipamientoSugerido } from "@/components/monetizacion/equipamiento-sugerido";
 import type { ColoresImagen } from "@/lib/logros/imagen";
 import { hapticoDial } from "@/lib/ui/hapticos";
 import {
@@ -254,6 +255,11 @@ function VisorEjercicio({
             {ej.descripcion}
           </p>
         ) : null}
+
+        {/* Recomendación de equipamiento con monetización pasiva */}
+        <div className="mt-4">
+          <EquipamientoSugerido ejercicio={ej} variante="tarjeta" />
+        </div>
       </div>
     </div>,
     document.body
@@ -1445,29 +1451,42 @@ function ItemFila({
 
           {abrirCambio ? (
             <div className="mt-3 rounded-[12px] border border-rule bg-paper p-3 animate-fade-in">
-              <div className="mb-2 flex flex-wrap gap-1.5">
-                {MOLESTIAS.map((m) => {
-                  const on = molestias.includes(m);
-                  return (
-                    <button
-                      key={m}
-                      type="button"
-                      onClick={() =>
-                        setMolestias((p) =>
-                          on ? p.filter((x) => x !== m) : [...p, m],
-                        )
-                      }
-                      className={`h-11 rounded-[10px] border px-3 text-[11px] font-semibold transition-colors ${
-                        on
-                          ? "border-accent bg-accent text-accent-ink"
-                          : "border-rule text-ink-soft hover:border-ink/40"
-                      }`}
-                    >
-                      {MOLESTIA_LABEL[m]}
-                    </button>
-                  );
-                })}
+              {/* Filtro de molestias articulares con explicación clara */}
+              <div className="mb-3 rounded-[10px] border border-rule/60 bg-paper-2/60 p-2.5">
+                <div className="flex items-baseline justify-between gap-1.5 mb-1">
+                  <span className="text-xs font-bold text-ink">
+                    ¿Sentís dolor o molestia en alguna articulación?
+                  </span>
+                  <span className="text-[10px] text-ink-soft shrink-0">(opcional)</span>
+                </div>
+                <p className="text-[11px] text-ink-soft mb-2 leading-relaxed">
+                  Tocá la zona para quitar variantes que fuercen esa articulación:
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {MOLESTIAS.map((m) => {
+                    const on = molestias.includes(m);
+                    return (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() =>
+                          setMolestias((p) =>
+                            on ? p.filter((x) => x !== m) : [...p, m],
+                          )
+                        }
+                        className={`h-8 rounded-[8px] border px-2.5 text-[11px] font-semibold transition-all active:scale-95 ${
+                          on
+                            ? "border-accent bg-accent text-accent-ink shadow-xs"
+                            : "border-rule bg-paper text-ink-soft hover:border-ink/40 hover:text-ink"
+                        }`}
+                      >
+                        {MOLESTIA_LABEL[m]}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
+
               {confirmacionSolape ? (
                 <div className="mb-3 rounded-[12px] border border-amber-500/40 bg-amber-500/10 p-3 text-xs animate-fade-in shadow-xs">
                   <div className="flex items-start gap-2.5">
@@ -1511,45 +1530,63 @@ function ItemFila({
                 </div>
               ) : null}
 
-              <p className="text-xs text-ink-soft mb-2">
-                Priorizamos variantes que no repiten la misma porción muscular del día:
+              <p className="text-xs font-semibold text-ink mb-2">
+                Elegí una variante para sustituirlo:
               </p>
               {alternativasProcesadas.length === 0 ? (
-                <p className="text-xs text-ink-soft">Sin alternativas para este grupo.</p>
+                <p className="text-xs text-ink-soft py-2">Sin alternativas para este grupo.</p>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="space-y-2">
                   {alternativasProcesadas.map(({ ejercicio: alt, clasif, solapaCon }) => (
                     <button
                       key={alt.id}
                       type="button"
                       onClick={() => handleSeleccionarAlternativa({ ejercicio: alt, solapaCon })}
                       disabled={pending}
-                      className={`flex flex-col items-start justify-center p-2.5 rounded-[10px] border text-left transition-all duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 disabled:opacity-50 ${
+                      className={`flex items-center gap-3 p-2.5 rounded-[12px] border text-left transition-all duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 disabled:opacity-50 w-full ${
                         solapaCon
                           ? "border-rule/80 bg-paper/50 hover:border-amber-500/40 text-ink-soft"
                           : "border-rule bg-paper-2 hover:border-accent/40 text-ink"
                       }`}
                     >
-                      <div className="flex items-center justify-between gap-1.5 w-full">
-                        <span className="font-semibold text-xs leading-tight text-ink line-clamp-1">
-                          {alt.nombre}
-                        </span>
-                        {solapaCon ? (
-                          <span className="shrink-0 text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.2 rounded-[4px]">
-                            Solapa #{solapaCon.indice}
-                          </span>
+                      {/* Miniatura con foto o animación para reconocer el ejercicio */}
+                      <div className="relative size-12 shrink-0 overflow-hidden rounded-[8px] border border-rule bg-white grid place-items-center">
+                        {alt.imagen_url ? (
+                          <ImagenAnimada
+                            url={alt.imagen_url}
+                            activo={true}
+                            onError={() => {}}
+                            alt={alt.nombre}
+                            className="h-full w-full object-contain p-0.5"
+                          />
                         ) : (
-                          <span className="shrink-0 text-[10px] font-semibold text-accent bg-accent/10 px-1.5 py-0.2 rounded-[4px]">
-                            Recomendado
-                          </span>
+                          <Glifo className="size-5 text-ink-soft" />
                         )}
                       </div>
-                      <span className="mt-1 text-[10.5px] text-ink-soft flex items-center gap-1">
-                        <span>{clasif.label}</span>
-                        {alt.equipo ? (
-                          <span className="text-ink-soft/70">· {alt.equipo}</span>
-                        ) : null}
-                      </span>
+
+                      {/* Nombre completo sin recortar + detalles */}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <span className="font-bold text-[13px] leading-tight text-ink break-words">
+                            {alt.nombre}
+                          </span>
+                          {solapaCon ? (
+                            <span className="shrink-0 text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded-[4px]">
+                              Solapa #{solapaCon.indice}
+                            </span>
+                          ) : (
+                            <span className="shrink-0 text-[10px] font-semibold text-accent bg-accent/10 px-1.5 py-0.5 rounded-[4px]">
+                              Recomendado
+                            </span>
+                          )}
+                        </div>
+                        <span className="mt-1 text-[11px] text-ink-soft flex items-center gap-1">
+                          <span>{clasif.label}</span>
+                          {alt.equipo ? (
+                            <span className="text-ink-soft/70">· {alt.equipo}</span>
+                          ) : null}
+                        </span>
+                      </div>
                     </button>
                   ))}
                 </div>

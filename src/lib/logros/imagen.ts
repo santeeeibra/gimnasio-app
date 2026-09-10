@@ -1,7 +1,8 @@
 /**
- * Compartir logros — generación de la imagen para Instagram Stories.
- * 100% client-side con <canvas>, sin librerías (mismo enfoque que
- * src/lib/logo/comprimir.ts). Salida: PNG dataURL 1080×1920.
+ * Compartir logros y entrenamientos — generación de imágenes para Instagram Stories (9:16 - 1080×1920).
+ * 100% client-side con <canvas> sin librerías externas.
+ * Estilo visual: HUD atlético Obsidian / Cyberpunk Volt con telemetría de alto impacto visual
+ * diseñado para generar viralidad e intriga orgánica ("¿Qué app será?").
  */
 
 export type ColoresImagen = {
@@ -16,11 +17,20 @@ export type OpcionesImagenLogro = {
   titulo: string;
   subtitulo?: string;
   gimnasioNombre: string;
-  /** URL pública del logo (gimnasios.logo_url); si falla o falta, va el nombre. */
   logoUrl?: string | null;
-  colores: ColoresImagen;
+  colores?: ColoresImagen;
   ancho?: number;
   alto?: number;
+};
+
+export type OpcionesImagenDiaCompletado = {
+  diaTitulo: string;
+  totalSeries: number;
+  volumenKilos: number;
+  tiempoMin: number;
+  gimnasioNombre?: string;
+  logoUrl?: string | null;
+  colores?: ColoresImagen;
 };
 
 function cargarImagen(url: string): Promise<HTMLImageElement | null> {
@@ -40,7 +50,7 @@ function envolverTexto(
   y: number,
   maxAncho: number,
   lineHeight: number,
-): void {
+): number {
   const palabras = texto.split(" ");
   const lineas: string[] = [];
   let linea = "";
@@ -57,79 +67,48 @@ function envolverTexto(
 
   const offset = ((lineas.length - 1) * lineHeight) / 2;
   lineas.forEach((l, i) => ctx.fillText(l, x, y - offset + i * lineHeight));
+  return lineas.length;
 }
 
-export async function generarImagenLogro(
-  opts: OpcionesImagenLogro,
-): Promise<string> {
-  if (typeof document === "undefined") {
-    throw new Error("generarImagenLogro solo corre en el navegador.");
+/** Dibuja una grilla técnica de micropuntos futuristas */
+function dibujarMatrizDePuntos(
+  ctx: CanvasRenderingContext2D,
+  ancho: number,
+  alto: number,
+  espaciado = 48
+) {
+  ctx.fillStyle = "rgba(255, 255, 255, 0.04)";
+  for (let x = espaciado; x < ancho; x += espaciado) {
+    for (let y = espaciado; y < alto; y += espaciado) {
+      ctx.beginPath();
+      ctx.arc(x, y, 1.2, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
-
-  const W = opts.ancho ?? 1080;
-  const H = opts.alto ?? 1920;
-  const { paper, ink, volt, voltInk } = opts.colores;
-
-  const canvas = document.createElement("canvas");
-  canvas.width = W;
-  canvas.height = H;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("No se pudo crear el canvas.");
-
-  // Fondo (tema del gimnasio)
-  ctx.fillStyle = paper;
-  ctx.fillRect(0, 0, W, H);
-
-  // Banda de acento al pie
-  ctx.fillStyle = volt;
-  ctx.fillRect(0, H - 220, W, 220);
-
-  // Logo del gimnasio (o nombre como fallback)
-  const logo = opts.logoUrl ? await cargarImagen(opts.logoUrl) : null;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "alphabetic";
-  if (logo && logo.width > 0 && logo.height > 0) {
-    const max = 280;
-    const escala = Math.min(max / logo.width, max / logo.height, 1);
-    const w = logo.width * escala;
-    const h = logo.height * escala;
-    ctx.drawImage(logo, (W - w) / 2, 180, w, h);
-  } else {
-    ctx.fillStyle = ink;
-    ctx.font = "600 56px ui-sans-serif, system-ui, sans-serif";
-    ctx.fillText(opts.gimnasioNombre, W / 2, 280);
-  }
-
-  // Título del logro
-  ctx.fillStyle = volt;
-  ctx.font = "800 92px ui-sans-serif, system-ui, sans-serif";
-  envolverTexto(ctx, opts.titulo, W / 2, H / 2 - 20, W - 160, 108);
-
-  // Subtítulo
-  if (opts.subtitulo) {
-    ctx.fillStyle = ink;
-    ctx.font = "500 44px ui-sans-serif, system-ui, sans-serif";
-    envolverTexto(ctx, opts.subtitulo, W / 2, H / 2 + 160, W - 200, 56);
-  }
-
-  // Nombre del gimnasio sobre la banda de acento
-  ctx.fillStyle = voltInk;
-  ctx.font = "700 40px ui-sans-serif, system-ui, sans-serif";
-  ctx.fillText(opts.gimnasioNombre.toUpperCase(), W / 2, H - 116);
-
-  return canvas.toDataURL("image/png");
 }
 
-export type OpcionesImagenDiaCompletado = {
-  diaTitulo: string;
-  totalSeries: number;
-  volumenKilos: number;
-  tiempoMin: number;
-  gimnasioNombre: string;
-  logoUrl?: string | null;
-  colores?: ColoresImagen;
-};
+/** Dibuja esquinas tipo cruceta técnica (+) para dar estética de laboratorio */
+function dibujarCruceta(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  tam = 8,
+  color = "rgba(16, 231, 160, 0.5)"
+) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(x - tam, y);
+  ctx.lineTo(x + tam, y);
+  ctx.moveTo(x, y - tam);
+  ctx.lineTo(x, y + tam);
+  ctx.stroke();
+}
 
+/**
+ * Genera la historia de Instagram para un Día Completado.
+ * Diseño ultra-profesional estilo telemetry / Whoop / Cyberpunk Obsidian.
+ */
 export async function generarImagenDiaCompletado(
   opts: OpcionesImagenDiaCompletado,
 ): Promise<string> {
@@ -140,6 +119,7 @@ export async function generarImagenDiaCompletado(
   const W = 1080;
   const H = 1920;
   const volt = opts.colores?.volt || "#10e7a0";
+  const cyan = "#00f2fe";
 
   const canvas = document.createElement("canvas");
   canvas.width = W;
@@ -147,112 +127,485 @@ export async function generarImagenDiaCompletado(
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("No se pudo crear el canvas.");
 
-  // Fondo gradiente nocturno premium
-  const grad = ctx.createLinearGradient(0, 0, 0, H);
-  grad.addColorStop(0, "#09090b");
-  grad.addColorStop(0.5, "#121216");
-  grad.addColorStop(1, "#09090b");
-  ctx.fillStyle = grad;
+  // 1. Fondo Obsidian profundo
+  const gradFondo = ctx.createLinearGradient(0, 0, 0, H);
+  gradFondo.addColorStop(0, "#08090d");
+  gradFondo.addColorStop(0.3, "#0d0f15");
+  gradFondo.addColorStop(0.7, "#0a0b10");
+  gradFondo.addColorStop(1, "#050608");
+  ctx.fillStyle = gradFondo;
   ctx.fillRect(0, 0, W, H);
 
-  // Círculo resplandor de fondo
-  const glow = ctx.createRadialGradient(W / 2, 700, 50, W / 2, 700, 600);
-  glow.addColorStop(0, `${volt}25`);
-  glow.addColorStop(1, "transparent");
-  ctx.fillStyle = glow;
-  ctx.fillRect(0, 100, W, 1200);
+  // 2. Grilla de telemetría de micropuntos
+  dibujarMatrizDePuntos(ctx, W, H, 54);
 
-  // Logo o nombre del gimnasio en el header
-  const logo = opts.logoUrl ? await cargarImagen(opts.logoUrl) : null;
+  // 3. Resplandores cinemáticos de neón (Dual Glow Aurora)
+  // Glow superior en volt
+  const glowTop = ctx.createRadialGradient(W / 2, 540, 40, W / 2, 540, 520);
+  glowTop.addColorStop(0, `${volt}33`);
+  glowTop.addColorStop(0.5, `${volt}0f`);
+  glowTop.addColorStop(1, "transparent");
+  ctx.fillStyle = glowTop;
+  ctx.fillRect(0, 100, W, 900);
+
+  // Glow inferior sutil en cyan
+  const glowBottom = ctx.createRadialGradient(W - 200, H - 350, 20, W - 200, H - 350, 450);
+  glowBottom.addColorStop(0, `${cyan}20`);
+  glowBottom.addColorStop(1, "transparent");
+  ctx.fillStyle = glowBottom;
+  ctx.fillRect(0, H - 700, W, 700);
+
+  // 4. Header Técnico Superior (HUD)
+  const fechaHoy = new Date().toLocaleDateString("es-AR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).toUpperCase();
+
+  // Status dot pulsante
+  ctx.fillStyle = volt;
+  ctx.beginPath();
+  ctx.arc(90, 130, 6, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = `${volt}40`;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(90, 130, 12, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Texto header izquierdo
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "800 24px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif";
+  ctx.fillText("SYSGYM // ATHLETIC ENGINE", 120, 130);
+
+  // Fecha técnica derecha
+  ctx.textAlign = "right";
+  ctx.fillStyle = "#71717a";
+  ctx.font = "700 20px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, monospace";
+  ctx.fillText(`${fechaHoy} • VERIFIED`, W - 90, 130);
+
+  // Línea sutil divisoria
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.08)";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(90, 175);
+  ctx.lineTo(W - 90, 175);
+  ctx.stroke();
+
+  // 5. Dial / Anillo de Rendimiento (Activity Ring 100%)
+  const centroX = W / 2;
+  const centroY = 470;
+  const radio = 175;
+  const grosor = 26;
+
+  // Pista de fondo del anillo
+  ctx.beginPath();
+  ctx.arc(centroX, centroY, radio, 0, Math.PI * 2);
+  ctx.lineWidth = grosor;
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.07)";
+  ctx.lineCap = "round";
+  ctx.stroke();
+
+  // Arco activo de progreso (gradiente Volt a Cyan)
+  const gradArco = ctx.createLinearGradient(
+    centroX - radio,
+    centroY - radio,
+    centroX + radio,
+    centroY + radio
+  );
+  gradArco.addColorStop(0, volt);
+  gradArco.addColorStop(1, cyan);
+
+  ctx.beginPath();
+  ctx.arc(centroX, centroY, radio, -Math.PI / 2, Math.PI * 1.5);
+  ctx.lineWidth = grosor;
+  ctx.strokeStyle = gradArco;
+  ctx.shadowColor = volt;
+  ctx.shadowBlur = 30;
+  ctx.lineCap = "round";
+  ctx.stroke();
+  ctx.shadowBlur = 0; // Reset shadow
+
+  // Contenido dentro del anillo
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
-  if (logo && logo.width > 0 && logo.height > 0) {
-    const max = 220;
-    const escala = Math.min(max / logo.width, max / logo.height, 1);
-    const w = logo.width * escala;
-    const h = logo.height * escala;
-    ctx.drawImage(logo, (W - w) / 2, 220 - h / 2, w, h);
-  } else {
-    ctx.fillStyle = "#a1a1aa";
-    ctx.font = "700 36px ui-sans-serif, system-ui, sans-serif";
-    ctx.fillText(opts.gimnasioNombre.toUpperCase(), W / 2, 220);
-  }
+  // Emoji o símbolo de energía
+  ctx.fillStyle = volt;
+  ctx.font = "40px system-ui";
+  ctx.fillText("⚡", centroX, centroY - 55);
 
-  // Badge: "SESIÓN COMPLETADA"
-  ctx.fillStyle = `${volt}20`;
-  const badgeW = 440;
-  const badgeH = 64;
-  const badgeX = (W - badgeW) / 2;
-  const badgeY = 380;
+  // Porcentaje grande
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "900 84px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif";
+  ctx.fillText("100%", centroX, centroY + 12);
+
+  // Subtítulo del anillo
+  ctx.fillStyle = volt;
+  ctx.font = "800 19px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif";
+  ctx.fillText("OBJETIVO CUMPLIDO", centroX, centroY + 70);
+
+  // 6. Título y Badge del Entrenamiento
+  const badgeY = 715;
+  const badgeW = 340;
+  const badgeH = 50;
+  ctx.fillStyle = `${volt}15`;
   ctx.beginPath();
-  ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 32);
+  ctx.roundRect((W - badgeW) / 2, badgeY, badgeW, badgeH, 25);
   ctx.fill();
 
-  ctx.strokeStyle = `${volt}60`;
-  ctx.lineWidth = 2;
+  ctx.strokeStyle = `${volt}50`;
+  ctx.lineWidth = 1.5;
   ctx.stroke();
 
   ctx.fillStyle = volt;
-  ctx.font = "800 24px ui-sans-serif, system-ui, sans-serif";
-  ctx.fillText("¡SESIÓN COMPLETADA! 💥", W / 2, badgeY + badgeH / 2);
+  ctx.font = "800 18px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif";
+  ctx.fillText("SESIÓN DE ENTRENAMIENTO", centroX, badgeY + badgeH / 2 + 1);
 
-  // Título del Día / Rutina
+  // Nombre del Día / Rutina
   ctx.fillStyle = "#ffffff";
-  ctx.font = "800 76px ui-sans-serif, system-ui, sans-serif";
-  envolverTexto(ctx, opts.diaTitulo, W / 2, 580, W - 180, 88);
+  ctx.font = "900 64px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif";
+  envolverTexto(ctx, opts.diaTitulo.toUpperCase(), centroX, 830, W - 180, 72);
 
-  // Tarjetas de Métricas (Series, Volumen, Tiempo)
-  const metricas = [
-    { valor: `${opts.totalSeries}`, label: "SERIES COMPLETADAS", icon: "⚡" },
-    { valor: `~${opts.volumenKilos.toLocaleString("es-AR")} kg`, label: "VOLUMEN TOTAL", icon: "🏋️" },
-    { valor: `~${opts.tiempoMin} min`, label: "DURACIÓN ESTIMADA", icon: "⏱️" },
-  ];
-
+  // 7. Bloques de Telemetría (Glassmorphism + Bordes Neon)
   const cardW = W - 180;
-  const cardH = 140;
-  const startY = 820;
-  const gap = 30;
+  const startCardsY = 940;
 
-  metricas.forEach((m, idx) => {
-    const y = startY + idx * (cardH + gap);
+  // Card 1 (Destacada): Volumen Total
+  const card1H = 190;
+  const y1 = startCardsY;
 
-    // Fondo tarjeta
-    ctx.fillStyle = "rgba(255, 255, 255, 0.05)";
-    ctx.beginPath();
-    ctx.roundRect((W - cardW) / 2, y, cardW, cardH, 24);
-    ctx.fill();
+  // Fondo cristal
+  ctx.fillStyle = "rgba(18, 21, 30, 0.85)";
+  ctx.beginPath();
+  ctx.roundRect((W - cardW) / 2, y1, cardW, card1H, 24);
+  ctx.fill();
 
-    // Borde fino
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
+  // Borde fino
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.12)";
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
 
-    // Icono
-    ctx.font = "44px ui-sans-serif, system-ui, sans-serif";
-    ctx.textAlign = "left";
-    ctx.fillText(m.icon, (W - cardW) / 2 + 36, y + cardH / 2);
+  // Acento vertical izquierdo
+  ctx.fillStyle = volt;
+  ctx.beginPath();
+  ctx.roundRect((W - cardW) / 2, y1 + 24, 6, card1H - 48, 3);
+  ctx.fill();
 
-    // Valor
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "800 48px ui-sans-serif, system-ui, sans-serif";
-    ctx.fillText(m.valor, (W - cardW) / 2 + 110, y + cardH / 2 - 14);
+  // Crucetas decorativas en las esquinas
+  dibujarCruceta(ctx, (W - cardW) / 2 + 20, y1 + 20, 6, `${volt}80`);
+  dibujarCruceta(ctx, (W + cardW) / 2 - 20, y1 + card1H - 20, 6, `${volt}80`);
 
-    // Label
-    ctx.fillStyle = "#a1a1aa";
-    ctx.font = "600 20px ui-sans-serif, system-ui, sans-serif";
-    ctx.fillText(m.label, (W - cardW) / 2 + 110, y + cardH / 2 + 24);
-  });
+  // Contenido Card 1
+  ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
 
-  // Footer con marca de agua elegante
-  ctx.textAlign = "center";
-  ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
-  ctx.font = "600 26px ui-sans-serif, system-ui, sans-serif";
-  ctx.fillText("Entrenando en " + opts.gimnasioNombre, W / 2, H - 160);
+  // Label superior
+  ctx.fillStyle = "#a1a1aa";
+  ctx.font = "700 20px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif";
+  ctx.fillText("TONELAJE TOTAL LEVANTADO", (W - cardW) / 2 + 42, y1 + 52);
+
+  // Cifra masiva
+  const strVolumen = opts.volumenKilos.toLocaleString("es-AR");
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "900 80px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif";
+  ctx.fillText(strVolumen, (W - cardW) / 2 + 40, y1 + 138);
+
+  const anchoNumero = ctx.measureText(strVolumen).width;
+  ctx.fillStyle = volt;
+  ctx.font = "900 36px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif";
+  ctx.fillText("KG", (W - cardW) / 2 + 46 + anchoNumero, y1 + 138);
+
+  ctx.fillStyle = "#71717a";
+  ctx.font = "600 18px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif";
+  ctx.fillText("Volumen acumulado bajo tensión mecánica", (W - cardW) / 2 + 42, y1 + 168);
+
+  // Cards 2 y 3 (Lado a Lado): Series y Tiempo
+  const fila2Y = y1 + card1H + 24;
+  const mitadW = (cardW - 20) / 2;
+  const card2H = 175;
+
+  // --- Sub-Card 2 (Series) ---
+  const xCard2 = (W - cardW) / 2;
+  ctx.fillStyle = "rgba(18, 21, 30, 0.85)";
+  ctx.beginPath();
+  ctx.roundRect(xCard2, fila2Y, mitadW, card2H, 24);
+  ctx.fill();
+
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.12)";
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  ctx.fillStyle = cyan;
+  ctx.beginPath();
+  ctx.roundRect(xCard2, fila2Y + 24, 5, card2H - 48, 3);
+  ctx.fill();
+
+  ctx.textAlign = "left";
+  ctx.fillStyle = "#a1a1aa";
+  ctx.font = "700 18px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif";
+  ctx.fillText("SERIES TOTALES", xCard2 + 30, fila2Y + 48);
+
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "900 68px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif";
+  ctx.fillText(`${opts.totalSeries}`, xCard2 + 30, fila2Y + 120);
+
+  const anchoSeries = ctx.measureText(`${opts.totalSeries}`).width;
+  ctx.fillStyle = cyan;
+  ctx.font = "800 24px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif";
+  ctx.fillText("SETS", xCard2 + 36 + anchoSeries, fila2Y + 120);
+
+  ctx.fillStyle = "#71717a";
+  ctx.font = "600 17px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif";
+  ctx.fillText("100% completadas", xCard2 + 30, fila2Y + 152);
+
+  // --- Sub-Card 3 (Tiempo) ---
+  const xCard3 = xCard2 + mitadW + 20;
+  ctx.fillStyle = "rgba(18, 21, 30, 0.85)";
+  ctx.beginPath();
+  ctx.roundRect(xCard3, fila2Y, mitadW, card2H, 24);
+  ctx.fill();
+
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.12)";
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
 
   ctx.fillStyle = volt;
-  ctx.font = "800 22px ui-sans-serif, system-ui, sans-serif";
-  ctx.fillText("POTENCIADO POR SYSGYM", W / 2, H - 110);
+  ctx.beginPath();
+  ctx.roundRect(xCard3, fila2Y + 24, 5, card2H - 48, 3);
+  ctx.fill();
+
+  ctx.textAlign = "left";
+  ctx.fillStyle = "#a1a1aa";
+  ctx.font = "700 18px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif";
+  ctx.fillText("DURACIÓN", xCard3 + 30, fila2Y + 48);
+
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "900 68px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif";
+  ctx.fillText(`${opts.tiempoMin}`, xCard3 + 30, fila2Y + 120);
+
+  const anchoTiempo = ctx.measureText(`${opts.tiempoMin}`).width;
+  ctx.fillStyle = volt;
+  ctx.font = "800 24px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif";
+  ctx.fillText("MIN", xCard3 + 36 + anchoTiempo, fila2Y + 120);
+
+  ctx.fillStyle = "#71717a";
+  ctx.font = "600 17px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif";
+  ctx.fillText("Tiempo de sesión", xCard3 + 30, fila2Y + 152);
+
+  // 8. Card de Viralidad e Intriga al Pie (El gancho que despierta curiosidad)
+  const footerY = fila2Y + card2H + 40;
+  const footerH = 290;
+
+  // Contenedor principal del pie con resplandor
+  ctx.fillStyle = "rgba(12, 14, 20, 0.95)";
+  ctx.beginPath();
+  ctx.roundRect((W - cardW) / 2, footerY, cardW, footerH, 28);
+  ctx.fill();
+
+  ctx.strokeStyle = `${volt}40`;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Gráfico de onda de frecuencias / telemetría en el footer
+  const waveX = (W - cardW) / 2 + 40;
+  const waveY = footerY + 60;
+  const waveW = cardW - 80;
+  const alturas = [14, 28, 42, 18, 55, 34, 48, 22, 60, 38, 44, 26, 52, 30, 46, 20, 58, 36, 40, 24, 50, 32];
+  const barW = 6;
+  const barGap = (waveW - alturas.length * barW) / (alturas.length - 1);
+
+  alturas.forEach((alt, idx) => {
+    const bx = waveX + idx * (barW + barGap);
+    const gradBar = ctx.createLinearGradient(0, waveY, 0, waveY + alt);
+    gradBar.addColorStop(0, volt);
+    gradBar.addColorStop(1, `${volt}20`);
+    ctx.fillStyle = gradBar;
+    ctx.beginPath();
+    ctx.roundRect(bx, waveY + (60 - alt) / 2, barW, alt, 3);
+    ctx.fill();
+  });
+
+  // Marca de la app y llamada a la curiosidad
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "900 40px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif";
+  ctx.fillText("SYSGYM", centroX, footerY + 155);
+
+  ctx.fillStyle = "#a1a1aa";
+  ctx.font = "600 20px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif";
+  ctx.fillText("Sistema de Entrenamiento Inteligente", centroX, footerY + 195);
+
+  // Pastilla de llamado a la acción con URL
+  const pillW = 460;
+  const pillH = 50;
+  const pillY = footerY + 225;
+  ctx.fillStyle = `${volt}20`;
+  ctx.beginPath();
+  ctx.roundRect((W - pillW) / 2, pillY, pillW, pillH, 25);
+  ctx.fill();
+
+  ctx.strokeStyle = volt;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  ctx.fillStyle = volt;
+  ctx.font = "800 20px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif";
+  ctx.fillText("🔥 ENTRENÁ GRATIS EN SYSGYM.APP", centroX, pillY + pillH / 2 + 1);
+
+  // Footer branding legal sutil
+  if (opts.gimnasioNombre && opts.gimnasioNombre !== "SysGym") {
+    ctx.fillStyle = "#52525b";
+    ctx.font = "600 17px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif";
+    ctx.fillText(`Sede de entrenamiento: ${opts.gimnasioNombre}`, centroX, H - 45);
+  } else {
+    ctx.fillStyle = "#52525b";
+    ctx.font = "600 17px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, monospace";
+    ctx.fillText("SYSGYM • SCIENCE-BASED WORKOUT ARCHITECTURE", centroX, H - 45);
+  }
+
+  return canvas.toDataURL("image/png");
+}
+
+/**
+ * Genera la historia de Instagram para un Récord Personal (PR) o Racha.
+ * Diseñada para impresionar con números colosales y aura de victoria.
+ */
+export async function generarImagenLogro(
+  opts: OpcionesImagenLogro,
+): Promise<string> {
+  if (typeof document === "undefined") {
+    throw new Error("generarImagenLogro solo corre en el navegador.");
+  }
+
+  const W = opts.ancho ?? 1080;
+  const H = opts.alto ?? 1920;
+  const volt = opts.colores?.volt || "#10e7a0";
+  const cyan = "#00f2fe";
+
+  const canvas = document.createElement("canvas");
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("No se pudo crear el canvas.");
+
+  // Fondo Obsidian
+  const gradFondo = ctx.createLinearGradient(0, 0, 0, H);
+  gradFondo.addColorStop(0, "#08090d");
+  gradFondo.addColorStop(0.4, "#0d0f17");
+  gradFondo.addColorStop(1, "#050608");
+  ctx.fillStyle = gradFondo;
+  ctx.fillRect(0, 0, W, H);
+
+  // Micro-matriz de puntos
+  dibujarMatrizDePuntos(ctx, W, H, 54);
+
+  // Aura central masiva en neón
+  const glow = ctx.createRadialGradient(W / 2, H / 2 - 100, 50, W / 2, H / 2 - 100, 600);
+  glow.addColorStop(0, `${volt}35`);
+  glow.addColorStop(0.6, `${volt}0d`);
+  glow.addColorStop(1, "transparent");
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 200, W, 1200);
+
+  // Header HUD
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = volt;
+  ctx.beginPath();
+  ctx.arc(90, 130, 6, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "800 24px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif";
+  ctx.fillText("SYSGYM // ATHLETIC PR", 115, 130);
+
+  ctx.textAlign = "right";
+  ctx.fillStyle = "#71717a";
+  ctx.font = "700 20px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, monospace";
+  ctx.fillText("RECORD LOGGED", W - 90, 130);
+
+  // Línea divisoria
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.08)";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(90, 175);
+  ctx.lineTo(W - 90, 175);
+  ctx.stroke();
+
+  // Badge PR
+  const badgeY = 360;
+  const badgeW = 320;
+  const badgeH = 54;
+  ctx.fillStyle = `${volt}20`;
+  ctx.beginPath();
+  ctx.roundRect((W - badgeW) / 2, badgeY, badgeW, badgeH, 27);
+  ctx.fill();
+
+  ctx.strokeStyle = volt;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = volt;
+  ctx.font = "900 20px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif";
+  ctx.fillText("🏆 NUEVO RÉCORD PERSONAL", W / 2, badgeY + badgeH / 2 + 1);
+
+  // Título del logro (envoltura limpia)
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "900 84px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif";
+  envolverTexto(ctx, opts.titulo, W / 2, H / 2 - 80, W - 160, 96);
+
+  // Subtítulo si existe
+  if (opts.subtitulo) {
+    ctx.fillStyle = "#a1a1aa";
+    ctx.font = "600 36px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif";
+    envolverTexto(ctx, opts.subtitulo, W / 2, H / 2 + 130, W - 200, 48);
+  }
+
+  // Footer con marca y llamada a la acción
+  const footerY = H - 360;
+  const cardW = W - 180;
+  const footerH = 260;
+
+  ctx.fillStyle = "rgba(12, 14, 20, 0.95)";
+  ctx.beginPath();
+  ctx.roundRect((W - cardW) / 2, footerY, cardW, footerH, 28);
+  ctx.fill();
+
+  ctx.strokeStyle = `${volt}40`;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "900 38px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif";
+  ctx.fillText("SYSGYM", W / 2, footerY + 75);
+
+  ctx.fillStyle = "#a1a1aa";
+  ctx.font = "600 19px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif";
+  ctx.fillText("Superá tus marcas con ciencia y tracking", W / 2, footerY + 120);
+
+  const pillW = 440;
+  const pillH = 50;
+  const pillY = footerY + 160;
+  ctx.fillStyle = `${volt}20`;
+  ctx.beginPath();
+  ctx.roundRect((W - pillW) / 2, pillY, pillW, pillH, 25);
+  ctx.fill();
+
+  ctx.strokeStyle = volt;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  ctx.fillStyle = volt;
+  ctx.font = "800 19px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif";
+  ctx.fillText("👉 PROBALA GRATIS EN SYSGYM.APP", W / 2, pillY + pillH / 2 + 1);
 
   return canvas.toDataURL("image/png");
 }

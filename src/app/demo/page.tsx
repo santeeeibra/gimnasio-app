@@ -36,6 +36,7 @@ import { TimerDescanso } from "@/components/rutinas/timer-descanso";
 import { AnilloProgreso } from "@/components/anillo-progreso";
 import { RachaConstancia } from "@/components/mi/racha-constancia";
 import { BannerMotivacional } from "@/components/rutinas/banner-motivacional";
+import { EquipamientoSugerido } from "@/components/monetizacion/equipamiento-sugerido";
 import { ejerciciosSimilares, generarPlan } from "@/lib/rutina/motor";
 import { CATALOGO_UNIVERSAL_EMERGENCIA } from "@/lib/rutina/fallbacks";
 import {
@@ -250,6 +251,11 @@ function VisorEjercicio({
             {ej.descripcion}
           </p>
         ) : null}
+
+        {/* Sugerencia de equipamiento con monetización pasiva */}
+        <div className="mt-4">
+          <EquipamientoSugerido ejercicio={ej} variante="tarjeta" />
+        </div>
 
         <button
           type="button"
