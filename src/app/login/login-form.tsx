@@ -7,12 +7,13 @@ import {
   Eye,
   EyeOff,
   Lock,
+  Mail,
   User,
   ArrowRight,
   ShieldCheck,
 } from "lucide-react";
 import { JitterPoster } from "./jitter-poster";
-import { login, type LoginState } from "./actions";
+import { login, loginConEmail, type LoginState } from "./actions";
 import {
   iniciarAudioHaptico,
   hapticoDial,
@@ -37,6 +38,12 @@ export function LoginForm({
     login,
     {},
   );
+  const [emailState, formActionEmail, pendingEmail] = useActionState<
+    LoginState,
+    FormData
+  >(loginConEmail, {});
+  const [modo, setModo] = useState<"dni" | "email">("dni");
+  const [emailInput, setEmailInput] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [gimnasio, setGimnasio] = useState(initialGymSlug ?? "");
   const [gimnasioNombre, setGimnasioNombre] = useState<string | null>(
@@ -123,6 +130,122 @@ export function LoginForm({
                 className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/40 to-transparent"
               />
 
+              {/* Selector de modo: Gimnasio (DNI) vs Cuenta Directa (Email) */}
+              <div className="flex rounded-xl bg-[#11131a] p-1 border border-white/10 mb-5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    hapticoSeleccion();
+                    setModo("dni");
+                  }}
+                  className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${
+                    modo === "dni"
+                      ? "bg-white/15 text-white shadow-sm"
+                      : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  Con DNI (Gimnasio)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    hapticoSeleccion();
+                    setModo("email");
+                  }}
+                  className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${
+                    modo === "email"
+                      ? "bg-white/15 text-white shadow-sm"
+                      : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  Con Email (Directo)
+                </button>
+              </div>
+
+              {modo === "email" ? (
+                <form action={formActionEmail} className="space-y-5">
+                  <div>
+                    <h2 className="text-2xl font-bold text-white tracking-tight">
+                      Entrar con Email
+                    </h2>
+                    <p className="mt-1 text-[13px] text-slate-300 leading-relaxed">
+                      Para cuentas individuales y entrenadores independientes.
+                    </p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[12px] font-bold text-slate-200 uppercase tracking-wider">
+                      Email
+                    </label>
+                    <div className="relative">
+                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 size-5 text-slate-400 pointer-events-none" />
+                      <input
+                        name="email"
+                        type="email"
+                        autoComplete="email"
+                        value={emailInput}
+                        onChange={(e) => setEmailInput(e.target.value)}
+                        placeholder="tu@email.com"
+                        required
+                        className="w-full h-12.5 pl-10.5 pr-4 rounded-xl border border-white/20 bg-[#1d212d] text-white text-[16px] outline-none transition-[border-color,box-shadow,background-color] duration-150 focus:border-volt focus:bg-[#222736] focus:ring-2 focus:ring-volt/30"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[12px] font-bold text-slate-200 uppercase tracking-wider">
+                      Contraseña
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 size-5 text-slate-400 pointer-events-none" />
+                      <input
+                        name="clave"
+                        type={showPass ? "text" : "password"}
+                        autoComplete="current-password"
+                        required
+                        className="w-full h-12.5 pl-10.5 pr-12 rounded-xl border border-white/20 bg-[#1d212d] text-white text-[16px] outline-none transition-[border-color,box-shadow,background-color] duration-150 focus:border-volt focus:bg-[#222736] focus:ring-2 focus:ring-volt/30"
+                      />
+                      <button
+                        type="button"
+                        onClick={toggleShowPass}
+                        className="absolute right-1 top-1/2 -translate-y-1/2 size-10.5 flex items-center justify-center text-slate-300 hover:text-white active:scale-90 transition-all rounded-lg touch-manipulation cursor-pointer"
+                      >
+                        {showPass ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {emailState.error ? (
+                    <div
+                      role="alert"
+                      className="px-4 py-3 rounded-xl bg-rose-500/15 border border-rose-500/35 text-rose-200 text-[13px] font-medium flex items-center gap-2.5 animate-shake shadow-[0_0_20px_rgba(244,63,94,0.25)]"
+                    >
+                      <span className="size-2 rounded-full bg-rose-400 shrink-0" />
+                      <p>{emailState.error}</p>
+                    </div>
+                  ) : null}
+
+                  <div className="pt-2">
+                    <button
+                      type="submit"
+                      disabled={pendingEmail}
+                      onClick={() => hapticoImpactoMedio()}
+                      className="relative group w-full h-13 rounded-xl font-bold text-[16px] tracking-wide text-volt-ink bg-volt hover:brightness-105 active:scale-[0.98] transition-all duration-150 shadow-[0_4px_24px_rgba(205,233,74,0.4)] disabled:opacity-60 flex items-center justify-center gap-2 overflow-hidden cursor-pointer"
+                    >
+                      {pendingEmail ? "Entrando…" : "Entrar"}
+                    </button>
+                  </div>
+
+                  <div className="pt-2 text-center">
+                    <Link
+                      href="/registrarse"
+                      className="text-xs text-volt hover:underline font-medium"
+                    >
+                      ¿No tenés cuenta? Registrate gratis acá
+                    </Link>
+                  </div>
+                </form>
+              ) : (
             <form
               action={formAction}
               onSubmit={() => {
@@ -361,6 +484,7 @@ export function LoginForm({
                 </div>
               </div>
             </form>
+          )}
           </div>
         </div>
       </div>

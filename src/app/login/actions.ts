@@ -87,6 +87,115 @@ export async function login(
   redirect(profile?.rol === "dueno" ? "/panel" : "/mi");
 }
 
+export async function loginConEmail(
+  _prev: LoginState,
+  formData: FormData,
+): Promise<LoginState> {
+  const emailRaw = String(formData.get("email") ?? "").trim().toLowerCase();
+  const clave = String(formData.get("clave") ?? "");
+
+  if (!emailRaw || !clave) {
+    return { error: "Completá email y contraseña." };
+  }
+
+  const supabase = await createClient();
+
+  // 1. Intentar login directo con email (para cuentas registradas via /registrarse)
+  const { data: directAuth, error: directError } = await supabase.auth.signInWithPassword({
+    email: emailRaw,
+    password: clave,
+  });
+
+  let userId = directAuth?.user?.id;
+
+  // 2. Si falla directamente, buscar si es un dueño o cliente con email cargado pero usuario sintético
+  if (directError || !userId) {
+    const admin = createAdminClient();
+
+    // Buscar en profiles (dueños)
+    const { data: profileMatch } = await admin
+      .from("profiles")
+      .select("id, dni, rol, gimnasio_id, gimnasios:gimnasio_id(slug, nombre, estado)")
+      .eq("email_recuperacion", emailRaw)
+      .maybeSingle();
+
+    let targetGymSlug: string | null = null;
+    let targetDni: string | null = null;
+    let targetGymNombre: string | null = null;
+
+    if (profileMatch && profileMatch.gimnasios) {
+      const g = Array.isArray(profileMatch.gimnasios) ? profileMatch.gimnasios[0] : profileMatch.gimnasios;
+      if (g.estado === "suspendido") {
+        return { error: "Este gimnasio está suspendido temporalmente." };
+      }
+      targetGymSlug = g.slug;
+      targetGymNombre = g.nombre;
+      targetDni = profileMatch.dni;
+    } else {
+      // Buscar en clientes
+      const { data: clienteMatch } = await admin
+        .from("clientes")
+        .select("gimnasio_id, profile:profile_id(dni), gimnasios:gimnasio_id(slug, nombre, estado)")
+        .eq("email", emailRaw)
+        .maybeSingle();
+
+      if (clienteMatch && clienteMatch.gimnasios && clienteMatch.profile) {
+        const g = Array.isArray(clienteMatch.gimnasios) ? clienteMatch.gimnasios[0] : clienteMatch.gimnasios;
+        const prof = Array.isArray(clienteMatch.profile) ? clienteMatch.profile[0] : clienteMatch.profile;
+        if (g.estado === "suspendido") {
+          return { error: "Este gimnasio está suspendido temporalmente." };
+        }
+        targetGymSlug = g.slug;
+        targetGymNombre = g.nombre;
+        targetDni = prof.dni;
+      }
+    }
+
+    if (!targetGymSlug || !targetDni) {
+      return { error: "Email o contraseña incorrectos." };
+    }
+
+    const { data: synthAuth, error: synthErr } = await supabase.auth.signInWithPassword({
+      email: dniAEmail(targetDni, targetGymSlug),
+      password: clave,
+    });
+
+    if (synthErr || !synthAuth?.user) {
+      return { error: "Email o contraseña incorrectos." };
+    }
+
+    userId = synthAuth.user.id;
+
+    if (targetGymNombre) {
+      try {
+        const cookieStore = await cookies();
+        cookieStore.set(
+          "gym_ultimo",
+          JSON.stringify({ slug: targetGymSlug, nombre: targetGymNombre }),
+          {
+            maxAge: 60 * 60 * 24 * 365,
+            path: "/",
+            sameSite: "lax",
+            httpOnly: false,
+          },
+        );
+      } catch {}
+    }
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("rol, debe_cambiar_clave")
+    .eq("id", userId!)
+    .single();
+
+  if (profile?.debe_cambiar_clave) {
+    redirect(profile.rol === "dueno" ? "/bienvenida" : "/cambiar-clave");
+  }
+
+  redirect(profile?.rol === "dueno" ? "/panel" : "/mi");
+}
+
 export async function loginDevAction(): Promise<void> {
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({

@@ -20,7 +20,7 @@ export default async function PanelLayout({
   const supabase = await createClient();
   const { data: gym } = await supabase
     .from("gimnasios")
-    .select("nombre, tema, logo_url")
+    .select("nombre, tema, logo_url, tipo_cuenta")
     .eq("id", profile.gimnasio_id)
     .single();
 
@@ -47,6 +47,7 @@ export default async function PanelLayout({
         nombre={gym?.nombre}
         dueno={profile.nombre}
         logo={gym?.logo_url ?? null}
+        tipoCuenta={gym?.tipo_cuenta ?? "gym"}
         esSuper={esSuper}
       />
 
@@ -59,9 +60,9 @@ export default async function PanelLayout({
         <main className="w-full max-w-[1600px] mx-auto flex-1 p-4 sm:p-6 pb-28 md:p-8 md:pb-10">
           <PullToRefresh>{children}</PullToRefresh>
         </main>
+        <PanelBottomNav tipoCuenta={gym?.tipo_cuenta ?? "gym"} />
       </div>
 
-      <PanelBottomNav />
       <Tutorial rol="dueno" />
       <div id="portal-root" />
     </div>

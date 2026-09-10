@@ -7,10 +7,12 @@ import { pillClasses } from "@/components/ui";
 import { hapticoSeleccion } from "@/lib/ui/hapticos";
 import {
   CreditCard,
+  Dumbbell,
   Inbox,
   LayoutDashboard,
   LifeBuoy,
   MessageSquare,
+  Scale,
   Settings,
   Tags,
   Users,
@@ -26,19 +28,39 @@ type NavItem = {
   Icono: LucideIcon;
 };
 
-// Íconos: SIEMPRE de lucide-react (REGLAS_UI_EMIL.md §14). Nunca SVG a mano.
-const NAV: NavItem[] = [
-  { href: "/panel", label: "Resumen", Icono: LayoutDashboard },
-  { href: "/panel/clientes", label: "Clientes", Icono: Users },
-  { href: "/panel/planes", label: "Planes de socios", corto: "Planes", Icono: Tags },
-  { href: "/panel/mensajes", label: "Mensajes", Icono: MessageSquare },
-  { href: "/panel/buzon", label: "Buzón", Icono: Inbox },
-  { href: "/panel/ingresos", label: "Ingresos", Icono: Wallet },
-  { href: "/panel/plan", label: "Mi plan", soloDesktop: true, Icono: CreditCard },
-  { href: "/panel/ajustes", label: "Ajustes", Icono: Settings },
-];
+export function getNavItems(tipoCuenta: string = "gym"): NavItem[] {
+  if (tipoCuenta === "individual") {
+    return [
+      { href: "/panel", label: "Resumen", Icono: LayoutDashboard },
+      { href: "/mi/rutina", label: "Mi Rutina", corto: "Rutina", Icono: Dumbbell },
+      { href: "/mi/peso", label: "Mi Peso", corto: "Peso", Icono: Scale },
+      { href: "/panel/plan", label: "Mi plan", soloDesktop: true, Icono: CreditCard },
+      { href: "/panel/ajustes", label: "Ajustes", Icono: Settings },
+    ];
+  }
 
-const NAV_MOBILE = NAV.filter((i) => !i.soloDesktop);
+  if (tipoCuenta === "negocio_liviano") {
+    return [
+      { href: "/panel", label: "Resumen", Icono: LayoutDashboard },
+      { href: "/panel/clientes", label: "Clientes", Icono: Users },
+      { href: "/panel/mensajes", label: "Mensajes", Icono: MessageSquare },
+      { href: "/panel/plan", label: "Mi plan", soloDesktop: true, Icono: CreditCard },
+      { href: "/panel/ajustes", label: "Ajustes", Icono: Settings },
+    ];
+  }
+
+  // gym completo
+  return [
+    { href: "/panel", label: "Resumen", Icono: LayoutDashboard },
+    { href: "/panel/clientes", label: "Clientes", Icono: Users },
+    { href: "/panel/planes", label: "Planes de socios", corto: "Planes", Icono: Tags },
+    { href: "/panel/mensajes", label: "Mensajes", Icono: MessageSquare },
+    { href: "/panel/buzon", label: "Buzón", Icono: Inbox },
+    { href: "/panel/ingresos", label: "Ingresos", Icono: Wallet },
+    { href: "/panel/plan", label: "Mi plan", soloDesktop: true, Icono: CreditCard },
+    { href: "/panel/ajustes", label: "Ajustes", Icono: Settings },
+  ];
+}
 
 function isActive(pathname: string, href: string) {
   if (href === "/panel") return pathname === "/panel";
@@ -85,14 +107,17 @@ export function PanelSidebar({
   nombre,
   dueno,
   logo,
+  tipoCuenta = "gym",
   esSuper = false,
 }: {
   nombre?: string | null;
   dueno: string;
   logo?: string | null;
+  tipoCuenta?: string;
   esSuper?: boolean;
 }) {
   const pathname = usePathname();
+  const items = getNavItems(tipoCuenta);
 
   return (
     <aside className="hidden md:flex md:flex-col gap-6 border-r border-rule p-5 md:sticky md:top-0 md:h-screen">
@@ -104,7 +129,7 @@ export function PanelSidebar({
         </div>
       </div>
       <nav className="flex flex-col gap-0.5 flex-1">
-        {NAV.map((item) => {
+        {items.map((item) => {
           const active = isActive(pathname, item.href);
           return (
             <Link
@@ -125,15 +150,17 @@ export function PanelSidebar({
         })}
       </nav>
       <div className="flex flex-col gap-3">
-        <Link
-          href="/checkin"
-          className="inline-flex h-9 items-center justify-between rounded-[5px] border border-rule px-3 text-sm text-ink transition-colors duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper-2 active:scale-[0.98]"
-        >
-          <span>Modo check-in</span>
-          <span className="rounded-[4px] bg-volt/20 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-ink">
-            Elite
-          </span>
-        </Link>
+        {tipoCuenta === "gym" && (
+          <Link
+            href="/checkin"
+            className="inline-flex h-9 items-center justify-between rounded-[5px] border border-rule px-3 text-sm text-ink transition-colors duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper-2 active:scale-[0.98]"
+          >
+            <span>Modo check-in</span>
+            <span className="rounded-[4px] bg-volt/20 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-ink">
+              Elite
+            </span>
+          </Link>
+        )}
         <a
           href={whatsappReporteUrl(nombre)}
           target="_blank"
@@ -201,13 +228,14 @@ export function PanelTopbar({
  * rediseño de navegación a ventanas superpuestas (pedido reunión de ventas
  * 08/09): la nav queda como capa fija y las secciones podrán abrirse encima.
  */
-export function PanelBottomNav() {
+export function PanelBottomNav({ tipoCuenta = "gym" }: { tipoCuenta?: string }) {
   const pathname = usePathname();
+  const items = getNavItems(tipoCuenta).filter((i) => !i.soloDesktop);
 
   return (
     <div className="md:hidden pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center px-3 pb-[calc(env(safe-area-inset-bottom,0px)+0.55rem)] pt-2">
       <nav className="pointer-events-auto flex w-full max-w-md items-stretch gap-0.5 rounded-[22px] border border-rule/70 bg-paper/70 p-1.5 shadow-[0_10px_34px_rgb(0_0_0_/_0.18)] backdrop-blur-xl backdrop-saturate-150">
-        {NAV_MOBILE.map((item) => {
+        {items.map((item) => {
           const active = isActive(pathname, item.href);
           return (
             <Link
