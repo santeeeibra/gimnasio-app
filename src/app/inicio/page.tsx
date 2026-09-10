@@ -24,6 +24,9 @@ export const metadata: Metadata = {
     title: TITLE,
     description: DESC,
   },
+  verification: {
+    google: "ZqNI9UJjVgP-cZRe1MTfAnYCguQFmI2MM29ierHqdN0",
+  },
 };
 
 function IconAlert() {

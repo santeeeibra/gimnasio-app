@@ -164,7 +164,7 @@ export default async function PanelPlanPage({
       : null;
 
   return (
-    <div className="stagger max-w-lg space-y-6">
+    <div className="stagger max-w-lg lg:max-w-3xl space-y-6">
       <div>
         <Link href="/panel" className={pillClasses.neutra}>
           <ChevronLeft aria-hidden strokeWidth={2} className="size-4" />
