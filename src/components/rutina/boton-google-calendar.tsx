@@ -5,6 +5,7 @@ import { Calendar, Check, ChevronDown, Download, ExternalLink } from "lucide-rea
 import {
   generarGoogleCalendarUrl,
   descargarIcsEntrenamiento,
+  abrirAppleCalendar,
   type EventoEntrenamiento,
 } from "@/lib/calendar/google-calendar";
 import { hapticoImpactoSuave, hapticoSeleccion } from "@/lib/ui/hapticos";
@@ -32,7 +33,7 @@ export function BotonGoogleCalendar({
   const [abierto, setAbierto] = useState(false);
   const [copiado, setCopiado] = useState(false);
 
-  // Armar el resumen de la rutina para Google Calendar
+  // Armar el resumen de la rutina para Calendario
   const armarEvento = (diaIndex?: number): EventoEntrenamiento => {
     if (typeof diaIndex === "number" && dias[diaIndex]) {
       const d = dias[diaIndex];
@@ -77,6 +78,13 @@ export function BotonGoogleCalendar({
     setAbierto(false);
   };
 
+  const handleAbrirApple = (diaIndex?: number) => {
+    hapticoImpactoSuave();
+    const evento = armarEvento(diaIndex);
+    abrirAppleCalendar(evento);
+    setAbierto(false);
+  };
+
   const handleDescargarIcs = (diaIndex?: number) => {
     hapticoImpactoSuave();
     const evento = armarEvento(diaIndex);
@@ -96,10 +104,10 @@ export function BotonGoogleCalendar({
         }}
         className="group inline-flex items-center gap-2 h-9 px-3.5 rounded-full text-xs font-semibold bg-white/10 hover:bg-white/15 active:scale-95 text-ink border border-rule transition-all duration-150 touch-manipulation cursor-pointer shadow-xs"
         aria-expanded={abierto}
-        aria-label="Agregar a Google Calendar"
+        aria-label="Agregar a Calendario"
       >
-        <Calendar className="size-3.5 text-[#4285F4]" />
-        <span>Agendar en Calendar</span>
+        <Calendar className="size-3.5 text-accent" />
+        <span>Agendar en Calendario</span>
         <ChevronDown
           className={`size-3 transition-transform duration-200 text-ink-soft ${
             abierto ? "rotate-180" : ""
@@ -113,7 +121,7 @@ export function BotonGoogleCalendar({
             className="fixed inset-0 z-40"
             onClick={() => setAbierto(false)}
           />
-          <div className="absolute right-0 mt-1.5 w-64 rounded-2xl border border-white/15 bg-[#1a1d26] p-1.5 text-white shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150">
+          <div className="absolute right-0 mt-1.5 w-68 rounded-2xl border border-white/15 bg-[#1a1d26] p-1.5 text-white shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150">
             <div className="px-3 py-2 border-b border-white/10 mb-1">
               <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                 Sincronizar entrenamiento
@@ -123,6 +131,22 @@ export function BotonGoogleCalendar({
               </p>
             </div>
 
+            {/* Opción Apple Calendar (iOS / Mac) */}
+            <button
+              type="button"
+              onClick={() => handleAbrirApple()}
+              className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-left text-xs font-semibold hover:bg-white/10 active:bg-white/15 transition-colors cursor-pointer group"
+            >
+              <div className="flex items-center gap-2.5">
+                <svg className="size-4 shrink-0 fill-current text-white" viewBox="0 0 170 170">
+                  <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.69-3.04-7.6-7.85-11.73-14.44-6.3-10.02-11.28-21.57-14.93-34.66-3.65-13.09-5.48-25.04-5.48-35.85 0-14.36 3.65-26.31 10.95-35.85 7.3-9.54 16.5-14.37 27.6-14.49 5.86 0 12.18 1.48 18.96 4.45 6.78 2.97 10.95 4.51 12.51 4.62 1.34 0 5.86-1.74 13.56-5.22 7.7-3.48 14.13-4.99 19.3-4.52 14.38.65 25.59 6.29 33.64 16.92-12.82 7.74-19.11 18.28-18.87 31.62.24 10.45 4.3 19.13 12.18 26.04 4.13 3.69 8.8 6.3 14.02 7.82-2.83 8.27-6.53 16.86-11.11 25.77zM119.22 33.15c0-7.83 2.76-15.08 8.27-21.75 5.51-6.67 12.33-10.87 20.47-12.6 0 .33.05.77.16 1.31.11.55.16 1.04.16 1.48 0 7.73-2.94 15.22-8.83 22.48-5.89 7.26-12.85 11.51-20.88 12.76-.11-1.2-.35-2.43-.35-3.68z" />
+                </svg>
+                <span>Apple Calendar (iOS / Mac)</span>
+              </div>
+              <ExternalLink className="size-3.5 text-slate-400 group-hover:text-white" />
+            </button>
+
+            {/* Opción Google Calendar */}
             <button
               type="button"
               onClick={() => handleAbrirGoogle()}
@@ -147,7 +171,7 @@ export function BotonGoogleCalendar({
                     d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
                   />
                 </svg>
-                <span>Abrir en Google Calendar</span>
+                <span>Google Calendar (Android / Web)</span>
               </div>
               <ExternalLink className="size-3.5 text-slate-400 group-hover:text-white" />
             </button>

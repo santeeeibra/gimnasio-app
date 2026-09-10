@@ -27,7 +27,7 @@ export default async function MiPage() {
   const [{ data: gym }, { data }, { count: noLeidos }] = await Promise.all([
     supabase
       .from("gimnasios")
-      .select("estado, pago_alias, pago_cbu, pago_titular, nombre, logo_url, tema")
+      .select("estado, pago_alias, pago_cbu, pago_titular, nombre, logo_url, tema, tipo_cuenta")
       .eq("id", profile.gimnasio_id)
       .single(),
     supabase
@@ -88,8 +88,9 @@ export default async function MiPage() {
     voltInk: temaGym.voltInk,
   };
 
-  const dias = diasRestantes(c?.fecha_vencimiento ?? null);
-  const estado = estadoDesdeDias(dias);
+  const esIndividual = gym?.tipo_cuenta === "individual" || profile.rol === "dueno";
+  const dias = esIndividual ? null : diasRestantes(c?.fecha_vencimiento ?? null);
+  const estado = esIndividual ? "al_dia" : estadoDesdeDias(dias);
   const duracionTotal = c?.plan?.duracion_dias ?? 30; // fallback a 30 si no hay plan
   const diasParaAnillo = dias !== null && dias >= 0 ? dias : 0;
 
@@ -129,60 +130,77 @@ export default async function MiPage() {
         </div>
       </div>
 
-      <div
-        className={`card-cut card-cut-lg futurista-fondo border border-rule bg-paper-2 p-5 border-l-2 ${
-          estado === "vencido"
-            ? "border-l-danger"
-            : estado === "por_vencer"
-              ? "border-l-warn"
-              : "border-l-ok"
-        }`}
-      >
-        <p className="text-xs text-ink-soft mb-4">Tu cuota</p>
-        
-        <div className="flex items-center gap-6">
-          <AnilloProgreso
-            valor={diasParaAnillo}
-            max={duracionTotal}
-            label="días"
-            tono={
-              estado === "vencido"
-                ? "peligro"
-                : estado === "por_vencer"
-                  ? "aviso"
-                  : "ok"
-            }
-          />
-          
-          <div className="min-w-0 flex-1">
-            <p
-              className={`font-display text-2xl leading-tight ${
-                estado === "vencido"
-                  ? "text-danger"
-                  : estado === "por_vencer"
-                    ? "text-warn"
-                    : "text-ok"
-              }`}
-            >
-              {ESTADO_LABEL[estado]}
-            </p>
-            <p className="text-sm text-ink-soft mt-1">
-              {c?.plan?.nombre ?? "Sin plan"}
-              {c?.fecha_vencimiento
-                ? ` · vence ${c.fecha_vencimiento}${
-                    dias !== null
-                      ? dias < 0
-                        ? ` (hace ${Math.abs(dias)} días)`
-                        : dias === 0
-                          ? " (vence hoy)"
-                          : ` (en ${dias} días)`
-                      : ""
-                  }`
-                : ""}
-            </p>
+      {esIndividual ? (
+        <div className="card-cut card-cut-lg futurista-fondo border border-rule bg-paper-2 p-5 border-l-2 border-l-ok">
+          <p className="text-xs text-ink-soft mb-1">Tu cuenta</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-display text-2xl leading-tight text-ok">
+                Cuenta Personal
+              </p>
+              <p className="text-sm text-ink-soft mt-0.5">
+                Entrenamiento individual activo
+              </p>
+            </div>
+            <span className="flex size-3 rounded-full bg-ok animate-pulse" />
           </div>
         </div>
-      </div>
+      ) : (
+        <div
+          className={`card-cut card-cut-lg futurista-fondo border border-rule bg-paper-2 p-5 border-l-2 ${
+            estado === "vencido"
+              ? "border-l-danger"
+              : estado === "por_vencer"
+                ? "border-l-warn"
+                : "border-l-ok"
+          }`}
+        >
+          <p className="text-xs text-ink-soft mb-4">Tu cuota</p>
+          
+          <div className="flex items-center gap-6">
+            <AnilloProgreso
+              valor={diasParaAnillo}
+              max={duracionTotal}
+              label="días"
+              tono={
+                estado === "vencido"
+                  ? "peligro"
+                  : estado === "por_vencer"
+                    ? "aviso"
+                    : "ok"
+              }
+            />
+            
+            <div className="min-w-0 flex-1">
+              <p
+                className={`font-display text-2xl leading-tight ${
+                  estado === "vencido"
+                    ? "text-danger"
+                    : estado === "por_vencer"
+                      ? "text-warn"
+                      : "text-ok"
+                }`}
+              >
+                {ESTADO_LABEL[estado]}
+              </p>
+              <p className="text-sm text-ink-soft mt-1">
+                {c?.plan?.nombre ?? "Sin plan"}
+                {c?.fecha_vencimiento
+                  ? ` · vence ${c.fecha_vencimiento}${
+                      dias !== null
+                        ? dias < 0
+                          ? ` (hace ${Math.abs(dias)} días)`
+                          : dias === 0
+                            ? " (vence hoy)"
+                            : ` (en ${dias} días)`
+                        : ""
+                    }`
+                  : ""}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {racha ? (
         <RachaConstancia dias={racha.dias} total={racha.total} />
@@ -197,7 +215,7 @@ export default async function MiPage() {
         />
       ) : null}
 
-      {estado !== "al_dia" ? (
+      {!esIndividual && estado !== "al_dia" ? (
         <div className="space-y-3">
           <Link
             href="/mi/pagos"

@@ -58,7 +58,7 @@ export default async function MiRutinaPage() {
   const { data: gymData } = cliente
     ? await supabase
         .from("gimnasios")
-        .select("nombre, logo_url, tema, tipo_cuenta, estado, pago_alias, pago_cbu, pago_titular")
+        .select("nombre, logo_url, tema, tipo_cuenta, estado, pago_alias, pago_cbu, pago_titular, slug")
         .eq("id", cliente.gimnasio_id ?? "")
         .maybeSingle()
     : { data: null };
@@ -71,7 +71,10 @@ export default async function MiRutinaPage() {
     voltInk: temaGym.voltInk,
   };
 
-  const esIndividual = gymData?.tipo_cuenta === "individual";
+  const esIndividual =
+    gymData?.tipo_cuenta === "individual" ||
+    profile.rol === "dueno" ||
+    Boolean(gymData?.slug?.startsWith("user-"));
   const cuotaVencida =
     !esIndividual &&
     (cliente?.estado_cuota === "vencido" || cliente?.acceso_habilitado === false) &&

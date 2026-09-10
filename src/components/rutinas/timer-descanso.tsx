@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { hapticoTimerFin, hapticoImpactoMedio } from "@/lib/ui/hapticos";
 
 const PRESETS = [
@@ -504,14 +505,16 @@ export function TimerDescanso() {
     setTimeout(() => setSnapping(false), 280);
   }
 
-  function onPointerDown(e: React.PointerEvent) {
-    // Solo click primario / touch
+  function onPointerDown(e: React.PointerEvent<HTMLDivElement>) {
     if (e.button !== undefined && e.button !== 0) return;
-    // Si se hizo click sobre botones o controles internos, no arrastrar
     const target = e.target as HTMLElement;
     if (target.closest("button") || target.closest("select") || target.closest("input")) {
       return;
     }
+
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {}
 
     setIsDragging(true);
     dragInfoRef.current = {
@@ -521,75 +524,73 @@ export function TimerDescanso() {
       elemY: pos?.y ?? 100,
       hasMoved: false,
     };
-
-    const onPointerMove = (moveEvent: PointerEvent) => {
-      const dx = moveEvent.clientX - dragInfoRef.current.startX;
-      const dy = moveEvent.clientY - dragInfoRef.current.startY;
-
-      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
-        dragInfoRef.current.hasMoved = true;
-      }
-
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      const elemWidth = containerRef.current?.offsetWidth || 160;
-      const elemHeight = containerRef.current?.offsetHeight || 48;
-      const margin = 8;
-      const bottomNavHeight = 66;
-      const topMargin = 8;
-
-      let nextX = dragInfoRef.current.elemX + dx;
-      let nextY = dragInfoRef.current.elemY + dy;
-
-      // Delimitación al viewport visible sin tapar la bottom nav ni salir de pantalla
-      nextX = Math.max(margin, Math.min(w - elemWidth - margin, nextX));
-      nextY = Math.max(topMargin, Math.min(h - bottomNavHeight - elemHeight - margin, nextY));
-
-      setPos({ x: nextX, y: nextY });
-    };
-
-    const onPointerUp = () => {
-      setIsDragging(false);
-      window.removeEventListener("pointermove", onPointerMove);
-      window.removeEventListener("pointerup", onPointerUp);
-      window.removeEventListener("pointercancel", onPointerUp);
-
-      if (dragInfoRef.current.hasMoved) {
-        // Soltado tras arrastre: snap al borde más próximo
-        setPos((latest) => {
-          if (!latest) return latest;
-          snapToClosestEdge(latest.x, latest.y);
-          return latest;
-        });
-      } else {
-        // Fue un tap limpio sin arrastre: abrir modal centrado
-        setColapsado(false);
-      }
-    };
-
-    window.addEventListener("pointermove", onPointerMove, { passive: false });
-    window.addEventListener("pointerup", onPointerUp);
-    window.addEventListener("pointercancel", onPointerUp);
   }
 
-  if (!pos) return null;
+  function onPointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (!isDragging) return;
+    const dx = e.clientX - dragInfoRef.current.startX;
+    const dy = e.clientY - dragInfoRef.current.startY;
 
-  return (
+    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
+      dragInfoRef.current.hasMoved = true;
+    }
+
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const elemWidth = containerRef.current?.offsetWidth || 160;
+    const elemHeight = containerRef.current?.offsetHeight || 48;
+    const margin = 8;
+    const bottomNavHeight = 70;
+    const topMargin = 10;
+
+    let nextX = dragInfoRef.current.elemX + dx;
+    let nextY = dragInfoRef.current.elemY + dy;
+
+    nextX = Math.max(margin, Math.min(w - elemWidth - margin, nextX));
+    nextY = Math.max(topMargin, Math.min(h - bottomNavHeight - elemHeight - margin, nextY));
+
+    setPos({ x: nextX, y: nextY });
+  }
+
+  function onPointerUp(e: React.PointerEvent<HTMLDivElement>) {
+    if (!isDragging) return;
+    setIsDragging(false);
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {}
+
+    if (dragInfoRef.current.hasMoved) {
+      setPos((latest) => {
+        if (!latest) return latest;
+        snapToClosestEdge(latest.x, latest.y);
+        return latest;
+      });
+    } else {
+      setColapsado(false);
+    }
+  }
+
+  if (!pos || typeof document === "undefined") return null;
+
+  return createPortal(
     <>
       {/* Modo Colapsado: Píldora táctil ergonómica arrastrable */}
       {colapsado && (
         <div
           ref={containerRef}
           onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerCancel={onPointerUp}
           style={{
             transform: `translate3d(${pos.x}px, ${pos.y}px, 0)`,
             touchAction: "none",
           }}
-          className={`fixed top-0 left-0 z-40 select-none ${
+          className={`fixed top-0 left-0 z-[9999] select-none ${
             snapping
               ? "transition-transform duration-300 [transition-timing-function:cubic-bezier(0.2,0.9,0.3,1.2)]"
               : isDragging
-              ? "cursor-grabbing opacity-95"
+              ? "cursor-grabbing opacity-95 scale-105"
               : "cursor-grab"
           }`}
         >
@@ -854,6 +855,7 @@ export function TimerDescanso() {
           </div>
         </div>
       )}
-    </>
+    </>,
+    document.body,
   );
 }

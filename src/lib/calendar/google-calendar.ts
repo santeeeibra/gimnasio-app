@@ -60,10 +60,9 @@ export function generarGoogleCalendarUrl({
 }
 
 /**
- * Genera y descarga un archivo .ics estándar (funciona en Google Calendar, Apple Calendar, Outlook)
- * sin consumir servidor ni almacenamiento.
+ * Genera el contenido en formato estándar iCalendar (.ics RFC 5545)
  */
-export function descargarIcsEntrenamiento(evento: EventoEntrenamiento): void {
+export function generarIcsContent(evento: EventoEntrenamiento): string {
   const ahora = new Date();
   const inicio = evento.fechaInicio ? new Date(evento.fechaInicio) : new Date();
   if (!evento.fechaInicio) {
@@ -90,7 +89,7 @@ export function descargarIcsEntrenamiento(evento: EventoEntrenamiento): void {
   const rruleLine = evento.recurrenteSemanal !== false ? "RRULE:FREQ=WEEKLY\r\n" : "";
   const locationLine = evento.ubicacion ? `LOCATION:${evento.ubicacion.replace(/,/g, "\\,")}\r\n` : "";
 
-  const icsContent = [
+  return [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
     "PRODID:-//SysGym//Entrenamientos//ES",
@@ -116,7 +115,30 @@ export function descargarIcsEntrenamiento(evento: EventoEntrenamiento): void {
   ]
     .filter(Boolean)
     .join("\r\n");
+}
 
+/**
+ * Abre o sincroniza directamente con Apple Calendar (iOS / iPadOS / macOS)
+ * Utiliza data URI text/calendar que dispara el importador nativo de iOS.
+ */
+export function abrirAppleCalendar(evento: EventoEntrenamiento): void {
+  const ics = generarIcsContent(evento);
+  const esApple = typeof navigator !== "undefined" && /iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent);
+
+  if (esApple) {
+    const dataUri = `data:text/calendar;charset=utf-8,${encodeURIComponent(ics)}`;
+    window.location.href = dataUri;
+  } else {
+    descargarIcsEntrenamiento(evento);
+  }
+}
+
+/**
+ * Genera y descarga un archivo .ics estándar (funciona en Google Calendar, Apple Calendar, Outlook)
+ * sin consumir servidor ni almacenamiento.
+ */
+export function descargarIcsEntrenamiento(evento: EventoEntrenamiento): void {
+  const icsContent = generarIcsContent(evento);
   const blob = new Blob([icsContent], { type: "text/calendar;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
