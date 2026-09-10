@@ -24,14 +24,14 @@ export default function DemoLayout({
 
   return (
     <div
-      className="capa-ambiental min-h-screen bg-paper text-ink selection:bg-volt selection:text-volt-ink md:flex md:flex-col md:items-center md:justify-start md:py-8 md:px-4 md:bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(16,231,160,0.08),transparent)]"
+      className="capa-ambiental min-h-screen bg-paper text-ink selection:bg-volt selection:text-volt-ink"
       style={temaToVars(tema)}
       data-estilo-visual={tema.estiloVisual}
       data-theme-polarity={polaridadTema(tema)}
       data-motion={resolverMotion(tema)}
     >
-      <div className="relative flex w-full flex-col min-h-screen md:min-h-0 md:max-w-md md:rounded-[28px] md:border md:border-rule/80 md:bg-paper md:shadow-[0_24px_60px_rgba(0,0,0,0.45),0_0_0_1px_rgba(255,255,255,0.05)]">
-        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-rule bg-paper/95 backdrop-blur-md px-5 py-3 pt-[calc(env(safe-area-inset-top,0px)+0.75rem)] md:pt-3.5 md:rounded-t-[28px]">
+      <div className="relative mx-auto flex min-h-screen w-full max-w-md flex-col md:border-x md:border-rule/70 md:bg-paper md:shadow-[0_0_60px_rgba(0,0,0,0.35)]">
+        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-rule bg-paper/95 backdrop-blur-md px-5 py-3 pt-[calc(env(safe-area-inset-top,0px)+0.75rem)] md:pt-3.5">
           <div className="flex min-w-0 items-center gap-2.5">
             <span className="grid size-9 shrink-0 place-items-center rounded-[10px] border border-volt/30 bg-volt/15 text-sm font-bold text-volt shadow-xs">
               S

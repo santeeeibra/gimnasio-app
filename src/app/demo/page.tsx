@@ -4,15 +4,22 @@ import { useCallback, useEffect, useState } from "react";
 import {
   CheckCircle2,
   ChevronRight,
+  CreditCard,
   Dumbbell,
+  Inbox,
   MessageSquare,
+  Palette,
   Plus,
   RefreshCw,
   RotateCcw,
   Scale,
+  Smartphone,
   Sparkles,
   TrendingDown,
+  User,
 } from "lucide-react";
+import { AnilloProgreso } from "@/components/anillo-progreso";
+import { RachaConstancia } from "@/components/mi/racha-constancia";
 import { ejerciciosSimilares, generarPlan } from "@/lib/rutina/motor";
 import { CATALOGO_UNIVERSAL_EMERGENCIA } from "@/lib/rutina/fallbacks";
 import {
@@ -36,6 +43,11 @@ import { LoginWall } from "./login-wall";
 
 const CATALOGO = [...CATALOGO_UNIVERSAL_EMERGENCIA];
 const LIMITE_GENERACIONES = 3;
+
+// Mock de constancia para simular el mini-calendario de visitas reales de /mi
+const MOCK_RACHA_DIAS = [
+  false, false, true, false, true, false, false, true, true, false, true, false, true, true, false,
+];
 
 type ItemEditable = {
   key: string;
@@ -82,47 +94,67 @@ export default function DemoPage() {
 
 function DemoInicio() {
   const { ir } = useDemoVista();
-  const [wall, setWall] = useState(false);
+  const [wall, setWall] = useState<{ titulo: string; detalle: string } | null>(
+    null,
+  );
 
   return (
     <div className="space-y-6">
-      <div>
-        <p className="text-[13px] text-ink-soft">Hola 👋</p>
-        <h1 className="font-display text-2xl font-semibold tracking-tight text-ink">
-          Tu gimnasio
-        </h1>
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-[13px] text-ink-soft">Hola 👋</p>
+          <h1 className="font-display text-2xl font-semibold tracking-tight text-ink">
+            Gimnasio Sante
+          </h1>
+        </div>
+        <span className="rounded-full border border-volt/30 bg-volt/10 px-3 py-1 text-xs font-semibold text-volt">
+          Modo Demo
+        </span>
       </div>
 
-      <div className="rounded-[16px] border border-rule bg-paper-2 p-4.5 shadow-sm">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-soft">
-          Tu cuota
-        </p>
-        <p className="mt-1 font-display text-xl font-semibold text-[color:var(--ok)]">
-          Al día
-        </p>
-        <p className="mt-0.5 text-[13px] text-ink-soft">Vence en 24 días</p>
+      {/* Tarjeta de Cuota con Anillo de Progreso SVG (igual a /mi) */}
+      <div className="card-cut card-cut-lg border border-rule bg-paper-2 p-5 border-l-2 border-l-ok shadow-sm">
+        <p className="text-xs text-ink-soft mb-4">Tu cuota</p>
+        <div className="flex items-center gap-6">
+          <AnilloProgreso valor={25} max={30} label="días" tono="ok" />
+          <div className="min-w-0 flex-1">
+            <p className="font-display text-2xl font-semibold leading-tight text-[color:var(--ok)]">
+              Al día
+            </p>
+            <p className="text-sm text-ink-soft mt-1">
+              Pase Libre · vence en 25 días
+            </p>
+          </div>
+        </div>
       </div>
 
-      <ul className="divide-y divide-rule overflow-hidden rounded-[16px] border border-rule bg-paper-2 shadow-sm">
+      {/* Widget de Racha / Constancia de asistencia (igual a /mi) */}
+      <RachaConstancia dias={MOCK_RACHA_DIAS} total={7} />
+
+      {/* Lista completa de módulos de la vista de cliente */}
+      <ul className="stagger-in card-cut overflow-hidden border border-rule bg-paper-2 divide-y divide-rule shadow-sm">
         <li>
           <button
             type="button"
             onClick={() => {
               hapticoSeleccion();
-              ir("rutina");
+              ir("peso");
             }}
-            className="flex w-full items-center gap-3.5 p-4 text-left min-h-14 transition-[background-color] duration-150 [transition-timing-function:var(--ease-out)] active:bg-paper-3"
+            className="group flex w-full items-center gap-3 px-4 py-4 min-h-14 text-left transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper active:bg-paper active:scale-[0.985]"
           >
-            <span className="grid size-10 shrink-0 place-items-center rounded-[10px] border border-rule bg-paper text-accent shadow-xs">
-              <Dumbbell className="size-5" />
+            <User
+              aria-hidden
+              strokeWidth={2}
+              className="size-[18px] shrink-0 text-ink-soft transition-colors duration-150 [transition-timing-function:var(--ease-out)] group-active:text-ink"
+            />
+            <span className="min-w-0 flex-1 text-sm font-medium">
+              Mi perfil y peso corporal
             </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-sm font-semibold text-ink">Tu rutina</span>
-              <span className="block text-[13px] text-ink-soft">
-                Generá y ajustá tu plan
-              </span>
-            </span>
-            <ChevronRight className="size-4 shrink-0 text-ink-soft" />
+            <ChevronRight
+              aria-hidden
+              strokeWidth={2}
+              className="size-4 shrink-0 text-ink-soft transition-transform duration-150 [transition-timing-function:var(--ease-out)] group-active:translate-x-[3px]"
+            />
           </button>
         </li>
         <li>
@@ -130,35 +162,187 @@ function DemoInicio() {
             type="button"
             onClick={() => {
               hapticoImpactoMedio();
-              setWall(true);
+              setWall({
+                titulo: "Mensajes con tu gimnasio",
+                detalle:
+                  "Creá tu cuenta gratis para escribirte con los profes y recibir avisos de tu cuota y tu rutina.",
+              });
             }}
-            className="flex w-full items-center gap-3.5 p-4 text-left min-h-14 transition-[background-color] duration-150 [transition-timing-function:var(--ease-out)] active:bg-paper-3"
+            className="group flex w-full items-center gap-3 px-4 py-4 min-h-14 text-left transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper active:bg-paper active:scale-[0.985]"
           >
-            <span className="grid size-10 shrink-0 place-items-center rounded-[10px] border border-rule bg-paper text-accent shadow-xs">
-              <MessageSquare className="size-5" />
+            <MessageSquare
+              aria-hidden
+              strokeWidth={2}
+              className="size-[18px] shrink-0 text-ink-soft transition-colors duration-150 [transition-timing-function:var(--ease-out)] group-active:text-ink"
+            />
+            <span className="min-w-0 flex-1 text-sm font-medium">
+              Mensajes del gimnasio
             </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-sm font-semibold text-ink">Mensajes</span>
-              <span className="block text-[13px] text-ink-soft">
-                Escribite con los profes
-              </span>
+            <ChevronRight
+              aria-hidden
+              strokeWidth={2}
+              className="size-4 shrink-0 text-ink-soft transition-transform duration-150 [transition-timing-function:var(--ease-out)] group-active:translate-x-[3px]"
+            />
+          </button>
+        </li>
+        <li>
+          <button
+            type="button"
+            onClick={() => {
+              hapticoSeleccion();
+              ir("rutina");
+            }}
+            className="group flex w-full items-center gap-3 px-4 py-4 min-h-14 text-left transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper active:bg-paper active:scale-[0.985]"
+          >
+            <Dumbbell
+              aria-hidden
+              strokeWidth={2}
+              className="size-[18px] shrink-0 text-ink-soft transition-colors duration-150 [transition-timing-function:var(--ease-out)] group-active:text-ink"
+            />
+            <span className="min-w-0 flex-1 text-sm font-medium">
+              Tu rutina
             </span>
-            <ChevronRight className="size-4 shrink-0 text-ink-soft" />
+            <ChevronRight
+              aria-hidden
+              strokeWidth={2}
+              className="size-4 shrink-0 text-ink-soft transition-transform duration-150 [transition-timing-function:var(--ease-out)] group-active:translate-x-[3px]"
+            />
+          </button>
+        </li>
+        <li>
+          <button
+            type="button"
+            onClick={() => {
+              hapticoImpactoMedio();
+              setWall({
+                titulo: "Tus pagos y cuotas",
+                detalle:
+                  "Con tu cuenta podés ver tus comprobantes, pagar por transferencia o Mercado Pago y seguir tu historial.",
+              });
+            }}
+            className="group flex w-full items-center gap-3 px-4 py-4 min-h-14 text-left transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper active:bg-paper active:scale-[0.985]"
+          >
+            <CreditCard
+              aria-hidden
+              strokeWidth={2}
+              className="size-[18px] shrink-0 text-ink-soft transition-colors duration-150 [transition-timing-function:var(--ease-out)] group-active:text-ink"
+            />
+            <span className="min-w-0 flex-1 text-sm font-medium">
+              Mis pagos
+            </span>
+            <ChevronRight
+              aria-hidden
+              strokeWidth={2}
+              className="size-4 shrink-0 text-ink-soft transition-transform duration-150 [transition-timing-function:var(--ease-out)] group-active:translate-x-[3px]"
+            />
+          </button>
+        </li>
+        <li>
+          <button
+            type="button"
+            onClick={() => {
+              hapticoImpactoMedio();
+              setWall({
+                titulo: "Personalizar tema",
+                detalle:
+                  "Elegí entre tema claro, oscuro o modo OLED, y adaptá los colores a tu estilo.",
+              });
+            }}
+            className="group flex w-full items-center gap-3 px-4 py-4 min-h-14 text-left transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper active:bg-paper active:scale-[0.985]"
+          >
+            <Palette
+              aria-hidden
+              strokeWidth={2}
+              className="size-[18px] shrink-0 text-ink-soft transition-colors duration-150 [transition-timing-function:var(--ease-out)] group-active:text-ink"
+            />
+            <span className="min-w-0 flex-1 text-sm font-medium">
+              Personalizar tema
+            </span>
+            <ChevronRight
+              aria-hidden
+              strokeWidth={2}
+              className="size-4 shrink-0 text-ink-soft transition-transform duration-150 [transition-timing-function:var(--ease-out)] group-active:translate-x-[3px]"
+            />
+          </button>
+        </li>
+        <li>
+          <button
+            type="button"
+            onClick={() => {
+              hapticoImpactoMedio();
+              setWall({
+                titulo: "Buzón anónimo",
+                detalle:
+                  "Enviá sugerencias o comentarios 100% anónimos directamente a los dueños del gimnasio.",
+              });
+            }}
+            className="group flex w-full items-center gap-3 px-4 py-4 min-h-14 text-left transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper active:bg-paper active:scale-[0.985]"
+          >
+            <Inbox
+              aria-hidden
+              strokeWidth={2}
+              className="size-[18px] shrink-0 text-ink-soft transition-colors duration-150 [transition-timing-function:var(--ease-out)] group-active:text-ink"
+            />
+            <span className="min-w-0 flex-1 text-sm font-medium">
+              Buzón anónimo
+            </span>
+            <ChevronRight
+              aria-hidden
+              strokeWidth={2}
+              className="size-4 shrink-0 text-ink-soft transition-transform duration-150 [transition-timing-function:var(--ease-out)] group-active:translate-x-[3px]"
+            />
           </button>
         </li>
       </ul>
 
+      {/* Banner PWA para instalar la app (igual a /mi) */}
+      <div className="card-cut flex items-center justify-between gap-4 border border-rule bg-paper-2 p-4 shadow-sm">
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="grid size-10 shrink-0 place-items-center rounded-[10px] border border-rule bg-paper text-volt shadow-xs">
+            <Smartphone className="size-5" />
+          </span>
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm font-semibold truncate text-ink">
+                Instalar en tu celular
+              </span>
+              <span className="rounded-[4px] bg-volt/20 px-1.5 py-0.5 text-[10px] font-bold text-volt">
+                #APP
+              </span>
+            </div>
+            <p className="text-xs text-ink-soft mt-0.5 truncate">
+              Instalá la aplicación en tu inicio con 1 toque
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            hapticoImpactoMedio();
+            setWall({
+              titulo: "Instalar aplicación",
+              detalle:
+                "Creá tu cuenta gratis para instalar la app en tu celular y acceder directo desde tu pantalla de inicio.",
+            });
+          }}
+          className="shrink-0 inline-flex min-h-9 items-center justify-center rounded-[8px] bg-ink px-3 text-xs font-semibold text-paper shadow-sm active:scale-95 transition-transform"
+        >
+          Agregar a inicio →
+        </button>
+      </div>
+
       <p className="px-2 text-center text-[13px] text-ink-soft leading-snug">
         Estás viendo una demo. Tocá{" "}
-        <span className="font-semibold text-ink">Rutina</span> abajo para probar el
-        generador.
+        <span className="font-semibold text-ink">Rutina</span> o{" "}
+        <span className="font-semibold text-ink">Peso</span> abajo para interactuar
+        con el sistema.
       </p>
 
       {wall ? (
         <LoginWall
-          titulo="Mensajes con tu gimnasio"
-          detalle="Creá tu cuenta gratis para escribirte con los profes y recibir avisos de tu cuota y tu rutina."
-          onClose={() => setWall(false)}
+          titulo={wall.titulo}
+          detalle={wall.detalle}
+          onClose={() => setWall(null)}
         />
       ) : null}
     </div>
