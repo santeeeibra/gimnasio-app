@@ -15,6 +15,8 @@ const PUBLIC_PATHS = [
   "/api/auth",
   "/auth",
   "/api/cron",
+  // Devuelve un .ics con datos de la URL, sin tocar la base.
+  "/api/rutina/ics",
   // Webhooks de la pasarela: los llama Mercado Pago, sin sesión.
   "/api/pagos/webhook",
   "/api/pagos-socio/webhook",

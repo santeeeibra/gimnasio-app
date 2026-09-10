@@ -122,24 +122,19 @@ export function generarIcsContent(evento: EventoEntrenamiento): string {
  * Utiliza data URI text/calendar que dispara el importador nativo de iOS.
  */
 export function abrirAppleCalendar(evento: EventoEntrenamiento): void {
-  const ics = generarIcsContent(evento);
-  const esApple =
-    typeof navigator !== "undefined" &&
-    (/iPad|iPhone|iPod/.test(navigator.userAgent) ||
-      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1) ||
-      /Macintosh/.test(navigator.userAgent));
+  // iOS Safari — y sobre todo la PWA en modo standalone — no hace nada al
+  // navegar a URIs `data:` o `blob:`. La única vía fiable es una URL real del
+  // mismo origen que responda con `Content-Type: text/calendar`: ahí iOS abre
+  // la hoja nativa "Agregar al calendario".
+  const params = new URLSearchParams({ t: evento.titulo });
+  if (evento.descripcion) params.set("d", evento.descripcion);
+  if (evento.ubicacion) params.set("loc", evento.ubicacion);
+  if (evento.duracionMinutos) params.set("dur", String(evento.duracionMinutos));
+  if (evento.fechaInicio)
+    params.set("start", new Date(evento.fechaInicio).toISOString());
+  if (evento.recurrenteSemanal === false) params.set("rec", "0");
 
-  if (esApple) {
-    // iOS Safari bloquea la navegación a URIs `data:` en el nivel superior.
-    // Con un blob URL de tipo text/calendar, en cambio, dispara la hoja
-    // nativa "Agregar al calendario".
-    const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    window.location.href = url;
-    setTimeout(() => URL.revokeObjectURL(url), 10000);
-  } else {
-    descargarIcsEntrenamiento(evento);
-  }
+  window.location.href = `/api/rutina/ics?${params.toString()}`;
 }
 
 /**

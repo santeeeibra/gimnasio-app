@@ -357,6 +357,7 @@ export default async function MiRutinaPage() {
             mostrarTecnica={rutina.origen === "manual"}
             clienteId={cliente?.id}
             creadoPor="cliente"
+            esIndividual={esIndividual}
             gimnasioNombre={gymData?.nombre ?? ""}
             logoUrl={gymData?.logo_url ?? null}
             colores={coloresLogro}

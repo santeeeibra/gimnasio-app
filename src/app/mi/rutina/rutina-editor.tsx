@@ -30,6 +30,7 @@ import { BotonPedirAyuda } from "@/components/rutinas/boton-pedir-ayuda";
 import { DialVerticalProgreso } from "@/components/progreso/dial-vertical-progreso";
 import { HistorialEjercicio } from "@/components/progreso/historial-ejercicio";
 import type { ColoresImagen } from "@/lib/logros/imagen";
+import { hapticoDial } from "@/lib/ui/hapticos";
 import {
   guardarProgresoCliente,
   guardarProgresoSocio,
@@ -279,12 +280,15 @@ export function RutinaEditor({
   gimnasioNombre,
   logoUrl,
   colores,
+  esIndividual = false,
 }: {
   dias: DiaEditable[];
   ejercicios: Ejercicio[];
   mostrarTecnica?: boolean;
   clienteId?: string;
   creadoPor?: 'cliente' | 'dueno';
+  /** Cuenta personal: no hay gimnasio a quien pedirle ayuda. */
+  esIndividual?: boolean;
   /** Para el <CartelLogro> de récord (sólo se pasa en la vista del alumno). */
   gimnasioNombre?: string;
   logoUrl?: string | null;
@@ -608,6 +612,7 @@ export function RutinaEditor({
                       }
                       clienteId={clienteId}
                       creadoPor={creadoPor}
+                      esIndividual={esIndividual}
                       gimnasioNombre={gimnasioNombre}
                       logoUrl={logoUrl}
                       colores={colores}
@@ -809,6 +814,7 @@ function ItemFila({
   onToggleSet,
   clienteId,
   creadoPor,
+  esIndividual = false,
   gimnasioNombre,
   logoUrl,
   colores,
@@ -825,6 +831,7 @@ function ItemFila({
   onToggleSet: (setIndex: number) => void;
   clienteId?: string;
   creadoPor?: 'cliente' | 'dueno';
+  esIndividual?: boolean;
   gimnasioNombre?: string;
   logoUrl?: string | null;
   colores?: ColoresImagen;
@@ -848,8 +855,9 @@ function ItemFila({
     series !== String(item.series) || reps.trim() !== item.repeticiones;
 
   const targetReps = useMemo(() => {
-    const match = item.repeticiones.match(/\d+/);
-    return match ? parseInt(match[0], 10) : 10;
+    const nums = item.repeticiones.match(/\d+/g);
+    if (!nums || nums.length === 0) return 10;
+    return parseInt(nums[nums.length - 1], 10);
   }, [item.repeticiones]);
 
   const [mostrarEditorSeries, setMostrarEditorSeries] = useState(false);
@@ -867,6 +875,7 @@ function ItemFila({
   }, [item.id]);
 
   function cambiarRepsSerie(setIndex: number, delta: number) {
+    hapticoDial();
     setRepsPorSerie((prev) => {
       const actual = prev[setIndex] ?? targetReps;
       const nuevo = Math.max(1, actual + delta);
@@ -1093,11 +1102,13 @@ function ItemFila({
               </div>
             </div>
             <div className="flex items-center gap-1 -mr-1 -mt-1">
-              <BotonPedirAyuda
-                ejercicioId={ej?.id}
-                ejercicioNombre={ej?.nombre ?? "Ejercicio"}
-                equipo={ej?.equipo}
-              />
+              {!esIndividual ? (
+                <BotonPedirAyuda
+                  ejercicioId={ej?.id}
+                  ejercicioNombre={ej?.nombre ?? "Ejercicio"}
+                  equipo={ej?.equipo}
+                />
+              ) : null}
               <button
                 type="button"
                 onClick={() => setAbrirCambio((v) => !v)}
@@ -1210,6 +1221,9 @@ function ItemFila({
                   const hecho = setsCompletados.includes(sIdx);
                   const esObjetivoGuia = mostrarGuiaSerie && sIdx === 0 && !hecho;
                   const repsEstaSerie = repsPorSerie[sIdx] ?? targetReps;
+                  const tieneRepsPersonalizadas =
+                    repsPorSerie[sIdx] !== undefined &&
+                    repsPorSerie[sIdx] !== targetReps;
 
                   return (
                     <div key={sIdx} className="relative">
@@ -1241,7 +1255,7 @@ function ItemFila({
                           onToggleSet(sIdx);
                         }}
                         aria-label={`Serie ${sIdx + 1} de ${numSeries} (${repsEstaSerie} reps) ${hecho ? "completada" : "pendiente"}`}
-                        className={`grid size-11 min-w-[44px] place-items-center rounded-[10px] border text-xs font-bold transition-all duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${
+                        className={`grid size-11 min-w-[44px] place-items-center rounded-[10px] border font-bold transition-all duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${
                           hecho
                             ? "border-accent bg-accent text-accent-ink shadow-sm"
                             : esObjetivoGuia
@@ -1251,15 +1265,21 @@ function ItemFila({
                         style={{ fontFamily: "var(--font-hero)" }}
                       >
                         {hecho ? (
+                          tieneRepsPersonalizadas ? (
+                            <div className="flex flex-col items-center leading-none">
+                              <span className="text-[12px]">✓</span>
+                              <span className="text-[8.5px] font-extrabold opacity-95">{repsEstaSerie}</span>
+                            </div>
+                          ) : (
+                            <span className="text-sm">✓</span>
+                          )
+                        ) : tieneRepsPersonalizadas ? (
                           <div className="flex flex-col items-center leading-none">
-                            <span className="text-[12px]">✓</span>
-                            <span className="text-[8.5px] font-bold opacity-95">{repsEstaSerie}</span>
+                            <span className="text-xs">{sIdx + 1}</span>
+                            <span className="text-[8.5px] font-bold text-accent">{repsEstaSerie}</span>
                           </div>
                         ) : (
-                          <div className="flex flex-col items-center leading-none">
-                            <span>{sIdx + 1}</span>
-                            <span className="text-[8.5px] font-normal text-ink-soft opacity-75">{repsEstaSerie}</span>
-                          </div>
+                          <span className="text-sm">{sIdx + 1}</span>
                         )}
                       </button>
                     </div>
