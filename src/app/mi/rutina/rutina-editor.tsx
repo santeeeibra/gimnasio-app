@@ -258,7 +258,7 @@ function VisorEjercicio({
 
         {/* Recomendación de equipamiento con monetización pasiva */}
         <div className="mt-4">
-          <EquipamientoSugerido ejercicio={ej} variante="tarjeta" />
+          <EquipamientoSugerido ejercicio={ej} />
         </div>
       </div>
     </div>,

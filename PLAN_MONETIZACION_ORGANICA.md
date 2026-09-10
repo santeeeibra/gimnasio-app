@@ -1,54 +1,54 @@
-# Plan de Monetización Orgánica y Crecimiento — SysGym
-> **Enfoque**: Desarrollador solo, sin contactos corporativos previos, app 100% gratuita para el usuario final y monetización pasiva sin fricción ni desconfianza.
+# Plan de Monetización Orgánica y Crecimiento — SysGym (v2 Revisado)
+> **Enfoque**: Desarrollador solo, app 100% gratuita para el usuario final, crecimiento Bottom-Up (atletas y entrenadores) para luego cerrar gimnasios B2B con métricas de uso reales en mano.
 
 ---
 
-## 🎯 Filosofía Central
-1. **Cero venta cara a cara a dueños desconfiados por ahora**: El crecimiento viene desde los atletas/usuarios (Bottom-Up).
-2. **Sin barreras de pago**: Todo el tracking de entrenamiento, series y descansos es libre y gratuito.
-3. **Monetización indirecta limpia**: Cero anuncios molestos de pantalla completa que interrumpan series.
+## 🎯 Principios Fundamentales
+1. **El valor real está en los Entrenadores y Atletas (Bottom-Up)**: Si 50 socios usan la app en un gimnasio, el dueño no desconfía porque ve la retención con sus propios ojos.
+2. **Cero spam en la UI**: Ningún banner intrusivo, ninguna publicidad encubierta que dañe la confianza.
+3. **Métricas antes de vender**: No ir a venderle a un dueño sin antes mostrarle: *"X personas de tu propio gimnasio entrenan con SysGym hoy"*.
 
 ---
 
-## 🗺️ Fases del Plan
+## 🗺️ Fases Estratégicas (Ordenadas por ROI Real)
 
-### Fase 1: Afiliación Abierta y Contextual (Inmediata - Cero Contactos)
-No requiere hablar con nadie ni contratos previos.
-- [ ] **1.1 Alta en programas públicos**: Crear cuenta de afiliado en Mercado Libre / Amazon Afiliados.
-- [ ] **1.2 Configuración centralizada**: Crear archivo de configuración `src/lib/monetizacion/afiliados.ts` con links, tags de referido y productos recomendados según categoría.
-- [ ] **1.3 Integración contextual en ejercicios**:
-  - Peso Muerto / RDL / Jalones ➔ Sugerencia discreta: *"Equipamiento recomendado: Straps / Muñequeras"*.
-  - Sentadilla pesada / Prensa ➔ Sugerencia: *"Cinturón lumbar / Zapatillas planas"*.
-- [ ] **1.4 Calculadora / Sección de Suplementación**:
-  - Calculadora de creatina (0.1g/kg) y proteína diaria con botón: *"Ver opciones de Creatina Monohidrato recomendada"*.
-
----
-
-### Fase 2: Tracción Orgánica y Efecto "Caballo de Troya"
-Hacer que la gente que entrena use la app en sala sin forzar ventas.
-- [ ] **2.1 Onboarding ultra-rápido para amigos**: Enlace directo para compartir rutina o progreso en historias de Instagram (con card visual atractiva de SysGym).
-- [ ] **2.2 Contacto directo con entrenadores jóvenes / creadores**:
-  - Identificar 5-10 entrenadores en IG/TikTok de 2k-10k seguidores que vendan rutinas en PDF.
-  - Ofrecerles digitalizar su rutina en SysGym gratis para sus alumnos.
-  - Beneficio: Ellos promocionan la app gratis para darle una mejor experiencia a sus alumnos.
+### Fase 1: Motor de Crecimiento con Entrenadores / Creadores (Prioridad #1)
+El verdadero motor de crecimiento orgánico y credibilidad.
+- [ ] **1.1 Mapeo de 10 entrenadores independientes**:
+  - Buscar en Instagram / TikTok perfiles de 2k a 15k seguidores que vendan asesorías o rutinas en formato PDF.
+- [ ] **1.2 Propuesta de valor de igual a igual**:
+  - Ofrecerles digitalizar sus rutinas en SysGym con su nombre de coach.
+  - Para ellos: una experiencia premium con cronómetro y tracking para sus alumnos (en vez de un PDF incómodo).
+  - Para SysGym: decenas de usuarios activos diarios reales sin gastar $1 en pauta.
+- [ ] **1.3 Flujo de onboarding con código de entrenador**:
+  - Los alumnos ingresan con el enlace del entrenador y cargan su rutina automáticamente.
 
 ---
 
-### Fase 3: Publicidad Voluntaria (Rewarded Ads)
-- [ ] **3.1 Cuenta en Google AdMob**: Configurar cuenta como desarrollador independiente.
-- [ ] **3.2 Recompensas opcionales (Cero invasión)**:
-  - Ver video de 15 segundos para desbloquear: exportar informe PDF de progreso, comparativa de volumen de últimos 6 meses, o temas visuales exclusivos.
-  - El usuario siempre decide si ver el anuncio o no.
+### Fase 2: Instrumentación de Métricas de Uso y Retención
+Preparar la base técnica para poder venderle al dueño de gimnasio.
+- [ ] **2.1 Contador de Atletas Activos por Gimnasio**:
+  - Métricas agregadas: cuántas personas entrenaron esta semana, días más concurridos, volumen promedio.
+- [ ] **2.2 Reporte de Retención**:
+  - Indicador de alumnos que dejaron de registrar entrenamientos hace más de 10 días (alerta de abandono).
+- [ ] **2.3 Control de Costos de Infraestructura**:
+  - Mantener optimizadas las queries de Supabase para evitar pasarse de los límites gratuitos antes de monetizar.
 
 ---
 
-### Fase 4: Transición a B2B con Tracción Real
-- [ ] **4.1 Métricas de uso demostrables**: Cuando un gimnasio tenga 15-20 socios usando la app a diario, el dueño ya no desconfía porque ve el valor funcionando en sus propias instalaciones.
-- [ ] **4.2 Demo en mano**: Mostrarle al dueño la pantalla con datos reales de sus propios socios usándola.
+### Fase 3: Transición B2B con Tracción Comprobada
+Cuando la app ya se use en 1 o 2 gimnasios físicos:
+- [ ] **3.1 Visita con datos reales**:
+  - Ir con el celular y mostrarle al dueño: *"Tenés 25 alumnos usando esto acá. Te doy el panel de administración para que los profes armen las rutinas oficiales y no pierdas socios por falta de seguimiento"*.
+- [ ] **3.2 Cobro mensual SaaS al gimnasio**:
+  - Abono mensual en pesos/dólares por gimnasio. Los alumnos siguen usándola 100% gratis.
 
 ---
 
-## 📋 Próximo Paso Inmediato para Programar:
-Implementar el módulo base de **Afiliación Contextual** en la app:
-1. `src/lib/monetizacion/afiliados.ts`: Base de datos de productos por tipo de ejercicio.
-2. Componente de UI `<EquipamientoSugerido />` integrado sutilmente en el detalle del ejercicio o descanso, respetando el diseño Apple / Liquid Glass.
+### Fase 4: Afiliación Oficial Mercado Libre (Canal Secundario Pasivo)
+*Actualmente preparado pero apagado bajo Feature Flag (`NEXT_PUBLIC_HABILITAR_AFILIADOS=false`)*.
+- [ ] **4.1 Alta en Mercado Libre Afiliados**:
+  - Obtener los enlaces oficiales acortados (`https://mercadolibre.com/sec/...`).
+- [ ] **4.2 Activación quirúrgica**:
+  - Solo se muestra en ejercicios axiales/pesados clave (Peso Muerto, Sentadilla, Press con barra).
+  - Incluye divulgación legal obligatoria de afiliado.
