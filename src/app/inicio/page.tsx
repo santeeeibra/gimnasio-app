@@ -5,7 +5,7 @@ import { LeadForm } from "./lead-form";
 const TITLE = "SysGym — Gestión de gimnasios sin perseguir a nadie por WhatsApp";
 const DESC =
   "Software para dueños de gimnasio: control de cuotas con aviso automático de vencimiento, alta de socios, rutinas personalizadas, check-in por DNI y tu marca en una app propia.";
-const URL = "https://sysgym.app/inicio";
+const URL = "https://gimnasio-app-rose.vercel.app/inicio";
 
 export const metadata: Metadata = {
   title: TITLE,
