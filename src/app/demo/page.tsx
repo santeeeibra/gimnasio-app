@@ -2,15 +2,18 @@
 
 import { useCallback, useEffect, useState } from "react";
 import {
+  Calendar,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
   CreditCard,
   Download,
   Dumbbell,
+  IdCard,
   Inbox,
   MessageSquare,
   Palette,
+  Phone,
   Plus,
   RefreshCw,
   RotateCcw,
@@ -22,6 +25,9 @@ import {
   User,
   X,
 } from "lucide-react";
+import catalogoEjerciciosJson from "@/data/ejercicios.json";
+import { DialVerticalProgreso } from "@/components/progreso/dial-vertical-progreso";
+import { RulerWeightPicker } from "@/components/peso/card-peso";
 import { AnilloProgreso } from "@/components/anillo-progreso";
 import { RachaConstancia } from "@/components/mi/racha-constancia";
 import { BannerMotivacional } from "@/components/rutinas/banner-motivacional";
@@ -46,7 +52,16 @@ import {
 import { useDemoVista } from "./demo-shell";
 import { LoginWall } from "./login-wall";
 
-const CATALOGO = [...CATALOGO_UNIVERSAL_EMERGENCIA];
+// Fusionar catálogo universal con los ejercicios del JSON para tener nombres, imágenes (GIFs) e info completa
+const CATALOGO_MAP = new Map<string, any>();
+for (const ej of CATALOGO_UNIVERSAL_EMERGENCIA) {
+  CATALOGO_MAP.set(ej.slug, ej);
+}
+for (const ej of catalogoEjerciciosJson as any[]) {
+  const existente = CATALOGO_MAP.get(ej.slug);
+  CATALOGO_MAP.set(ej.slug, { ...existente, ...ej });
+}
+const CATALOGO = Array.from(CATALOGO_MAP.values());
 const LIMITE_GENERACIONES = 3;
 
 // Mock de constancia para simular el mini-calendario de visitas reales de /mi
@@ -64,11 +79,216 @@ type ItemEditable = {
 type DiaEditable = { titulo: string; items: ItemEditable[] };
 
 function ejPorSlug(slug: string) {
-  return CATALOGO.find((e) => e.slug === slug) ?? null;
+  return CATALOGO_MAP.get(slug) ?? CATALOGO.find((e) => e.slug === slug) ?? null;
 }
 
 function nombreDe(slug: string) {
   return ejPorSlug(slug)?.nombre ?? slug.replace(/-/g, " ");
+}
+
+/** Alterna entre 0.jpg y 1.jpg de free-exercise-db para lograr animación tipo GIF. */
+function frameAlterno(url: string): string | null {
+  if (/\/0\.jpg$/i.test(url)) return url.replace(/\/0\.jpg$/i, "/1.jpg");
+  return null;
+}
+
+function ImagenAnimada({
+  url,
+  activo,
+  className,
+  onError,
+  alt: altText = "",
+}: {
+  url: string;
+  activo: boolean;
+  className: string;
+  onError?: () => void;
+  alt?: string;
+}) {
+  const alt = frameAlterno(url);
+  const [mostrarAlt, setMostrarAlt] = useState(false);
+
+  useEffect(() => {
+    if (!activo || !alt) return;
+    const id = setInterval(() => setMostrarAlt((v) => !v), 850);
+    return () => clearInterval(id);
+  }, [activo, alt]);
+
+  return (
+    <div className="relative h-full w-full flex items-center justify-center overflow-hidden">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={url}
+        alt={altText}
+        loading="lazy"
+        decoding="async"
+        onError={onError}
+        className={`${className} absolute inset-0 m-auto max-h-full max-w-full object-contain object-center transition-opacity duration-200 [transition-timing-function:var(--ease-out)] ${mostrarAlt ? "opacity-0" : "opacity-100"}`}
+      />
+      {alt && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={alt}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          className={`${className} absolute inset-0 m-auto max-h-full max-w-full object-contain object-center transition-opacity duration-200 [transition-timing-function:var(--ease-out)] ${mostrarAlt ? "opacity-100" : "opacity-0"}`}
+        />
+      )}
+    </div>
+  );
+}
+
+function ExThumb({
+  ej,
+  onOpen,
+}: {
+  ej: any;
+  onOpen: () => void;
+}) {
+  const [err, setErr] = useState(false);
+  const url = ej?.imagen_url ?? null;
+
+  if (!url || err) {
+    return (
+      <div
+        className="grid size-[68px] shrink-0 place-items-center rounded-[10px] border border-rule bg-paper-2 text-ink-soft shadow-xs"
+        aria-hidden
+      >
+        <Dumbbell className="size-6 text-ink-soft/40" />
+      </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      aria-label={`Ver ${ej?.nombre ?? "ejercicio"} animado`}
+      className="group relative size-[68px] shrink-0 overflow-hidden rounded-[10px] border border-rule bg-white shadow-xs transition-transform duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+    >
+      <ImagenAnimada
+        url={url}
+        activo={!err}
+        onError={() => setErr(true)}
+        className="h-full w-full object-contain object-center p-1"
+      />
+    </button>
+  );
+}
+
+function VisorEjercicio({
+  ej,
+  onClose,
+}: {
+  ej: any;
+  onClose: () => void;
+}) {
+  const [err, setErr] = useState(false);
+  const url = ej?.imagen_url ?? null;
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  if (!ej) return null;
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={ej.nombre}
+      onClick={onClose}
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-ink/70 p-4 backdrop-blur-sm animate-fade-in"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-[20px] border border-rule bg-paper p-5 shadow-2xl animate-scale-in"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h3 className="font-display text-lg font-bold leading-tight text-ink">{ej.nombre}</h3>
+            {ej.grupo_muscular ? (
+              <span className="mt-0.5 inline-block text-[11px] uppercase tracking-[0.08em] text-ink-soft font-semibold">
+                {String(ej.grupo_muscular).replace(/_/g, " ")}
+              </span>
+            ) : null}
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Cerrar"
+            className="-mr-1 -mt-1 grid size-9 shrink-0 place-items-center rounded-[8px] border border-rule bg-paper-2 text-ink-soft transition-transform duration-150 active:scale-90 hover:text-ink"
+          >
+            <X className="size-4" />
+          </button>
+        </div>
+
+        <div className="relative mt-4 grid aspect-square w-full place-items-center overflow-hidden rounded-[14px] border border-rule bg-white shadow-xs">
+          {url && !err ? (
+            <ImagenAnimada
+              url={url}
+              activo={!err}
+              onError={() => setErr(true)}
+              alt={ej.nombre}
+              className="h-full w-full object-contain object-center p-3"
+            />
+          ) : (
+            <Dumbbell className="size-12 text-ink-soft/40" />
+          )}
+        </div>
+
+        {ej.descripcion ? (
+          <p className="mt-4 text-[13px] leading-snug text-ink-soft">
+            {ej.descripcion}
+          </p>
+        ) : null}
+
+        <button
+          type="button"
+          onClick={() => {
+            hapticoSeleccion();
+            onClose();
+          }}
+          className="mt-5 flex min-h-11 w-full items-center justify-center rounded-[12px] bg-paper-2 border border-rule px-4 text-xs font-semibold text-ink shadow-xs active:scale-95 transition-transform"
+        >
+          Cerrar
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function deducirTipoEquipo(base: any): "corporal" | "barra" | "mancuerna" | "polea" | "maquina" | "otro" {
+  const eq = (base?.equipo || "").toLowerCase();
+  const nom = (base?.nombre || "").toLowerCase();
+  if (
+    eq === "peso_corporal" ||
+    eq === "corporal" ||
+    nom.includes("corporal") ||
+    nom.includes("fondos") ||
+    nom.includes("flexiones") ||
+    nom.includes("dominadas") ||
+    nom.includes("plancha")
+  ) {
+    return "corporal";
+  } else if (eq === "barra" || nom.includes("barra")) {
+    return "barra";
+  } else if (eq === "mancuerna" || eq === "mancuernas" || nom.includes("mancuerna")) {
+    return "mancuerna";
+  } else if (eq === "polea" || nom.includes("polea")) {
+    return "polea";
+  } else if (
+    eq === "maquina" ||
+    nom.includes("maquina") ||
+    nom.includes("máquina") ||
+    nom.includes("prensa")
+  ) {
+    return "maquina";
+  }
+  return "otro";
 }
 
 function aEditable(plan: PlanGenerado): DiaEditable[] {
@@ -440,6 +660,37 @@ function DemoRutina() {
   const [modalExplicacion, setModalExplicacion] = useState(false);
   const [swapKey, setSwapKey] = useState<string | null>(null);
   const [feedbackActualizar, setFeedbackActualizar] = useState(false);
+  const [ejercicioModal, setEjercicioModal] = useState<any | null>(null);
+  const [pesosEjercicios, setPesosEjercicios] = useState<Record<string, number>>(() => {
+    if (typeof window === "undefined") return {};
+    try {
+      const raw = sessionStorage.getItem("sysgym_demo_pesos_ejercicios");
+      return raw
+        ? JSON.parse(raw)
+        : {
+            "press-banca-barra": 60,
+            "press-inclinado-mancuernas": 22,
+            "sentadillas-barra": 80,
+            "prensa-piernas": 120,
+            "jalon-pecho": 55,
+            "remo-barra": 50,
+            "curl-biceps-barra": 25,
+            "extensiones-triceps-polea": 30,
+          };
+    } catch {
+      return {};
+    }
+  });
+
+  function guardarPesoEjercicio(slug: string, peso: number) {
+    setPesosEjercicios((prev) => {
+      const next = { ...prev, [slug]: peso };
+      try {
+        sessionStorage.setItem("sysgym_demo_pesos_ejercicios", JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  }
 
   useEffect(() => {
     try {
@@ -887,125 +1138,155 @@ function DemoRutina() {
 
             return (
               <li key={it.key} className="p-4 transition-colors">
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  {/* Columna Izquierda: GIF animado + Dial vertical de guardado de peso */}
+                  <div className="flex flex-col items-center gap-2 shrink-0 w-[68px]">
+                    <ExThumb ej={base} onOpen={() => setEjercicioModal(base)} />
+                    <DialVerticalProgreso
+                      ejercicioId={it.slug}
+                      tipoEquipo={deducirTipoEquipo(base)}
+                      ejercicioNombre={base?.nombre ?? nombreDe(it.slug)}
+                      action={async (_prev, fd) => {
+                        const p = Number(fd.get("peso") || 0);
+                        guardarPesoEjercicio(it.slug, p);
+                        return { ok: "Guardado" };
+                      }}
+                      fetchUltimoPeso={async (eid) => {
+                        const p = pesosEjercicios[eid];
+                        return p !== undefined
+                          ? { peso: p, reps: null }
+                          : { peso: deducirTipoEquipo(base) === "corporal" ? 0 : 20, reps: null };
+                      }}
+                    />
+                  </div>
+
+                  {/* Columna Derecha: Detalle, cambio, series y checks */}
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono font-bold text-accent">
-                        {String(idx + 1).padStart(2, "0")}
-                      </span>
-                      <span className="text-sm font-semibold capitalize text-ink">
-                        {nombreDe(it.slug)}
-                      </span>
-                    </div>
-                    <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                      <span className="rounded-[4px] border border-rule bg-paper px-1.5 py-0.5 text-[10px] font-medium text-ink-soft capitalize">
-                        {base?.equipo ? base.equipo.replace(/_/g, " ") : "Con barra"}
-                      </span>
-                      <span className="text-[11px] text-ink-soft capitalize">
-                        {base?.grupo_muscular ?? "cuerpo completo"}
-                      </span>
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      hapticoSeleccion();
-                      setSwapKey(swapKey === it.key ? null : it.key);
-                    }}
-                    className="inline-flex min-h-9 items-center gap-1 rounded-[8px] border border-rule bg-paper px-2.5 text-xs text-ink-soft transition-colors hover:text-ink active:scale-95"
-                  >
-                    <RefreshCw className="size-3" />
-                    Cambiar
-                  </button>
-                </div>
-
-                {/* Selectores de Series / Reps y Botones interactivos de tildar serie */}
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-rule/60 pt-3">
-                  <div className="flex items-center gap-2">
-                    <select
-                      value={it.series}
-                      onChange={(e) =>
-                        editar(diaActivoIdx, it.key, "series", e.target.value)
-                      }
-                      className="h-9 appearance-none rounded-[8px] border border-rule bg-paper px-2 text-xs font-mono tabular-nums text-ink outline-none focus:border-ink"
-                    >
-                      {SERIES_OPCIONES.map((s) => (
-                        <option key={s} value={s}>
-                          {s} series
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      value={it.repeticiones}
-                      onChange={(e) =>
-                        editar(diaActivoIdx, it.key, "repeticiones", e.target.value)
-                      }
-                      className="h-9 appearance-none rounded-[8px] border border-rule bg-paper px-2 text-xs font-mono tabular-nums text-ink outline-none focus:border-ink"
-                    >
-                      {(REPS_OPCIONES.includes(it.repeticiones as any)
-                        ? REPS_OPCIONES
-                        : [it.repeticiones, ...REPS_OPCIONES]
-                      ).map((r) => (
-                        <option key={r} value={r}>
-                          {r} reps
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Círculos interactivos de series */}
-                  <div className="flex items-center gap-1.5">
-                    {Array.from({ length: it.series }).map((_, sIdx) => {
-                      const hecha = completadas.includes(sIdx);
-                      return (
-                        <button
-                          key={sIdx}
-                          type="button"
-                          onClick={() => toggleSet(it.key, sIdx)}
-                          className={`size-8 rounded-[8px] text-xs font-mono font-bold transition-[transform,background-color] duration-150 active:scale-90 flex items-center justify-center ${
-                            hecha
-                              ? "bg-accent text-accent-ink shadow-xs"
-                              : "border border-rule bg-paper text-ink-soft hover:text-ink"
-                          }`}
-                        >
-                          {hecha ? "✓" : sIdx + 1}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Desplegable de cambio de ejercicio */}
-                {swapKey === it.key ? (
-                  <div className="mt-3 space-y-1.5 border-t border-rule pt-3">
-                    <span className="block text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-soft">
-                      Alternativas del mismo grupo:
-                    </span>
-                    {alts.length ? (
-                      alts.map((alt) => (
-                        <button
-                          key={alt.id}
-                          type="button"
-                          onClick={() =>
-                            alt.slug &&
-                            cambiarEjercicio(diaActivoIdx, it.key, alt.slug)
-                          }
-                          className="flex min-h-11 w-full items-center justify-between rounded-[10px] border border-rule bg-paper-2 px-3 py-2 text-left text-[13px] transition-colors active:bg-paper-3"
-                        >
-                          <span className="capitalize font-medium text-ink">
-                            {alt.nombre}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="flex items-baseline gap-1.5">
+                          <span
+                            className="shrink-0 text-[11px] font-[700] leading-none text-accent"
+                            style={{ fontFamily: "var(--font-hero)" }}
+                            aria-hidden
+                          >
+                            {String(idx + 1).padStart(2, "0")}
                           </span>
-                          <ChevronRight className="size-4 shrink-0 text-ink-soft" />
-                        </button>
-                      ))
-                    ) : (
-                      <span className="block text-[13px] text-ink-soft py-1">
-                        Sin alternativas para este grupo.
-                      </span>
-                    )}
+                          <p className="min-w-0 font-display text-[15px] font-bold leading-tight text-ink">
+                            {nombreDe(it.slug)}
+                          </p>
+                        </div>
+                        <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                          <span className="rounded-[4px] border border-rule bg-paper px-1.5 py-0.5 text-[10px] font-medium text-ink-soft capitalize">
+                            {base?.equipo ? base.equipo.replace(/_/g, " ") : "Con barra"}
+                          </span>
+                          <span className="text-[11px] text-ink-soft capitalize">
+                            {base?.grupo_muscular ?? "cuerpo completo"}
+                          </span>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          hapticoSeleccion();
+                          setSwapKey(swapKey === it.key ? null : it.key);
+                        }}
+                        className="inline-flex min-h-9 items-center gap-1 rounded-[8px] border border-rule bg-paper px-2.5 text-xs text-ink-soft transition-colors hover:text-ink active:scale-95"
+                      >
+                        <RefreshCw className="size-3" />
+                        Cambiar
+                      </button>
+                    </div>
+
+                    {/* Selectores de Series / Reps y Botones interactivos de tildar serie */}
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-rule/60 pt-3">
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={it.series}
+                          onChange={(e) =>
+                            editar(diaActivoIdx, it.key, "series", e.target.value)
+                          }
+                          className="h-9 appearance-none rounded-[8px] border border-rule bg-paper px-2 text-xs font-mono tabular-nums text-ink outline-none focus:border-ink"
+                        >
+                          {SERIES_OPCIONES.map((s) => (
+                            <option key={s} value={s}>
+                              {s} series
+                            </option>
+                          ))}
+                        </select>
+                        <select
+                          value={it.repeticiones}
+                          onChange={(e) =>
+                            editar(diaActivoIdx, it.key, "repeticiones", e.target.value)
+                          }
+                          className="h-9 appearance-none rounded-[8px] border border-rule bg-paper px-2 text-xs font-mono tabular-nums text-ink outline-none focus:border-ink"
+                        >
+                          {(REPS_OPCIONES.includes(it.repeticiones as any)
+                            ? REPS_OPCIONES
+                            : [it.repeticiones, ...REPS_OPCIONES]
+                          ).map((r) => (
+                            <option key={r} value={r}>
+                              {r} reps
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Círculos interactivos de series */}
+                      <div className="flex items-center gap-1.5">
+                        {Array.from({ length: it.series }).map((_, sIdx) => {
+                          const hecha = completadas.includes(sIdx);
+                          return (
+                            <button
+                              key={sIdx}
+                              type="button"
+                              onClick={() => toggleSet(it.key, sIdx)}
+                              className={`size-8 rounded-[8px] text-xs font-mono font-bold transition-[transform,background-color] duration-150 active:scale-90 flex items-center justify-center ${
+                                hecha
+                                  ? "bg-accent text-accent-ink shadow-xs"
+                                  : "border border-rule bg-paper text-ink-soft hover:text-ink"
+                              }`}
+                            >
+                              {hecha ? "✓" : sIdx + 1}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Desplegable de cambio de ejercicio */}
+                    {swapKey === it.key ? (
+                      <div className="mt-3 space-y-1.5 border-t border-rule pt-3">
+                        <span className="block text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-soft">
+                          Alternativas del mismo grupo:
+                        </span>
+                        {alts.length ? (
+                          alts.map((alt) => (
+                            <button
+                              key={alt.id}
+                              type="button"
+                              onClick={() =>
+                                alt.slug &&
+                                cambiarEjercicio(diaActivoIdx, it.key, alt.slug)
+                              }
+                              className="flex min-h-11 w-full items-center justify-between rounded-[10px] border border-rule bg-paper-2 px-3 py-2 text-left text-[13px] transition-colors active:bg-paper-3"
+                            >
+                              <span className="capitalize font-medium text-ink">
+                                {alt.nombre}
+                              </span>
+                              <ChevronRight className="size-4 shrink-0 text-ink-soft" />
+                            </button>
+                          ))
+                        ) : (
+                          <span className="block text-[13px] text-ink-soft py-1">
+                            Sin alternativas para este grupo.
+                          </span>
+                        )}
+                      </div>
+                    ) : null}
                   </div>
-                ) : null}
+                </div>
               </li>
             );
           })}
@@ -1105,119 +1386,240 @@ function DemoRutina() {
           </div>
         </div>
       ) : null}
+
+      {/* Modal de Visor de Ejercicio animado */}
+      {ejercicioModal ? (
+        <VisorEjercicio
+          ej={ejercicioModal}
+          onClose={() => setEjercicioModal(null)}
+        />
+      ) : null}
     </div>
   );
 }
 
-/* ───────────────────────── Peso (control de peso, mock) ────────────────── */
+/* ───────────────────────── Peso / Perfil (mock réplica /mi/perfil) ─────── */
 
 function DemoPeso() {
-  const [historial, setHistorial] = useState([
-    { id: "1", fecha: "01 Sep", peso: 76.5 },
-    { id: "2", fecha: "04 Sep", peso: 75.9 },
-    { id: "3", fecha: "08 Sep", peso: 75.2 },
+  const { ir } = useDemoVista();
+  const [pesoActual, setPesoActual] = useState(68.4);
+  const [registros, setRegistros] = useState([
+    { id: "1", fecha: "Hoy", peso: 68.4 },
+    { id: "2", fecha: "04 Sep", peso: 69.1 },
+    { id: "3", fecha: "28 Ago", peso: 69.8 },
   ]);
-  const [nuevo, setNuevo] = useState("");
+  const [guardadoFeedback, setGuardadoFeedback] = useState(false);
+  const [wall, setWall] = useState<null | "tema" | "clave">(null);
 
-  function agregar(e: React.FormEvent) {
-    e.preventDefault();
-    const val = parseFloat(nuevo);
-    if (isNaN(val) || val <= 30 || val >= 250) return;
+  function handleGuardarPeso() {
     hapticoImpactoMedio();
-    const ahora = new Date();
-    const fecha = `${ahora.getDate()} ${ahora.toLocaleString("es-AR", {
-      month: "short",
-    })}`;
-    setHistorial((prev) => [
-      ...prev,
-      { id: String(Date.now()), fecha, peso: val },
+    setGuardadoFeedback(true);
+    setRegistros((prev) => [
+      { id: String(Date.now()), fecha: "Hoy", peso: pesoActual },
+      ...prev.filter((r) => r.fecha !== "Hoy"),
     ]);
-    setNuevo("");
-    hapticoExito();
+    setTimeout(() => {
+      hapticoExito();
+      setGuardadoFeedback(false);
+    }, 1800);
   }
-
-  const ultimo = historial[historial.length - 1]?.peso ?? null;
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-semibold tracking-tight text-ink">
-          Control de peso
-        </h1>
-        <p className="mt-1 text-sm text-ink-soft leading-snug">
-          Anotá tu peso y mirá la evolución. En la demo se guarda solo en esta
-          pantalla.
-        </p>
-      </div>
-
-      <form
-        onSubmit={agregar}
-        className="flex gap-2 rounded-[16px] border border-rule bg-paper-2 p-4 shadow-sm"
+      {/* Breadcrumb / Volver */}
+      <button
+        type="button"
+        onClick={() => {
+          hapticoSeleccion();
+          ir("inicio");
+        }}
+        className="inline-flex min-h-11 items-center gap-1.5 text-sm text-accent hover:underline active:scale-95 transition-transform"
       >
-        <input
-          type="number"
-          step="0.1"
-          inputMode="decimal"
-          placeholder="Ej: 74.8"
-          value={nuevo}
-          onChange={(e) => setNuevo(e.target.value)}
-          className="h-11 flex-1 rounded-[10px] border border-rule bg-paper px-3.5 text-[16px] tabular-nums font-mono text-ink outline-none transition-[border-color] duration-150 [transition-timing-function:var(--ease-out)] focus:border-ink placeholder:text-ink-soft/60"
-        />
+        ← Volver al inicio
+      </button>
+
+      {/* Cabecera del perfil */}
+      <div className="rounded-[18px] border border-rule bg-paper-2 p-5 flex items-center gap-4 shadow-sm">
+        <div className="relative size-16 shrink-0 rounded-full border-2 border-rule bg-paper-3 overflow-hidden grid place-items-center text-xl font-bold text-ink-soft">
+          <span>LS</span>
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <h1 className="text-lg font-bold text-ink truncate leading-tight">
+            Lucas Socio
+          </h1>
+          <p className="text-xs text-ink-soft mt-0.5">
+            DNI 20000000 · Gimnasio Sante
+          </p>
+          <p className="text-[11px] text-ink-soft/70 mt-1 flex items-center gap-1">
+            <Calendar className="size-3" /> Socio desde septiembre de 2026
+          </p>
+        </div>
+      </div>
+
+      {/* ── SECCIÓN 1: Peso corporal (Dial horizontal de regla + historial) ── */}
+      <div className="rounded-[18px] border border-rule bg-paper-2 overflow-hidden shadow-sm">
+        <div className="p-5 space-y-4">
+          {/* Encabezado */}
+          <div className="flex items-center justify-between">
+            <h2 className="text-[12px] font-bold uppercase tracking-[0.1em] text-ink-soft">
+              Peso corporal
+            </h2>
+            <span className="text-[11px] text-ink-soft">
+              Hoy:{" "}
+              <b
+                className="text-[#ff9f0a] font-semibold"
+                style={{ fontFamily: "var(--font-hero)" }}
+              >
+                {pesoActual.toFixed(1)} kg
+              </b>
+            </span>
+          </div>
+
+          {/* Dial de regla horizontal estilo iOS Timer */}
+          <div className="pt-1">
+            <RulerWeightPicker
+              defaultValue={pesoActual}
+              onChange={(nuevoPeso) => setPesoActual(nuevoPeso)}
+            />
+          </div>
+
+          {/* Fila inferior: Botón estilo pill iOS a la izquierda + Display digital a la derecha */}
+          <div className="flex items-center justify-between gap-3 pt-1 border-t border-rule/50">
+            {/* Botón pill estilo 'Start Timer' */}
+            <button
+              type="button"
+              onClick={handleGuardarPeso}
+              className={`h-11 px-5 rounded-full text-xs font-bold tracking-wide transition-all duration-150 active:scale-95 flex items-center gap-2 ${
+                guardadoFeedback
+                  ? "bg-ok text-ok-ink border border-ok shadow-[0_0_15px_rgba(16,231,160,0.2)]"
+                  : "bg-[#ff9f0a]/15 border border-[#ff9f0a]/35 text-[#ff9f0a] hover:bg-[#ff9f0a]/25 shadow-[0_0_15px_rgba(255,159,10,0.1)]"
+              }`}
+            >
+              <CheckCircle2 className="size-4" />
+              <span>{guardadoFeedback ? "¡Peso guardado!" : "Guardar peso"}</span>
+            </button>
+
+            {/* Display digital grande con brillo ámbar */}
+            <div className="flex items-baseline gap-1 text-right select-none">
+              <span
+                className="text-[34px] font-bold tracking-tight text-[#ff9f0a] tabular-nums"
+                style={{
+                  fontFamily: "var(--font-hero, system-ui)",
+                  textShadow: "0 0 20px rgba(255, 159, 10, 0.4)",
+                }}
+              >
+                {pesoActual.toFixed(1)}
+              </span>
+              <span className="text-[14px] font-semibold text-[#ff9f0a]/75">
+                kg
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Historial colapsado con registros */}
+        <details className="group border-t border-rule">
+          <summary className="flex cursor-pointer select-none list-none items-center justify-between px-5 py-3 text-[12px] font-medium text-ink-soft hover:text-ink transition-colors [&::-webkit-details-marker]:hidden">
+            <span>
+              Historial · {registros.length}{" "}
+              {registros.length === 1 ? "registro" : "registros"}
+            </span>
+            <ChevronRight className="size-4 transition-transform duration-150 group-open:rotate-90" />
+          </summary>
+          <div className="divide-y divide-rule border-t border-rule px-5 py-2">
+            {registros.map((r) => (
+              <div
+                key={r.id}
+                className="flex items-center justify-between py-2 text-xs"
+              >
+                <span className="text-ink-soft font-mono">{r.fecha}</span>
+                <span className="font-semibold text-ink tabular-nums">
+                  {r.peso.toFixed(1)} kg
+                </span>
+              </div>
+            ))}
+          </div>
+        </details>
+      </div>
+
+      {/* ── SECCIÓN 2: Datos de Contacto y Cuenta ── */}
+      <div className="rounded-[18px] border border-rule bg-paper-2 p-5 space-y-3 shadow-sm">
+        <h2 className="text-xs font-bold uppercase tracking-[0.1em] text-ink-soft">
+          Datos de la cuenta
+        </h2>
+
+        <ul className="divide-y divide-rule text-xs">
+          <li className="py-2.5 flex items-center justify-between">
+            <span className="text-ink-soft flex items-center gap-2">
+              <IdCard className="size-3.5 text-ink-soft" /> DNI
+            </span>
+            <span className="font-mono text-ink">20000000</span>
+          </li>
+
+          <li className="py-2.5 flex items-center justify-between">
+            <span className="text-ink-soft flex items-center gap-2">
+              <Phone className="size-3.5 text-ink-soft" /> Teléfono
+            </span>
+            <span className="text-ink">1123456789</span>
+          </li>
+
+          <li className="py-2.5 flex items-center justify-between">
+            <span className="text-ink-soft flex items-center gap-2">
+              <User className="size-3.5 text-ink-soft" /> Sexo
+            </span>
+            <span className="capitalize text-ink">Hombre</span>
+          </li>
+
+          <li className="py-2.5 flex items-center justify-between">
+            <span className="text-ink-soft flex items-center gap-2">
+              <Dumbbell className="size-3.5 text-ink-soft" /> Plan actual
+            </span>
+            <span className="font-semibold text-ink">Pase Libre</span>
+          </li>
+        </ul>
+      </div>
+
+      {/* ── SECCIÓN 3: Preferencias y Seguridad ── */}
+      <div className="flex flex-col gap-2">
         <button
-          type="submit"
-          className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-[10px] bg-volt px-4 text-sm font-semibold text-volt-ink shadow-sm transition-transform duration-150 [transition-timing-function:var(--ease-out)] hover:brightness-95 active:scale-95"
+          type="button"
+          onClick={() => {
+            hapticoImpactoMedio();
+            setWall("tema");
+          }}
+          className="rounded-[14px] border border-rule bg-paper-2 p-4 flex items-center justify-between text-xs font-medium text-ink hover:bg-paper active:scale-[0.99] transition-all shadow-xs"
         >
-          <Plus className="size-4" />
-          Anotar
+          <span>Personalizar tema visual de la app</span>
+          <span className="text-ink-soft">→</span>
         </button>
-      </form>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-[16px] border border-rule bg-paper-2 p-4 shadow-sm">
-          <span className="block text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-soft">
-            Último peso
-          </span>
-          <div className="mt-1.5 flex items-baseline gap-1">
-            <span className="font-display text-2xl font-bold tabular-nums font-mono text-ink">
-              {ultimo ?? "--"}
-            </span>
-            <span className="text-xs font-semibold text-ink-soft">kg</span>
-          </div>
-        </div>
-        <div className="rounded-[16px] border border-rule bg-paper-2 p-4 shadow-sm">
-          <span className="block text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-soft">
-            Evolución
-          </span>
-          <div className="mt-1.5 flex items-center gap-1.5 text-sm font-semibold text-[color:var(--ok)] tabular-nums font-mono">
-            <TrendingDown className="size-4 shrink-0" />
-            -1.3 kg / 7 días
-          </div>
-        </div>
+        <button
+          type="button"
+          onClick={() => {
+            hapticoImpactoMedio();
+            setWall("clave");
+          }}
+          className="rounded-[14px] border border-rule bg-paper-2 p-4 flex items-center justify-between text-xs font-medium text-ink hover:bg-paper active:scale-[0.99] transition-all shadow-xs"
+        >
+          <span>Cambiar contraseña</span>
+          <span className="text-ink-soft">→</span>
+        </button>
       </div>
 
-      <div className="space-y-2 rounded-[16px] border border-rule bg-paper-2 p-4 shadow-sm">
-        <span className="block text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-soft">
-          Historial
-        </span>
-        {historial.map((r) => (
-          <div
-            key={r.id}
-            className="flex items-center justify-between rounded-[10px] border border-rule bg-paper px-3.5 py-2.5 shadow-xs"
-          >
-            <span className="text-[13px] font-mono text-ink-soft">{r.fecha}</span>
-            <span className="text-sm font-semibold tabular-nums font-mono text-ink">
-              {r.peso} kg
-            </span>
-          </div>
-        ))}
-      </div>
-
-      <div className="flex items-center gap-2.5 rounded-[12px] border border-rule bg-paper-2 p-3.5 text-[13px] leading-snug text-ink-soft shadow-xs">
-        <Scale className="size-4 shrink-0 text-accent" />
-        <span>
-          Con una cuenta, tu peso queda guardado y aparece en el PDF de tu rutina.
-        </span>
-      </div>
+      {wall === "tema" ? (
+        <LoginWall
+          titulo="Personalizá tu tema visual"
+          detalle="Creá tu cuenta para elegir entre tema oscuro, claro, acentos de color personalizados y contraste alto."
+          onClose={() => setWall(null)}
+        />
+      ) : null}
+      {wall === "clave" ? (
+        <LoginWall
+          titulo="Seguridad de la cuenta"
+          detalle="El cambio de contraseña y autenticación en dos pasos requiere tener tu usuario activo en el gimnasio."
+          onClose={() => setWall(null)}
+        />
+      ) : null}
     </div>
   );
 }
