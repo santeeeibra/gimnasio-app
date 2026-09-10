@@ -9,6 +9,10 @@
 
 import { marcarIngreso } from "@/app/checkin/actions";
 import { altaCliente } from "@/app/panel/clientes/actions";
+import {
+  guardarProgresoCliente,
+  guardarProgresoSocio,
+} from "@/lib/progreso/actions";
 import type { Handler, ResultadoHandler } from "./cola";
 
 const TIMEOUT_MS = 8_000;
@@ -78,7 +82,33 @@ const alta_cliente: Handler<PayloadAlta> = async (p) => {
   return { reintentar: true };
 };
 
+export type PayloadProgreso = {
+  ejercicio_id: string;
+  peso: number;
+  reps: number | null;
+  cliente_id?: string;
+};
+
+const progreso_ejercicio: Handler<PayloadProgreso> = async (p) => {
+  const fd = new FormData();
+  fd.set("ejercicio_id", p.ejercicio_id);
+  fd.set("peso", String(p.peso));
+  if (p.reps !== null && p.reps !== undefined) fd.set("reps", String(p.reps));
+
+  const r = await conTimeout(() =>
+    p.cliente_id
+      ? guardarProgresoSocio(p.cliente_id, {}, fd)
+      : guardarProgresoCliente({}, fd),
+  );
+  if (!r.ok) return { reintentar: true };
+  const st = r.valor;
+  if (st.ok) return { ok: true };
+  if (st.error) return { reintentar: true };
+  return { reintentar: true };
+};
+
 export const HANDLERS: Record<string, Handler> = {
   checkin: checkin as Handler,
   alta_cliente: alta_cliente as Handler,
+  progreso_ejercicio: progreso_ejercicio as Handler,
 };

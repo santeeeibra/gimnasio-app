@@ -15,6 +15,7 @@ import {
   hapticoExito,
   hapticoError,
 } from "@/lib/ui/hapticos";
+import { encolar } from "@/lib/offline/cola";
 import { CartelLogro } from "@/components/logros/cartel-logro";
 import { tituloRecord } from "@/lib/logros/compartir";
 import type { ColoresImagen } from "@/lib/logros/imagen";
@@ -73,7 +74,39 @@ export function DialVerticalProgreso({
   const animIdRef = useRef<number | null>(null);
   const lastEmittedRef = useRef(pesoInicial);
 
-  const [state, formAction, pending] = useActionState(action, {});
+  // Envuelve la Server Action: si el dispositivo está sin conexión (o el fetch
+  // falla con un error de red), encola el registro en la cola offline y devuelve
+  // éxito optimista para no bloquear al socio en el gimnasio.
+  const accionConCola = useCallback(
+    async (prev: ProgresoState, fd: FormData): Promise<ProgresoState> => {
+      const payload = {
+        ejercicio_id: String(fd.get("ejercicio_id") ?? ""),
+        peso: Number(fd.get("peso") ?? 0),
+        reps: fd.get("reps") ? Number(fd.get("reps")) : null,
+      };
+      const offline =
+        typeof navigator !== "undefined" && !navigator.onLine;
+      if (offline) {
+        encolar("progreso_ejercicio", payload);
+        return { ok: "✓" };
+      }
+      try {
+        return await action(prev, fd);
+      } catch (err) {
+        if (
+          err instanceof TypeError ||
+          (err instanceof Error && /fetch|network/i.test(err.message))
+        ) {
+          encolar("progreso_ejercicio", payload);
+          return { ok: "✓" };
+        }
+        throw err;
+      }
+    },
+    [action],
+  );
+
+  const [state, formAction, pending] = useActionState(accionConCola, {});
   const [feedbackOk, setFeedbackOk] = useState(false);
   const [logro, setLogro] = useState<ResultadoRecord | null>(null);
 
