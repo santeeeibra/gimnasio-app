@@ -24,6 +24,7 @@ import {
   hapticoError,
 } from "@/lib/ui/hapticos";
 import { createClient } from "@/lib/supabase/client";
+import { GoogleOneTap } from "@/components/auth/google-one-tap";
 
 const STORAGE_KEY = "gym.ultimo_slug";
 
@@ -138,6 +139,8 @@ export function LoginForm({
       onPointerDown={() => iniciarAudioHaptico()}
       className="min-h-screen relative overflow-hidden bg-[#0c0d11] text-[#f4f4f6] flex flex-col justify-between selection:bg-volt selection:text-volt-ink"
     >
+      <GoogleOneTap onError={(msg) => setOauthError(msg)} />
+
       {/* ── Halo lumínico ambiental GPU (Acoustic / Visual Depth) ── */}
       <div
         aria-hidden="true"

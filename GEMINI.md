@@ -74,3 +74,21 @@ El usuario no memoriza rutas técnicas ni archivos de código. El agente asume e
 3. **Autonomía y Verificación**:
    * Ejecutar directo con diffs limpios y verificar tipados (`npx tsc --noEmit`) sin obligarlo a validar comandos técnicos.
 
+---
+
+## 5. Modo Ultra-Ahorro Quirúrgico (Cuota Crítica)
+
+Directiva permanente para maximizar la cuota disponible y evitar lecturas o respuestas innecesarias:
+
+### A. Reglas Internas del Agente:
+1. **Cero subagentes**: 100% prohibido invocar subagentes. Resolver todo en el hilo principal.
+2. **Cero exploraciones ciegas**: Localización por `grep_search` certero y lectura quirúrgica de máximo 20-40 líneas (`view_file` con slicing estricto).
+3. **Edición atómica en 1 paso**: Usar `replace_file_content` directo. Prohibido re-leer el archivo luego de editarlo o generar planes burocráticos.
+4. **Respuestas telegráficas**: Reportar únicamente el archivo modificado y 2 líneas de resumen.
+
+### B. Formato Óptimo de Pedidos (Guía para el Usuario):
+Para consumir la menor cantidad de tokens posible en cada orden:
+* **1. Dónde**: La URL visible (ej: `/mi/rutina`, `/perfil`) O el texto exacto entre comillas (ej: `"Terminar serie"`, `"Plan Actual"`).
+* **2. Qué**: La acción exacta (ej: *"cambiá el fondo a negro y sumá háptico success"*).
+* **3. Errores**: Si algo falla, pegar la captura o el texto del error directamente sin rodeos.
+

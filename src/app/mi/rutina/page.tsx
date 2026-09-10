@@ -28,6 +28,7 @@ import { RutinaEditor, type DiaEditable } from "./rutina-editor";
 import { BuilderManual } from "./builder-manual";
 import { BannerMotivacional } from "@/components/rutinas/banner-motivacional";
 import { DescargarRutinaPdf } from "@/components/pdf/descargar-rutina-pdf";
+import { BotonGoogleCalendar } from "@/components/rutina/boton-google-calendar";
 import { BotonActualizar } from "@/components/ui/boton-actualizar";
 import { ExplicacionModal } from "@/components/rutina/explicacion-modal";
 import { ModalAvanzadoAfinarPlan } from "./modal-avanzado";
@@ -251,7 +252,15 @@ export default async function MiRutinaPage() {
             ) : null}
           </div>
           {rutina && cliente ? (
-            <div className="shrink-0">
+            <div className="shrink-0 flex flex-wrap items-center gap-2">
+              <BotonGoogleCalendar
+                tituloPlan={`${OBJETIVO_LABEL[rutina.objetivo as Objetivo] ?? rutina.objetivo}${rutina.nivel ? ` · ${NIVEL_LABEL[rutina.nivel as Nivel]}` : ""}`}
+                gimnasioNombre={gymData?.nombre ?? "SysGym"}
+                dias={agruparPorDia(
+                  (itemsData ?? []) as any[],
+                  (rutina.dias_titulos as string[] | null) ?? null,
+                )}
+              />
               <DescargarRutinaPdf
                 clienteNombre={profile.nombre ?? ""}
                 gimnasioNombre={gymData?.nombre ?? ""}
