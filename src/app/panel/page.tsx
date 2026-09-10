@@ -43,6 +43,10 @@ export default async function ResumenPage() {
   const inicioHoy = new Date(anioActual, mesActual, ahora.getDate());
   const inicioHoyISO = inicioHoy.toISOString();
 
+  // Ventana de 30 días para la constancia de entrenamiento
+  const hace30 = new Date(anioActual, mesActual, ahora.getDate() - 30);
+  const hace30Str = `${hace30.getFullYear()}-${pad2(hace30.getMonth() + 1)}-${pad2(hace30.getDate())}`;
+
   const [
     { data: gym },
     cupo,
@@ -51,6 +55,8 @@ export default async function ResumenPage() {
     pedidosRes,
     { data: pagosData },
     asistenciasRes,
+    { data: progresoData },
+    { data: entradasData },
   ] = await Promise.all([
     supabase
       .from("gimnasios")
@@ -93,6 +99,16 @@ export default async function ResumenPage() {
       .select("id", { count: "exact", head: true })
       .eq("gimnasio_id", dueno.gimnasio_id)
       .gte("creado_en", inicioHoyISO),
+    supabase
+      .from("registro_progreso")
+      .select("cliente_id, fecha")
+      .eq("gimnasio_id", dueno.gimnasio_id)
+      .gte("fecha", hace30Str),
+    supabase
+      .from("registros_entrada")
+      .select("cliente_id, creado_en")
+      .eq("gimnasio_id", dueno.gimnasio_id)
+      .gte("creado_en", `${hace30Str}T00:00:00.000Z`),
   ]);
 
   const pedidosActivos = pedidosRes?.pedidos ?? [];
@@ -157,6 +173,52 @@ export default async function ResumenPage() {
 
   // 5. En prueba sin convertir
   const enPruebaCount = clientes.filter((c) => !!c.en_prueba).length;
+
+  // 6. Constancia de entrenamiento (uso real de la app, distinto de cuota al día)
+  //    "Atleta activo" = registró progreso o check-in en la ventana.
+  const hace7Ms = new Date(anioActual, mesActual, ahora.getDate() - 7).getTime();
+  const activos7 = new Set<string>();
+  const activos30 = new Set<string>();
+  const entrenosPorDow = [0, 0, 0, 0, 0, 0, 0]; // domingo .. sábado
+
+  const registrarActividad = (clienteId: string, fechaISO: string) => {
+    if (!clienteId) return;
+    activos30.add(clienteId);
+    const d = new Date(
+      fechaISO.length === 10 ? `${fechaISO}T12:00:00` : fechaISO,
+    );
+    const t = d.getTime();
+    if (Number.isNaN(t)) return;
+    if (t >= hace7Ms) activos7.add(clienteId);
+    entrenosPorDow[d.getDay()]++;
+  };
+
+  for (const r of (progresoData ?? []) as { cliente_id: string; fecha: string }[]) {
+    registrarActividad(r.cliente_id, r.fecha);
+  }
+  for (const r of (entradasData ?? []) as {
+    cliente_id: string;
+    creado_en: string;
+  }[]) {
+    registrarActividad(r.cliente_id, r.creado_en);
+  }
+
+  const activos7Count = activos7.size;
+  const activos30Count = activos30.size;
+  const pctEntrenando =
+    totalSocios > 0 ? Math.round((activos7Count / totalSocios) * 100) : 0;
+  const maxDow = Math.max(1, ...entrenosPorDow);
+  const dowLabels = ["D", "L", "M", "M", "J", "V", "S"];
+  const dowTop =
+    activos30Count > 0
+      ? entrenosPorDow.indexOf(Math.max(...entrenosPorDow))
+      : -1;
+  const dowTopNombre =
+    dowTop >= 0
+      ? ["domingos", "lunes", "martes", "miércoles", "jueves", "viernes", "sábados"][
+          dowTop
+        ]
+      : null;
 
   return (
     <div className="stagger space-y-6">
@@ -399,6 +461,75 @@ export default async function ResumenPage() {
           </div>
         </div>
       </div>
+
+      {/* ─────────────────────────────────────────────────────────────
+          CONSTANCIA DE ENTRENAMIENTO (uso real de la app)
+          ───────────────────────────────────────────────────────────── */}
+      <section className="space-y-3">
+        <div className="flex items-baseline justify-between px-0.5">
+          <span className="text-[11px] uppercase tracking-[0.08em] text-ink-soft font-semibold">
+            Constancia de Entrenamiento
+          </span>
+          <span className="text-xs text-ink-soft font-medium">Últimos 30 días</span>
+        </div>
+
+        <div className="rounded-[14px] border border-rule bg-paper-2 p-4 sm:p-5 shadow-sm">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-2xl sm:text-3xl font-display font-bold tracking-tight text-ink">
+                  {activos7Count}
+                </span>
+                <span className="text-sm font-medium text-ink-soft">
+                  / {totalSocios} entrenando
+                </span>
+              </div>
+              <p className="mt-1 text-xs text-ink-soft">
+                Registraron un entrenamiento en los últimos 7 días
+                {activos30Count > activos7Count
+                  ? ` · ${activos30Count} en el mes`
+                  : ""}
+              </p>
+            </div>
+            <span className="text-sm font-semibold text-volt shrink-0">
+              {pctEntrenando}%
+            </span>
+          </div>
+
+          {activos30Count === 0 ? (
+            <p className="mt-4 text-xs text-ink-soft">
+              Todavía nadie registra entrenamientos. Cuando tus socios usen la
+              rutina en la app, vas a ver acá quiénes son constantes.
+            </p>
+          ) : (
+            <>
+              <div className="mt-4 flex items-end justify-between gap-1.5 h-16">
+                {entrenosPorDow.map((n, i) => (
+                  <div
+                    key={i}
+                    className="flex-1 flex flex-col items-center gap-1 min-w-0"
+                  >
+                    <div
+                      className="w-full max-w-[28px] rounded-[4px] bg-volt/70"
+                      style={{ height: `${Math.round((n / maxDow) * 100)}%` }}
+                      title={`${n} entrenamientos`}
+                    />
+                    <span className="text-[10px] text-ink-soft">
+                      {dowLabels[i]}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              {dowTopNombre && (
+                <p className="mt-3 pt-3 border-t border-rule/60 text-[11px] text-ink-soft">
+                  Tu día más concurrido son los{" "}
+                  <span className="text-ink font-medium">{dowTopNombre}</span>.
+                </p>
+              )}
+            </>
+          )}
+        </div>
+      </section>
 
       {/* ─────────────────────────────────────────────────────────────
           SECCIÓN DETALLE: VENCEN ESTA SEMANA & ACCIONES RÁPIDAS

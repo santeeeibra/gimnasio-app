@@ -97,6 +97,118 @@ async function correrCron() {
     avisos3d++;
   }
 
+  // ─── Alerta de abandono: socio con cuota al día que dejó de entrenar ───
+  //     (sin registro_progreso ni registros_entrada hace > 10 días).
+  //     Un push por gimnasio a sus dueños. Dedupe: no reavisar en < 7 días.
+  const hace10 = new Date();
+  hace10.setDate(hace10.getDate() - 10);
+  const hace10ISO = hace10.toISOString().slice(0, 10);
+  const hace7 = new Date();
+  hace7.setDate(hace7.getDate() - 7);
+  const hace7ISO = hace7.toISOString().slice(0, 10);
+  const hace60d = new Date();
+  hace60d.setDate(hace60d.getDate() - 60);
+  const hace60dISO = hace60d.toISOString().slice(0, 10);
+
+  let avisosAbandono = 0;
+  try {
+    const [{ data: progr }, { data: entr }, { data: clientesAbandono }] =
+      await Promise.all([
+        admin
+          .from("registro_progreso")
+          .select("cliente_id, fecha")
+          .gte("fecha", hace60dISO),
+        admin
+          .from("registros_entrada")
+          .select("cliente_id, creado_en")
+          .gte("creado_en", `${hace60dISO}T00:00:00.000Z`),
+        admin
+          .from("clientes")
+          .select(
+            "id, gimnasio_id, fecha_vencimiento, ultimo_aviso_abandono_enviado_en",
+          )
+          .not("fecha_vencimiento", "is", null),
+      ]);
+
+    const ultimaActividad = new Map<string, string>();
+    const guardar = (cid: string, fecha: string) => {
+      const prev = ultimaActividad.get(cid);
+      if (!prev || fecha > prev) ultimaActividad.set(cid, fecha);
+    };
+    for (const r of (progr ?? []) as { cliente_id: string; fecha: string }[]) {
+      guardar(r.cliente_id, r.fecha);
+    }
+    for (const r of (entr ?? []) as { cliente_id: string; creado_en: string }[]) {
+      guardar(r.cliente_id, r.creado_en.slice(0, 10));
+    }
+
+    type RowAb = {
+      id: string;
+      gimnasio_id: string;
+      fecha_vencimiento: string;
+      ultimo_aviso_abandono_enviado_en: string | null;
+    };
+    const inactivosPorGym = new Map<string, string[]>();
+    for (const c of (clientesAbandono ?? []) as RowAb[]) {
+      const dias = diasRestantes(c.fecha_vencimiento);
+      if (dias === null || dias < 0) continue; // solo cuota al día
+      const ultima = ultimaActividad.get(c.id);
+      if (!ultima) continue; // nunca entrenó o churn total (> 60 días): no es "abandono" fresco
+      if (ultima >= hace10ISO) continue; // entrenó hace poco
+      if (
+        c.ultimo_aviso_abandono_enviado_en &&
+        c.ultimo_aviso_abandono_enviado_en >= hace7ISO
+      ) {
+        continue; // ya avisamos esta semana
+      }
+      const arr = inactivosPorGym.get(c.gimnasio_id) ?? [];
+      arr.push(c.id);
+      inactivosPorGym.set(c.gimnasio_id, arr);
+    }
+
+    if (inactivosPorGym.size > 0) {
+      const gymsAbandono = [...inactivosPorGym.keys()];
+      const { data: duenosAb } = await admin
+        .from("profiles")
+        .select("id, gimnasio_id")
+        .eq("rol", "dueno")
+        .in("gimnasio_id", gymsAbandono);
+      const duenosAbPorGym = new Map<string, string[]>();
+      for (const d of (duenosAb ?? []) as {
+        id: string;
+        gimnasio_id: string;
+      }[]) {
+        const arr = duenosAbPorGym.get(d.gimnasio_id) ?? [];
+        arr.push(d.id);
+        duenosAbPorGym.set(d.gimnasio_id, arr);
+      }
+
+      for (const [gid, ids] of inactivosPorGym) {
+        const dueniosGym = duenosAbPorGym.get(gid) ?? [];
+        if (dueniosGym.length) {
+          const n = ids.length;
+          await enviarPush(dueniosGym, {
+            title: "Socios en riesgo de abandono",
+            body:
+              n === 1
+                ? "1 socio con la cuota al día lleva +10 días sin entrenar. Un mensaje ahora ayuda a que renueve."
+                : `${n} socios con la cuota al día llevan +10 días sin entrenar. Un mensaje ahora ayuda a que renueven.`,
+            url: "/panel/clientes",
+            tag: `abandono-${gid}-${hoyISO}`,
+          });
+        }
+        await admin
+          .from("clientes")
+          .update({ ultimo_aviso_abandono_enviado_en: hoyISO })
+          .in("id", ids);
+        avisosAbandono += ids.length;
+      }
+    }
+  } catch (err) {
+    // Pre-migración 0042 (columna ausente) o cualquier fallo: no romper el cron.
+    console.error("alerta de abandono falló:", err);
+  }
+
   // ─── Trials vencidos (gimnasios en prueba > 14 días desde creado_at) y
   //     planes de plataforma vencidos (gimnasios activos). Se corre siempre,
   //     no solo cuando hay cuotas de socios por vencer. ───
@@ -108,7 +220,13 @@ async function correrCron() {
   );
 
   if (afectados.length === 0) {
-    return NextResponse.json({ ok: true, avisos: 0, avisosMorosidad, avisos3d });
+    return NextResponse.json({
+      ok: true,
+      avisos: 0,
+      avisosMorosidad,
+      avisos3d,
+      avisosAbandono,
+    });
   }
 
   // Dueños por gimnasio (una sola consulta).
@@ -176,5 +294,11 @@ async function correrCron() {
       .lt("creado_at", hace60ISO),
   ]);
 
-  return NextResponse.json({ ok: true, avisos, avisosMorosidad, avisos3d });
+  return NextResponse.json({
+    ok: true,
+    avisos,
+    avisosMorosidad,
+    avisos3d,
+    avisosAbandono,
+  });
 }

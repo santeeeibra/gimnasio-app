@@ -88,6 +88,35 @@ export default async function ClienteDetallePage({
     .eq("cliente_id", id);
   const pruebaVencida = !!(cliente as any).en_prueba && (ingresosCount ?? 0) > 0;
 
+  // Última vez que el socio entrenó (registro de progreso o check-in).
+  const [ultimoProgreso, ultimaEntrada] = await Promise.all([
+    supabase
+      .from("registro_progreso")
+      .select("fecha")
+      .eq("cliente_id", id)
+      .order("fecha", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("registros_entrada")
+      .select("creado_en")
+      .eq("cliente_id", id)
+      .order("creado_en", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+  const fechasActividad = [
+    ultimoProgreso.data?.fecha as string | undefined,
+    (ultimaEntrada.data?.creado_en as string | undefined)?.slice(0, 10),
+  ].filter(Boolean) as string[];
+  const ultimaActividad = fechasActividad.sort().at(-1) ?? null;
+  const diasSinEntrenar = ultimaActividad
+    ? Math.floor(
+        (Date.now() - new Date(`${ultimaActividad}T12:00:00`).getTime()) /
+          86400000,
+      )
+    : null;
+
   const [planesResult, { data: pagosData }, { data: rutinaData }] =
     await Promise.all([
       supabase
@@ -188,6 +217,21 @@ export default async function ClienteDetallePage({
                 >
                   {ESTADO_LABEL[estado]}
                 </span>
+                {diasSinEntrenar !== null && (
+                  <span
+                    className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                      diasSinEntrenar > 10
+                        ? "bg-danger/15 text-danger border border-danger/30"
+                        : "bg-paper-2 text-ink-soft border border-rule"
+                    }`}
+                  >
+                    {diasSinEntrenar === 0
+                      ? "Entrenó hoy"
+                      : diasSinEntrenar === 1
+                        ? "Entrenó ayer"
+                        : `Sin entrenar hace ${diasSinEntrenar} días`}
+                  </span>
+                )}
               </div>
               <p className="text-sm text-ink-soft mt-0.5">
                 DNI {c.profile?.dni}
