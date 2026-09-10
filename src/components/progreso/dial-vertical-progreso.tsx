@@ -398,7 +398,27 @@ export function DialVerticalProgreso({
         </button>
       </div>
 
-      {/* Selector rápido de repeticiones */}
+      {/* Botón guardar rápido de 1 tap */}
+      <button
+        type="submit"
+        disabled={pending}
+        aria-label="Guardar peso y reps de este ejercicio"
+        className={`w-full h-6 rounded-[6px] text-[10px] font-bold tracking-tight transition-all duration-150 flex items-center justify-center gap-1 active:scale-95 disabled:opacity-50 my-0.5 ${
+          feedbackOk
+            ? "bg-ok text-ok-ink border border-ok"
+            : "bg-[#ff9f0a]/20 hover:bg-[#ff9f0a]/30 border border-[#ff9f0a]/40 text-[#ff9f0a]"
+        }`}
+      >
+        {pending ? (
+          <Spinner className="size-3 text-[#ff9f0a]" />
+        ) : feedbackOk ? (
+          <span>✓ Listo</span>
+        ) : (
+          <span>Guardar</span>
+        )}
+      </button>
+
+      {/* Selector rápido de repeticiones (ubicado abajo de Guardar) */}
       <div className="flex items-center justify-between w-full h-[22px] px-1 my-0.5 rounded-[5px] border border-rule/70 bg-paper/90">
         <button
           type="button"
@@ -429,26 +449,6 @@ export function DialVerticalProgreso({
         </button>
       </div>
       <input type="hidden" name="reps" value={reps} />
-
-      {/* Botón guardar rápido de 1 tap */}
-      <button
-        type="submit"
-        disabled={pending}
-        aria-label="Guardar peso y reps de este ejercicio"
-        className={`w-full h-6 rounded-[6px] text-[10px] font-bold tracking-tight transition-all duration-150 flex items-center justify-center gap-1 active:scale-95 disabled:opacity-50 ${
-          feedbackOk
-            ? "bg-ok text-ok-ink border border-ok"
-            : "bg-[#ff9f0a]/20 hover:bg-[#ff9f0a]/30 border border-[#ff9f0a]/40 text-[#ff9f0a]"
-        }`}
-      >
-        {pending ? (
-          <Spinner className="size-3 text-[#ff9f0a]" />
-        ) : feedbackOk ? (
-          <span>✓ Listo</span>
-        ) : (
-          <span>Guardar</span>
-        )}
-      </button>
 
     </form>
     </>

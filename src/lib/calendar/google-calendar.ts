@@ -123,11 +123,20 @@ export function generarIcsContent(evento: EventoEntrenamiento): string {
  */
 export function abrirAppleCalendar(evento: EventoEntrenamiento): void {
   const ics = generarIcsContent(evento);
-  const esApple = typeof navigator !== "undefined" && /iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent);
+  const esApple =
+    typeof navigator !== "undefined" &&
+    (/iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1) ||
+      /Macintosh/.test(navigator.userAgent));
 
   if (esApple) {
-    const dataUri = `data:text/calendar;charset=utf-8,${encodeURIComponent(ics)}`;
-    window.location.href = dataUri;
+    // iOS Safari bloquea la navegación a URIs `data:` en el nivel superior.
+    // Con un blob URL de tipo text/calendar, en cambio, dispara la hoja
+    // nativa "Agregar al calendario".
+    const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    window.location.href = url;
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
   } else {
     descargarIcsEntrenamiento(evento);
   }
