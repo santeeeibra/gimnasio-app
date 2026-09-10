@@ -8,6 +8,14 @@ export default function RegistrarsePage() {
         <p className="text-sm text-gray-400 mb-6">Empezá a gestionar tus rutinas</p>
 
         <form action={registrarCuentaIndependiente} className="flex flex-col gap-4">
+          <input
+            type="text"
+            name="empresa"
+            tabIndex={-1}
+            autoComplete="off"
+            aria-hidden="true"
+            className="absolute left-[-9999px] h-0 w-0 opacity-0"
+          />
           <div>
             <label className="text-sm font-medium mb-1 block text-gray-300">Nombre</label>
             <input 

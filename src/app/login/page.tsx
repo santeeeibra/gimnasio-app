@@ -7,7 +7,7 @@ import { LoginForm } from "./login-form";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ g?: string }>;
+  searchParams: Promise<{ g?: string; error?: string }>;
 }) {
   // 1. Si el usuario ya cuenta con sesión activa, redirigir directo
   const profile = await getSessionProfile();
@@ -20,6 +20,7 @@ export default async function LoginPage({
   const params = await searchParams;
   let initialGymSlug = params?.g ?? null;
   let initialGymNombre: string | null = null;
+  const initialError = params?.error ?? null;
 
   if (!initialGymSlug) {
     try {
@@ -40,6 +41,7 @@ export default async function LoginPage({
       <LoginForm
         initialGymSlug={initialGymSlug}
         initialGymNombre={initialGymNombre}
+        initialError={initialError}
       />
     </Suspense>
   );
