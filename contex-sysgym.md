@@ -490,6 +490,73 @@ conflictos vive en `localStorage`.
   `mi/page.tsx` y `panel/clientes/page.tsx` montan `<CacheAlVuelo>`.
 - **Fuera de alcance**: realtime multi-dispositivo, automerge de conflictos,
   mensajería/rutinas offline.
+- **Progreso offline (2026-09-10)**: el dial de peso
+  (`src/components/progreso/dial-vertical-progreso.tsx`) también entra a la
+  cola. `accionConCola` envuelve la Server Action: si `!navigator.onLine` o la
+  action tira `TypeError`/error de red → `encolar("progreso_ejercicio", …)` +
+  `{ ok: "✓" }` optimista ("✓ Listo", sin bloquear al socio en la sala).
+  Handler `progreso_ejercicio` en `handlers.ts` (`PayloadProgreso`) reinvoca
+  `guardarProgresoSocio(cliente_id, …)` o `guardarProgresoCliente(…)` al
+  reconectar. Sin migración.
+
+## Monetización orgánica y crecimiento (`PLAN_MONETIZACION_ORGANICA.md` v2, 2026-09-10)
+
+Plan ordenado por ROI real. App 100% gratis para el usuario final; el
+crecimiento es Bottom-Up (atletas y entrenadores) para después cerrar
+gimnasios B2B con métricas de uso reales en mano.
+
+- **Fase 1 — Entrenadores / creadores**: mapear 10 entrenadores independientes
+  (2k–15k seguidores) que vendan rutinas en PDF y ofrecerles digitalizarlas en
+  SysGym con su marca. NO rompe el modelo de datos: operan con
+  `gimnasios.tipo_cuenta = "individual"` (migración `0041_tipo_cuenta.sql`,
+  plan de plataforma "Individual") como su propia marca ("Team Lucas"), sin rol
+  nuevo, sin tocar RLS ni multi-tenant. **Gate de salida**: 30–50 atletas
+  activos (2 entrenadores × 15–25 alumnos).
+- **Fase 2 — Métricas de uso y retención** (✅ código 2026-09-10): ver abajo.
+- **Fase 3 — Transición B2B**: con la app usándose en 1–2 gimnasios físicos,
+  visita con datos reales. **Pricing (estándar industria AR)**: el abono =
+  equivalente a 1–2 cuotas del pase libre del propio gym por mes (cuota $30k →
+  software $30k–$60k/mes). Se ajusta solo con la inflación cuando el gym sube
+  su cuota. Pitch: "reteniendo 2 socios que no abandonan, se paga solo". NO
+  cobrar en USD (espanta) ni fijo en pesos (se licúa). Cobro por la infra de
+  MP Connect que ya existe.
+- **Fase 4 — Afiliación Mercado Libre** (canal secundario pasivo, **apagado**):
+  `src/lib/monetizacion/afiliados.ts` + `<EquipamientoSugerido />`
+  (`src/components/monetizacion/`), montado en `mi/rutina/rutina-editor.tsx` y
+  `demo/page.tsx`. `CONFIG_AFILIADOS.activo = NEXT_PUBLIC_HABILITAR_AFILIADOS
+  === "true"` (off por defecto). Sin `urlDirecta` (envs
+  `NEXT_PUBLIC_MELI_URL_STRAPS` / `_CINTURON` / `_MUNEQUERAS` / `_RODILLERAS`,
+  links `/sec/` reales del panel de ML Afiliados) el componente NO renderiza.
+  `obtenerEquipamientoParaEjercicio` solo sugiere en compuestos pesados
+  puntuales (peso muerto / RDL / rack pull → straps; sentadilla trasera / hack
+  / prensa 45 → cinturón; press banca|militar con barra → muñequeras); resto →
+  `null` (cero spam). `<a rel="sponsored nofollow noopener noreferrer">` +
+  divulgación visible. **Falta manual**: alta en ML Afiliados + envs.
+- **Costos Supabase**: el primer gym pagando ($30k–$60k ARS) financia 100% el
+  plan Pro ($25 USD) antes de tocar límites de egress.
+
+### Fase 2 — Métricas de uso y retención (2026-09-10)
+
+"Atleta activo" = registró `registro_progreso` o `registros_entrada` en los
+últimos 7 días (distinto de "cuota al día"; es la métrica que prueba uso real
+y habilita el pitch B2B).
+
+- **Dashboard del dueño** (`src/app/panel/page.tsx`): card "Constancia de
+  Entrenamiento" — activos 7d / total + %, `N en el mes`, barras por día de
+  semana (últimos 30d) y "tu día más concurrido son los martes". Dos queries
+  agregadas en el RSC sobre `registro_progreso` + `registros_entrada` (RLS ya
+  deja al dueño leer su gimnasio), sin función SQL.
+- **Ficha del socio** (`src/app/panel/clientes/[id]/page.tsx`): chip junto al
+  nombre — "Entrenó hoy/ayer" o "Sin entrenar hace X días" (rojo si > 10).
+- **Alerta de abandono** (`src/app/api/cron/cuotas/route.ts`): por gimnasio, 1
+  push/día a los dueños con "N socios con la cuota al día llevan +10 días sin
+  entrenar". Ventana de actividad de 60 días; dedupe de 7 días vía
+  `clientes.ultimo_aviso_abandono_enviado_en` (migración
+  `0042_alerta_abandono.sql`). `avisosAbandono` sumado al JSON de respuesta.
+  Pre-`0042` el bloque degrada sin romper (try/catch).
+- El cron `/api/cron/cuotas` ya corre a diario (avisos de vencimiento +
+  morosidad + trials/planes vencidos + purga de buzón); la alerta de abandono
+  se sumó a ese mismo barrido (no un cron nuevo).
 
 ## Modelo de datos
 
@@ -497,12 +564,17 @@ Migraciones `0001`–`0019` ✅ aplicadas (2026-09-03). `tema` jsonb también
 guarda `reposoCheckin` (pantalla de reposo del check-in; sin migración).
 
 `gimnasios` (+ `tema` jsonb, `logo_url`, `pin_ingresos`, `dias_aviso_morosidad`,
-`pago_alias` / `pago_cbu` / `pago_titular`), `planes`,
+`pago_alias` / `pago_cbu` / `pago_titular`; + `tipo_cuenta` text
+`gym`/`individual`/`negocio_liviano`, migración `0041`), `planes`,
 `clientes` (+ `sexo` text nullable: `mujer`/`hombre`/`sin_especificar`;
 + `en_prueba` bool + `prueba_iniciada_en` date;
-+ `ultimo_aviso_morosidad_enviado_en` date nullable; + `acceso_habilitado` bool),
++ `ultimo_aviso_morosidad_enviado_en` date nullable;
++ `ultimo_aviso_abandono_enviado_en` date nullable, migración `0042`;
++ `acceso_habilitado` bool),
 `ejercicios`, `rutinas` / `rutina_items`, `mensajes` / `mensaje_destinatarios`,
 `push_subscriptions`, `registros_entrada` (presencia puntual),
+`registro_peso` / `registro_progreso` (evolución del socio, migración `0036`;
+upsert por `cliente_id,ejercicio_id,fecha`),
 `monitor_db_estado` (monitor de uso de la base).
 
 Helpers SQL: `current_gimnasio_id()`, `is_dueno()`, `current_cliente_id()`,
@@ -608,6 +680,26 @@ Lo que de ahí se decide adoptar se escribe primero en `REGLAS_UI_EMIL.md`
 (reescrito 2026-09-04) y recién después se lleva a `src/`.
 
 ## Cómo seguir (próxima sesión)
+
+Ya hecho (2026-09-10):
+- **Plan de monetización orgánica v2** (`PLAN_MONETIZACION_ORGANICA.md`):
+  reordenado por ROI real — entrenadores → métricas → B2B → afiliados
+  (apagado). Ver sección "Monetización orgánica y crecimiento".
+- **Fase 2 — Métricas de uso y retención** (código + typecheck): card
+  "Constancia de Entrenamiento" en `/panel`, chip "sin entrenar hace X días"
+  en la ficha del socio, alerta de abandono en el cron de cuotas, migración
+  `0042_alerta_abandono.sql` (**falta aplicar**). Ver sección "Fase 2".
+- **Módulo de afiliación contextual** (`src/lib/monetizacion/afiliados.ts`,
+  `src/components/monetizacion/equipamiento-sugerido.tsx`): apagado por feature
+  flag `NEXT_PUBLIC_HABILITAR_AFILIADOS`; sin links `/sec/` reales no renderiza.
+- **Progreso offline**: el dial de peso encola en `src/lib/offline/` cuando no
+  hay señal (handler `progreso_ejercicio`). Ver "Fallback offline".
+- **Fix animación de GIF en Safari iOS** (`rutina-editor.tsx`, `globals.css`):
+  no forzar `0.01ms` a todo con `prefers-reduced-motion`; precargar el cuadro
+  alternativo del crossfade.
+
+Próximo: **Fase 1 del plan** (mapear 10 entrenadores, flujo de onboarding con
+código de entrenador sobre `tipo_cuenta = "individual"`).
 
 Ya hecho (2026-09-03):
 - **Zonas de dolor conectadas a la generación inicial de rutinas**. El filtro

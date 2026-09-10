@@ -31,7 +31,10 @@
 | UI home + form rutina (selects, --volt, bottom nav) | `SPEC_UI_HOME_RUTINA.md` | 🔄 spec pasado a Claude Code, no confirmado ejecutado |
 | Tutorial onboarding | `SPEC_TUTORIAL_ONBOARDING.md` | 🔄 parece implementado, falta confirmar recorrido completo |
 | Frases motivadoras | `src/lib/frases-motivadoras.ts` | 🔲 instrucción dada a Cline, no confirmado |
-| Memoria de progreso (peso/reps por sesión) | tabla `registro_progreso` (no creada) | 🔲 sin spec armado — retención 6 meses obligatoria |
+| Memoria de progreso (peso/reps por sesión) | tabla `registro_progreso` (migración `0036`), `src/lib/progreso/actions.ts` (`guardarProgresoCliente` / `guardarProgresoSocio`), `src/components/progreso/dial-vertical-progreso.tsx` | ✅ HECHO — `0036` aplicada. Dial de peso estilo regla iOS con guardado por ejercicio/día (upsert `cliente_id,ejercicio_id,fecha`) |
+| Progreso offline (sobrecarga sin señal) | `src/lib/offline/handlers.ts` (`PayloadProgreso` + handler `progreso_ejercicio` en `HANDLERS`), `src/components/progreso/dial-vertical-progreso.tsx` (`accionConCola` envuelve la Server Action) | ✅ código + typecheck (2026-09-10). Si `!navigator.onLine` o la action tira `TypeError`/error de red → `encolar("progreso_ejercicio", …)` + `{ ok: "✓" }` optimista ("✓ Listo"). El handler reinvoca `guardarProgresoSocio(cliente_id,…)` o `guardarProgresoCliente(…)` al reconectar. Sin migración |
+| Monetización — afiliación contextual (Fase 4 del plan) | `src/lib/monetizacion/afiliados.ts` (catálogo por patrón biomecánico), `src/components/monetizacion/equipamiento-sugerido.tsx`, montado en `mi/rutina/rutina-editor.tsx` + `demo/page.tsx`, `PLAN_MONETIZACION_ORGANICA.md` | ✅ código + typecheck (2026-09-10) — **apagado**. `CONFIG_AFILIADOS.activo = NEXT_PUBLIC_HABILITAR_AFILIADOS === "true"` (off por defecto). Sin `urlDirecta` (env `NEXT_PUBLIC_MELI_URL_*`) no renderiza. Solo sugiere en compuestos pesados puntuales (peso muerto, sentadilla trasera, press con barra); resto → `null`. `rel="sponsored nofollow"` + divulgación visible. **Falta manual**: alta en ML Afiliados + links `/sec/` reales en los envs |
+| Métricas de uso y retención (Fase 2 del plan) | `src/app/panel/page.tsx` (card "Constancia de Entrenamiento"), `src/app/panel/clientes/[id]/page.tsx` (chip "sin entrenar hace X días"), `src/app/api/cron/cuotas/route.ts` (bloque alerta de abandono), migración `0042_alerta_abandono.sql` | ✅ código + typecheck (2026-09-10). "Atleta activo" = registró `registro_progreso` o `registros_entrada` en 7d; dashboard muestra activos 7d/30d + reparto por día de semana (30d). Cron: 1 push/día al dueño con socios al día inactivos +10d (ventana 60d, dedupe 7d vía `clientes.ultimo_aviso_abandono_enviado_en`). **Falta aplicar `0042`** — pre-migración el bloque de abandono degrada sin romper (try/catch) |
 | Compartir logros (récord de peso + racha de constancia) | `src/lib/logros/*` (deteccion, actions, compartir, imagen, tipos), `src/components/logros/*` (`cartel-logro.tsx`, `racha-card.tsx`, `racha-seccion.tsx`), `src/components/mascota/pulpo.tsx`, migración `0038_reacciones_logro.sql` | ✅ integrado (2026-09-09) — `0038` ya aplicada en Supabase (tabla `reacciones_logro` verificada). Detección de récord enganchada en `guardarProgresoCliente` (`src/lib/progreso/actions.ts` → `ProgresoState.record`), `<CartelLogro tipo="record">` renderizado desde el dial de peso bajo la GIF (`dial-vertical-progreso.tsx`, props `gimnasioNombre`/`logoUrl`/`colores`/`ejercicioNombre` threadeadas por `rutina-editor.tsx` + `mi/rutina/page.tsx`, sólo vista alumno). Racha en `/mi` vía `obtenerRachaCliente` + `<RachaSeccion>` (auto-abre `<CartelLogro tipo="racha">` una vez por hito, guard en localStorage). Colores del tema vía `parseTema` de `src/lib/tema.ts`. `tsc --noEmit` limpio. Reacciones 👏 entre alumnos (`alternarReaccionLogro`) siguen sin UI. |
 | Push web nativo (VAPID) | — | ✅ código completo — **falta manual: VAPID keys, iconos, deploy** |
 | Reset de clave "olvidé mi contraseña" | `src/app/login/olvide-clave/*`, `src/app/reset-clave/page.tsx`, `src/lib/email/enviar.ts` (Resend), campo email en `alta-form.tsx` / `editar-datos.tsx` / `panel/ajustes` (`email-recuperacion-form.tsx`), migración `0021_email_recuperacion.sql` | ✅ código + typecheck (2026-09-03). **Doble camino**: (A) link por email — solo si `RESEND_FROM` es un dominio verificado (no `@resend.dev`); (B) sin dominio → flujo asistido: socio ⇒ push a los dueños "regeneralé la clave desde la ficha"; dueño ⇒ `notificarSuperadmin`. **Falta manual**: aplicar `0021`; para camino A: dominio en Resend + `RESEND_FROM=no-reply@dominio` + `<origin>/reset-clave` en Redirect URLs de Supabase Auth |
@@ -87,13 +90,27 @@ además excluye `suspendido`. Idempotente. Hasta aplicarla: el detalle/lista de
 `/admin/gimnasios` fallan al leer `nota_interna`, y "Desactivar PIN" en
 `/panel/ingresos` devuelve error sin romper la sección.
 
+**Pendiente: `0042_alerta_abandono.sql`** (2026-09-10) — agrega
+`clientes.ultimo_aviso_abandono_enviado_en date` (dedupe de la alerta de
+abandono en el cron de cuotas). Idempotente. Pre-migración el bloque de
+abandono del cron degrada sin romper (try/catch); el resto del cron y el
+dashboard funcionan igual.
+
+**Nota:** `0040_leads_landing.sql`, `0041_tipo_cuenta.sql` ya existen en el
+repo (estado de aplicación no confirmado acá).
+
 ### Otros
 
 - VAPID keys + `CRON_SECRET`
 - Subir `icon-192.png`, `icon-512.png`, `badge-72.png`
 - Probar push real
 - Deploy a Vercel
-- Implementar cron `recalcular_estado_cuota()`
+- Implementar cron `recalcular_estado_cuota()` (hoy se calcula on-demand; el
+  cron `/api/cron/cuotas` ya corre a diario y hace avisos + alerta de abandono)
+- Aplicar `0042_alerta_abandono.sql`
+- Monetización afiliados: alta en Mercado Libre Afiliados + poner los links
+  `/sec/` reales en `NEXT_PUBLIC_MELI_URL_*` y `NEXT_PUBLIC_HABILITAR_AFILIADOS=true`
+  cuando se quiera encender
 
 ---
 
