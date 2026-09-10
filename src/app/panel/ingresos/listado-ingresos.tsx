@@ -71,6 +71,16 @@ export function ListadoIngresos({
     }
   };
 
+  // Meses disponibles desde los pagos cargados (para el selector)
+  const mesesDisponibles = useMemo(() => {
+    const set = new Set<string>();
+    pagos.forEach((p) => {
+      const [y, m] = p.fecha_pago.split("-");
+      set.add(`${y}-${m}`);
+    });
+    return [...set].sort((a, b) => b.localeCompare(a)); // desc
+  }, [pagos]);
+
   if (!verificado) {
     return null; // El modal maneja la verificación
   }
@@ -93,16 +103,6 @@ export function ListadoIngresos({
       </div>
     );
   }
-
-  // Meses disponibles desde los pagos cargados (para el selector)
-  const mesesDisponibles = useMemo(() => {
-    const set = new Set<string>();
-    pagos.forEach((p) => {
-      const [y, m] = p.fecha_pago.split("-");
-      set.add(`${y}-${m}`);
-    });
-    return [...set].sort((a, b) => b.localeCompare(a)); // desc
-  }, [pagos]);
 
   const filtro = norm(q.trim());
 
