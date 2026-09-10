@@ -423,11 +423,12 @@ textarea {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
-  }
-  .animate-float-soft {
+  /* No forzar 0.01ms a todos los elementos (*): en Safari/WebKit provoca
+     que las transiciones y animaciones parpadeen y se perciban hiper-aceleradas.
+     Desactivamos únicamente loops ambientales y decorativos pesados. */
+  .animate-float-soft,
+  .animate-bounce,
+  .animate-pulse {
     animation: none !important;
   }
 }

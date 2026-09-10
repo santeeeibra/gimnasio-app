@@ -69,18 +69,6 @@ function frameAlterno(url: string): string | null {
   return null;
 }
 
-function usePrefiereMenosMovimiento() {
-  const [reduce, setReduce] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReduce(mq.matches);
-    const on = () => setReduce(mq.matches);
-    mq.addEventListener("change", on);
-    return () => mq.removeEventListener("change", on);
-  }, []);
-  return reduce;
-}
-
 /** Crossfade entre los dos cuadros (en vez de cortar el src en seco). */
 function ImagenAnimada({
   url,
@@ -100,6 +88,11 @@ function ImagenAnimada({
 
   useEffect(() => {
     if (!activo || !alt) return;
+    // Pre-cargar el cuadro alternativo para que Safari en iOS no lo postergue
+    if (typeof window !== "undefined") {
+      const img = new Image();
+      img.src = alt;
+    }
     const id = setInterval(() => setMostrarAlt((v) => !v), 850);
     return () => clearInterval(id);
   }, [activo, alt]);
@@ -110,7 +103,6 @@ function ImagenAnimada({
       <img
         src={url}
         alt={altText}
-        loading="lazy"
         decoding="async"
         onError={onError}
         className={`${className} absolute inset-0 m-auto max-h-full max-w-full object-contain object-center transition-opacity duration-200 [transition-timing-function:var(--ease-out)] ${mostrarAlt ? "opacity-0" : "opacity-100"}`}
@@ -120,7 +112,6 @@ function ImagenAnimada({
         <img
           src={alt}
           alt=""
-          loading="lazy"
           decoding="async"
           className={`${className} absolute inset-0 m-auto max-h-full max-w-full object-contain object-center transition-opacity duration-200 [transition-timing-function:var(--ease-out)] ${mostrarAlt ? "opacity-100" : "opacity-0"}`}
         />
@@ -152,7 +143,6 @@ function ExThumb({
   ej: Ejercicio | null;
   onOpen: () => void;
 }) {
-  const reduce = usePrefiereMenosMovimiento();
   const [err, setErr] = useState(false);
   const url = ej?.imagen_url ?? null;
 
@@ -176,7 +166,7 @@ function ExThumb({
     >
       <ImagenAnimada
         url={url}
-        activo={!reduce && !err}
+        activo={!err}
         onError={() => setErr(true)}
         className="h-full w-full object-contain object-center p-1"
       />
@@ -192,7 +182,6 @@ function VisorEjercicio({
   onClose: () => void;
 }) {
   const [mounted, setMounted] = useState(false);
-  const reduce = usePrefiereMenosMovimiento();
   const [err, setErr] = useState(false);
   const url = ej.imagen_url ?? null;
 
@@ -250,7 +239,7 @@ function VisorEjercicio({
           {url && !err ? (
             <ImagenAnimada
               url={url}
-              activo={!reduce && !err}
+              activo={!err}
               onError={() => setErr(true)}
               alt={ej.nombre}
               className="h-full w-full object-contain object-center p-3"
