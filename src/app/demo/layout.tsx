@@ -46,12 +46,20 @@ export default function DemoLayout({
             </span>
           </div>
 
-          <Link
-            href="/registrarse"
-            className="inline-flex min-h-11 items-center justify-center rounded-full bg-volt px-4 text-xs font-semibold text-volt-ink shadow-sm transition-[transform,filter] duration-150 [transition-timing-function:var(--ease-out)] hover:brightness-95 active:scale-95"
-          >
-            Crear cuenta
-          </Link>
+          <div className="flex items-center gap-1.5">
+            <Link
+              href="/login"
+              className="inline-flex min-h-9 items-center justify-center rounded-full px-3 text-xs font-semibold text-ink-soft hover:text-ink transition-colors active:scale-95"
+            >
+              Iniciar sesión
+            </Link>
+            <Link
+              href="/registrarse"
+              className="inline-flex min-h-9 items-center justify-center rounded-full bg-volt px-3.5 text-xs font-semibold text-volt-ink shadow-sm transition-[transform,filter] duration-150 [transition-timing-function:var(--ease-out)] hover:brightness-95 active:scale-95"
+            >
+              Crear cuenta
+            </Link>
+          </div>
         </header>
 
         <DemoShell>{children}</DemoShell>

@@ -11,6 +11,7 @@ import {
   User,
   ArrowRight,
   ShieldCheck,
+  Sparkles,
 } from "lucide-react";
 import { JitterPoster } from "./jitter-poster";
 import { login, loginConEmail, type LoginState } from "./actions";
@@ -485,6 +486,22 @@ export function LoginForm({
               </div>
             </form>
           )}
+
+            {/* Botón Probar App sin cuenta (Demo) */}
+            <div className="pt-4 border-t border-white/10 mt-5 text-center">
+              <Link
+                href="/demo"
+                onClick={() => hapticoImpactoMedio()}
+                className="group relative flex w-full min-h-[46px] items-center justify-center gap-2 rounded-xl border border-volt/35 bg-volt/10 px-4 text-sm font-semibold text-volt transition-all duration-150 hover:bg-volt/20 hover:border-volt/60 active:scale-[0.98] shadow-sm touch-manipulation"
+              >
+                <Sparkles className="size-4 text-volt" />
+                <span>PROBAR APP (DEMO)</span>
+                <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
+              </Link>
+              <p className="mt-2 text-[12px] text-slate-400">
+                Probá rutinas, timer y seguimiento sin registrarte
+              </p>
+            </div>
           </div>
         </div>
       </div>

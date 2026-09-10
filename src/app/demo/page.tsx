@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import {
   Calendar,
   CheckCircle2,
@@ -483,9 +484,17 @@ function DemoInicio() {
             Gimnasio Sante
           </h1>
         </div>
-        <span className="rounded-full border border-volt/30 bg-volt/10 px-3 py-1 text-xs font-semibold text-volt">
-          Modo Demo
-        </span>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/login"
+            className="inline-flex min-h-8 items-center gap-1 rounded-full border border-rule bg-paper-2 px-3 text-[11px] font-semibold text-ink-soft hover:text-ink hover:border-ink/30 active:scale-95 transition-all shadow-2xs"
+          >
+            Iniciar sesión →
+          </Link>
+          <span className="rounded-full border border-volt/30 bg-volt/10 px-3 py-1 text-xs font-semibold text-volt">
+            Modo Demo
+          </span>
+        </div>
       </div>
 
       {/* Tarjeta de Cuota con Anillo de Progreso SVG (igual a /mi) */}
