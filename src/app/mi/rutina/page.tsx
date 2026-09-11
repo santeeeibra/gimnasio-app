@@ -31,6 +31,8 @@ import { DescargarRutinaPdf } from "@/components/pdf/descargar-rutina-pdf";
 import { BotonGoogleCalendar } from "@/components/rutina/boton-google-calendar";
 import { BotonActualizar } from "@/components/ui/boton-actualizar";
 import { ExplicacionModal } from "@/components/rutina/explicacion-modal";
+import { PublicarPlantilla } from "@/components/rutina/publicar-plantilla";
+import { CodigoEntrenador } from "@/components/rutina/codigo-entrenador";
 import { ModalAvanzadoAfinarPlan } from "./modal-avanzado";
 
 export const dynamic = "force-dynamic";
@@ -328,11 +330,18 @@ export default async function MiRutinaPage() {
           <div id="generar-rutina-auto" className="scroll-mt-4">
             <GenerarRutinaForm action={generarMiRutina} />
           </div>
+          <CodigoEntrenador />
           {opcionesPersonalizacion}
         </>
       ) : (
         <>
           {opcionesPersonalizacion}
+
+          {esIndividual && rutina ? (
+            <PublicarPlantilla rutinaId={rutina.id} />
+          ) : (
+            <CodigoEntrenador />
+          )}
 
           {(() => {
             const p = rutina.preferencias as

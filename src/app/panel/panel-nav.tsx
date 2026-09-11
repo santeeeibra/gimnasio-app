@@ -14,6 +14,7 @@ import {
   MessageSquare,
   Scale,
   Settings,
+  Share2,
   Tags,
   Users,
   Wallet,
@@ -34,6 +35,7 @@ export function getNavItems(tipoCuenta: string = "gym"): NavItem[] {
       { href: "/panel", label: "Resumen", Icono: LayoutDashboard },
       { href: "/mi/rutina", label: "Mi Rutina", corto: "Rutina", Icono: Dumbbell },
       { href: "/mi/peso", label: "Mi Peso", corto: "Peso", Icono: Scale },
+      { href: "/panel/plantillas", label: "Compartir rutina", corto: "Compartir", Icono: Share2 },
       { href: "/panel/plan", label: "Mi plan", soloDesktop: true, Icono: CreditCard },
       { href: "/panel/ajustes", label: "Ajustes", Icono: Settings },
     ];
@@ -57,6 +59,7 @@ export function getNavItems(tipoCuenta: string = "gym"): NavItem[] {
     { href: "/panel/mensajes", label: "Mensajes", Icono: MessageSquare },
     { href: "/panel/buzon", label: "Buzón", Icono: Inbox },
     { href: "/panel/ingresos", label: "Ingresos", Icono: Wallet },
+    { href: "/panel/plantillas", label: "Compartir rutina", corto: "Compartir", soloDesktop: true, Icono: Share2 },
     { href: "/panel/plan", label: "Mi plan", soloDesktop: true, Icono: CreditCard },
     { href: "/panel/ajustes", label: "Ajustes", Icono: Settings },
   ];
