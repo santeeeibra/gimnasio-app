@@ -3,7 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { requireProfile } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
+import { registrarAccionAdmin } from "@/lib/admin/audit";
 import { sugerirReferralCode, esReferralCodeValido } from "@/lib/partners/codigos";
+
+const COOLDOWN_ALIAS_MS = 48 * 60 * 60 * 1000;
 import {
   type Partner,
   type ResumenPartner,
@@ -213,6 +217,7 @@ export async function actualizarDatosCobroAction(
 
     const cbu_cvu = String(formData.get("cbu_cvu") ?? "").trim() || null;
     const alias_mp = String(formData.get("alias_mp") ?? "").trim() || null;
+    const password = String(formData.get("password") ?? "");
 
     if (!cbu_cvu && !alias_mp) {
       return {
@@ -224,11 +229,35 @@ export async function actualizarDatosCobroAction(
       return { error: "El CBU o CVU debe contener exactamente 22 dígitos numéricos." };
     }
 
+    // Reautenticación: cambiar el destino de cobro es el vector clásico de
+    // "robo de sesión → redirijo el próximo retiro a mi cuenta" — se exige
+    // la contraseña de la cuenta antes de tocar cbu_cvu/alias_mp (mismo
+    // patrón que resetearPinConContrasena de Ingresos).
+    if (!password) {
+      return { error: "Ingresá tu contraseña para confirmar el cambio de datos de cobro." };
+    }
+
+    const { data: authUser } = await admin.auth.admin.getUserById(dueno.id);
+    const email = authUser?.user?.email;
+    if (!email) {
+      return { error: "No se pudo verificar tu cuenta. Reintentá más tarde." };
+    }
+
+    const supabaseAnon = await createClient();
+    const { error: authError } = await supabaseAnon.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (authError) {
+      return { error: "Contraseña incorrecta." };
+    }
+
     const { error: updErr } = await admin
       .from("partners")
       .update({
         cbu_cvu,
         alias_mp,
+        datos_cobro_actualizados_at: new Date().toISOString(),
       })
       .eq("user_id", dueno.id);
 
@@ -236,8 +265,15 @@ export async function actualizarDatosCobroAction(
       return { error: "No se pudieron guardar los datos de cobro." };
     }
 
+    await registrarAccionAdmin(dueno.id, "partner_cambiar_datos_cobro", null, {
+      partner_user_id: dueno.id,
+    });
+
     revalidatePath("/panel/partner");
-    return { ok: true, msg: "Datos de cobro actualizados correctamente." };
+    return {
+      ok: true,
+      msg: "Datos de cobro actualizados. Por seguridad, no vas a poder retirar hasta dentro de 48hs.",
+    };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Error inesperado";
     return { error: msg };
@@ -279,6 +315,18 @@ export async function solicitarRetiroAction(
         error:
           "Configurá primero tu CBU/CVU o Alias de Mercado Pago antes de solicitar el retiro.",
       };
+    }
+
+    // Cooldown de 48h desde el último cambio de datos de cobro: evita que
+    // una sesión comprometida cambie el alias y pida el retiro al toque.
+    if (partner.datos_cobro_actualizados_at) {
+      const desde = Date.now() - new Date(partner.datos_cobro_actualizados_at).getTime();
+      if (desde < COOLDOWN_ALIAS_MS) {
+        const faltanHs = Math.ceil((COOLDOWN_ALIAS_MS - desde) / (60 * 60 * 1000));
+        return {
+          error: `Cambiaste tus datos de cobro hace poco. Por seguridad, esperá ${faltanHs}hs más antes de pedir un retiro.`,
+        };
+      }
     }
 
     // Verificar si ya tiene un retiro pendiente
@@ -327,6 +375,11 @@ export async function solicitarRetiroAction(
     if (insErr) {
       return { error: "No se pudo procesar la solicitud de retiro. Intentá nuevamente." };
     }
+
+    await registrarAccionAdmin(dueno.id, "partner_solicitar_retiro", null, {
+      partner_id: partner.id,
+      monto_ars: montoRaw,
+    });
 
     revalidatePath("/panel/partner");
     return {

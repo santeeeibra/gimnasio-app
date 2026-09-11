@@ -215,6 +215,13 @@ async function correrCron() {
   await admin.rpc("recalcular_estado_cuota");
   await admin.rpc("chequear_trial_vencido");
   await admin.rpc("chequear_plan_vencido");
+  // Libera comisiones de partners cuyo hold anti-fraude de 10 días ya venció
+  // (PLAN_PARTNERS_Y_GATING.md §5.B). Best-effort: no debe romper el cron.
+  try {
+    await admin.rpc("partner_liberar_comisiones_vencidas");
+  } catch {
+    // best-effort
+  }
 
   const afectados = (clientes ?? []).filter((c: Row) =>
     DIAS_AVISO.has(diasRestantes(c.fecha_vencimiento) ?? -999),

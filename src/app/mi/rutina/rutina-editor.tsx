@@ -31,7 +31,12 @@ import { DialVerticalProgreso } from "@/components/progreso/dial-vertical-progre
 import { HistorialEjercicio } from "@/components/progreso/historial-ejercicio";
 import { EquipamientoSugerido } from "@/components/monetizacion/equipamiento-sugerido";
 import type { ColoresImagen } from "@/lib/logros/imagen";
-import { hapticoDial } from "@/lib/ui/hapticos";
+import {
+  hapticoDial,
+  hapticoExito,
+  hapticoImpactoSuave,
+  hapticoSeleccion,
+} from "@/lib/ui/hapticos";
 import {
   guardarProgresoCliente,
   guardarProgresoSocio,
@@ -645,7 +650,10 @@ function DiaTabs({
           <button
             key={d.numero}
             type="button"
-            onClick={() => onSelect(d.numero)}
+            onClick={() => {
+              hapticoSeleccion();
+              onSelect(d.numero);
+            }}
             aria-pressed={on}
             className={`flex-1 rounded-[12px] border px-3 py-2.5 text-xs font-semibold transition-[transform,color,background-color,border-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${
               on
@@ -1238,6 +1246,7 @@ function ItemFila({
                         type="button"
                         onClick={() => {
                           if (!hecho) {
+                            hapticoExito();
                             const segs = extraerSegundosDescanso(item.nota);
                             if (typeof window !== "undefined") {
                               window.dispatchEvent(
@@ -1246,6 +1255,8 @@ function ItemFila({
                                 }),
                               );
                             }
+                          } else {
+                            hapticoImpactoSuave();
                           }
                           onToggleSet(sIdx);
                         }}

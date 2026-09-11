@@ -5,6 +5,7 @@ import { notificarSuperadmin } from "@/lib/admin/notificar";
 
 // Acciones de /admin que además del audit log disparan un aviso al superadmin.
 const AVISA_SUPERADMIN = new Set<AccionAdmin>([
+  "partner_cambiar_datos_cobro",
   "cambiar_estado_gym",
   "asignar_plan_plataforma",
   "renovar_plan_plataforma",
@@ -39,7 +40,9 @@ type AccionAdmin =
   | "simular_pago_aprobado"
   | "borrar_simulacion_e2e"
   | "marcar_payout_pagado"
-  | "marcar_payout_rechazado";
+  | "marcar_payout_rechazado"
+  | "partner_cambiar_datos_cobro"
+  | "partner_solicitar_retiro";
 
 // Traduce (action, meta) a un texto legible para la notificación al
 // superadmin. El audit log (arriba) sigue guardando el JSON completo — esto
@@ -103,6 +106,8 @@ function formatearAccionAdmin(
       return `Simularon pago aprobado sobre ${gym}`;
     case "borrar_simulacion_e2e":
       return "Limpieza de datos de simulación E2E ejecutada";
+    case "partner_cambiar_datos_cobro":
+      return "Un Partner cambió su CBU/Alias de cobro (cooldown de 48h antes de poder retirar)";
     default:
       return `Acción: ${action}`;
   }

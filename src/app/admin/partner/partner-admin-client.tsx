@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import {
   Copy,
@@ -17,6 +17,8 @@ import {
   Coins,
   ShieldAlert,
   RefreshCw,
+  AlertOctagon,
+  Flame,
 } from "lucide-react";
 import {
   crearGimnasioSimuladoAction,
@@ -24,6 +26,7 @@ import {
   borrarDatosSimulacionAction,
   marcarPayoutAction,
 } from "./actions";
+import type { AlertaFraude } from "@/lib/partners/anti-fraude";
 
 export type PartnerAdminItem = {
   id: string;
@@ -71,11 +74,13 @@ export function PartnerAdminClient({
   partners,
   gimnasiosSimulados,
   payoutsPendientes = [],
+  alertasFraude = [],
   defaultOrigin = "",
 }: {
   partners: PartnerAdminItem[];
   gimnasiosSimulados: GymSimuladoItem[];
   payoutsPendientes?: PayoutPendienteItem[];
+  alertasFraude?: AlertaFraude[];
   defaultOrigin?: string;
 }) {
   const [copiadoCode, setCopiadoCode] = useState<string | null>(null);
@@ -85,6 +90,23 @@ export function PartnerAdminClient({
     tipo: "ok" | "err" | "info";
     texto: string;
   } | null>(null);
+
+  // Advertencias automáticas en la consola dev del navegador
+  useEffect(() => {
+    if (alertasFraude.length > 0) {
+      console.warn(
+        `%c⚠️ [ANTI-FRAUDE PARTNERS DEV CONSOLE] Se detectaron ${alertasFraude.length} anomalías de auditoría:`,
+        "font-weight: bold; color: #f59e0b;",
+      );
+      for (const a of alertasFraude) {
+        console.warn(
+          `%c[${a.tipo.toUpperCase()}] (${a.severidad}) Partner: "${a.partnerNombre}" (${a.partnerCodigo})\n%c-> ${a.mensaje}\nDetalle: ${a.detalle}`,
+          "color: #ef4444; font-weight: bold;",
+          "color: inherit;",
+        );
+      }
+    }
+  }, [alertasFraude]);
 
   const [copiadoCobroId, setCopiadoCobroId] = useState<string | null>(null);
 
@@ -287,6 +309,88 @@ export function PartnerAdminClient({
           </button>
         </div>
       )}
+
+      {/* CENTRO DE AUDITORÍA & DETECCIÓN ANTI-FRAUDE */}
+      <div
+        className={`card-cut rounded-[18px] border p-4.5 text-xs transition-all ${
+          alertasFraude.length > 0
+            ? "border-danger/40 bg-danger/5 text-ink shadow-xs"
+            : "border-ok/30 bg-ok/5 text-ink"
+        }`}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start gap-3">
+            {alertasFraude.length > 0 ? (
+              <AlertOctagon className="size-5 shrink-0 text-danger mt-0.5" />
+            ) : (
+              <Check className="size-5 shrink-0 text-ok mt-0.5" />
+            )}
+            <div className="space-y-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-bold text-sm text-ink">
+                  Auditoría Anti-Fraude & Integridad de Partners
+                </span>
+                {alertasFraude.length > 0 ? (
+                  <span className="rounded-full bg-danger/15 px-2.5 py-0.5 font-mono text-[10px] font-black uppercase tracking-wider text-danger border border-danger/30">
+                    {alertasFraude.length} alerta{alertasFraude.length > 1 ? "s" : ""} activa{alertasFraude.length > 1 ? "s" : ""}
+                  </span>
+                ) : (
+                  <span className="rounded-full bg-ok/15 px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-ok border border-ok/30">
+                    Auditoría limpia · Sin anomalías detectadas
+                  </span>
+                )}
+              </div>
+              <p className="text-ink-soft leading-relaxed">
+                Supervisión automática de <strong>Auto-referidos</strong> (DNI o email del dueño idéntico al partner) y <strong>Ráfagas de altas</strong> (&gt;3 gimnasios en &lt;48hs) para revisión manual previa a liquidación de comisiones.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {alertasFraude.length > 0 && (
+          <div className="mt-4 space-y-2 pt-3 border-t border-danger/20">
+            {alertasFraude.map((alerta) => (
+              <div
+                key={alerta.id}
+                className="flex flex-wrap items-start justify-between gap-3 rounded-[12px] border border-danger/25 bg-paper p-3 shadow-xs"
+              >
+                <div className="space-y-1 min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span
+                      className={`rounded px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase ${
+                        alerta.tipo === "auto_referido"
+                          ? "bg-danger/20 text-danger border border-danger/30"
+                          : "bg-amber-500/20 text-amber-500 border border-amber-500/30"
+                      }`}
+                    >
+                      {alerta.tipo === "auto_referido" ? "🚨 Auto-Referido" : "⚡ Ráfaga <48hs"}
+                    </span>
+                    <span className="font-bold text-ink">
+                      Partner: {alerta.partnerNombre}
+                    </span>
+                    <code className="font-mono text-[11px] bg-paper-2 px-1.5 py-0.5 rounded border border-rule text-ink-soft">
+                      {alerta.partnerCodigo}
+                    </code>
+                    {alerta.gimnasioNombre && (
+                      <span className="text-[11px] text-ink-soft">
+                        Gym: <strong className="text-ink">{alerta.gimnasioNombre}</strong>
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-ink-soft leading-relaxed">
+                    {alerta.detalle}
+                  </p>
+                </div>
+                <div className="shrink-0 flex items-center gap-2">
+                  <span className="rounded bg-paper-2 px-2 py-1 text-[10.5px] font-semibold text-danger border border-danger/20">
+                    Revisión manual previa a liquidar
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* ───────────────────────────────────────────────────────────── */}
       {/* 1. SECCIÓN: PROGRAMA PARTNER & REFERIDOS ACTIVOS              */}
@@ -525,6 +629,13 @@ export function PartnerAdminClient({
                       {payout.nota && (
                         <div className="mt-1 text-[11px] text-ink-soft italic">
                           Nota: {payout.nota}
+                        </div>
+                      )}
+
+                      {alertasFraude.some((a) => a.partnerId === payout.partnerId) && (
+                        <div className="mt-2 inline-flex items-center gap-1.5 rounded-[6px] border border-danger/30 bg-danger/10 px-2 py-0.5 text-[11px] font-bold text-danger">
+                          <AlertOctagon className="size-3.5 shrink-0" />
+                          <span>Alerta de auditoría activa en este partner · Revisar antes de transferir</span>
                         </div>
                       )}
                     </div>

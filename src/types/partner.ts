@@ -13,6 +13,7 @@ export type Partner = {
   alias_mp: string | null;
   estado: EstadoPartner;
   creado_at: string;
+  datos_cobro_actualizados_at: string | null;
 };
 
 export type DatosCobroPartner = {
@@ -30,6 +31,9 @@ export type PartnerCommission = {
   monto_comision_ars: number;
   periodo: string; // 'YYYY-MM'
   creado_at: string;
+  estado: "pendiente" | "aprobada" | "revertida";
+  disponible_desde: string;
+  revertida_at: string | null;
 };
 
 export const COMISION_ARRANQUE_PCT = 20; // Primeros 5 gimnasios (15% + 5% bonus impulso)

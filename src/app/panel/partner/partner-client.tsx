@@ -843,9 +843,23 @@ export function PartnerDashboardClient({
                     <p className="text-[11px] text-ink-soft">
                       Base: ${Number(c.monto_base_ars).toLocaleString("es-AR")} ARS ({c.porcentaje}%)
                     </p>
+                    {c.estado === "pendiente" && (
+                      <p className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">
+                        En espera hasta el {new Date(c.disponible_desde).toLocaleDateString("es-AR")}
+                      </p>
+                    )}
+                    {c.estado === "revertida" && (
+                      <p className="text-[10px] text-danger font-medium">Revertida</p>
+                    )}
                   </div>
                   <div className="text-right">
-                    <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                    <span
+                      className={`font-mono font-bold ${
+                        c.estado === "revertida"
+                          ? "text-ink-soft line-through"
+                          : "text-emerald-600 dark:text-emerald-400"
+                      }`}
+                    >
                       +${Number(c.monto_comision_ars).toLocaleString("es-AR")} ARS
                     </span>
                     <p className="text-[10px] text-ink-soft">
@@ -1181,6 +1195,22 @@ export function PartnerDashboardClient({
                   maxLength={22}
                   className="w-full h-10 px-3 rounded-[12px] bg-paper-2 border border-rule text-ink text-sm font-mono focus:outline-none focus:border-accent"
                 />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-ink-soft block mb-1">
+                  Tu contraseña (confirmá que sos vos)
+                </label>
+                <input
+                  type="password"
+                  name="password"
+                  required
+                  placeholder="Contraseña de tu cuenta"
+                  className="w-full h-10 px-3 rounded-[12px] bg-paper-2 border border-rule text-ink text-sm focus:outline-none focus:border-accent"
+                />
+                <p className="text-[11px] text-ink-soft mt-1">
+                  Por seguridad, después de cambiar el destino de cobro hay 48hs de espera antes de poder retirar.
+                </p>
               </div>
 
               {cobroResult?.error && (

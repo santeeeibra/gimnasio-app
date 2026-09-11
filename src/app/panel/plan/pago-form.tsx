@@ -474,7 +474,11 @@ export function PagoForm({
           {pending
             ? "Generando…"
             : tipo === "plan_mensual" && selectedPlan
-              ? `Generar pago · Plan ${selectedPlan.nombre} · ${ars(montoFinal)}`
+              ? `${
+                  !planActualId || planActualId !== selectedPlan.id
+                    ? "Mejorar a Plan"
+                    : "Renovar Plan"
+                } ${selectedPlan.nombre} · ${ars(montoFinal)}`
               : `Generar pago · ${TIPO_PAGO_LABEL[tipo]} · ${ars(montoFinal)}`}
         </Button>
       </div>

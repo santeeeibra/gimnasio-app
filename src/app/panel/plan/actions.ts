@@ -181,13 +181,21 @@ export async function generarPagoPlan(
       ? `Plan ${plan?.nombre ?? "plataforma"} · ${gym?.nombre ?? ""} · ${dias} días`
       : `${TIPO_PAGO_LABEL[tipo]} · ${gym?.nombre ?? ""} (cargo único)`;
 
+  let emailPagador: string | null = null;
+  try {
+    const { data: userAuth } = await db.auth.admin.getUserById(dueno.id);
+    emailPagador = userAuth?.user?.email ?? null;
+  } catch {
+    /* best effort */
+  }
+
   let link;
   try {
     link = await via.crearLink({
       referencia: pago.id as string,
       concepto,
       montoARS,
-      emailPagador: null,
+      emailPagador,
       urlRetorno: `${origin}/panel/plan`,
     });
   } catch (err) {
