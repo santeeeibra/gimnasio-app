@@ -562,7 +562,7 @@ export function LoginForm({
                 type="button"
                 onClick={() => handleOAuthLogin("google")}
                 disabled={loadingProvider !== null || pending || pendingEmail}
-                className="group relative flex h-12.5 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.06] hover:bg-white/[0.12] hover:border-white/30 active:scale-[0.98] transition-all duration-150 font-semibold text-[14px] text-white shadow-sm touch-manipulation disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+                className="col-span-2 group relative flex h-12.5 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.06] hover:bg-white/[0.12] hover:border-white/30 active:scale-[0.98] transition-all duration-150 font-semibold text-[14px] text-white shadow-sm touch-manipulation disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
               >
                 {loadingProvider === "google" ? (
                   <svg className="animate-spin size-5 text-slate-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>
@@ -575,24 +575,6 @@ export function LoginForm({
                       <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
                     </svg>
                     <span>Google</span>
-                  </>
-                )}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleOAuthLogin("apple")}
-                disabled={loadingProvider !== null || pending || pendingEmail}
-                className="group relative flex h-12.5 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.06] hover:bg-white/[0.12] hover:border-white/30 active:scale-[0.98] transition-all duration-150 font-semibold text-[14px] text-white shadow-sm touch-manipulation disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
-              >
-                {loadingProvider === "apple" ? (
-                  <svg className="animate-spin size-5 text-slate-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>
-                ) : (
-                  <>
-                    <svg className="size-5 shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M16.365 21.43c-1.397.98-2.73 1.05-3.882.02-1.22-1.1-2.58-1.08-3.95 0-1.22.95-2.53.86-3.79-.1-2.77-2.1-4.7-6.05-4.14-9.3.26-1.54 1.05-2.9 2.21-3.78 1.4-.95 3.12-.91 4.4.4.67.65 1.57.65 2.13 0 1.34-1.37 2.89-1.46 4.31-.5 1.33.91 2.05 2.05 2.26 3.03-2.3 1.25-2.16 4.32.25 5.56-1.55 1.83-2.35 3.65-4.04 4.67zm-3.32-15.06c-.14-1.92 1.35-3.66 3.14-4.05.3 2.04-1.33 3.86-3.14 4.05z" />
-                    </svg>
-                    <span>Apple</span>
                   </>
                 )}
               </button>

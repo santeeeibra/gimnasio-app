@@ -11,14 +11,12 @@ export function JitterPoster() {
 
       {/* ── Video Player Completo de Jitter ── */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden bg-[#0a0a0c]">
-        {/* Imagen de fondo de alta definición: fallback mientras el video buffer-ea
-            y base permanente contra cualquier frame negro del <video> (loop nativo
-            en Chrome/Firefox puede pintar un frame vacío al reiniciar). */}
+        {/* Imagen de fondo de alta definición */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/images/login-poster.png"
           alt="SysGym Motion"
-          className="absolute inset-0 w-full h-full object-cover object-center scale-[1.01] contrast-[1.05] brightness-[0.98]"
+          className="absolute inset-0 w-full h-full object-cover object-bottom scale-[1.01] contrast-[1.05] brightness-[0.98]"
         />
         <video
           ref={videoRef}
@@ -37,7 +35,7 @@ export function JitterPoster() {
               v.play().catch(() => {});
             }
           }}
-          className={`relative z-10 w-full h-full object-cover object-center scale-[1.01] group-hover:scale-[1.04] transition-[transform,opacity] duration-700 ease-out filter contrast-[1.05] brightness-[0.98] ${
+          className={`relative z-10 w-full h-full object-cover object-bottom scale-[1.01] group-hover:scale-[1.04] transition-[transform,opacity] duration-700 ease-out filter contrast-[1.05] brightness-[0.98] ${
             videoListo ? "opacity-100" : "opacity-0"
           }`}
         >
