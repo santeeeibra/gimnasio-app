@@ -46,3 +46,4 @@
 - Soporte multi-usuario staff (rol 'staff', migración 0062, requireStaffODueno, panel reducido, alta/desactivación en /panel/ajustes y protección de bajas).
 - Marca de agua sutil SysGym (Hecho con SysGym • Gestioná tu progreso así • sysgym.app) en cartel de logro compartido por el socio, con Web Share nativo y branding de gimnasio intacto.
 - feed-logros.tsx estilizado con Apple HIG, variantes record/racha (ámbar/trofeo y esmeralda/llama), PulpoCard y hápticoSeleccion.
+- Celebración en vivo de récord personal en /mi/rutina: componente ConfetiCelebracion nativo en Canvas 60fps/120fps, aura lumínica, fanfarria inmediata y apertura garantizada de CartelLogro.

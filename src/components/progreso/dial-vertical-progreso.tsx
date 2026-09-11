@@ -14,6 +14,7 @@ import {
   hapticoDial,
   hapticoExito,
   hapticoError,
+  hapticoRecordPersonal,
 } from "@/lib/ui/hapticos";
 import { encolar } from "@/lib/offline/cola";
 import { CartelLogro } from "@/components/logros/cartel-logro";
@@ -308,11 +309,14 @@ export function DialVerticalProgreso({
 
   useEffect(() => {
     if (state.ok) {
-      hapticoExito();
-      setFeedbackOk(true);
-      if (state.record?.esRecord && colores && gimnasioNombre) {
+      if (state.record?.esRecord) {
+        iniciarAudioHaptico();
+        hapticoRecordPersonal();
         setLogro(state.record);
+      } else {
+        hapticoExito();
       }
+      setFeedbackOk(true);
       const t = setTimeout(() => setFeedbackOk(false), 2000);
       return () => clearTimeout(t);
     } else if (state.error) {
@@ -320,20 +324,31 @@ export function DialVerticalProgreso({
     }
   }, [state]);
 
+  const coloresEfectivos: ColoresImagen = colores ?? {
+    paper: "#09090b",
+    ink: "#f4f4f5",
+    volt: "#10e7a0",
+    voltInk: "#042f22",
+  };
+  const gymNombreEfectivo =
+    gimnasioNombre && gimnasioNombre.trim().length > 0
+      ? gimnasioNombre
+      : "SysGym";
+
   return (
     <>
-    {logro && colores && gimnasioNombre && (
+    {logro && (
       <CartelLogro
         tipo="record"
         titulo={tituloRecord(logro.pesoKg, ejercicioNombre ?? "tu ejercicio")}
         subtitulo={
           logro.pesoAnteriorKg != null
-            ? `Tu marca anterior era ${logro.pesoAnteriorKg} kg`
-            : undefined
+            ? `Superaste tu marca anterior de ${logro.pesoAnteriorKg} kg`
+            : "¡Primer registro histórico en este ejercicio!"
         }
-        gimnasioNombre={gimnasioNombre}
+        gimnasioNombre={gymNombreEfectivo}
         logoUrl={logoUrl ?? null}
-        colores={colores}
+        colores={coloresEfectivos}
         whatsapp={{ pesoKg: logro.pesoKg, ejercicio: ejercicioNombre ?? "" }}
         onCerrar={() => setLogro(null)}
       />
@@ -435,6 +450,7 @@ export function DialVerticalProgreso({
       <button
         type="submit"
         disabled={pending}
+        onClick={() => iniciarAudioHaptico()}
         aria-label="Guardar peso y reps de este ejercicio"
         className={`w-full h-6 rounded-[6px] text-[10px] font-bold tracking-tight transition-all duration-150 flex items-center justify-center gap-1 active:scale-95 disabled:opacity-50 my-0.5 ${
           feedbackOk

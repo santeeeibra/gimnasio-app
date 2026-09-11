@@ -23,6 +23,7 @@ import {
 } from "@/lib/logros/compartir";
 import type { TipoLogro } from "@/lib/logros/tipos";
 import { PulpoCard } from "@/components/mascota/pulpo";
+import { ConfetiCelebracion } from "@/components/ui/confeti-celebracion";
 import {
   hapticoImpactoMedio,
   hapticoRecordPersonal,
@@ -143,7 +144,17 @@ export function CartelLogro(props: CartelLogroProps) {
       data-logro={props.tipo}
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md transition-all duration-200 animate-in fade-in"
     >
-      <div className="relative w-full max-w-sm rounded-[22px] border border-white/10 bg-zinc-950/95 p-6 shadow-2xl backdrop-blur-2xl text-white animate-in zoom-in-95 duration-200 flex flex-col items-center text-center overflow-hidden">
+      {/* Lluvia de confeti festivo (Canvas 60fps) */}
+      <ConfetiCelebracion activo={true} tipo={props.tipo} />
+
+      {/* Halo de resplandor ambiental detrás del modal */}
+      <div
+        className={`absolute w-full max-w-sm h-80 rounded-[32px] blur-3xl pointer-events-none opacity-40 transition-opacity duration-500 ${
+          esRecord ? "bg-amber-500" : "bg-emerald-500"
+        }`}
+      />
+
+      <div className="relative w-full max-w-sm rounded-[22px] border border-white/10 bg-zinc-950/95 p-6 shadow-2xl backdrop-blur-2xl text-white animate-in zoom-in-95 duration-200 flex flex-col items-center text-center overflow-hidden z-10">
         {/* Botón de cerrar superior */}
         {props.onCerrar && (
           <button
