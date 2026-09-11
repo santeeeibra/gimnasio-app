@@ -31,7 +31,6 @@ import {
   type Rol,
   type Sexo,
   type Tecnica,
-  type Volumen,
 } from "./tipos";
 import { calcularBalanceVolumen, resumirBalance } from "./balance";
 import { auditarYEspaciarDias } from "./recuperacion";
@@ -133,15 +132,20 @@ const PUSH: Ranura[] = [
   A("triceps"),
   A("triceps"),
 ];
-// Un solo primario de espalda (el jalón/dominada pesado de arranque) + dos
-// compuestos de apoyo. Antes tenía dos P("espalda") seguidos, que con el +1 de
-// avanzado se iban a 5+5 series de espalda antes de los accesorios — volumen
-// excesivo para una sola sesión, sobre todo en PPL de 6 días (frecuencia 2).
+// Un solo primario de espalda (el jalón/dominada pesado de arranque) + un
+// compuesto de apoyo. Antes tenía dos P("espalda") seguidos (5+5 series con el
+// +1 de avanzado) y después dos S("espalda") seguidos (4+3+3=10 series de
+// espalda, justo en el techo). FIX auditoría (2026-09-11): con cualquier
+// escalado de volumen futuro sobre el techo por rol, 3 ranuras del mismo grupo
+// en un día quedan sin margen — se reemplaza la 2ª ranura de apoyo por un 2º
+// accesorio de bíceps (día de tracción = énfasis natural de bíceps, Simão et
+// al.), dejando espalda en 1 primario + 1 secundario (4+3=7 series, con
+// margen real bajo el techo de 6-10/sesión).
 const PULL: Ranura[] = [
   P("espalda", "traccion_vertical"),
   S("espalda", "traccion_horizontal"),
-  S("espalda", "traccion_horizontal"),
   A("hombros"),
+  A("biceps"),
   A("biceps"),
   A("core"),
 ];
@@ -695,17 +699,16 @@ function ajustarPorSexo(
 
 // Techo duro por rol: evita la acumulación de más de 4 series en un mismo ejercicio
 // básico (Beardsley/Schoenfeld: rendimientos decrecientes y daño articular excesivo).
-function resolverMaxPorRol(
-  esquema: EsquemaObj,
-  volumen?: Volumen,
-): Record<Rol, number> {
-  if (volumen === "mav") {
-    return {
-      primario: Math.min(4, esquema.primario.series + 1),
-      secundario: Math.min(4, esquema.secundario.series + 1),
-      aislamiento: Math.min(3, esquema.aislamiento.series + 1),
-    };
-  }
+// FIX auditoría (2026-09-11): antes `volumen === "mav"` subía este techo (+1 a cada
+// rol), duplicando la palanca de volumen que ya aplica FACTOR_VOLUMEN (×1.1 sobre el
+// presupuesto del día, Fase 2). Esa suba SÍ movía el presupuesto total correctamente,
+// pero el +1 de acá además rompía el techo por grupo/sesión (6-10 series, Heaselgrave
+// 2019/Krieger 2020): en PULL (2 ranuras secundarias de espalda) el secundario subía
+// de 3 a 4, dando 4+4+4=12 series de espalda en una sola sesión. "Más volumen
+// semanal" (MAV) es repartir más series entre ranuras y frecuencia, no inflar el
+// techo anti-junk-volume de UN ejercicio puntual — ese techo es fijo por rol,
+// independiente del preset de volumen.
+function resolverMaxPorRol(esquema: EsquemaObj): Record<Rol, number> {
   return {
     primario: Math.min(4, esquema.primario.series),
     secundario: Math.min(3, esquema.secundario.series),
@@ -1366,7 +1369,7 @@ export function generarPlan(
     const seriesPorRanura = repartirSeries(
       ranuras.map((r) => r.rol),
       presupuesto,
-      resolverMaxPorRol(esquema, avanzado?.volumen),
+      resolverMaxPorRol(esquema),
       resolverMinPorRol(esquema),
     );
 
