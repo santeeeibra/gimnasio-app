@@ -114,7 +114,7 @@ export function PublicarPlantilla({ rutinaId }: { rutinaId: string }) {
               className="mt-1 h-10 w-full rounded-[10px] border border-rule bg-paper px-3 text-[16px] uppercase text-ink"
             />
             <span className="mt-1 block normal-case tracking-normal text-[11px] text-ink-soft">
-              Queda como sysgym.app/r/TUCODIGO. Si lo dejás vacío lo generamos.
+              Queda como .../r/TUCODIGO. Si lo dejás vacío lo generamos.
             </span>
           </label>
           {state.error && <p className="text-xs text-danger">{state.error}</p>}

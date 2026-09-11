@@ -15,6 +15,20 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "**.supabase.co" },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: '/partners',
+        destination: '/registro-partner',
+        permanent: true,
+      },
+      {
+        source: '/partner',
+        destination: '/registro-partner',
+        permanent: true,
+      }
+    ];
+  },
 };
 
 export default nextConfig;

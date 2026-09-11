@@ -395,6 +395,7 @@ export default function LandingPage() {
           </p>
 
           <div className="flex items-center gap-4 text-xs text-neutral-400 font-semibold">
+            <Link href="/registro-partner" className="text-[#c8ff00] hover:text-[#b5e600] transition-colors">Programa de Partners</Link>
             <Link href="/login" className="hover:text-white transition-colors">Ingresar</Link>
             <Link href="/login/olvide-clave" className="hover:text-white transition-colors">Recuperar Clave</Link>
           </div>
