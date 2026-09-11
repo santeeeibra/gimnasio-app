@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireDueno } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { notificarSuperadmin } from "@/lib/admin/notificar";
 import {
   CAMPOS_COLOR,
@@ -361,5 +362,89 @@ export async function actualizarTema(
   revalidatePath("/panel", "layout");
   revalidatePath("/mi", "layout");
   return { ok: "Tema actualizado correctamente" };
+}
+
+// Cuentas individuales (tipo_cuenta = "individual", ver auth/callback/route.ts):
+// entraron con Google y no tienen contraseña propia en auth.users. Esto les
+// permite fijar un teléfono + contraseña para loguearse después con
+// nombre/email/teléfono desde la pestaña "Cuenta individual" del login
+// (loginIndividual en login/actions.ts), sin depender de Google cada vez.
+export async function actualizarCredencialesIndividuales(
+  _prev: AjustesState,
+  formData: FormData,
+): Promise<AjustesState> {
+  const dueno = await requireDueno();
+
+  const admin = createAdminClient();
+  const { data: gym } = await admin
+    .from("gimnasios")
+    .select("tipo_cuenta")
+    .eq("id", dueno.gimnasio_id)
+    .maybeSingle();
+  if (gym?.tipo_cuenta !== "individual") {
+    return { error: "Esta opción es solo para cuentas individuales." };
+  }
+
+  const telefonoRaw = String(formData.get("telefono") ?? "").trim();
+  const telefono = telefonoRaw ? telefonoRaw.replace(/[^\d+]/g, "") : null;
+  const clave = String(formData.get("clave") ?? "");
+
+  if (clave && clave.length < 6) {
+    return { error: "La contraseña debe tener al menos 6 caracteres." };
+  }
+
+  if (telefono) {
+    const { error: telErr } = await admin
+      .from("profiles")
+      .update({ telefono })
+      .eq("id", dueno.id);
+    if (telErr) {
+      console.error("[actualizarCredencialesIndividuales]", telErr);
+      return { error: "No se pudo guardar el teléfono." };
+    }
+  }
+
+  if (clave) {
+    const { error: passErr } = await admin.auth.admin.updateUserById(dueno.id, {
+      password: clave,
+    });
+    if (passErr) {
+      return { error: `No se pudo guardar la contraseña: ${passErr.message}` };
+    }
+
+    // La Admin API revoca las sesiones existentes al cambiar la contraseña
+    // (medida de seguridad de Supabase): sin esto, el dueño quedaría
+    // deslogueado apenas Next revalida esta página y nunca vería el mensaje
+    // de éxito. Reautenticamos acá mismo con la contraseña nueva para que
+    // la sesión (cookies) siga siendo válida.
+    const { data: perfil } = await admin
+      .from("profiles")
+      .select("email_recuperacion")
+      .eq("id", dueno.id)
+      .maybeSingle();
+    if (perfil?.email_recuperacion) {
+      const supabase = await createClient();
+      const { error: reloginErr } = await supabase.auth.signInWithPassword({
+        email: perfil.email_recuperacion,
+        password: clave,
+      });
+      if (reloginErr) {
+        // La contraseña sí se guardó; solo avisamos que hay que volver a entrar.
+        return {
+          ok: "Contraseña guardada. Volvé a entrar con tu contraseña nueva.",
+        };
+      }
+    }
+  }
+
+  revalidatePath("/panel/ajustes");
+  return {
+    ok:
+      telefono && clave
+        ? "Teléfono y contraseña guardados."
+        : clave
+          ? "Contraseña guardada."
+          : "Teléfono guardado.",
+  };
 }
 

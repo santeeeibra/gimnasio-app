@@ -14,7 +14,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { JitterPoster } from "./jitter-poster";
-import { login, loginConEmail, type LoginState } from "./actions";
+import { login, loginIndividual, type LoginState } from "./actions";
 import {
   iniciarAudioHaptico,
   hapticoDial,
@@ -46,9 +46,9 @@ export function LoginForm({
   const [emailState, formActionEmail, pendingEmail] = useActionState<
     LoginState,
     FormData
-  >(loginConEmail, {});
+  >(loginIndividual, {});
   const [modo, setModo] = useState<"dni" | "email">("dni");
-  const [emailInput, setEmailInput] = useState("");
+  const [identificadorInput, setIdentificadorInput] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [gimnasio, setGimnasio] = useState(initialGymSlug ?? "");
   const [gimnasioNombre, setGimnasioNombre] = useState<string | null>(
@@ -199,7 +199,7 @@ export function LoginForm({
                       : "text-slate-400 hover:text-white"
                   }`}
                 >
-                  Con Email (Directo)
+                  Cuenta individual
                 </button>
               </div>
 
@@ -207,26 +207,27 @@ export function LoginForm({
                 <form action={formActionEmail} className="space-y-5">
                   <div>
                     <h2 className="text-2xl font-bold text-white tracking-tight">
-                      Entrar con Email
+                      Entrar
                     </h2>
                     <p className="mt-1 text-[13px] text-slate-300 leading-relaxed">
                       Para cuentas individuales y entrenadores independientes.
+                      Sin gimnasio.
                     </p>
                   </div>
 
                   <div className="space-y-1.5">
                     <label className="text-[12px] font-bold text-slate-200 uppercase tracking-wider">
-                      Email
+                      Usuario, email o teléfono
                     </label>
                     <div className="relative">
                       <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 size-5 text-slate-400 pointer-events-none" />
                       <input
-                        name="email"
-                        type="email"
-                        autoComplete="email"
-                        value={emailInput}
-                        onChange={(e) => setEmailInput(e.target.value)}
-                        placeholder="tu@email.com"
+                        name="identificador"
+                        type="text"
+                        autoComplete="username"
+                        value={identificadorInput}
+                        onChange={(e) => setIdentificadorInput(e.target.value)}
+                        placeholder="Nombre, tu@email.com o tu teléfono"
                         required
                         className="w-full h-12.5 pl-10.5 pr-4 rounded-xl border border-white/20 bg-[#1d212d] text-white text-[16px] outline-none transition-[border-color,box-shadow,background-color] duration-150 focus:border-volt focus:bg-[#222736] focus:ring-2 focus:ring-volt/30"
                       />

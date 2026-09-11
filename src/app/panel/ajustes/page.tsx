@@ -11,6 +11,7 @@ import { AvisoMorosidadForm } from "./aviso-morosidad-form";
 import { ReposoCheckinForm } from "./reposo-checkin-form";
 import { DatosPagoForm } from "./datos-pago-form";
 import { EmailRecuperacionForm } from "./email-recuperacion-form";
+import { CredencialesIndividualForm } from "./credenciales-individual-form";
 import { ContactarSoporteForm } from "./contactar-soporte-form";
 import { VerTutorialDeNuevo } from "@/components/tutorial/tutorial";
 import { LinkAccesoCard } from "./link-acceso-card";
@@ -51,7 +52,7 @@ export default async function AjustesPage({
     supabase
       .from("gimnasios")
       .select(
-        "id, slug, nombre, tema, logo_url, dias_aviso_morosidad, estado, plan_plataforma_vence_el, pago_alias, pago_cbu, pago_titular",
+        "id, slug, nombre, tema, logo_url, dias_aviso_morosidad, estado, plan_plataforma_vence_el, pago_alias, pago_cbu, pago_titular, tipo_cuenta",
       )
       .eq("id", profile.gimnasio_id)
       .maybeSingle(),
@@ -63,7 +64,7 @@ export default async function AjustesPage({
       .maybeSingle(),
     supabase
       .from("profiles")
-      .select("email_recuperacion")
+      .select("email_recuperacion, telefono")
       .eq("id", profile.id)
       .maybeSingle(),
     estadoCobroAutomatico(db, profile.gimnasio_id),
@@ -254,6 +255,22 @@ export default async function AjustesPage({
             email={miPerfil?.email_recuperacion ?? null}
           />
         </AjustesSeccionModal>
+
+        {/* ACCESO DIRECTO (solo cuentas individuales de Google) */}
+        {gym?.tipo_cuenta === "individual" ? (
+          <AjustesSeccionModal
+            titulo="Acceso directo"
+            subtitulo="Loguéate con nombre, email o teléfono + contraseña, sin pasar por Google."
+            icon={<KeyRound className="size-4" />}
+            resumen={
+              <p className="text-[11px] text-ink-soft font-mono">
+                {miPerfil?.telefono ?? "Sin teléfono registrado"}
+              </p>
+            }
+          >
+            <CredencialesIndividualForm telefono={miPerfil?.telefono ?? null} />
+          </AjustesSeccionModal>
+        ) : null}
 
         {/* CONTACTAR SOPORTE */}
         <AjustesSeccionModal
