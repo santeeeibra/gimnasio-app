@@ -21,6 +21,10 @@ import {
   Users,
   MessageCircle,
   Clock,
+  Crown,
+  BookOpen,
+  Headphones,
+  Rocket,
 } from "lucide-react";
 import { PulpoCard } from "@/components/mascota/pulpo";
 import { useHapticos } from "@/lib/ui/hapticos";
@@ -30,6 +34,9 @@ import {
   type PartnerPayout,
   RETIRO_MINIMO_ARS,
   BONOS_HITO,
+  calcularRangoPartner,
+  COMISION_ARRANQUE_PCT,
+  COMISION_ESTANDAR_PCT,
 } from "@/types/partner";
 import {
   actualizarDatosCobroAction,
@@ -129,10 +136,25 @@ export function PartnerDashboardClient({
     });
   };
 
-  // Cálculo de progreso hacia el próximo hito
-  const metaActual = proximoHito ? proximoHito.milestone : 10;
+  // Rango oficial y estado de fast-start
+  const rangoActual = calcularRangoPartner(gimnasiosPagoActivos);
+  const quedaArranque = Math.max(0, 5 - gimnasiosPagoActivos);
+  const esArranqueActivo = quedaArranque > 0;
   const faltan = proximoHito ? proximoHito.faltan : 0;
-  const progresoHitoPct = Math.min(100, Math.round((gimnasiosPagoActivos / metaActual) * 100));
+
+  // Estado para copiar scripts del Arsenal
+  const [copiadoScriptId, setCopiadoScriptId] = useState<string | null>(null);
+
+  const copiarScript = async (id: string, texto: string) => {
+    try {
+      await navigator.clipboard.writeText(texto);
+      setCopiadoScriptId(id);
+      hapticos.exito();
+      setTimeout(() => setCopiadoScriptId(null), 2500);
+    } catch {
+      hapticos.suave();
+    }
+  };
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto animate-fade-in pb-12">
@@ -142,18 +164,29 @@ export function PartnerDashboardClient({
         
         <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="space-y-3 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[#10e7a0] text-xs font-bold tracking-wide">
-              <ShieldCheck className="size-4" />
-              <span>PROGRAMA OFICIAL SYSGYM PARTNER</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[#10e7a0] text-xs font-bold tracking-wide">
+                <ShieldCheck className="size-4" />
+                <span>PROGRAMA OFICIAL SYSGYM PARTNER</span>
+              </div>
+              {esArranqueActivo && (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-extrabold animate-pulse">
+                  <Rocket className="size-3.5 text-amber-400" />
+                  <span>20% Bono Arranque Activo ({quedaArranque} restante{quedaArranque === 1 ? "" : "s"})</span>
+                </div>
+              )}
             </div>
 
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-tight">
-              Recomendá SysGym y ganá{" "}
-              <span className="text-[#10e7a0]">10% recurrente</span> de por vida
+              Impulsá gimnasios con SysGym y ganá{" "}
+              <span className="text-[#10e7a0]">
+                {esArranqueActivo ? "20% inicial" : "15% inicial"}
+              </span>{" "}
+              + $180.000 ARS en Bonos
             </h1>
 
             <p className="text-sm text-zinc-400 leading-relaxed">
-              Por cada dueño de gimnasio o box que se sume con tu enlace, recibís comisiones mensuales recurrentes del 10% más bonos acumulativos en efectivo de hasta $110.000 ARS.
+              Recibís comisión directa sobre el primer pago de cada gimnasio adherido ({COMISION_ARRANQUE_PCT}% en tus primeros 5 gimnasios, {COMISION_ESTANDAR_PCT}% en los siguientes) más bonos acumulativos en efectivo de ${BONOS_HITO[5].toLocaleString("es-AR")}, ${BONOS_HITO[10].toLocaleString("es-AR")} y ${BONOS_HITO[15].toLocaleString("es-AR")} ARS al llegar a 5, 10 y 15 sedes activas.
             </p>
           </div>
 
@@ -231,6 +264,75 @@ export function PartnerDashboardClient({
               <CreditCard className="size-3.5" />
               <span>Datos de cobro</span>
             </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ── 1.5. Credencial Digital Holográfica & Rango Oficial ───────────── */}
+      <div className="relative overflow-hidden rounded-[24px] border border-rule bg-paper p-6 shadow-sm">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
+          <div className="flex items-center gap-4">
+            <div
+              className="size-14 rounded-[16px] flex items-center justify-center text-2xl shadow-inner border"
+              style={{
+                backgroundColor: `${rangoActual.color}18`,
+                borderColor: `${rangoActual.color}45`,
+              }}
+            >
+              <Crown className="size-7" style={{ color: rangoActual.color }} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs uppercase tracking-wider font-extrabold text-ink-soft">
+                  Credencial Oficial
+                </span>
+                <span
+                  className="text-[11px] font-bold px-2 py-0.5 rounded-full"
+                  style={{
+                    backgroundColor: `${rangoActual.color}25`,
+                    color: rangoActual.color,
+                  }}
+                >
+                  {rangoActual.badge}
+                </span>
+              </div>
+              <h2 className="text-xl font-extrabold text-ink mt-0.5">
+                {rangoActual.nombre}
+              </h2>
+              <p className="text-xs text-ink-soft mt-0.5">
+                {rangoActual.beneficio}
+              </p>
+            </div>
+          </div>
+
+          {/* Mini medidor al siguiente rango */}
+          <div className="w-full md:w-auto min-w-[240px] p-3.5 rounded-[14px] bg-paper-2/70 border border-rule space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-semibold text-ink-soft">Siguiente escalafón</span>
+              <span className="font-bold font-mono text-ink">
+                {gimnasiosPagoActivos >= 15
+                  ? "¡Nivel Máximo!"
+                  : `${Math.min(15, gimnasiosPagoActivos)} / ${gimnasiosPagoActivos < 5 ? 5 : gimnasiosPagoActivos < 10 ? 10 : 15} gyms`}
+              </span>
+            </div>
+            <div className="w-full h-2 rounded-full bg-paper overflow-hidden border border-rule">
+              <div
+                className="h-full rounded-full transition-all duration-700 ease-out"
+                style={{
+                  width: `${Math.min(100, (gimnasiosPagoActivos / (gimnasiosPagoActivos < 5 ? 5 : gimnasiosPagoActivos < 10 ? 10 : 15)) * 100)}%`,
+                  backgroundColor: rangoActual.color,
+                }}
+              />
+            </div>
+            <p className="text-[10px] text-ink-soft text-right">
+              {gimnasiosPagoActivos < 5
+                ? `Faltan ${5 - gimnasiosPagoActivos} para Partner Pro 🥈`
+                : gimnasiosPagoActivos < 10
+                ? `Faltan ${10 - gimnasiosPagoActivos} para Partner Elite 🥇`
+                : gimnasiosPagoActivos < 15
+                ? `Faltan ${15 - gimnasiosPagoActivos} para Embajador Black 💎`
+                : "¡Sos Embajador Black oficial de SysGym!"}
+            </p>
           </div>
         </div>
       </div>
@@ -325,11 +427,11 @@ export function PartnerDashboardClient({
           </div>
         </div>
 
-        {/* Comisión Recurrente */}
+        {/* Comisión Inicial */}
         <div className="rounded-[20px] border border-rule bg-paper p-5 flex flex-col justify-between gap-4 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-ink-soft uppercase tracking-wider">
-              Comisión Mensual
+              Tasa de Comisión
             </span>
             <div className="p-2 rounded-[10px] bg-amber-500/15 text-amber-500">
               <Percent className="size-4" />
@@ -338,17 +440,19 @@ export function PartnerDashboardClient({
 
           <div>
             <div className="text-2xl sm:text-3xl font-mono font-extrabold text-ink">
-              10%
-              <span className="text-xs font-normal text-ink-soft ml-1">recurrente</span>
+              {esArranqueActivo ? `${COMISION_ARRANQUE_PCT}%` : `${COMISION_ESTANDAR_PCT}%`}
+              <span className="text-xs font-normal text-ink-soft ml-1">en 1er pago</span>
             </div>
             <p className="text-[11px] text-ink-soft mt-1">
-              Últimos 30d: ${resumen.comisionesUltimos30d.toLocaleString("es-AR")} ARS
+              {esArranqueActivo
+                ? `Tasa preferencial: quedan ${quedaArranque} de 5 gyms`
+                : "Tasa estándar aplicada a nuevos gyms"}
             </p>
           </div>
 
           <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
             <Sparkles className="size-3" />
-            <span>Sin vencimiento ni topes</span>
+            <span>+ $180k en bonos por metas</span>
           </div>
         </div>
       </div>
@@ -422,7 +526,7 @@ export function PartnerDashboardClient({
                         : "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30"
                     }`}
                   >
-                    {g.esPagoActivo ? "Pago Activo · 10%" : "Plan Inicial"}
+                    {g.esPagoActivo ? "Pago Activo · 15%" : "Plan Inicial"}
                   </span>
                 </div>
 
@@ -443,9 +547,9 @@ export function PartnerDashboardClient({
 
                 <p className="text-[11px] text-ink-soft leading-tight">
                   {g.esPagoActivo
-                    ? "✅ Califica para bono por hito y genera 10% mensual de comisión."
+                    ? "✅ Califica para bono por hito y comisión inicial del 15% por activación."
                     : g.alumnosActivos >= 35
-                    ? "⏳ Cerca de los 40 alumnos: cuando pase a Pro/Elite empezará a comisionar."
+                    ? "⏳ Cerca de los 40 alumnos: cuando pase a Pro/Elite generará tu comisión y sumará para los bonos."
                     : "🌱 Utilizando el Plan Inicial Gratuito para probar la plataforma."}
                 </p>
               </div>
@@ -480,8 +584,8 @@ export function PartnerDashboardClient({
           )}
         </div>
 
-        {/* Tarjetas de Hito 1 y Hito 2 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Tarjetas de Hitos: 5, 10 y 15 Gimnasios */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Hito 1: 5 Gimnasios */}
           <div
             className={`rounded-[18px] border p-5 flex flex-col justify-between gap-4 transition-all ${
@@ -493,10 +597,10 @@ export function PartnerDashboardClient({
             <div className="flex items-start justify-between gap-3">
               <div>
                 <span className="text-[11px] uppercase tracking-wider font-bold text-ink-soft">
-                  Hito 1 · 5 Gimnasios Pagos
+                  Hito 1 · 5 Gimnasios
                 </span>
                 <h3 className="text-xl font-bold text-ink mt-0.5">
-                  +$30.000 ARS en efectivo
+                  +${BONOS_HITO[5].toLocaleString("es-AR")} ARS
                 </h3>
               </div>
               <div
@@ -515,13 +619,13 @@ export function PartnerDashboardClient({
             </div>
 
             <p className="text-xs text-ink-soft">
-              Se acredita en tu saldo automáticamente en cuanto 5 gimnasios referidos alcancen +40 alumnos con Plan Pro o Elite.
+              Se acredita en tu saldo al alcanzar 5 gimnasios referidos con Plan Pro o Elite activo.
             </p>
 
             <div className="flex items-center justify-between text-xs font-semibold pt-2 border-t border-rule/60">
               <span className="text-ink-soft">Progreso</span>
               <span className="font-mono text-ink">
-                {Math.min(5, gimnasiosPagoActivos)} / 5 gimnasios
+                {Math.min(5, gimnasiosPagoActivos)} / 5 sedes
               </span>
             </div>
           </div>
@@ -537,10 +641,10 @@ export function PartnerDashboardClient({
             <div className="flex items-start justify-between gap-3">
               <div>
                 <span className="text-[11px] uppercase tracking-wider font-bold text-ink-soft">
-                  Hito 2 · 10 Gimnasios Pagos
+                  Hito 2 · 10 Gimnasios
                 </span>
                 <h3 className="text-xl font-bold text-ink mt-0.5">
-                  +$80.000 ARS en efectivo
+                  +${BONOS_HITO[10].toLocaleString("es-AR")} ARS
                 </h3>
               </div>
               <div
@@ -559,13 +663,57 @@ export function PartnerDashboardClient({
             </div>
 
             <p className="text-xs text-ink-soft">
-              Bono acumulativo extra que se suma al del Hito 1. ¡Totalizando $110.000 ARS en bonos de bienvenida!
+              Bono en efectivo adicional que se suma al Hito 1 ($80.000 ARS acumulados).
             </p>
 
             <div className="flex items-center justify-between text-xs font-semibold pt-2 border-t border-rule/60">
               <span className="text-ink-soft">Progreso</span>
               <span className="font-mono text-ink">
-                {Math.min(10, gimnasiosPagoActivos)} / 10 gimnasios
+                {Math.min(10, gimnasiosPagoActivos)} / 10 sedes
+              </span>
+            </div>
+          </div>
+
+          {/* Hito 3: 15 Gimnasios */}
+          <div
+            className={`rounded-[18px] border p-5 flex flex-col justify-between gap-4 transition-all ${
+              hitosAlcanzados.includes(15)
+                ? "bg-emerald-500/10 border-emerald-500/40 text-emerald-950 dark:text-emerald-100"
+                : "bg-paper-2/60 border-rule"
+            }`}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <span className="text-[11px] uppercase tracking-wider font-bold text-ink-soft">
+                  Hito 3 · 15 Gimnasios
+                </span>
+                <h3 className="text-xl font-bold text-ink mt-0.5">
+                  +${BONOS_HITO[15].toLocaleString("es-AR")} ARS
+                </h3>
+              </div>
+              <div
+                className={`p-2 rounded-xl shrink-0 ${
+                  hitosAlcanzados.includes(15)
+                    ? "bg-emerald-500 text-black font-bold"
+                    : "bg-paper border border-rule text-ink-soft"
+                }`}
+              >
+                {hitosAlcanzados.includes(15) ? (
+                  <Check className="size-4" />
+                ) : (
+                  <Award className="size-4" />
+                )}
+              </div>
+            </div>
+
+            <p className="text-xs text-ink-soft">
+              Premio mayor en efectivo al consolidar 15 sedes ($180.000 ARS en bonos totales acumulados).
+            </p>
+
+            <div className="flex items-center justify-between text-xs font-semibold pt-2 border-t border-rule/60">
+              <span className="text-ink-soft">Progreso</span>
+              <span className="font-mono text-ink">
+                {Math.min(15, gimnasiosPagoActivos)} / 15 sedes
               </span>
             </div>
           </div>
@@ -589,7 +737,7 @@ export function PartnerDashboardClient({
                 Aún no tenés comisiones registradas.
               </p>
               <p className="text-[11px] text-ink-soft">
-                Compartí tu enlace con colegas para empezar a recibir el 10% mensual.
+                Compartí tu enlace con colegas para recibir tu comisión en su primer pago.
               </p>
             </div>
           ) : (
@@ -674,6 +822,219 @@ export function PartnerDashboardClient({
               ))}
             </div>
           )}
+        </div>
+      </div>
+
+      {/* ── 5. Arsenal de Difusión del Partner (Plantillas Listas) ─────── */}
+      <div className="rounded-[24px] border border-rule bg-paper p-6 space-y-6 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-rule pb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <BookOpen className="size-5 text-accent" />
+              <h2 className="text-lg font-bold text-ink">
+                Arsenal del Partner: Mensajes Listos para Compartir
+              </h2>
+            </div>
+            <p className="text-xs text-ink-soft mt-0.5">
+              Copiá y pegá estos mensajes probados para conseguir que los gimnasios se registren con tu código en 1 clic.
+            </p>
+          </div>
+          <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-accent/15 text-accent self-start sm:self-auto">
+            3 Plantillas de Alta Conversión
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Script 1: Para Dueño de Gimnasio / Box */}
+          <div className="rounded-[18px] border border-rule bg-paper-2/60 p-4 flex flex-col justify-between gap-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-ink-soft">
+                  Para Dueños de Gym
+                </span>
+                <span className="text-xs">🏋️‍♂️</span>
+              </div>
+              <h3 className="text-sm font-bold text-ink">
+                Propuesta de Valor Directa
+              </h3>
+              <p className="text-xs text-ink-soft italic bg-paper p-3 rounded-[12px] border border-rule/70 leading-relaxed font-sans select-all">
+                &ldquo;¡Buenas! Te paso el sistema que están usando varios boxes y gimnasios: SysGym automatiza cobros con Mercado Pago, accesos QR en puerta y rutinas personalizadas para los alumnos. Es 100% gratis hasta 40 alumnos. Creá tu cuenta con mi enlace: {urlReferido}&rdquo;
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() =>
+                copiarScript(
+                  "script-dueno",
+                  `¡Buenas! Te paso el sistema que están usando varios boxes y gimnasios: SysGym automatiza cobros con Mercado Pago, accesos QR en puerta y rutinas personalizadas para los alumnos. Es 100% gratis hasta 40 alumnos. Creá tu cuenta con mi enlace: ${urlReferido}`
+                )
+              }
+              className="w-full h-9 rounded-[10px] font-semibold text-xs inline-flex items-center justify-center gap-2 bg-paper text-ink border border-rule hover:border-accent hover:text-accent active:scale-95 transition-all shadow-xs"
+            >
+              {copiadoScriptId === "script-dueno" ? (
+                <>
+                  <Check className="size-3.5 text-emerald-500" />
+                  <span className="text-emerald-500 font-bold">¡Copiado!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="size-3.5 text-ink-soft" />
+                  <span>Copiar mensaje</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Script 2: Para Historia de Instagram / Estados de WhatsApp */}
+          <div className="rounded-[18px] border border-rule bg-paper-2/60 p-4 flex flex-col justify-between gap-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-ink-soft">
+                  Instagram / Estados
+                </span>
+                <span className="text-xs">📲</span>
+              </div>
+              <h3 className="text-sm font-bold text-ink">
+                Story / Sticker de Enlace
+              </h3>
+              <p className="text-xs text-ink-soft italic bg-paper p-3 rounded-[12px] border border-rule/70 leading-relaxed font-sans select-all">
+                &ldquo;¿Tenés gimnasio o entrenás alumnos? Dejá de renegar con planillas de Excel. Con SysGym tenés cobros automáticos, QR y rutinas con IA. Entrá gratis con mi link hasta 40 alumnos 👉 {urlReferido}&rdquo;
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() =>
+                copiarScript(
+                  "script-story",
+                  `¿Tenés gimnasio o entrenás alumnos? Dejá de renegar con planillas de Excel. Con SysGym tenés cobros automáticos, QR y rutinas con IA. Entrá gratis con mi link hasta 40 alumnos 👉 ${urlReferido}`
+                )
+              }
+              className="w-full h-9 rounded-[10px] font-semibold text-xs inline-flex items-center justify-center gap-2 bg-paper text-ink border border-rule hover:border-accent hover:text-accent active:scale-95 transition-all shadow-xs"
+            >
+              {copiadoScriptId === "script-story" ? (
+                <>
+                  <Check className="size-3.5 text-emerald-500" />
+                  <span className="text-emerald-500 font-bold">¡Copiado!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="size-3.5 text-ink-soft" />
+                  <span>Copiar mensaje</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Script 3: Para Colega Entrenador o Profe */}
+          <div className="rounded-[18px] border border-rule bg-paper-2/60 p-4 flex flex-col justify-between gap-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-ink-soft">
+                  Para Profes / Coaches
+                </span>
+                <span className="text-xs">🤝</span>
+              </div>
+              <h3 className="text-sm font-bold text-ink">
+                Recomendación entre Colegas
+              </h3>
+              <p className="text-xs text-ink-soft italic bg-paper p-3 rounded-[12px] border border-rule/70 leading-relaxed font-sans select-all">
+                &ldquo;Che, si en tu gym todavía cobran por transferencia manual o controlan a mano los accesos, mostrales SysGym. Les ahorra horas por semana y el plan inicial es sin costo hasta 40 socios: {urlReferido}&rdquo;
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() =>
+                copiarScript(
+                  "script-colega",
+                  `Che, si en tu gym todavía cobran por transferencia manual o controlan a mano los accesos, mostrales SysGym. Les ahorra horas por semana y el plan inicial es sin costo hasta 40 socios: ${urlReferido}`
+                )
+              }
+              className="w-full h-9 rounded-[10px] font-semibold text-xs inline-flex items-center justify-center gap-2 bg-paper text-ink border border-rule hover:border-accent hover:text-accent active:scale-95 transition-all shadow-xs"
+            >
+              {copiadoScriptId === "script-colega" ? (
+                <>
+                  <Check className="size-3.5 text-emerald-500" />
+                  <span className="text-emerald-500 font-bold">¡Copiado!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="size-3.5 text-ink-soft" />
+                  <span>Copiar mensaje</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ── 6. Comunidad de Partners & Canal VIP con el Fundador ──────── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        {/* Comunidad Oficial de Partners en WhatsApp */}
+        <div className="rounded-[24px] border border-emerald-500/30 bg-gradient-to-br from-emerald-950/30 via-paper to-paper p-6 flex flex-col justify-between gap-5 shadow-sm">
+          <div className="flex items-start gap-4">
+            <div className="p-3.5 rounded-[16px] bg-emerald-500/15 text-[#10e7a0] shrink-0 border border-emerald-500/30">
+              <Users className="size-6" />
+            </div>
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/15 text-[#10e7a0] text-[10px] font-extrabold uppercase tracking-wide">
+                <span>Comunidad Oficial</span>
+              </div>
+              <h3 className="text-base font-bold text-ink">
+                Grupo de WhatsApp de Partners
+              </h3>
+              <p className="text-xs text-ink-soft leading-relaxed">
+                Conocé a otros colaboradores, compartí estrategias de difusión, enterate antes que nadie de nuevas funciones y festejá cada hito alcanzado.
+              </p>
+            </div>
+          </div>
+
+          <a
+            href="https://chat.whatsapp.com/BahGi6pehnB6Iq7M1fW5Y4"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => hapticos.exito()}
+            className="w-full h-11 px-5 rounded-[12px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs inline-flex items-center justify-center gap-2 active:scale-95 transition-all shadow-md"
+          >
+            <MessageCircle className="size-4" />
+            <span>Unirme a la Comunidad de Partners</span>
+            <ArrowUpRight className="size-3.5" />
+          </a>
+        </div>
+
+        {/* Canal VIP Directo con el Fundador */}
+        <div className="rounded-[24px] border border-rule bg-paper p-6 flex flex-col justify-between gap-5 shadow-sm">
+          <div className="flex items-start gap-4">
+            <div className="p-3.5 rounded-[16px] bg-paper-2 text-ink shrink-0 border border-rule">
+              <Headphones className="size-6 text-accent" />
+            </div>
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-paper-2 text-ink-soft text-[10px] font-extrabold uppercase tracking-wide border border-rule">
+                <span>Soporte 1 a 1</span>
+              </div>
+              <h3 className="text-base font-bold text-ink">
+                Canal VIP con el Fundador
+              </h3>
+              <p className="text-xs text-ink-soft leading-relaxed">
+                ¿Tenés un gimnasio grande de +100 alumnos o necesitás ayuda personalizada para cerrar la propuesta? Escribile directo a Santi.
+              </p>
+            </div>
+          </div>
+
+          <a
+            href={`https://wa.me/5492920605208?text=${encodeURIComponent(
+              `¡Hola Santi! Soy partner oficial de SysGym (Código: ${partner.referral_code}, ${partner.nombre}). Te escribo desde el panel de partners porque tengo una consulta comercial.`
+            )}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => hapticos.medio()}
+            className="w-full h-11 px-5 rounded-[12px] bg-paper-2 hover:bg-paper border border-rule hover:border-accent text-ink font-bold text-xs inline-flex items-center justify-center gap-2 active:scale-95 transition-all"
+          >
+            <MessageCircle className="size-4 text-emerald-500" />
+            <span>Hablar con Santi por WhatsApp</span>
+          </a>
         </div>
       </div>
 

@@ -160,6 +160,11 @@ export async function obtenerODescargarPartnerAction(): Promise<{
         milestone: 10,
         faltan: Math.max(0, 10 - gimnasiosPagoActivos),
       };
+    } else if (!hitosAlcanzados.includes(15)) {
+      proximoHito = {
+        milestone: 15,
+        faltan: Math.max(0, 15 - gimnasiosPagoActivos),
+      };
     }
 
     const resumen: ResumenPartner = {

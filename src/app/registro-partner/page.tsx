@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useActionState } from "react";
 import Link from "next/link";
@@ -77,15 +77,39 @@ export default function RegistroPartnerPage() {
             <div className="p-1 rounded-md bg-emerald-500/20 text-[#10e7a0]">
               <Percent className="size-3.5" />
             </div>
-            <span><strong>10% mensual recurrente</strong> de por vida por cada gimnasio.</span>
+            <span><strong>20% en tus primeros 5 gimnasios</strong> (15% estándar luego) en su primer pago.</span>
           </div>
           <div className="flex items-center gap-2.5 text-zinc-300">
             <div className="p-1 rounded-md bg-purple-500/20 text-purple-400">
               <Award className="size-3.5" />
             </div>
-            <span><strong>Bonos en efectivo</strong>: $30.000 (5 gyms) y $80.000 (10 gyms).</span>
+            <span><strong>$180.000 ARS en Bonos</strong>: $20.000 (5 gyms), $60.000 (10 gyms) y $100.000 (15 gyms).</span>
           </div>
         </div>
+
+        {/* Banner Comunidad WhatsApp Oficial */}
+        <a
+          href="https://chat.whatsapp.com/BahGi6pehnB6Iq7M1fW5Y4"
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => hapticos.suave()}
+          className="flex items-center justify-between p-3 rounded-[14px] bg-emerald-950/30 border border-emerald-500/30 hover:border-emerald-500/60 transition-all text-xs group"
+        >
+          <div className="flex items-center gap-2.5">
+            <div className="size-7 rounded-lg bg-emerald-500/20 text-[#10e7a0] flex items-center justify-center font-bold">
+              💬
+            </div>
+            <div>
+              <p className="font-bold text-white group-hover:text-[#10e7a0] transition-colors">
+                Comunidad Oficial de Partners
+              </p>
+              <p className="text-[11px] text-zinc-400">
+                Sumate al grupo de WhatsApp con otros colaboradores
+              </p>
+            </div>
+          </div>
+          <ArrowRight className="size-3.5 text-zinc-400 group-hover:text-[#10e7a0] group-hover:translate-x-0.5 transition-all" />
+        </a>
 
         {/* Formulario */}
         <form
