@@ -13,6 +13,7 @@ const AVISA_SUPERADMIN = new Set<AccionAdmin>([
   "entrar_como",
   "activar_gimnasio_disponible",
   "crear_gimnasio",
+  "eliminar_gimnasio_definitivo",
 ]);
 
 type AccionAdmin =
@@ -32,7 +33,8 @@ type AccionAdmin =
   | "crear_gimnasio"
   | "resetear_clave"
   | "actualizar_nota_interna"
-  | "importar_socios";
+  | "importar_socios"
+  | "eliminar_gimnasio_definitivo";
 
 // Traduce (action, meta) a un texto legible para la notificación al
 // superadmin. El audit log (arriba) sigue guardando el JSON completo — esto

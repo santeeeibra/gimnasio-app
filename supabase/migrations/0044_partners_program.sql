@@ -267,20 +267,10 @@ create trigger pagos_plataforma_procesar_comision
 -- 5) Billetera del partner: balance calculado + retiros
 -- ═════════════════════════════════════════════════════════════
 
-create or replace function public.partner_balance(p_partner_id uuid)
-returns numeric
-language sql
-stable
-as $$
-  select
-    coalesce((select sum(monto_comision_ars) from public.partner_commissions where partner_id = p_partner_id), 0)
-    + coalesce((select sum(bono_ars) from public.partner_milestone_awards where partner_id = p_partner_id), 0)
-    - coalesce((select sum(monto_ars) from public.partner_payouts where partner_id = p_partner_id and estado in ('pendiente', 'pagado')), 0);
-$$;
-
-comment on function public.partner_balance(uuid) is
-  'Balance disponible del partner: comisiones + bonos - retiros pendientes/pagados.';
-
+-- La tabla va primero: partner_balance() es LANGUAGE SQL y Postgres valida
+-- las referencias de su cuerpo en el momento del CREATE FUNCTION, no recién
+-- al invocarla (a diferencia de plpgsql). Si partner_payouts no existe
+-- todavía, el CREATE FUNCTION de más abajo falla con 42P01.
 create table if not exists public.partner_payouts (
   id               uuid primary key default gen_random_uuid(),
   partner_id       uuid not null references public.partners (id) on delete cascade,
@@ -307,3 +297,17 @@ create policy partner_payouts_select_own on public.partner_payouts
 -- Sin policy de insert: solicitarRetiroPartner (Server Action, service_role)
 -- valida balance >= monto antes de insertar, para no confiar en un check
 -- de RLS que no puede leer partner_balance() de forma segura contra carreras.
+
+create or replace function public.partner_balance(p_partner_id uuid)
+returns numeric
+language sql
+stable
+as $$
+  select
+    coalesce((select sum(monto_comision_ars) from public.partner_commissions where partner_id = p_partner_id), 0)
+    + coalesce((select sum(bono_ars) from public.partner_milestone_awards where partner_id = p_partner_id), 0)
+    - coalesce((select sum(monto_ars) from public.partner_payouts where partner_id = p_partner_id and estado in ('pendiente', 'pagado')), 0);
+$$;
+
+comment on function public.partner_balance(uuid) is
+  'Balance disponible del partner: comisiones + bonos - retiros pendientes/pagados.';

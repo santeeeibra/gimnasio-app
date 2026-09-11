@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { requireSuperadmin, claveInicial, dniAEmail } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { enviarPush } from "@/lib/push/enviar";
@@ -874,5 +875,106 @@ export async function obtenerUsuariosGimnasioDev(gimnasioId: string): Promise<{
     dueno: dueno ? { ...dueno, slug: gym.slug } : null,
     socios,
   };
+}
+
+const BUCKET_LOGOS = "logos";
+
+// Borrado DEFINITIVO de un gimnasio: auth.users de todos sus profiles +
+// logo del bucket + la fila de gimnasios (cascada limpia todo lo que cuelga
+// de gimnasio_id: clientes, planes, pagos_plataforma, registros_entrada,
+// partner_commissions donde este gym fue el referido, etc.).
+// Irreversible. Superadmin, service_role, auditado ANTES de borrar (si se
+// audita después ya no queda gimnasio_id vivo para asociar el log).
+export async function eliminarGimnasioDefinitivamente(
+  _prev: { ok: boolean; msg: string } | null,
+  formData: FormData,
+): Promise<{ ok: boolean; msg: string }> {
+  const admin = await requireSuperadmin();
+  const gimnasioId = String(formData.get("gimnasio_id") ?? "");
+  const slugConfirmado = String(formData.get("confirmar_slug") ?? "").trim();
+  if (!gimnasioId) return { ok: false, msg: "Falta el gimnasio." };
+
+  const db = createAdminClient();
+  const { data: gym } = await db
+    .from("gimnasios")
+    .select("id, nombre, slug")
+    .eq("id", gimnasioId)
+    .maybeSingle();
+  if (!gym) return { ok: false, msg: "El gimnasio ya no existe." };
+
+  if (slugConfirmado !== gym.slug) {
+    return {
+      ok: false,
+      msg: `Para confirmar, escribí exactamente "${gym.slug}".`,
+    };
+  }
+
+  const { data: profiles } = await db
+    .from("profiles")
+    .select("id")
+    .eq("gimnasio_id", gimnasioId);
+  const profileIds = (profiles ?? []).map((p) => p.id as string);
+
+  // Salvavidas: si alguno de los dueños/socios de este gym es también un
+  // SysGym Partner (identidad global, independiente del gimnasio), borrar
+  // su auth.users se llevaría por cascada TODO su historial de comisiones
+  // y referidos de OTROS gimnasios. Se bloquea hasta resolver a mano.
+  if (profileIds.length > 0) {
+    const { data: partnersLigados } = await db
+      .from("partners")
+      .select("id, referral_code")
+      .in("user_id", profileIds);
+    if (partnersLigados && partnersLigados.length > 0) {
+      const codigos = partnersLigados.map((p) => p.referral_code).join(", ");
+      return {
+        ok: false,
+        msg:
+          `No se puede borrar: el dueño (u otro perfil) de este gimnasio es un SysGym Partner ` +
+          `activo (código ${codigos}) con historial de referidos propio. Reasigná o dale de baja ` +
+          `esa cuenta de Partner antes de borrar el gimnasio.`,
+      };
+    }
+  }
+
+  // Auditar ANTES de borrar: después de este punto el gimnasio_id deja de
+  // existir y el log quedaría huérfano (la FK de admin_audit_log es opcional
+  // pero preferimos dejarlo asociado mientras se puede).
+  await registrarAccionAdmin(admin.id, "eliminar_gimnasio_definitivo", gimnasioId, {
+    nombre: gym.nombre,
+    slug: gym.slug,
+    cantidad_perfiles: profileIds.length,
+  });
+
+  // Logo del bucket: best-effort, no bloquea el borrado si falla.
+  try {
+    await db.storage.from(BUCKET_LOGOS).remove([`${gimnasioId}.webp`]);
+  } catch {
+    // noop
+  }
+
+  // Borra cada cuenta de auth para que no quede un usuario huérfano ocupando
+  // el email sintético (dni@slug.gym.local) ni el cupo de Auth de Supabase.
+  // Cascada: auth.users -> profiles -> clientes -> pagos/registro_progreso/...
+  const erroresAuth: string[] = [];
+  for (const profileId of profileIds) {
+    const { error } = await db.auth.admin.deleteUser(profileId);
+    if (error) erroresAuth.push(`${profileId}: ${error.message}`);
+  }
+
+  // La fila de gimnasios: cascada lo que no dependía de un profile_id
+  // (planes, pagos_plataforma, registros_entrada, partner_commissions del
+  // gym como referido, etc.) y cualquier profile/cliente residual.
+  const { error: delErr } = await db.from("gimnasios").delete().eq("id", gimnasioId);
+  if (delErr) {
+    return {
+      ok: false,
+      msg:
+        `Se borraron las cuentas de acceso pero la fila del gimnasio no pudo eliminarse: ${delErr.message}` +
+        (erroresAuth.length ? ` (además fallaron ${erroresAuth.length} auth.users)` : ""),
+    };
+  }
+
+  revalidatePath("/admin/gimnasios");
+  redirect("/admin/gimnasios");
 }
 

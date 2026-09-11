@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
@@ -18,6 +18,9 @@ import {
   AlertCircle,
   X,
   Share2,
+  Users,
+  MessageCircle,
+  Clock,
 } from "lucide-react";
 import { PulpoCard } from "@/components/mascota/pulpo";
 import { useHapticos } from "@/lib/ui/hapticos";
@@ -44,6 +47,7 @@ export function PartnerDashboardClient({
 }) {
   const hapticos = useHapticos();
   const [copiado, setCopiado] = useState(false);
+  const [copiadoCodigo, setCopiadoCodigo] = useState(false);
   const [modalCobroAbierto, setModalCobroAbierto] = useState(false);
   const [modalRetiroAbierto, setModalRetiroAbierto] = useState(false);
 
@@ -54,11 +58,22 @@ export function PartnerDashboardClient({
   const [retiroPending, startRetiroTransition] = useTransition();
   const [retiroResult, setRetiroResult] = useState<{ ok?: boolean; error?: string; msg?: string } | null>(null);
 
-  const { partner, balanceDisponible, gimnasiosReferidos, gimnasiosPagoActivos, hitosAlcanzados, proximoHito } = resumen;
+  const {
+    partner,
+    balanceDisponible,
+    gimnasiosReferidos,
+    gimnasiosPagoActivos,
+    hitosAlcanzados,
+    proximoHito,
+    gimnasiosDetalle = [],
+  } = resumen;
 
   const urlReferido = typeof window !== "undefined"
     ? `${window.location.origin}/registro?ref=${partner.referral_code}`
     : `https://sysgym.app/registro?ref=${partner.referral_code}`;
+
+  const mensajeWhatsApp = `¡Hola! Te recomiendo SysGym para tu gimnasio o box. Automatiza cobros con Mercado Pago, control de acceso QR en puerta y rutinas para alumnos. ¡Es 100% gratis para los primeros 40 alumnos! Probá registrarte acá: ${urlReferido}`;
+  const urlWhatsApp = `https://wa.me/?text=${encodeURIComponent(mensajeWhatsApp)}`;
 
   const handleCopiarEnlace = async () => {
     try {
@@ -66,6 +81,17 @@ export function PartnerDashboardClient({
       setCopiado(true);
       hapticos.exito();
       setTimeout(() => setCopiado(false), 2500);
+    } catch {
+      hapticos.suave();
+    }
+  };
+
+  const handleCopiarCodigo = async () => {
+    try {
+      await navigator.clipboard.writeText(partner.referral_code);
+      setCopiadoCodigo(true);
+      hapticos.suave();
+      setTimeout(() => setCopiadoCodigo(false), 2500);
     } catch {
       hapticos.suave();
     }
@@ -141,13 +167,37 @@ export function PartnerDashboardClient({
         </div>
 
         {/* Barra de enlace de referido interactivo */}
-        <div className="mt-6 pt-6 border-t border-zinc-800/80 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          <div className="flex-1 flex items-center bg-zinc-900 border border-zinc-700/60 rounded-[14px] px-3.5 py-2 text-xs font-mono text-zinc-300 overflow-hidden">
-            <span className="text-zinc-500 mr-1 select-none">Tu enlace:</span>
-            <span className="truncate select-all">{urlReferido}</span>
+        {/* Barra de Código y Enlaces Interactivos */}
+        <div className="mt-6 pt-6 border-t border-zinc-800/80 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-xs text-zinc-400 font-medium">Tu código:</span>
+            <button
+              type="button"
+              onClick={handleCopiarCodigo}
+              title="Copiar código"
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-[10px] bg-zinc-900 border border-zinc-700 hover:border-emerald-500/60 font-mono font-bold text-sm text-[#10e7a0] active:scale-95 transition-all"
+            >
+              <span>{partner.referral_code}</span>
+              {copiadoCodigo ? (
+                <Check className="size-3.5 text-emerald-400" />
+              ) : (
+                <Copy className="size-3.5 text-zinc-400" />
+              )}
+            </button>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <a
+              href={urlWhatsApp}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => hapticos.medio()}
+              className="h-10 px-4 rounded-[12px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs inline-flex items-center justify-center gap-2 active:scale-95 transition-all shadow-md"
+            >
+              <MessageCircle className="size-4" />
+              <span>Enviar por WhatsApp</span>
+            </a>
+
             <button
               type="button"
               onClick={handleCopiarEnlace}
@@ -303,7 +353,108 @@ export function PartnerDashboardClient({
         </div>
       </div>
 
-      {/* ── 3. Tablero de Hitos y Bonos en Efectivo ─────────────────────── */}
+      {/* ── 3. Gimnasios Adheridos con tu Código (Seguimiento Detallado) ─── */}
+      <div className="rounded-[22px] border border-rule bg-paper p-6 space-y-5 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-rule pb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <Building2 className="size-5 text-accent" />
+              <h2 className="text-lg font-bold text-ink">
+                Gimnasios Adheridos con tu Código
+              </h2>
+            </div>
+            <p className="text-xs text-ink-soft mt-0.5">
+              Seguimiento en tiempo real: cantidad de alumnos activos y si califica como pago activo para comisiones.
+            </p>
+          </div>
+
+          <span className="text-xs font-semibold px-3 py-1 rounded-full bg-paper-2 border border-rule text-ink-soft self-start sm:self-auto">
+            {gimnasiosDetalle.length} {gimnasiosDetalle.length === 1 ? "gimnasio" : "gimnasios"} registrados
+          </span>
+        </div>
+
+        {gimnasiosDetalle.length === 0 ? (
+          <div className="py-10 px-4 text-center rounded-[18px] bg-paper-2/50 border border-rule space-y-4">
+            <div className="flex justify-center">
+              <PulpoCard size={72} pose="festejo" />
+            </div>
+            <div className="max-w-md mx-auto space-y-1">
+              <h3 className="text-base font-bold text-ink">
+                Aún no tenés gimnasios adheridos
+              </h3>
+              <p className="text-xs text-ink-soft leading-relaxed">
+                Compartí tu código <strong className="text-accent">{partner.referral_code}</strong> o enviá el mensaje de invitación por WhatsApp a colegas o dueños de gimnasios para verlos acá.
+              </p>
+            </div>
+            <a
+              href={urlWhatsApp}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => hapticos.medio()}
+              className="h-10 px-5 rounded-[12px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs inline-flex items-center gap-2 active:scale-95 transition-all shadow-sm"
+            >
+              <MessageCircle className="size-4" />
+              <span>Enviar invitación por WhatsApp</span>
+            </a>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {gimnasiosDetalle.map((g) => (
+              <div
+                key={g.id}
+                className="rounded-[16px] border border-rule bg-paper-2/60 p-4 flex flex-col justify-between gap-3 shadow-sm hover:border-accent/40 transition-all"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <h4 className="text-sm font-bold text-ink leading-snug">
+                      {g.nombre}
+                    </h4>
+                    <span className="text-[11px] text-ink-soft flex items-center gap-1 mt-0.5">
+                      <Clock className="size-3" />
+                      Registrado el {new Date(g.creado_at).toLocaleDateString("es-AR")}
+                    </span>
+                  </div>
+
+                  <span
+                    className={`text-[11px] px-2.5 py-0.5 rounded-full font-bold shrink-0 ${
+                      g.esPagoActivo
+                        ? "bg-emerald-500/15 text-emerald-600 dark:text-[#10e7a0] border border-emerald-500/30"
+                        : "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30"
+                    }`}
+                  >
+                    {g.esPagoActivo ? "Pago Activo · 10%" : "Plan Inicial"}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between text-xs pt-2 border-t border-rule/60">
+                  <div className="flex items-center gap-1.5 text-ink-soft">
+                    <Users className="size-3.5" />
+                    <span>Alumnos activos:</span>
+                    <strong className="text-ink font-mono">{g.alumnosActivos}</strong>
+                    {!g.esPagoActivo && g.alumnosActivos <= 40 ? (
+                      <span className="text-[10px] text-ink-soft">/ 40 gratis</span>
+                    ) : null}
+                  </div>
+
+                  <span className="text-[11px] font-semibold text-ink-soft">
+                    {g.planNombre}
+                  </span>
+                </div>
+
+                <p className="text-[11px] text-ink-soft leading-tight">
+                  {g.esPagoActivo
+                    ? "✅ Califica para bono por hito y genera 10% mensual de comisión."
+                    : g.alumnosActivos >= 35
+                    ? "⏳ Cerca de los 40 alumnos: cuando pase a Pro/Elite empezará a comisionar."
+                    : "🌱 Utilizando el Plan Inicial Gratuito para probar la plataforma."}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── 4. Tablero de Hitos y Bonos en Efectivo ─────────────────────── */}
       <div className="rounded-[22px] border border-rule bg-paper p-6 space-y-6 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>

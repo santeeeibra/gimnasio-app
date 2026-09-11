@@ -63,6 +63,15 @@ export type PartnerPayout = {
 
 export const RETIRO_MINIMO_ARS = 10000;
 
+export type GimnasioReferidoDetalle = {
+  id: string;
+  nombre: string;
+  creado_at: string;
+  alumnosActivos: number;
+  esPagoActivo: boolean;
+  planNombre: string;
+};
+
 /** Resumen para el dashboard del partner (`/panel/partner` o similar). */
 export type ResumenPartner = {
   partner: Partner;
@@ -72,6 +81,7 @@ export type ResumenPartner = {
   comisionesUltimos30d: number;
   hitosAlcanzados: MilestoneNumero[];
   proximoHito: { milestone: MilestoneNumero; faltan: number } | null;
+  gimnasiosDetalle: GimnasioReferidoDetalle[];
 };
 
 // ── Gating de plan gratuito (cap de 40 alumnos) ─────────────────────────

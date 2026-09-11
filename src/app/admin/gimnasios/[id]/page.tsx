@@ -7,6 +7,7 @@ import { entrarComoAction } from "../../impersonar-actions";
 import { Button, linkClasses, pillClasses } from "@/components/ui";
 import { cupoExcedido, cupoTexto } from "@/lib/plataforma/planes";
 import { EstadoForm } from "./estado-form";
+import { BorrarGimnasioForm } from "./borrar-gimnasio-form";
 import { NotaInternaForm } from "./nota-interna-form";
 import { PlanPlataformaForm } from "./plan-plataforma-form";
 import { PagosPlataforma, type PagoPlataformaRow } from "./pagos-plataforma";
@@ -357,6 +358,21 @@ export default async function AdminGimnasioDetalle({
           ))}
         </ul>
       )}
+
+      <div className="card-cut mb-8 border border-danger bg-paper-2 p-5">
+        <h2 className="mb-1 text-sm uppercase tracking-[0.14em] text-danger">
+          Zona de peligro
+        </h2>
+        <p className="mb-4 text-xs text-ink-soft">
+          Borra el gimnasio, sus socios, planes, pagos, rutinas y las cuentas
+          de acceso (dueño y socios). Irreversible: no queda respaldo.
+        </p>
+        <BorrarGimnasioForm
+          gimnasioId={gym.id}
+          gimnasioNombre={gym.nombre ?? ""}
+          gimnasioSlug={gym.slug ?? ""}
+        />
+      </div>
 
       <TourDev />
     </div>

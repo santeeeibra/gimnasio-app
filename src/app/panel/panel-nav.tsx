@@ -204,7 +204,13 @@ export function PanelTopbar({
         <LogoMark logo={logo} size="size-7" />
         <p className="font-display text-base leading-tight truncate">{nombre}</p>
       </div>
-      <div className="flex shrink-0 items-center gap-2">
+        <Link
+          href="/panel/partner"
+          className="px-2.5 py-1 text-xs font-bold rounded-full inline-flex items-center gap-1 bg-emerald-500/15 text-emerald-600 dark:text-[#10e7a0] border border-emerald-500/30 active:scale-95 transition-all"
+        >
+          <Award className="size-3" />
+          <span>Partner</span>
+        </Link>
         <a
           href={whatsappReporteUrl(nombre)}
           target="_blank"

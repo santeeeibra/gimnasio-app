@@ -83,8 +83,9 @@ export async function obtenerODescargarPartnerAction(): Promise<{
     ] = await Promise.all([
       admin
         .from("gimnasios")
-        .select("id, nombre, estado, plan_plataforma_vence_el, plan:planes_plataforma(nombre)")
-        .eq("referred_by_partner_id", partnerId),
+        .select("id, nombre, estado, creado_at, plan_plataforma_vence_el, plan:planes_plataforma(nombre)")
+        .eq("referred_by_partner_id", partnerId)
+        .order("creado_at", { ascending: false }),
       admin
         .from("partner_commissions")
         .select("*")
@@ -106,13 +107,32 @@ export async function obtenerODescargarPartnerAction(): Promise<{
     const milestones = milestoneAwardsData ?? [];
     const payouts = (payoutsData ?? []) as PartnerPayout[];
 
-    // Evaluar cuántos gimnasios referidos tienen pago activo llamando a gimnasio_es_pago_activo() en SQL
-    const checks = await Promise.all(
-      gimnasios.map((g) =>
-        admin.rpc("gimnasio_es_pago_activo", { p_gimnasio_id: g.id }),
-      ),
+    // Evaluar detalle de cada gimnasio referido y si califica como pago activo
+    const gimnasiosDetalle = await Promise.all(
+      gimnasios.map(async (g) => {
+        const [{ data: esPago }, { count }] = await Promise.all([
+          admin.rpc("gimnasio_es_pago_activo", { p_gimnasio_id: g.id }),
+          admin
+            .from("clientes")
+            .select("id", { count: "exact", head: true })
+            .eq("gimnasio_id", g.id)
+            .eq("acceso_habilitado", true),
+        ]);
+
+        const planNombre =
+          (g as { plan?: { nombre?: string } | null })?.plan?.nombre ?? "Plan Inicial";
+
+        return {
+          id: g.id,
+          nombre: g.nombre,
+          creado_at: (g as { creado_at?: string }).creado_at ?? new Date().toISOString(),
+          alumnosActivos: count ?? 0,
+          esPagoActivo: esPago === true,
+          planNombre: esPago === true ? planNombre : "Plan Inicial Gratuito",
+        };
+      }),
     );
-    const gimnasiosPagoActivos = checks.filter((res) => res.data === true).length;
+    const gimnasiosPagoActivos = gimnasiosDetalle.filter((g) => g.esPagoActivo).length;
 
     // Balance oficial mediante la función SQL partner_balance()
     const { data: balanceData } = await admin.rpc("partner_balance", {
@@ -150,6 +170,7 @@ export async function obtenerODescargarPartnerAction(): Promise<{
       comisionesUltimos30d,
       hitosAlcanzados,
       proximoHito,
+      gimnasiosDetalle,
     };
 
     return {
