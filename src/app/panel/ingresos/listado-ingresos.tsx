@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Spinner, pillClasses } from "@/components/ui";
 import { KeyRound } from "lucide-react";
 import { DescargarIngresosPdf } from "@/components/pdf/descargar-ingresos-pdf";
+import { DescargarIngresosExcel } from "@/components/pdf/descargar-ingresos-excel";
 
 type Pago = {
   id: string;
@@ -179,6 +180,11 @@ export function ListadoIngresos({
           pagosFiltrados={mesFiltro ? pagosFiltrados : []}
           gimnasioNombre={gimnasioNombre}
           logoUrl={logoUrl}
+          rangoLabel={mesFiltro ? formatearMes(mesFiltro) : ''}
+        />
+        <DescargarIngresosExcel
+          gimnasioNombre={gimnasioNombre}
+          pagosFiltrados={mesFiltro ? pagosFiltrados : []}
           rangoLabel={mesFiltro ? formatearMes(mesFiltro) : ''}
         />
       </div>
