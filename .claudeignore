@@ -1,0 +1,21 @@
+﻿# Directorios de diseño y marketing
+design/
+marketing/
+docs/historico/
+
+# Archivos pesados / generados
+package-lock.json
+*.tsbuildinfo
+build-output.txt
+*.mp4
+*.png
+*.jpg
+*.jpeg
+*.svg
+*.ico
+
+# Build y dependencias
+node_modules/
+.next/
+out/
+supabase/.temp/

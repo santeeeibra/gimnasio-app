@@ -1,17 +1,14 @@
-# Leer primero, en este orden
+# Referencias bajo demanda (NO cargar todo de inicio)
 
-1. @MAPA_PROYECTO.md — índice: qué feature está en qué archivo y en qué estado.
-   Usalo para ubicarte antes de buscar/grep por el repo.
-2. @contex-sysgym.md — contexto completo del proyecto.
-3. @MEMORIA.md — memoria de corto plazo. Al terminar tu tarea, agregá una línea acá sin leer todo el contexto.
-4. @REGLAS_DESARROLLO.md — reglas de cómo trabajar (ahorro de tokens, cuándo
-   editar directo vs. avisar, cuándo pasar a Cline vs. Claude Code).
-5. **UI, UX & Rutinas (Prioridad Suprema):** Se rige por las 6 skills en `.agents/skills`:
+Para ubicar cualquier archivo al instante sin recorrer el repo:
+1. **Skill GPS de Navegación:** `.agents/skills/sysgym-architecture/SKILL.md` (mapa de URLs, componentes, server actions y tablas). Usar antes de cualquier búsqueda o grep.
+2. `MAPA_PROYECTO.md` — índice de features y estado de avance.
+3. `contex-sysgym.md` — decisiones de producto históricas (consultar solo secciones puntuales).
+4. `MEMORIA.md` — memoria de corto plazo. Al terminar tu tarea, agregá 1 línea al final en UTF-8 sin leer todo el archivo.
+5. `REGLAS_DESARROLLO.md` — directivas de desarrollo y ahorro de tokens.
+6. **UI, UX & Rutinas (Prioridad Suprema):** Se rige por las skills en `.agents/skills`:
    1º `sysgym-ux-patterns`, 2º `apple-design-skill`, 3º `60fps-animation`, 4º `sysgym-mascot-skill`, 5º `science-workout-engine`, 6º `ios-ux-prototype`.
    Toda interacción debe tener feedback táctil/acústico (`src/lib/ui/hapticos.ts`), 60fps compositor-only y presencia de la mascota oficial (Pulpo Volt verde `#10e7a0`).
-
-No repitas ni resumas estos archivos en tu respuesta: ya los tenés cargados.
-Si `MAPA_PROYECTO.md` no cubre lo que buscás, recién ahí buscá en el repo.
 
 # Credenciales y datos sensibles
 

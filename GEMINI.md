@@ -64,8 +64,9 @@ En cualquier cambio de interfaz, aplicar siempre sin preguntar:
 
 El usuario no memoriza rutas técnicas ni archivos de código. El agente asume el 100% de la carga de búsqueda y verificación técnica:
 
-1. **Localización por Pantalla o URL**:
-   * Encontrar los archivos a partir de textos visibles entre comillas, títulos de pantalla, nombres de botones o URLs que mencione el usuario (mediante `grep_search` o `find_by_name`).
+1. **Localización por Pantalla o URL (GPS Directo)**:
+   * Consultar prioritariamente la skill `.agents/skills/sysgym-architecture/SKILL.md` para ir directo al archivo exacto sin recorrer carpetas ni adivinar.
+   * Si no está en el mapa, ubicar a partir de textos visibles entre comillas, títulos o botones mediante `grep_search` certero.
    * NUNCA exigirle al usuario que sepa qué archivo tocar.
 2. **Recordatorio Activo de Tips**:
    * Si el usuario describe un cambio sin indicar pantalla o texto, recordarle al instante:
