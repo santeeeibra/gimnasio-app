@@ -33,28 +33,7 @@ export async function registrarPartnerAction(
 
   const admin = createAdminClient();
 
-  // 1. Obtener o crear gimnasio para el profile del usuario
-  let gymId = "";
-  const { data: gymGenerico } = await admin
-    .from("gimnasios")
-    .select("id")
-    .eq("slug", "atletas")
-    .maybeSingle();
-
-  if (gymGenerico) {
-    gymId = gymGenerico.id;
-  } else {
-    const { data: primerGym } = await admin
-      .from("gimnasios")
-      .select("id")
-      .limit(1)
-      .maybeSingle();
-    if (primerGym) {
-      gymId = primerGym.id;
-    }
-  }
-
-  // 2. Crear usuario auth
+  // 1. Crear usuario auth
   const { data: authData, error: authErr } = await admin.auth.admin.createUser({
     email,
     password: clave,
@@ -71,19 +50,38 @@ export async function registrarPartnerAction(
 
   const userId = authData.user.id;
 
-  // 3. Crear perfil de usuario
-  if (gymId) {
-    await admin.from("profiles").insert({
-      id: userId,
-      gimnasio_id: gymId,
-      rol: "dueno",
-      dni: email.split("@")[0].slice(0, 12),
-      nombre,
-      telefono,
-      debe_cambiar_clave: false,
-      email_recuperacion: email,
-    });
+  // 2. Crear un gimnasio propio "individual" para el partner (nunca reusar
+  // un gimnasio real: mezclaría al partner con los datos de un cliente vía
+  // RLS por gimnasio_id). Mismo patrón que asegurarPerfilGoogleAction.
+  const { data: gymNuevo, error: gymErr } = await admin
+    .from("gimnasios")
+    .insert({
+      nombre: `Partner: ${nombre}`,
+      slug: `partner-${userId.slice(0, 8)}`,
+      estado: "activo",
+      tipo_cuenta: "individual",
+    })
+    .select("id")
+    .single();
+
+  if (gymErr || !gymNuevo) {
+    await admin.auth.admin.deleteUser(userId);
+    return { error: "No se pudo crear la cuenta de Partner. Intentá nuevamente." };
   }
+
+  const gymId = gymNuevo.id;
+
+  // 3. Crear perfil de usuario
+  await admin.from("profiles").insert({
+    id: userId,
+    gimnasio_id: gymId,
+    rol: "dueno",
+    dni: email.split("@")[0].slice(0, 12),
+    nombre,
+    telefono,
+    debe_cambiar_clave: false,
+    email_recuperacion: email,
+  });
 
   // 4. Crear registro de Partner
   let code = sugerirReferralCode(nombre);

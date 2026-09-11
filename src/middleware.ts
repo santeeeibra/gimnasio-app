@@ -6,6 +6,7 @@ type CookieToSet = { name: string; value: string; options: CookieOptions };
 const PUBLIC_PATHS = [
   "/login",
   "/registrarse",
+  "/registro-partner",
   // Landing público de rutina compartida por un entrenador (/r/<codigo>).
   "/r/",
   "/demo",
