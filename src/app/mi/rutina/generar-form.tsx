@@ -514,7 +514,7 @@ export function GenerarRutinaForm({
   const [split, setSplit] = useState<string>(
     avanzadoDefaults?.split ?? "auto",
   );
-  const avanzadoActivo = mostrarAvanzado && nivel === "avanzado";
+  const avanzadoActivo = mostrarAvanzado;
   const splitDiasOk =
     split === "auto" ||
     (SPLIT_DIAS_OK[split as keyof typeof SPLIT_DIAS_OK] ?? []).includes(
