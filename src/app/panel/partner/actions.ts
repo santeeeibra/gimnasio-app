@@ -80,6 +80,7 @@ export async function obtenerODescargarPartnerAction(): Promise<{
       { data: commissionsData },
       { data: milestoneAwardsData },
       { data: payoutsData },
+      { data: notifsData },
     ] = await Promise.all([
       admin
         .from("gimnasios")
@@ -100,7 +101,15 @@ export async function obtenerODescargarPartnerAction(): Promise<{
         .select("*")
         .eq("partner_id", partnerId)
         .order("solicitado_at", { ascending: false }),
+      admin
+        .from("partner_notifications")
+        .select("*")
+        .eq("partner_id", partnerId)
+        .order("creado_at", { ascending: false })
+        .limit(20),
     ]);
+
+    const notificaciones = (notifsData ?? []) as ResumenPartner["notificaciones"];
 
     const gimnasios = gymReferidos ?? [];
     const commissions = (commissionsData ?? []) as PartnerCommission[];
@@ -176,6 +185,7 @@ export async function obtenerODescargarPartnerAction(): Promise<{
       hitosAlcanzados,
       proximoHito,
       gimnasiosDetalle,
+      notificaciones,
     };
 
     return {
@@ -326,5 +336,30 @@ export async function solicitarRetiroAction(
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Error inesperado";
     return { error: msg };
+  }
+}
+
+export async function marcarNotificacionPartnerLeidaAction(notificacionId: string) {
+  try {
+    const user = await requireProfile();
+    const admin = createAdminClient();
+    const { data: partner } = await admin
+      .from("partners")
+      .select("id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (!partner) return { ok: false };
+
+    await admin
+      .from("partner_notifications")
+      .update({ leido: true })
+      .eq("id", notificacionId)
+      .eq("partner_id", partner.id);
+
+    revalidatePath("/panel/partner");
+    return { ok: true };
+  } catch (err) {
+    return { ok: false };
   }
 }

@@ -93,12 +93,32 @@ export async function registrarGimnasio(
       slugGym = `${slugGym}-${Math.floor(Math.random() * 899 + 100)}`;
     }
 
+    // Referral code de partner (si vino por enlace de referido)
+    const refCode = String(formData.get("refCode") ?? "").trim().toUpperCase();
+    let partnerReferidorId: string | null = null;
+    let partnerNombre: string | null = null;
+
+    if (refCode) {
+      const { data: partnerFound } = await admin
+        .from("partners")
+        .select("id, nombre")
+        .eq("referral_code", refCode)
+        .eq("estado", "activo")
+        .maybeSingle();
+
+      if (partnerFound) {
+        partnerReferidorId = partnerFound.id;
+        partnerNombre = partnerFound.nombre;
+      }
+    }
+
     const { data: nuevoGym, error: errGym } = await admin
       .from("gimnasios")
       .insert({
         nombre: nombreGymFinal,
         slug: slugGym,
         estado: "prueba", // 14 días de prueba gratis
+        referred_by_partner_id: partnerReferidorId,
       })
       .select("id")
       .single();
@@ -107,6 +127,21 @@ export async function registrarGimnasio(
       return { error: `Error al crear el gimnasio: ${errGym.message}` };
     }
     gymId = nuevoGym.id;
+
+    // Disparar notificación interna al Partner
+    if (partnerReferidorId) {
+      try {
+        await admin.from("partner_notifications").insert({
+          partner_id: partnerReferidorId,
+          tipo: "nuevo_registro",
+          titulo: "¡Nuevo gimnasio adherido con tu código!",
+          mensaje: `El gimnasio "${nombreGymFinal}" acaba de registrarse con tu código. Acompañalos para que comiencen a cargar alumnos.`,
+          metadata: { gimnasio_id: gymId, nombre_gimnasio: nombreGymFinal },
+        });
+      } catch (errNotif) {
+        console.error("[registro-gimnasio] Error al notificar al partner:", errNotif);
+      }
+    }
   }
 
   // Email sintético para auth

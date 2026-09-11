@@ -1,12 +1,27 @@
 "use client";
 
-import React, { useActionState, useState } from "react";
+import React, { useActionState, useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { Sparkles, ShieldCheck } from "lucide-react";
 import { registrarGimnasio, RegistroState } from "./actions";
+import { obtenerInfoPartnerReferidor, type InfoReferidor } from "./info-partner";
 import { hapticoImpactoSuave, hapticoExito } from "@/lib/ui/hapticos";
 
-export default function RegistroGimnasioPage() {
+function RegistroGimnasioContenido() {
+  const searchParams = useSearchParams();
+  const refCodeParam = searchParams.get("ref") || searchParams.get("codigo") || "";
+  const [partnerInfo, setPartnerInfo] = useState<InfoReferidor>(null);
+
+  useEffect(() => {
+    if (refCodeParam) {
+      obtenerInfoPartnerReferidor(refCodeParam).then((info) => {
+        if (info) setPartnerInfo(info);
+      });
+    }
+  }, [refCodeParam]);
+
   const [tipoCuenta, setTipoCuenta] = useState<"dueno" | "solo">("dueno");
   const [state, formAction, isPending] = useActionState<RegistroState, FormData>(
     registrarGimnasio,
@@ -90,6 +105,37 @@ export default function RegistroGimnasioPage() {
           </button>
         </div>
 
+        {/* Banner de Invitación de Partner (si aplica) */}
+        {partnerInfo && (
+          <div className="mb-5 p-4 rounded-[18px] bg-gradient-to-br from-emerald-950/40 via-zinc-900 to-zinc-900 border border-emerald-500/40 shadow-lg text-left animate-fade-in space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="p-1 rounded-md bg-emerald-500/20 text-[#10e7a0]">
+                <ShieldCheck className="size-4" />
+              </span>
+              <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#10e7a0]">
+                Invitación Oficial de {partnerInfo.nombre}
+              </span>
+            </div>
+            <p className="text-xs text-white font-medium leading-snug">
+              Registrándote con el código <strong className="font-mono text-[#10e7a0]">{partnerInfo.referralCode}</strong> accedés a:
+            </p>
+            <div className="text-[11px] text-zinc-300 space-y-1 pt-1 border-t border-zinc-800">
+              <div className="flex items-center gap-2">
+                <span className="text-emerald-400">✓</span>
+                <span><strong>Plan Inicial 100% Gratuito</strong> hasta 40 alumnos activos.</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-emerald-400">✓</span>
+                <span>Cobros automáticos con Mercado Pago + QR en puerta.</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-emerald-400">✓</span>
+                <span>Soporte prioritario y puesta en marcha inmediata.</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Error Notification */}
         {state.error && (
           <div className="mb-5 p-3.5 bg-rose-500/10 border border-rose-500/30 rounded-[14px] text-xs font-semibold text-rose-400 text-center animate-shake">
@@ -100,6 +146,7 @@ export default function RegistroGimnasioPage() {
         {/* Form */}
         <form action={formAction} onSubmit={() => hapticoExito()} className="space-y-4">
           <input type="hidden" name="tipoCuenta" value={tipoCuenta} />
+          <input type="hidden" name="refCode" value={partnerInfo?.referralCode || refCodeParam} />
 
           {/* Conditional field: Gym Name */}
           {tipoCuenta === "dueno" && (
@@ -211,5 +258,13 @@ export default function RegistroGimnasioPage() {
         SysGym SaaS © {new Date().getFullYear()} — Plataforma de Entrenamiento de Alto Rendimiento
       </footer>
     </div>
+  );
+}
+
+export default function RegistroGimnasioPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#0a0a0a]" />}>
+      <RegistroGimnasioContenido />
+    </Suspense>
   );
 }

@@ -124,6 +124,23 @@ export type GimnasioReferidoDetalle = {
   planNombre: string;
 };
 
+export type TipoNotificacionPartner =
+  | "nuevo_registro"
+  | "gimnasio_pago"
+  | "bono_alcanzado"
+  | "retiro_pagado";
+
+export type PartnerNotification = {
+  id: string;
+  partner_id: string;
+  tipo: TipoNotificacionPartner;
+  titulo: string;
+  mensaje: string;
+  leido: boolean;
+  metadata?: Record<string, unknown>;
+  creado_at: string;
+};
+
 /** Resumen para el dashboard del partner (`/panel/partner` o similar). */
 export type ResumenPartner = {
   partner: Partner;
@@ -134,6 +151,7 @@ export type ResumenPartner = {
   hitosAlcanzados: MilestoneNumero[];
   proximoHito: { milestone: MilestoneNumero; faltan: number } | null;
   gimnasiosDetalle: GimnasioReferidoDetalle[];
+  notificaciones?: PartnerNotification[];
 };
 
 // ── Gating de plan gratuito (cap de 40 alumnos) ─────────────────────────

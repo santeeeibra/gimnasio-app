@@ -25,6 +25,8 @@ import {
   BookOpen,
   Headphones,
   Rocket,
+  Bell,
+  CheckCheck,
 } from "lucide-react";
 import { PulpoCard } from "@/components/mascota/pulpo";
 import { useHapticos } from "@/lib/ui/hapticos";
@@ -32,6 +34,7 @@ import {
   type ResumenPartner,
   type PartnerCommission,
   type PartnerPayout,
+  type PartnerNotification,
   RETIRO_MINIMO_ARS,
   BONOS_HITO,
   calcularRangoPartner,
@@ -41,6 +44,7 @@ import {
 import {
   actualizarDatosCobroAction,
   solicitarRetiroAction,
+  marcarNotificacionPartnerLeidaAction,
 } from "./actions";
 
 export function PartnerDashboardClient({
@@ -156,6 +160,20 @@ export function PartnerDashboardClient({
     }
   };
 
+  // Notificaciones internas
+  const [notificaciones, setNotificaciones] = useState<PartnerNotification[]>(
+    resumen.notificaciones ?? []
+  );
+  const notificacionesNoLeidas = notificaciones.filter((n) => !n.leido).length;
+
+  const marcarComoLeida = async (id: string) => {
+    setNotificaciones((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, leido: true } : n))
+    );
+    hapticos.suave();
+    await marcarNotificacionPartnerLeidaAction(id);
+  };
+
   return (
     <div className="space-y-8 max-w-6xl mx-auto animate-fade-in pb-12">
       {/* ── 1. Hero del Partner Oficial ──────────────────────────────────── */}
@@ -267,6 +285,77 @@ export function PartnerDashboardClient({
           </div>
         </div>
       </div>
+
+      {/* ── 1.2. Centro de Notificaciones en Tiempo Real ─────────────────── */}
+      {notificaciones.length > 0 && (
+        <div className="rounded-[22px] border border-rule bg-paper p-5 space-y-3 shadow-sm animate-fade-in">
+          <div className="flex items-center justify-between border-b border-rule pb-3">
+            <div className="flex items-center gap-2">
+              <div className="relative p-1.5 rounded-lg bg-emerald-500/15 text-emerald-500">
+                <Bell className="size-4" />
+                {notificacionesNoLeidas > 0 && (
+                  <span className="absolute -top-1 -right-1 size-2.5 rounded-full bg-emerald-500 ring-2 ring-paper animate-pulse" />
+                )}
+              </div>
+              <h3 className="text-sm font-bold text-ink">
+                Novedades y Actividad de tus Referidos
+              </h3>
+              {notificacionesNoLeidas > 0 && (
+                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+                  {notificacionesNoLeidas} nueva{notificacionesNoLeidas === 1 ? "" : "s"}
+                </span>
+              )}
+            </div>
+            <span className="text-xs text-ink-soft">
+              {notificaciones.length} notificación{notificaciones.length === 1 ? "" : "es"}
+            </span>
+          </div>
+
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {notificaciones.map((notif) => (
+              <div
+                key={notif.id}
+                className={`p-3.5 rounded-[14px] border text-xs flex items-start justify-between gap-3 transition-all ${
+                  notif.leido
+                    ? "bg-paper-2/40 border-rule text-ink-soft opacity-75"
+                    : "bg-emerald-500/10 border-emerald-500/30 text-ink shadow-xs"
+                }`}
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-ink text-xs">
+                      {notif.titulo}
+                    </span>
+                    {!notif.leido && (
+                      <span className="size-1.5 rounded-full bg-emerald-500 inline-block" />
+                    )}
+                  </div>
+                  <p className="text-ink-soft text-[11px] leading-relaxed">
+                    {notif.mensaje}
+                  </p>
+                  <span className="text-[10px] text-ink-soft opacity-70 block">
+                    {new Date(notif.creado_at).toLocaleString("es-AR", {
+                      dateStyle: "short",
+                      timeStyle: "short",
+                    })}
+                  </span>
+                </div>
+
+                {!notif.leido && (
+                  <button
+                    type="button"
+                    onClick={() => marcarComoLeida(notif.id)}
+                    title="Marcar como leída"
+                    className="p-1.5 rounded-lg bg-paper border border-rule hover:border-emerald-500 text-ink-soft hover:text-emerald-500 shrink-0 active:scale-90 transition-all"
+                  >
+                    <CheckCheck className="size-3.5" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── 1.5. Credencial Digital Holográfica & Rango Oficial ───────────── */}
       <div className="relative overflow-hidden rounded-[24px] border border-rule bg-paper p-6 shadow-sm">
