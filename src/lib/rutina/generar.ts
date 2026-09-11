@@ -51,9 +51,17 @@ async function generarYGuardarInterno(
   // ── upsert de la rutina (una por cliente) ──
   const { data: existente } = await supabase
     .from("rutinas")
-    .select("id")
+    .select("id, preferencias")
     .eq("cliente_id", clienteId)
     .maybeSingle();
+
+  const ahora = new Date();
+  const mesActual = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, "0")}`;
+  const prefsPrevias = (existente?.preferencias ?? {}) as Record<string, any>;
+  const conteoPrevio =
+    prefsPrevias.ultimo_mes_generado === mesActual
+      ? Number(prefsPrevias.generaciones_mes ?? 0)
+      : 0;
 
   const payload = {
     gimnasio_id: gimnasioId,
@@ -71,9 +79,11 @@ async function generarYGuardarInterno(
       avanzado: entrada.avanzado ?? null,
       explicacion,
       explicacionGeneral,
+      ultimo_mes_generado: mesActual,
+      generaciones_mes: conteoPrevio + 1,
     },
     dias_titulos: plan.dias.map((d) => d.titulo),
-    actualizado_at: new Date().toISOString(),
+    actualizado_at: ahora.toISOString(),
   };
 
   let rutinaId: string;

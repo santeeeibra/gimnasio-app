@@ -1,6 +1,8 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
+import Link from "next/link";
+import { Lock, ArrowRight } from "lucide-react";
 import { altaCliente, type AltaState } from "./actions";
 import { Button, Field, Select, Spinner, linkClasses } from "@/components/ui";
 import { SEXOS, SEXO_LABEL } from "@/lib/rutina/tipos";
@@ -285,7 +287,23 @@ export function AltaForm({
             1 día de prueba
           </Button>
           {state.error ? (
-            <p className="w-full text-sm text-danger">{state.error}</p>
+            state.code === "LIMIT_EXCEEDED_UPGRADE_REQUIRED" ? (
+              <div className="w-full rounded-[14px] bg-danger/10 border border-danger/30 p-4 space-y-3">
+                <div className="flex items-start gap-2 text-danger">
+                  <Lock className="size-4 shrink-0 mt-0.5" />
+                  <p className="text-sm font-semibold leading-snug">{state.error}</p>
+                </div>
+                <Link
+                  href="/panel/plan"
+                  className="inline-flex items-center gap-2 px-3.5 py-2 rounded-[10px] bg-accent text-accent-contrast font-bold text-xs shadow hover:opacity-95 active:scale-95 transition-all"
+                >
+                  <span>Desbloquear alumnos ilimitados con Plan Pro</span>
+                  <ArrowRight className="size-3.5" />
+                </Link>
+              </div>
+            ) : (
+              <p className="w-full text-sm text-danger">{state.error}</p>
+            )
           ) : null}
           {state.encolado ? (
             <p className="w-full text-sm text-warn">

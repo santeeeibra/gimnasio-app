@@ -24,9 +24,11 @@ import {
   type PreferenciaEquipo,
   type Sexo,
 } from "@/lib/rutina/tipos";
+import { LIMIT_EXCEEDED_UPGRADE_REQUIRED } from "@/types/partner";
 
 export type AltaState = {
   error?: string;
+  code?: string;
   ok?: string;
   /** Datos para que el dueño le pase el acceso al socio nuevo. */
   alta?: {
@@ -94,6 +96,7 @@ async function altaClienteInterno(
       return {
         error:
           "Llegaste al límite de 40 alumnos activos del Plan Inicial Gratuito. Pasate a un plan Pro o Elite en Mi Plan para seguir sumando socios.",
+        code: LIMIT_EXCEEDED_UPGRADE_REQUIRED,
       };
     }
     return {
@@ -169,7 +172,17 @@ async function altaClienteInterno(
   clienteId = (cliData as { id: string } | null)?.id ?? null;
 
   if (cliErr) {
+    await admin.from("profiles").delete().eq("id", created.user.id);
+    await admin.auth.admin.deleteUser(created.user.id);
     await registrarError(dueno.gimnasio_id, "alta_cliente", cliErr);
+    if (cliErr.message?.includes(LIMIT_EXCEEDED_UPGRADE_REQUIRED)) {
+      return {
+        error:
+          "Llegaste al límite de 40 alumnos activos del Plan Inicial Gratuito. Pasate a un plan Pro o Elite en Mi Plan para seguir sumando socios.",
+        code: LIMIT_EXCEEDED_UPGRADE_REQUIRED,
+      };
+    }
+    return { error: "No se pudo registrar el cliente en el sistema." };
   }
 
   // Registrar peso corporal inicial si fue provisto

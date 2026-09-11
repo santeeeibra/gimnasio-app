@@ -121,6 +121,38 @@ async function generarComun(
   const avanzado =
     conAvanzado && nivel === "avanzado" ? parseAvanzado(formData) : undefined;
 
+  // Gating Plan Inicial: máx 2 rutinas científicas por mes en cuentas gratuitas
+  const { data: gym } = await supabase
+    .from("gimnasios")
+    .select("plan_plataforma_id")
+    .eq("id", cliente.gimnasio_id)
+    .single();
+
+  if (!gym?.plan_plataforma_id) {
+    const { data: rutExistente } = await supabase
+      .from("rutinas")
+      .select("preferencias")
+      .eq("cliente_id", cliente.id)
+      .maybeSingle();
+
+    if (rutExistente?.preferencias) {
+      const ahora = new Date();
+      const mesActual = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, "0")}`;
+      const prefs = (rutExistente.preferencias ?? {}) as Record<string, any>;
+      const conteoMes =
+        prefs.ultimo_mes_generado === mesActual
+          ? Number(prefs.generaciones_mes ?? 1)
+          : 0;
+
+      if (conteoMes >= 2) {
+        return {
+          error:
+            "En el Plan Inicial Gratuito podés generar hasta 2 rutinas por mes. Pedile a tu gimnasio que active el Plan Pro para generar rutinas ilimitadas.",
+        };
+      }
+    }
+  }
+
   const seed = Math.floor(Math.random() * 1_000_000_000);
   const res = await generarYGuardar(supabase, {
     gimnasioId: cliente.gimnasio_id,

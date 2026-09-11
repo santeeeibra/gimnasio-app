@@ -24,6 +24,7 @@ import { OnboardingDueno } from "./onboarding-dueno";
 import { BotonInstalarApp } from "@/components/pwa/boton-instalar-app";
 import { WidgetAsistenciaSala } from "@/components/panel/widget-asistencia-sala";
 import { obtenerPedidosActivos } from "./asistencia/actions";
+import { GatingPlanInicialBanner } from "@/components/plataforma/gating-plan-inicial";
 
 export default async function ResumenPage() {
   const dueno = await requireDueno();
@@ -252,8 +253,14 @@ export default async function ResumenPage() {
         </div>
       )}
 
-      {/* Banner Cupo / Plan */}
-      {mostrarBannerPlan && (
+      {/* Banner Cupo / Plan Inicial (40 alumnos) */}
+      {cupo.esGratuito ? (
+        <GatingPlanInicialBanner
+          usados={cupo.usados}
+          max={cupo.max ?? 40}
+          esGratuito={cupo.esGratuito}
+        />
+      ) : mostrarBannerPlan ? (
         <div className="rounded-[12px] border border-rule bg-paper-2 p-4">
           <p className="text-sm text-ink leading-relaxed">
             {!cupo.ok
@@ -269,7 +276,7 @@ export default async function ResumenPage() {
             </Link>
           </p>
         </div>
-      )}
+      ) : null}
 
       {/* Tarjeta Modo Check-in (Móvil) */}
       <div className="md:hidden">
