@@ -13,7 +13,7 @@ export default async function LoginPage({
   const profile = await getSessionProfile();
   if (profile) {
     if (profile.debe_cambiar_clave) redirect("/cambiar-clave");
-    redirect(profile.rol === "dueno" ? "/panel" : "/mi");
+    redirect(profile.rol === "dueno" || profile.rol === "staff" ? "/panel" : "/mi");
   }
 
   // 2. Resolver parámetro de URL o cookie persistida

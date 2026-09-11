@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { requireDueno, dniAEmail } from "@/lib/auth";
+import { requireStaffODueno, dniAEmail } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { enviarPush } from "@/lib/push/enviar";
 import { registrarError } from "@/lib/admin/errores";
@@ -15,14 +15,14 @@ export type CheckinState = {
 
 /**
  * Marca el ingreso de un cliente a partir de su DNI.
- * Corre dentro de la sesión autenticada del dueño (modo kiosko), usa el
+ * Corre dentro de la sesión autenticada del dueño o staff (modo kiosko), usa el
  * cliente RLS de Supabase: sólo ve/inserta registros de su gimnasio.
  */
 export async function marcarIngreso(
   _prev: CheckinState,
   formData: FormData,
 ): Promise<CheckinState> {
-  const dueno = await requireDueno();
+  const dueno = await requireStaffODueno();
   const dni = String(formData.get("dni") ?? "").replace(/\D/g, "").trim();
 
   if (!dni) return { error: "Escribí un DNI." };
@@ -37,7 +37,7 @@ export async function marcarIngreso(
 }
 
 async function marcarIngresoInterno(
-  dueno: Awaited<ReturnType<typeof requireDueno>>,
+  dueno: Awaited<ReturnType<typeof requireStaffODueno>>,
   dni: string,
 ): Promise<CheckinState> {
   const supabase = await createClient();
@@ -116,7 +116,7 @@ export async function salirModoCheckin(
   _prev: { error?: string },
   formData: FormData,
 ): Promise<{ error?: string }> {
-  const dueno = await requireDueno();
+  const dueno = await requireStaffODueno();
   const clave = String(formData.get("clave") ?? "");
   if (!clave) return { error: "Ingresá tu clave." };
 

@@ -30,7 +30,15 @@ type NavItem = {
   Icono: LucideIcon;
 };
 
-export function getNavItems(tipoCuenta: string = "gym"): NavItem[] {
+export function getNavItems(tipoCuenta: string = "gym", rol: string = "dueno"): NavItem[] {
+  if (rol === "staff") {
+    return [
+      { href: "/panel", label: "Resumen", Icono: LayoutDashboard },
+      { href: "/panel/clientes", label: "Clientes", Icono: Users },
+      { href: "/panel/mensajes", label: "Mensajes", Icono: MessageSquare },
+    ];
+  }
+
   if (tipoCuenta === "individual") {
     return [
       { href: "/panel", label: "Resumen", Icono: LayoutDashboard },
@@ -114,15 +122,17 @@ export function PanelSidebar({
   logo,
   tipoCuenta = "gym",
   esSuper = false,
+  rol = "dueno",
 }: {
   nombre?: string | null;
   dueno: string;
   logo?: string | null;
   tipoCuenta?: string;
   esSuper?: boolean;
+  rol?: string;
 }) {
   const pathname = usePathname();
-  const items = getNavItems(tipoCuenta);
+  const items = getNavItems(tipoCuenta, rol);
 
   return (
     <aside className="hidden md:flex md:flex-col gap-6 border-r border-rule p-5 md:sticky md:top-0 md:h-screen">
@@ -130,7 +140,14 @@ export function PanelSidebar({
         <LogoMark logo={logo} size="size-9" />
         <div className="min-w-0">
           <p className="font-display text-lg leading-tight truncate">{nombre}</p>
-          <p className="text-xs text-ink-soft truncate">{dueno}</p>
+          <div className="flex items-center gap-1.5 mt-0.5">
+            <p className="text-xs text-ink-soft truncate">{dueno}</p>
+            {rol === "staff" ? (
+              <span className="rounded bg-paper-3 px-1.5 py-0.2 text-[10px] font-semibold text-ink-soft border border-rule">
+                Staff
+              </span>
+            ) : null}
+          </div>
         </div>
       </div>
       <nav className="flex flex-col gap-0.5 flex-1">
@@ -193,10 +210,12 @@ export function PanelTopbar({
   nombre,
   logo,
   esSuper = false,
+  rol = "dueno",
 }: {
   nombre?: string | null;
   logo?: string | null;
   esSuper?: boolean;
+  rol?: string;
 }) {
   return (
     <header className="md:hidden sticky top-0 z-30 flex items-center justify-between border-b border-rule bg-paper/95 backdrop-blur-md px-5 pb-3 pt-[calc(env(safe-area-inset-top,0px)+0.75rem)]">
@@ -205,13 +224,15 @@ export function PanelTopbar({
         <p className="font-display text-base leading-tight truncate">{nombre}</p>
       </div>
       <div className="flex shrink-0 items-center gap-2">
-        <Link
-          href="/panel/partner"
-          className="px-2.5 py-1 text-xs font-bold rounded-full inline-flex items-center gap-1 bg-emerald-500/15 text-emerald-600 dark:text-[#10e7a0] border border-emerald-500/30 active:scale-95 transition-all"
-        >
-          <Award className="size-3" />
-          <span>Partner</span>
-        </Link>
+        {rol !== "staff" ? (
+          <Link
+            href="/panel/partner"
+            className="px-2.5 py-1 text-xs font-bold rounded-full inline-flex items-center gap-1 bg-emerald-500/15 text-emerald-600 dark:text-[#10e7a0] border border-emerald-500/30 active:scale-95 transition-all"
+          >
+            <Award className="size-3" />
+            <span>Partner</span>
+          </Link>
+        ) : null}
         <a
           href={whatsappReporteUrl(nombre)}
           target="_blank"
@@ -240,9 +261,15 @@ export function PanelTopbar({
  * rediseño de navegación a ventanas superpuestas (pedido reunión de ventas
  * 08/09): la nav queda como capa fija y las secciones podrán abrirse encima.
  */
-export function PanelBottomNav({ tipoCuenta = "gym" }: { tipoCuenta?: string }) {
+export function PanelBottomNav({
+  tipoCuenta = "gym",
+  rol = "dueno",
+}: {
+  tipoCuenta?: string;
+  rol?: string;
+}) {
   const pathname = usePathname();
-  const items = getNavItems(tipoCuenta).filter((i) => !i.soloDesktop);
+  const items = getNavItems(tipoCuenta, rol).filter((i) => !i.soloDesktop);
 
   return (
     <div className="md:hidden pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center px-3 pb-[calc(env(safe-area-inset-bottom,0px)+0.55rem)] pt-2">

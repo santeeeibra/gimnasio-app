@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { requireDueno, claveInicial } from "@/lib/auth";
+import { requireStaffODueno, claveInicial } from "@/lib/auth";
 import { Panel, linkClasses, pillClasses } from "@/components/ui";
 import { ChevronLeft, CreditCard, Sparkles, AlertCircle } from "lucide-react";
 import { AccesoSocio } from "./acceso-socio";
@@ -50,7 +50,7 @@ export default async function ClienteDetallePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const dueno = await requireDueno();
+  const dueno = await requireStaffODueno();
   const supabase = await createClient();
 
   const [{ data: cliente }, { data: gym }] = await Promise.all([
@@ -397,6 +397,7 @@ export default async function ClienteDetallePage({
                     telefono={c.profile?.telefono ?? null}
                     email={(c.email as string | null) ?? null}
                     sexo={(c.sexo as Sexo | null) ?? null}
+                    esDueno={dueno.rol === "dueno"}
                   />
                 </div>
               </Panel>

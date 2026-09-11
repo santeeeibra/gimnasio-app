@@ -24,7 +24,8 @@ import { verificarPlanGimnasio } from "@/lib/plataforma/plan-gate";
 import { BloqueoEliteGate, BadgeElite } from "@/components/ui/bloqueo-elite-gate";
 
 import { AjustesSeccionModal } from "./ajustes-seccion-modal";
-import { Palette, Landmark, Bell, Smartphone, QrCode, KeyRound, HelpCircle, Receipt } from "lucide-react";
+import { StaffForm, type StaffItem } from "./staff-form";
+import { Palette, Landmark, Bell, Smartphone, QrCode, KeyRound, HelpCircle, Receipt, Users } from "lucide-react";
 
 const ESTADO_LABEL: Record<string, string> = {
   prueba: "En prueba",
@@ -49,6 +50,7 @@ export default async function AjustesPage({
     cobroAuto,
     sp,
     planInfo,
+    { data: staffData },
   ] = await Promise.all([
     supabase
       .from("gimnasios")
@@ -71,7 +73,16 @@ export default async function AjustesPage({
     estadoCobroAutomatico(db, profile.gimnasio_id),
     (searchParams ?? Promise.resolve({})) as Promise<{ mp?: string }>,
     verificarPlanGimnasio(db, profile.gimnasio_id),
+    db
+      .from("profiles")
+      .select("id, nombre, dni, telefono, activo, creado_at")
+      .eq("gimnasio_id", profile.gimnasio_id)
+      .eq("rol", "staff")
+      .order("creado_at", { ascending: false }),
   ]);
+
+  const empleados = (staffData ?? []) as StaffItem[];
+  const staffActivosCount = empleados.filter((e) => e.activo).length;
 
   const estado = gym?.estado ?? "prueba";
   const planNombre =
@@ -181,6 +192,24 @@ export default async function AjustesPage({
               cbu={gym.pago_cbu ?? null}
               titular={gym.pago_titular ?? null}
             />
+          </AjustesSeccionModal>
+        ) : null}
+
+        {/* EMPLEADOS / STAFF DE RECEPCIÓN */}
+        {gym ? (
+          <AjustesSeccionModal
+            titulo="Empleados"
+            subtitulo="Cuentas de recepción y staff con acceso operativo al gimnasio."
+            icon={<Users className="size-4" />}
+            resumen={
+              <p className="text-[11px] text-ink-soft font-mono">
+                {empleados.length === 0
+                  ? "Sin empleados"
+                  : `${staffActivosCount} activo${staffActivosCount === 1 ? "" : "s"} / ${empleados.length} total`}
+              </p>
+            }
+          >
+            <StaffForm empleados={empleados} gimnasioSlug={gym.slug} />
           </AjustesSeccionModal>
         ) : null}
 

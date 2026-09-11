@@ -6,11 +6,13 @@ import { createAdminClient } from "@/lib/supabase/admin";
 export type Profile = {
   id: string;
   gimnasio_id: string;
-  rol: "dueno" | "cliente";
+  rol: "dueno" | "cliente" | "staff";
   dni: string;
   nombre: string;
   telefono: string | null;
   debe_cambiar_clave: boolean;
+  activo?: boolean;
+  permisos?: Record<string, any>;
 };
 
 // DNI -> email sintético. El cliente nunca ve esto.
@@ -32,7 +34,7 @@ export async function getSessionProfile(): Promise<Profile | null> {
 
   const { data } = await supabase
     .from("profiles")
-    .select("id, gimnasio_id, rol, dni, nombre, telefono, debe_cambiar_clave")
+    .select("id, gimnasio_id, rol, dni, nombre, telefono, debe_cambiar_clave, activo, permisos")
     .eq("id", user.id)
     .single();
 
@@ -42,8 +44,11 @@ export async function getSessionProfile(): Promise<Profile | null> {
 export async function requireProfile(): Promise<Profile> {
   const profile = await getSessionProfile();
   if (!profile) redirect("/login");
+  if (profile.activo === false) {
+    redirect("/login?error=cuenta_desactivada");
+  }
   if (profile.debe_cambiar_clave) {
-    // Al dueño se le da a elegir en /bienvenida; al cliente se lo fuerza como antes.
+    // Al dueño se le da a elegir en /bienvenida; al cliente y staff se los fuerza a cambiarla.
     redirect(profile.rol === "dueno" ? "/bienvenida" : "/cambiar-clave");
   }
 
@@ -66,7 +71,17 @@ export async function requireProfile(): Promise<Profile> {
 
 export async function requireDueno(): Promise<Profile> {
   const profile = await requireProfile();
-  if (profile.rol !== "dueno") redirect("/mi");
+  if (profile.rol !== "dueno") {
+    redirect(profile.rol === "staff" ? "/panel" : "/mi");
+  }
+  return profile;
+}
+
+export async function requireStaffODueno(): Promise<Profile> {
+  const profile = await requireProfile();
+  if (profile.rol !== "dueno" && profile.rol !== "staff") {
+    redirect("/mi");
+  }
   return profile;
 }
 

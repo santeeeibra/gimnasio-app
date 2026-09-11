@@ -172,6 +172,20 @@ export function LoginForm({
                 className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/40 to-transparent"
               />
 
+              {initialError ? (
+                <div
+                  role="alert"
+                  className="mb-5 px-4 py-3 rounded-xl bg-rose-500/15 border border-rose-500/35 text-rose-200 text-[13px] font-medium flex items-center gap-2.5 shadow-[0_0_20px_rgba(244,63,94,0.25)]"
+                >
+                  <span className="size-2 rounded-full bg-rose-400 shrink-0" />
+                  <p>
+                    {initialError === "cuenta_desactivada"
+                      ? "Tu cuenta ha sido desactivada. Consultá con la administración del gimnasio."
+                      : initialError}
+                  </p>
+                </div>
+              ) : null}
+
               {/* Selector de modo: Cuenta Directa (Email) vs Gimnasio (DNI) */}
               <div className="flex rounded-xl bg-[#11131a] p-1 border border-white/10 mb-5">
                 <button

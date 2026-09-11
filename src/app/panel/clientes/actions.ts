@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireDueno, dniAEmail, claveInicial } from "@/lib/auth";
+import { requireDueno, requireStaffODueno, dniAEmail, claveInicial } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generarYGuardar } from "@/lib/rutina/generar";
@@ -46,7 +46,7 @@ export async function altaCliente(
   _prev: AltaState,
   formData: FormData,
 ): Promise<AltaState> {
-  const dueno = await requireDueno();
+  const dueno = await requireStaffODueno();
   try {
     return await altaClienteInterno(dueno, formData);
   } catch (err) {
@@ -57,7 +57,7 @@ export async function altaCliente(
 }
 
 async function altaClienteInterno(
-  dueno: Awaited<ReturnType<typeof requireDueno>>,
+  dueno: Awaited<ReturnType<typeof requireStaffODueno>>,
   formData: FormData,
 ): Promise<AltaState> {
   const nombre = String(formData.get("nombre") ?? "").trim();
@@ -225,7 +225,7 @@ export async function registrarPago(
   _prev: { error?: string; ok?: string },
   formData: FormData,
 ): Promise<{ error?: string; ok?: string }> {
-  const dueno = await requireDueno();
+  const dueno = await requireStaffODueno();
   try {
     return await registrarPagoInterno(dueno, formData);
   } catch (err) {
@@ -235,7 +235,7 @@ export async function registrarPago(
 }
 
 async function registrarPagoInterno(
-  dueno: Awaited<ReturnType<typeof requireDueno>>,
+  dueno: Awaited<ReturnType<typeof requireStaffODueno>>,
   formData: FormData,
 ): Promise<{ error?: string; ok?: string }> {
   const clienteId = String(formData.get("cliente_id") ?? "");
@@ -299,7 +299,7 @@ export async function regenerarClave(
   _prev: { error?: string; ok?: string; clave?: string },
   formData: FormData,
 ): Promise<{ error?: string; ok?: string; clave?: string }> {
-  const dueno = await requireDueno();
+  const dueno = await requireStaffODueno();
   const clienteId = String(formData.get("cliente_id") ?? "");
   if (!clienteId) return { error: "Falta el cliente." };
 
@@ -329,7 +329,7 @@ export async function regenerarClave(
   return { ok: "Contraseña restablecida.", clave };
 }
 
-// El dueño corrige los datos de un socio ya creado. El DNI es delicado: de él
+// El dueño o staff corrige los datos de un socio ya creado. El DNI es delicado: de él
 // sale el email sintético de login (`dniAEmail`), así que si cambia hay que
 // actualizar también el usuario de auth. Contraseña opcional: si viene, se
 // setea y se fuerza el cambio en el próximo ingreso.
@@ -337,7 +337,7 @@ export async function editarCliente(
   _prev: { error?: string; ok?: string; clave?: string },
   formData: FormData,
 ): Promise<{ error?: string; ok?: string; clave?: string }> {
-  const dueno = await requireDueno();
+  const dueno = await requireStaffODueno();
   const clienteId = String(formData.get("cliente_id") ?? "");
   const nombre = String(formData.get("nombre") ?? "").trim();
   const dni = String(formData.get("dni") ?? "").trim();
@@ -438,7 +438,7 @@ export async function generarRutinaCliente(
   _prev: { error?: string; ok?: string },
   formData: FormData,
 ): Promise<{ error?: string; ok?: string }> {
-  const dueno = await requireDueno();
+  const dueno = await requireStaffODueno();
   const clienteId = String(formData.get("cliente_id") ?? "");
   const objetivo = String(formData.get("objetivo") ?? "") as Objetivo;
   const nivel = String(formData.get("nivel") ?? "") as Nivel;
@@ -491,7 +491,7 @@ export async function guardarFotoSocio(
   clienteId: string,
   fotoUrl: string | null,
 ): Promise<{ error?: string }> {
-  const dueno = await requireDueno();
+  const dueno = await requireStaffODueno();
   const supabase = await createClient();
 
   const { data: cli } = await supabase

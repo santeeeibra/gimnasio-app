@@ -1,4 +1,4 @@
-import { requireDueno } from "@/lib/auth";
+import { requireStaffODueno } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { parseTema, temaToVars, polaridadTema, resolverMotion } from "@/lib/tema";
 import { OfflineProvider } from "@/components/offline/provider";
@@ -11,7 +11,7 @@ export default async function CheckinLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const profile = await requireDueno();
+  const profile = await requireStaffODueno();
   const supabase = await createClient();
   const [{ data: gym }, infoPlan] = await Promise.all([
     supabase

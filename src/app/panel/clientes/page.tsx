@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { requireDueno } from "@/lib/auth";
+import { requireStaffODueno } from "@/lib/auth";
 import { cupoSocios } from "@/lib/plataforma/cupo";
 import { NuevoClienteModal } from "./nuevo-cliente-modal";
 import { type ClienteVista } from "./cliente-row";
@@ -17,7 +17,7 @@ export default async function ClientesPage({
   const params = await searchParams;
   const fueEliminado = params?.eliminado === "1";
 
-  const dueno = await requireDueno();
+  const dueno = await requireStaffODueno();
   const supabase = await createClient();
   const adminDb = createAdminClient();
   const [cupo, { data: clientesData }, { data: planesData }, { data: registrosData }] =

@@ -80,16 +80,21 @@ export async function login(
   // Obtener perfil y redirigir directamente sin pasar por el salto intermedio de "/"
   const { data: profile } = await supabase
     .from("profiles")
-    .select("rol, debe_cambiar_clave")
+    .select("rol, debe_cambiar_clave, activo")
     .eq("id", authData.user.id)
     .single();
 
+  if (profile?.activo === false) {
+    await supabase.auth.signOut();
+    return { error: "Tu cuenta ha sido desactivada. Consultá con la administración del gimnasio." };
+  }
+
   if (profile?.debe_cambiar_clave) {
-    // Al dueño se le da a elegir en /bienvenida; al cliente se lo fuerza como antes.
+    // Al dueño se le da a elegir en /bienvenida; al cliente y staff se los fuerza a cambiarla.
     redirect(profile.rol === "dueno" ? "/bienvenida" : "/cambiar-clave");
   }
 
-  redirect(profile?.rol === "dueno" ? "/panel" : "/mi");
+  redirect(profile?.rol === "dueno" || profile?.rol === "staff" ? "/panel" : "/mi");
 }
 
 // Login "directo" sin gimnasio: pensado para cuentas individuales (atletas
@@ -227,15 +232,20 @@ export async function loginIndividual(
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("rol, debe_cambiar_clave")
+    .select("rol, debe_cambiar_clave, activo")
     .eq("id", userId)
     .single();
+
+  if (profile?.activo === false) {
+    await supabase.auth.signOut();
+    redirect("/login?error=cuenta_desactivada");
+  }
 
   if (profile?.debe_cambiar_clave) {
     redirect(profile.rol === "dueno" ? "/bienvenida" : "/cambiar-clave");
   }
 
-  redirect(profile?.rol === "dueno" ? "/panel" : "/mi");
+  redirect(profile?.rol === "dueno" || profile?.rol === "staff" ? "/panel" : "/mi");
 }
 
 export async function loginDevAction(): Promise<void> {
@@ -322,7 +332,7 @@ export async function asegurarPerfilGoogleAction(): Promise<{
       ? profile.rol === "dueno"
         ? "/bienvenida"
         : "/cambiar-clave"
-      : profile.rol === "dueno"
+      : profile.rol === "dueno" || profile.rol === "staff"
         ? "/panel"
         : "/mi";
 

@@ -1,6 +1,6 @@
 "use server";
 
-import { requireDueno } from "@/lib/auth";
+import { requireStaffODueno } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { enviarPush } from "@/lib/push/enviar";
@@ -26,7 +26,7 @@ export type PedidoPanel = {
 export async function obtenerPedidosActivos(): Promise<{
   pedidos: PedidoPanel[];
 }> {
-  const dueno = await requireDueno();
+  const dueno = await requireStaffODueno();
   const supabase = await createClient();
 
   const hace2Horas = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
@@ -60,7 +60,7 @@ export async function obtenerPedidosActivos(): Promise<{
 }
 
 export async function marcarEnCamino(pedidoId: string): Promise<{ ok: boolean; error?: string }> {
-  const dueno = await requireDueno();
+  const dueno = await requireStaffODueno();
   const admin = createAdminClient();
 
   const { data: pedido, error } = await admin
@@ -101,7 +101,7 @@ export async function marcarEnCamino(pedidoId: string): Promise<{ ok: boolean; e
 }
 
 export async function marcarAtendido(pedidoId: string): Promise<{ ok: boolean; error?: string }> {
-  const dueno = await requireDueno();
+  const dueno = await requireStaffODueno();
   // Mutación con service_role: la autorización ya la hace requireDueno() y el
   // scope lo fija el .eq("gimnasio_id"). Se evita que una policy RLS anule el
   // UPDATE en silencio (0 filas afectadas, sin error) y el pedido reaparezca

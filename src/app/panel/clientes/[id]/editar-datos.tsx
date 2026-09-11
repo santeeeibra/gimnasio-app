@@ -13,6 +13,7 @@ export function EditarDatos({
   telefono,
   email,
   sexo,
+  esDueno = true,
 }: {
   clienteId: string;
   nombre: string;
@@ -20,6 +21,7 @@ export function EditarDatos({
   telefono: string | null;
   email: string | null;
   sexo: Sexo | null;
+  esDueno?: boolean;
 }) {
   const [state, action, pending] = useActionState(editarCliente, {});
 
@@ -106,7 +108,9 @@ export function EditarDatos({
       </form>
     </details>
 
-        <BajaClienteModal clienteId={clienteId} nombre={nombre} dni={dni} />
+        {esDueno ? (
+          <BajaClienteModal clienteId={clienteId} nombre={nombre} dni={dni} />
+        ) : null}
       </div>
     </div>
   );

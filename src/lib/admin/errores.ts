@@ -6,6 +6,7 @@ import { notificarSuperadmin } from "@/lib/admin/notificar";
 /** De dónde salió el error. Mismo criterio que la columna `origen`. */
 export type OrigenError =
   | "alta_cliente"
+  | "alta_staff"
   | "checkin"
   | "rutina"
   | "pago"
@@ -14,6 +15,7 @@ export type OrigenError =
 /** Texto legible por origen, para mostrar en /admin/errores sin jerga. */
 export const ORIGEN_LABEL: Record<OrigenError, string> = {
   alta_cliente: "Alta de socio",
+  alta_staff: "Alta de empleado",
   checkin: "Check-in",
   rutina: "Rutina",
   pago: "Pago",

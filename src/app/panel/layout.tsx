@@ -1,4 +1,4 @@
-import { requireDueno } from "@/lib/auth";
+import { requireStaffODueno } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { parseTema, temaToVars, polaridadTema, resolverMotion } from "@/lib/tema";
 import { PanelSidebar, PanelTopbar, PanelBottomNav } from "./panel-nav";
@@ -16,7 +16,7 @@ export default async function PanelLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const profile = await requireDueno();
+  const profile = await requireStaffODueno();
   const supabase = await createClient();
   const { data: gym } = await supabase
     .from("gimnasios")
@@ -49,6 +49,7 @@ export default async function PanelLayout({
         logo={gym?.logo_url ?? null}
         tipoCuenta={gym?.tipo_cuenta ?? "gym"}
         esSuper={esSuper}
+        rol={profile.rol}
       />
 
       <div className="flex min-h-screen flex-col">
@@ -56,14 +57,15 @@ export default async function PanelLayout({
           nombre={gym?.nombre}
           logo={gym?.logo_url ?? null}
           esSuper={esSuper}
+          rol={profile.rol}
         />
         <main className="w-full max-w-[1600px] mx-auto flex-1 p-4 sm:p-6 pb-28 md:p-8 md:pb-10">
           <PullToRefresh>{children}</PullToRefresh>
         </main>
-        <PanelBottomNav tipoCuenta={gym?.tipo_cuenta ?? "gym"} />
+        <PanelBottomNav tipoCuenta={gym?.tipo_cuenta ?? "gym"} rol={profile.rol} />
       </div>
 
-      <Tutorial rol="dueno" />
+      {profile.rol === "dueno" ? <Tutorial rol="dueno" /> : null}
       <div id="portal-root" />
     </div>
   );

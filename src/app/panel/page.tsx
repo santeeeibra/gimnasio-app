@@ -16,7 +16,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { linkClasses } from "@/components/ui";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { requireDueno } from "@/lib/auth";
+import { requireStaffODueno } from "@/lib/auth";
 import { diasRestantes, estadoDesdeDias } from "@/lib/cuota";
 import { cupoSocios } from "@/lib/plataforma/cupo";
 import type { ClienteVista } from "./clientes/cliente-row";
@@ -27,7 +27,8 @@ import { obtenerPedidosActivos } from "./asistencia/actions";
 import { GatingPlanInicialBanner } from "@/components/plataforma/gating-plan-inicial";
 
 export default async function ResumenPage() {
-  const dueno = await requireDueno();
+  const dueno = await requireStaffODueno();
+  const esStaff = dueno.rol === "staff";
   const supabase = await createClient();
   const adminDb = createAdminClient();
 
@@ -64,7 +65,9 @@ export default async function ResumenPage() {
       .select("estado, nombre")
       .eq("id", dueno.gimnasio_id)
       .single(),
-    cupoSocios(adminDb, dueno.gimnasio_id),
+    esStaff
+      ? Promise.resolve({ ok: true, usados: 0, max: null, esGratuito: false } as any)
+      : cupoSocios(adminDb, dueno.gimnasio_id),
     supabase
       .from("clientes")
       .select(
@@ -89,12 +92,14 @@ export default async function ResumenPage() {
       .select("id", { count: "exact", head: true })
       .eq("gimnasio_id", dueno.gimnasio_id),
     obtenerPedidosActivos(),
-    supabase
-      .from("pagos")
-      .select("monto, fecha_pago, estado")
-      .eq("gimnasio_id", dueno.gimnasio_id)
-      .eq("estado", "confirmado")
-      .gte("fecha_pago", inicioMesAnteriorStr),
+    esStaff
+      ? Promise.resolve({ data: [] as any[] })
+      : supabase
+          .from("pagos")
+          .select("monto, fecha_pago, estado")
+          .eq("gimnasio_id", dueno.gimnasio_id)
+          .eq("estado", "confirmado")
+          .gte("fecha_pago", inicioMesAnteriorStr),
     supabase
       .from("registros_entrada")
       .select("id", { count: "exact", head: true })
@@ -228,8 +233,43 @@ export default async function ResumenPage() {
         gimnasioId={dueno.gimnasio_id}
       />
 
-      {/* Banner Solo Lectura */}
-      {soloLectura && (
+      {/* Banner de Bienvenida y Accesos para Staff */}
+      {esStaff ? (
+        <div className="rounded-[14px] border border-rule bg-paper-2 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="rounded bg-volt/20 px-2 py-0.5 text-[10px] font-bold text-ink uppercase tracking-wider border border-volt/30">
+                Recepción · Staff
+              </span>
+            </div>
+            <h1 className="text-xl sm:text-2xl font-display font-bold text-ink mt-1.5">
+              ¡Hola, {dueno.nombre}!
+            </h1>
+            <p className="text-xs text-ink-soft mt-1">
+              Acceso operativo al gimnasio: podés dar de alta socios, cobrar cuotas y gestionar el ingreso.
+            </p>
+          </div>
+          <div className="flex items-center gap-2.5 shrink-0">
+            <Link
+              href="/panel/clientes"
+              className="inline-flex min-h-10 items-center gap-2 rounded-[10px] bg-ink px-4 py-2 text-xs font-semibold text-paper hover:opacity-90 active:scale-95 transition-all"
+            >
+              <Users className="size-4" />
+              <span>Ver Socios</span>
+            </Link>
+            <Link
+              href="/checkin"
+              className="inline-flex min-h-10 items-center gap-2 rounded-[10px] bg-volt/20 border border-volt/35 px-4 py-2 text-xs font-semibold text-ink hover:bg-volt/30 active:scale-95 transition-all"
+            >
+              <ScanLine className="size-4 text-volt" />
+              <span>Check-in</span>
+            </Link>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Banner Solo Lectura (Solo Dueño) */}
+      {!esStaff && soloLectura && (
         <div className="rounded-[12px] border-2 border-danger bg-danger/10 p-4">
           <div className="flex items-start gap-3">
             <AlertCircle className="size-5 text-danger shrink-0 mt-0.5" />
@@ -253,14 +293,14 @@ export default async function ResumenPage() {
         </div>
       )}
 
-      {/* Banner Cupo / Plan Inicial (40 alumnos) */}
-      {cupo.esGratuito ? (
+      {/* Banner Cupo / Plan Inicial (40 alumnos, Solo Dueño) */}
+      {!esStaff && cupo.esGratuito ? (
         <GatingPlanInicialBanner
           usados={cupo.usados}
           max={cupo.max ?? 40}
           esGratuito={cupo.esGratuito}
         />
-      ) : mostrarBannerPlan ? (
+      ) : !esStaff && mostrarBannerPlan ? (
         <div className="rounded-[12px] border border-rule bg-paper-2 p-4">
           <p className="text-sm text-ink leading-relaxed">
             {!cupo.ok
@@ -306,13 +346,16 @@ export default async function ResumenPage() {
         </Link>
       </div>
 
-      {/* Onboarding y Acceso PWA */}
-      <OnboardingDueno
-        tienePlanes={(planesCount ?? 0) > 0}
-        tieneSocios={totalSocios > 0}
-      />
-
-      <BotonInstalarApp variant="card" />
+      {/* Onboarding y Acceso PWA (Solo Dueño) */}
+      {!esStaff ? (
+        <>
+          <OnboardingDueno
+            tienePlanes={(planesCount ?? 0) > 0}
+            tieneSocios={totalSocios > 0}
+          />
+          <BotonInstalarApp variant="card" />
+        </>
+      ) : null}
 
       {/* ─────────────────────────────────────────────────────────────
           GRID DE MÉTRICAS OPERATIVAS REALES (Mobile: 1 col, Desktop: 2-4 cols)
@@ -320,58 +363,60 @@ export default async function ResumenPage() {
       <div>
         <div className="flex items-center justify-between mb-3 px-0.5">
           <span className="text-[11px] uppercase tracking-[0.08em] text-ink-soft font-semibold">
-            Métricas del Gimnasio
+            {esStaff ? "Métricas Operativas" : "Métricas del Gimnasio"}
           </span>
           <span className="text-xs text-ink-soft font-medium">
             {ahora.toLocaleDateString("es-AR", { month: "long", year: "numeric" })}
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-          {/* 1. Ingresos del Mes Actual */}
-          <div className="rounded-[14px] border border-rule bg-paper-2 p-4 sm:p-5 flex flex-col justify-between shadow-sm">
-            <div>
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[11px] uppercase tracking-[0.08em] text-ink-soft font-semibold">
-                  Ingresos del Mes
-                </span>
-                <span className="size-7 rounded-[8px] bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 grid place-items-center shrink-0">
-                  <CreditCard className="size-3.5" />
-                </span>
-              </div>
-              <p className="mt-3 text-2xl sm:text-3xl font-display font-bold tracking-tight text-ink">
-                ${ingresosMesActual.toLocaleString("es-AR")}
-              </p>
-            </div>
-
-            <div className="mt-3 pt-3 border-t border-rule/60 flex items-center justify-between gap-2">
-              {variacionPct !== null ? (
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <span
-                    className={`inline-flex items-center gap-0.5 text-[11px] font-semibold px-1.5 py-0.5 rounded-[6px] shrink-0 ${
-                      variacionPositiva
-                        ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/25"
-                        : "bg-danger/15 text-danger border border-danger/25"
-                    }`}
-                  >
-                    {variacionPositiva ? (
-                      <TrendingUp className="size-3" />
-                    ) : (
-                      <TrendingDown className="size-3" />
-                    )}
-                    {variacionPositiva ? "▲" : "▼"} {Math.abs(variacionPct)}%
+        <div className={esStaff ? "grid grid-cols-1 sm:grid-cols-3 gap-3.5" : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5"}>
+          {/* 1. Ingresos del Mes Actual (Solo Dueño) */}
+          {!esStaff ? (
+            <div className="rounded-[14px] border border-rule bg-paper-2 p-4 sm:p-5 flex flex-col justify-between shadow-sm">
+              <div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[11px] uppercase tracking-[0.08em] text-ink-soft font-semibold">
+                    Ingresos del Mes
                   </span>
-                  <span className="text-[11px] text-ink-soft truncate">
-                    vs mes anterior (${ingresosMesAnterior.toLocaleString("es-AR")})
+                  <span className="size-7 rounded-[8px] bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 grid place-items-center shrink-0">
+                    <CreditCard className="size-3.5" />
                   </span>
                 </div>
-              ) : (
-                <span className="text-[11px] text-ink-soft truncate">
-                  Sin cobros anteriores registrados
-                </span>
-              )}
+                <p className="mt-3 text-2xl sm:text-3xl font-display font-bold tracking-tight text-ink">
+                  ${ingresosMesActual.toLocaleString("es-AR")}
+                </p>
+              </div>
+
+              <div className="mt-3 pt-3 border-t border-rule/60 flex items-center justify-between gap-2">
+                {variacionPct !== null ? (
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span
+                      className={`inline-flex items-center gap-0.5 text-[11px] font-semibold px-1.5 py-0.5 rounded-[6px] shrink-0 ${
+                        variacionPositiva
+                          ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/25"
+                          : "bg-danger/15 text-danger border border-danger/25"
+                      }`}
+                    >
+                      {variacionPositiva ? (
+                        <TrendingUp className="size-3" />
+                      ) : (
+                        <TrendingDown className="size-3" />
+                      )}
+                      {variacionPositiva ? "▲" : "▼"} {Math.abs(variacionPct)}%
+                    </span>
+                    <span className="text-[11px] text-ink-soft truncate">
+                      vs mes anterior (${ingresosMesAnterior.toLocaleString("es-AR")})
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-[11px] text-ink-soft truncate">
+                    Sin cobros anteriores registrados
+                  </span>
+                )}
+              </div>
             </div>
-          </div>
+          ) : null}
 
           {/* 2. Socios Activos vs Total */}
           <div className="rounded-[14px] border border-rule bg-paper-2 p-4 sm:p-5 flex flex-col justify-between shadow-sm">
