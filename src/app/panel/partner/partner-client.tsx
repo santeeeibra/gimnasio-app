@@ -91,8 +91,8 @@ export function PartnerDashboardClient({
   } = resumen;
 
   const urlReferido = typeof window !== "undefined"
-    ? `${window.location.origin}/registro?ref=${partner.referral_code}`
-    : `https://gimnasio-app-rose.vercel.app/registro?ref=${partner.referral_code}`;
+    ? `${window.location.origin}/registro-gimnasio?ref=${partner.referral_code}`
+    : `https://gimnasio-app-rose.vercel.app/registro-gimnasio?ref=${partner.referral_code}`;
 
   const mensajeWhatsApp = `¡Hola! Te recomiendo SysGym para tu gimnasio o box. Automatiza cobros con Mercado Pago, control de acceso QR en puerta y rutinas para alumnos. ¡Es 100% gratis para los primeros 40 alumnos! Probá registrarte acá: ${urlReferido}`;
   const urlWhatsApp = `https://wa.me/?text=${encodeURIComponent(mensajeWhatsApp)}`;
