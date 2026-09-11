@@ -39,7 +39,11 @@ export async function notificarSuperadmin(
 
     const superId = process.env.SUPERADMIN_ID;
     const superEmail = process.env.SUPERADMIN_EMAIL;
-    const cuerpo = detalle.slice(0, 500);
+
+    // Para el push: el resumen directo sin adornos (máx 130 caracteres)
+    const lineas = detalle.split("\n").map((l) => l.trim()).filter(Boolean);
+    const primerLinea = lineas[0]?.replace(/^⚠️\s*/, "") || detalle;
+    const cuerpoPush = primerLinea.slice(0, 130);
 
     const tareas: Promise<unknown>[] = [];
 
@@ -47,18 +51,38 @@ export async function notificarSuperadmin(
       tareas.push(
         enviarPush([superId], {
           title: titulo.slice(0, 80),
-          body: cuerpo,
-          url: "/admin",
+          body: cuerpoPush,
+          url: "/admin/errores",
           tag: "admin-aviso",
         }),
       );
     }
 
     if (canales.email !== false && superEmail) {
-      const html = `<p><strong>${escaparHtml(titulo)}</strong></p><p style="white-space:pre-wrap">${escaparHtml(
-        cuerpo,
-      )}</p><p style="color:#888;font-size:12px">Aviso automático de SISTEMA GYM.</p>`;
-      tareas.push(enviarEmail(superEmail, `[SISTEMA GYM] ${titulo}`, html));
+      const lineasHtml = lineas
+        .map((l) => {
+          if (l.startsWith("Detalle técnico:")) {
+            return `<div style="margin-top:12px;padding:8px 12px;background:#f1f5f9;border-radius:6px;font-family:monospace;font-size:12px;color:#334155;word-break:break-all">${escaparHtml(l)}</div>`;
+          }
+          return `<p style="margin:6px 0;font-size:14px;color:#1e293b">${escaparHtml(l)}</p>`;
+        })
+        .join("");
+
+      const html = `
+<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;max-width:560px;margin:0 auto;padding:20px;border:1px solid #e2e8f0;border-radius:12px;background:#ffffff">
+  <div style="display:inline-block;padding:3px 10px;background:#fee2e2;color:#991b1b;border-radius:999px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px">
+    Aviso del Sistema
+  </div>
+  <h2 style="margin:0 0 12px 0;font-size:18px;color:#0f172a;font-weight:700">${escaparHtml(titulo)}</h2>
+  <div style="padding:14px;background:#fef2f2;border-left:4px solid #ef4444;border-radius:6px;margin-bottom:16px">
+    ${lineasHtml}
+  </div>
+  <p style="margin:16px 0 0 0;font-size:12px;color:#64748b">
+    Podés revisar todos los incidentes en el <a href="https://gimnasio-app.vercel.app/admin/errores" style="color:#2563eb;text-decoration:none;font-weight:600">Panel de Errores</a>.
+  </p>
+</div>`;
+
+      tareas.push(enviarEmail(superEmail, `[SysGym] ${titulo}`, html));
     }
 
     await Promise.allSettled(tareas);

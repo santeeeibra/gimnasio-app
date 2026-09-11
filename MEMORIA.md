@@ -37,4 +37,4 @@
 ## URLs del Proyecto
 
 - **URL Producción (Vercel):** https://gimnasio-app-rose.vercel.app
-- **Supabase Auth Callback:** https://adrkdortznimrlungwoy.supabase.co/auth/v1/callback
+- **Supabase Auth Callback:** https://adrkdortznimrlungwoy.supabase.co/auth/v1/callback- Diagnóstico y fix error rutina_items_tecnica_check (2026-09-11): Creada migración 0058 para incluir 'fst7' en el CHECK constraint de rutina_items.tecnica.

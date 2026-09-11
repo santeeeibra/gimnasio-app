@@ -5,6 +5,7 @@ import { linkClasses } from "@/components/ui";
 import {
   ORIGEN_LABEL,
   haceCuanto,
+  humanizarError,
   type OrigenError,
 } from "@/lib/admin/errores";
 
@@ -54,15 +55,14 @@ export default async function AdminErroresPage({
 
   return (
     <div className="stagger">
-      <h1 className="mb-1 text-lg">Errores</h1>
+      <h1 className="mb-1 text-lg font-bold">Errores y Avisos del Sistema</h1>
       <p className="mb-8 text-sm text-ink-soft">
-        Los últimos 30 problemas que registró la app. Sirven para el semáforo de
-        la lista de gimnasios.
+        Los últimos 30 incidentes registrados en la plataforma con diagnóstico automático.
         {gimnasioId ? (
           <>
             {" "}
             Filtrado por{" "}
-            <span className="text-ink">
+            <span className="text-ink font-medium">
               {nombrePorGym.get(gimnasioId) ?? "un gimnasio"}
             </span>
             .{" "}
@@ -75,30 +75,61 @@ export default async function AdminErroresPage({
 
       {lista.length === 0 ? (
         <p className="text-sm text-ink-soft">
-          No hay errores registrados. Todo viene funcionando.
+          No hay errores registrados. Todo viene funcionando con normalidad.
         </p>
       ) : (
         <ul className="card-cut border border-rule divide-y divide-rule bg-paper-2 overflow-hidden">
-          {lista.map((e) => (
-            <li key={e.id} className="px-5 py-4">
-              <div className="flex items-baseline justify-between gap-3">
-                <span className="text-sm font-medium">
-                  {etiquetaOrigen(e.origen)}
-                </span>
-                <span className="shrink-0 text-xs text-ink-soft">
-                  {haceCuanto(e.creado_en)}
-                </span>
-              </div>
-              <p className="mt-0.5 text-xs text-ink-soft">
-                {e.gimnasio_id
-                  ? (nombrePorGym.get(e.gimnasio_id) ?? "Gimnasio desconocido")
-                  : "Sin gimnasio asignado"}
-              </p>
-              <p className="mt-2 break-words text-sm text-ink-soft">
-                {e.mensaje}
-              </p>
-            </li>
-          ))}
+          {lista.map((e) => {
+            const info = humanizarError(e.mensaje);
+            return (
+              <li key={e.id} className="px-5 py-4 space-y-2">
+                <div className="flex items-baseline justify-between gap-3">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-danger/10 text-danger border border-danger/20">
+                      {etiquetaOrigen(e.origen)}
+                    </span>
+                    <span className="text-sm font-semibold text-ink">
+                      {info.titulo}
+                    </span>
+                  </div>
+                  <span className="shrink-0 text-xs text-ink-soft">
+                    {haceCuanto(e.creado_en)}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2 text-xs text-ink-soft flex-wrap">
+                  <span className="font-medium">
+                    {e.gimnasio_id
+                      ? (nombrePorGym.get(e.gimnasio_id) ?? "Gimnasio desconocido")
+                      : "Sin gimnasio asignado"}
+                  </span>
+                  {info.codigo && (
+                    <>
+                      <span>•</span>
+                      <span className="font-mono bg-paper px-1.5 py-0.5 rounded border border-rule text-[11px]">
+                        Código: {info.codigo}
+                      </span>
+                    </>
+                  )}
+                </div>
+
+                <p className="text-sm text-ink-soft leading-relaxed">
+                  {info.mensajeClaro}
+                </p>
+
+                {info.detalleTecnico && (
+                  <details className="text-xs group pt-1">
+                    <summary className="cursor-pointer text-ink-soft/80 hover:text-ink font-medium select-none flex items-center gap-1.5 transition-colors">
+                      <span>▶ Ver detalle técnico</span>
+                    </summary>
+                    <pre className="mt-2 p-2.5 rounded-[8px] bg-paper font-mono text-[11px] text-ink-soft border border-rule overflow-x-auto whitespace-pre-wrap break-all">
+                      {info.detalleTecnico}
+                    </pre>
+                  </details>
+                )}
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

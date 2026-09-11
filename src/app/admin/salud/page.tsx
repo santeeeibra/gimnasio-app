@@ -1,8 +1,8 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { requireSuperadmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { LIMITE_BYTES, mb, pctUso } from "@/lib/monitor-db";
-import { ORIGEN_LABEL, haceCuanto } from "@/lib/admin/errores";
+import { ORIGEN_LABEL, haceCuanto, humanizarError } from "@/lib/admin/errores";
 import { linkClasses } from "@/components/ui";
 import {
   HeartPulse,
@@ -287,24 +287,31 @@ export default async function AdminSaludPage() {
               {ultimosErrores.map((e) => {
                 const gym = (e as any).gimnasios;
                 const origenTxt = ORIGEN_LABEL[e.origen as keyof typeof ORIGEN_LABEL] ?? e.origen;
+                const info = humanizarError(e.mensaje);
 
                 return (
                   <div
                     key={e.id}
-                    className="text-xs p-2 rounded-[8px] bg-danger/5 border border-danger/20 space-y-1"
+                    className="text-xs p-2.5 rounded-[8px] bg-danger/5 border border-danger/20 space-y-1"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-semibold text-danger">{origenTxt}</span>
-                      <span className="text-[10px] text-ink-soft">{haceCuanto(e.creado_en)}</span>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-semibold text-danger">{origenTxt}</span>
+                        <span className="text-ink font-medium">• {info.titulo}</span>
+                      </div>
+                      <span className="text-[10px] text-ink-soft shrink-0">{haceCuanto(e.creado_en)}</span>
                     </div>
-                    <p className="text-ink text-[11px] font-mono line-clamp-1">
-                      {e.mensaje}
+                    <p className="text-ink-soft text-[11px] line-clamp-2">
+                      {info.mensajeClaro}
                     </p>
-                    {gym?.nombre && (
-                      <p className="text-[10px] text-ink-soft">
-                        Gimnasio: {gym.nombre}
-                      </p>
-                    )}
+                    <div className="flex items-center justify-between text-[10px] text-ink-soft pt-0.5">
+                      <span>{gym?.nombre ? `Gimnasio: ${gym.nombre}` : "Sin gimnasio asignado"}</span>
+                      {info.codigo && (
+                        <span className="font-mono bg-paper px-1 rounded border border-rule">
+                          cód. {info.codigo}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 );
               })}
