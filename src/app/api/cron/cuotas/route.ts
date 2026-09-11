@@ -212,6 +212,7 @@ async function correrCron() {
   // ─── Trials vencidos (gimnasios en prueba > 14 días desde creado_at) y
   //     planes de plataforma vencidos (gimnasios activos). Se corre siempre,
   //     no solo cuando hay cuotas de socios por vencer. ───
+  await admin.rpc("recalcular_estado_cuota");
   await admin.rpc("chequear_trial_vencido");
   await admin.rpc("chequear_plan_vencido");
 
