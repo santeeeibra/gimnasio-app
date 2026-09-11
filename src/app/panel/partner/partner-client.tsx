@@ -27,6 +27,17 @@ import {
   Rocket,
   Bell,
   CheckCheck,
+  FileText,
+  HelpCircle,
+  QrCode,
+  Receipt,
+  Zap,
+  CheckCircle2,
+  Calculator,
+  ChevronDown,
+  Download,
+  Play,
+  ExternalLink,
 } from "lucide-react";
 import { PulpoCard } from "@/components/mascota/pulpo";
 import { useHapticos } from "@/lib/ui/hapticos";
@@ -145,6 +156,11 @@ export function PartnerDashboardClient({
   const quedaArranque = Math.max(0, 5 - gimnasiosPagoActivos);
   const esArranqueActivo = quedaArranque > 0;
   const faltan = proximoHito ? proximoHito.faltan : 0;
+
+  // Estados para las herramientas del Kit de Ventas
+  const [simGyms, setSimGyms] = useState<number>(5);
+  const [objecionAbierta, setObjecionAbierta] = useState<number | null>(0);
+  const [copiadoDemo, setCopiadoDemo] = useState(false);
 
   // Estado para copiar scripts del Arsenal
   const [copiadoScriptId, setCopiadoScriptId] = useState<string | null>(null);
@@ -928,7 +944,596 @@ export function PartnerDashboardClient({
         </div>
       </div>
 
-      {/* ── 5. Arsenal de Difusión del Partner (Plantillas Listas) ─────── */}
+      {/* ── 5. Kit Comercial: Guía de Ventas, Planes y Onboarding ────────── */}
+      <div className="rounded-[24px] border border-rule bg-paper p-6 sm:p-7 space-y-7 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-rule pb-5">
+          <div className="space-y-1">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-[#10e7a0] text-[10px] font-extrabold uppercase tracking-wide">
+              <Sparkles className="size-3" />
+              <span>Kit de Ventas Oficial</span>
+            </div>
+            <h2 className="text-xl font-bold text-ink flex items-center gap-2">
+              <FileText className="size-5 text-accent" />
+              <span>Guía para Presentar la App a Dueños de Gyms</span>
+            </h2>
+            <p className="text-xs text-ink-soft max-w-2xl">
+              Todo lo que necesitás para explicar el valor de SysGym con seguridad, responder dudas y cerrar gimnasios en tu primer contacto.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+            <a
+              href={`https://wa.me/5492920605208?text=${encodeURIComponent(
+                `¡Hola Santi! Soy partner (${partner.nombre}, cód: ${partner.referral_code}). Tengo dudas comerciales para presentar la app a un dueño.`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => hapticos.medio()}
+              className="h-9 px-3.5 rounded-[12px] bg-paper-2 hover:bg-paper border border-rule hover:border-accent text-ink font-semibold text-xs inline-flex items-center gap-1.5 active:scale-95 transition-all"
+            >
+              <HelpCircle className="size-3.5 text-accent" />
+              <span>Consultar a Santi</span>
+            </a>
+          </div>
+        </div>
+
+        {/* Bloque 1: ¿Por qué elegirnos? (Pitch rápido) */}
+        <div className="space-y-3">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-ink-soft flex items-center gap-1.5">
+            <span>🎯</span>
+            <span>¿Por qué elegir SysGym? (Tus 4 argumentos clave)</span>
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            <div className="p-4 rounded-[16px] bg-paper-2/60 border border-rule space-y-1.5">
+              <div className="size-7 rounded-lg bg-emerald-500/15 text-[#10e7a0] flex items-center justify-center font-bold text-sm">
+                🛡️
+              </div>
+              <h4 className="text-sm font-bold text-ink">Cero fugas de dinero</h4>
+              <p className="text-xs text-ink-soft leading-relaxed">
+                El control de acceso por QR o DNI corta automáticamente a los socios morosos. El gym recupera entre 15% y 25% de cuotas perdidas.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-[16px] bg-paper-2/60 border border-rule space-y-1.5">
+              <div className="size-7 rounded-lg bg-blue-500/15 text-blue-400 flex items-center justify-center font-bold text-sm">
+                📲
+              </div>
+              <h4 className="text-sm font-bold text-ink">App de alumnos 120fps</h4>
+              <p className="text-xs text-ink-soft leading-relaxed">
+                Rutinas interactivas, historial de cargas, feedback háptico sensorial y cronómetros de descanso. La mejor retención del mercado.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-[16px] bg-paper-2/60 border border-rule space-y-1.5">
+              <div className="size-7 rounded-lg bg-purple-500/15 text-purple-400 flex items-center justify-center font-bold text-sm">
+                🧾
+              </div>
+              <h4 className="text-sm font-bold text-ink">Facturación AFIP Lista</h4>
+              <p className="text-xs text-ink-soft leading-relaxed">
+                Emisión automática de Factura B / C con AFIP integrada en 1 clic. El dueño no necesita abrir la web de AFIP para cada cobro.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-[16px] bg-paper-2/60 border border-rule space-y-1.5">
+              <div className="size-7 rounded-lg bg-amber-500/15 text-amber-400 flex items-center justify-center font-bold text-sm">
+                ⚡
+              </div>
+              <h4 className="text-sm font-bold text-ink">Todo en una sola app</h4>
+              <p className="text-xs text-ink-soft leading-relaxed">
+                Reemplaza 3 costos distintos: software de caja/acceso, app de rutinas y facturador externo. Todo centralizado y en tiempo real.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Bloque 2: Features separados por Plan */}
+        <div className="space-y-3 pt-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-ink-soft flex items-center gap-1.5">
+              <span>📦</span>
+              <span>Features de la app separados por Plan</span>
+            </h3>
+            <span className="text-[11px] text-ink-soft">
+              El plan inicial es 100% gratis hasta 40 socios para probar sin riesgo
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Plan Inicial */}
+            <div className="rounded-[20px] border border-rule bg-paper-2/40 p-5 flex flex-col justify-between gap-4">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wider text-ink-soft">
+                    Plan Inicial
+                  </span>
+                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-paper-2 border border-rule text-ink font-semibold">
+                    Gratis
+                  </span>
+                </div>
+                <div>
+                  <h4 className="text-lg font-black text-ink">Starter / Box Chico</h4>
+                  <p className="text-xs text-ink-soft mt-0.5">Hasta 40 socios activos</p>
+                </div>
+                <ul className="space-y-2 text-xs text-ink-soft pt-2 border-t border-rule/60">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="size-3.5 text-ink shrink-0 mt-0.5" />
+                    <span>Control de alumnos y vencimientos</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="size-3.5 text-ink shrink-0 mt-0.5" />
+                    <span>Caja diaria y registro manual de pagos</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="size-3.5 text-ink shrink-0 mt-0.5" />
+                    <span>Carga y asignación de rutinas</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="size-3.5 text-ink shrink-0 mt-0.5" />
+                    <span>Acceso PWA para profesores</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="p-2.5 rounded-[12px] bg-paper border border-rule/80 text-[11px] text-ink-soft">
+                💡 <strong>Tip comercial:</strong> Ideal para que el dueño cree su cuenta y pruebe el sistema en el momento sin pagar un peso.
+              </div>
+            </div>
+
+            {/* Plan Pro */}
+            <div className="rounded-[20px] border-2 border-accent/40 bg-gradient-to-b from-accent/5 to-transparent p-5 flex flex-col justify-between gap-4 relative shadow-sm">
+              <div className="absolute -top-2.5 right-4 bg-accent text-accent-contrast text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full tracking-wider">
+                Recomendado
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wider text-accent">
+                    Plan Pro
+                  </span>
+                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-accent/15 text-accent font-bold">
+                    Genera Comisión
+                  </span>
+                </div>
+                <div>
+                  <h4 className="text-lg font-black text-ink">Gimnasio Estándar</h4>
+                  <p className="text-xs text-ink-soft mt-0.5">Hasta 150 socios activos</p>
+                </div>
+                <ul className="space-y-2 text-xs text-ink pt-2 border-t border-rule/60">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="size-3.5 text-accent shrink-0 mt-0.5" />
+                    <span><strong>App del socio PWA 120fps</strong> completa</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="size-3.5 text-accent shrink-0 mt-0.5" />
+                    <span>Cobros online con <strong>Mercado Pago Connect</strong></span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="size-3.5 text-accent shrink-0 mt-0.5" />
+                    <span>Control de accesos con <strong>código QR dinámico</strong></span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="size-3.5 text-accent shrink-0 mt-0.5" />
+                    <span>Gestor de morosidad y avisos automáticos</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="size-3.5 text-accent shrink-0 mt-0.5" />
+                    <span>Branding: Logo y colores del gym</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="p-2.5 rounded-[12px] bg-paper border border-accent/30 text-[11px] text-ink-soft">
+                🔥 <strong>Tu ganancia:</strong> Al contratar Pro, cobrás tu comisión inmediata ({esArranqueActivo ? "20%" : "15%"}) y suma 1 gym para tus bonos de $180k.
+              </div>
+            </div>
+
+            {/* Plan Elite */}
+            <div className="rounded-[20px] border border-rule bg-paper-2/40 p-5 flex flex-col justify-between gap-4">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wider text-purple-500">
+                    Plan Elite / Cadena
+                  </span>
+                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-400 font-bold">
+                    Máxima Potencia
+                  </span>
+                </div>
+                <div>
+                  <h4 className="text-lg font-black text-ink">Gimnasios Grandes</h4>
+                  <p className="text-xs text-ink-soft mt-0.5">+150 socios o múltiples sedes</p>
+                </div>
+                <ul className="space-y-2 text-xs text-ink-soft pt-2 border-t border-rule/60">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="size-3.5 text-purple-500 shrink-0 mt-0.5" />
+                    <span><strong>Facturación AFIP Automática</strong> (Facturas B y C)</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="size-3.5 text-purple-500 shrink-0 mt-0.5" />
+                    <span>Integración con <strong>molinetes y cerraduras</strong></span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="size-3.5 text-purple-500 shrink-0 mt-0.5" />
+                    <span>Soporte prioritario 1 a 1 para migración</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="size-3.5 text-purple-500 shrink-0 mt-0.5" />
+                    <span>Capacidad escalable sin límite de alumnos</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="p-2.5 rounded-[12px] bg-paper border border-rule/80 text-[11px] text-ink-soft">
+                💎 <strong>Ticket alto:</strong> Ideal para convencer a gimnasios que sufren con la AFIP o tienen torniquetes mecánicos.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bloque 3: Paso a Paso: Cómo dar de alta al Dueño */}
+        <div className="space-y-3 pt-2">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-ink-soft flex items-center gap-1.5">
+            <span>🚀</span>
+            <span>Paso a Paso: Cómo dar de alta al Dueño</span>
+          </h3>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            <div className="p-4 rounded-[16px] bg-paper border border-rule relative">
+              <span className="font-mono text-xs font-black text-accent bg-accent/15 px-2 py-0.5 rounded-md">
+                PASO 1
+              </span>
+              <h4 className="text-sm font-bold text-ink mt-2.5">Envío de tu link</h4>
+              <p className="text-xs text-ink-soft mt-1 leading-relaxed">
+                Le compartís tu enlace de referido (o le pedís que use tu código <strong className="text-ink font-mono">{partner.referral_code}</strong>) al registrarse.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-[16px] bg-paper border border-rule relative">
+              <span className="font-mono text-xs font-black text-accent bg-accent/15 px-2 py-0.5 rounded-md">
+                PASO 2
+              </span>
+              <h4 className="text-sm font-bold text-ink mt-2.5">Configuración Inicial</h4>
+              <p className="text-xs text-ink-soft mt-1 leading-relaxed">
+                El dueño ingresa el nombre de su gimnasio, carga sus planes de cuota (ej: Pase Libre) y vincula su Mercado Pago en 2 minutos.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-[16px] bg-paper border border-rule relative">
+              <span className="font-mono text-xs font-black text-accent bg-accent/15 px-2 py-0.5 rounded-md">
+                PASO 3
+              </span>
+              <h4 className="text-sm font-bold text-ink mt-2.5">Carga de Alumnos</h4>
+              <p className="text-xs text-ink-soft mt-1 leading-relaxed">
+                Empieza a dar de alta sus alumnos. Si tiene una planilla de Excel previa, le ofrecemos importación rápida asistida.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-[16px] bg-paper border border-rule relative">
+              <span className="font-mono text-xs font-black text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded-md">
+                PASO 4
+              </span>
+              <h4 className="text-sm font-bold text-ink mt-2.5">Activación y Comisión</h4>
+              <p className="text-xs text-ink-soft mt-1 leading-relaxed">
+                Cuando el gym pasa al plan Pro o Elite, tu panel registra automáticamente el cobro y se acredita tu comisión de inmediato.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Bloque 4: Matriz Mata-Objeciones (Respuestas Rápidas) */}
+        <div className="space-y-3 pt-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-ink-soft flex items-center gap-1.5">
+              <span>🥊</span>
+              <span>Matriz Mata-Objeciones (Qué responder ante cada duda)</span>
+            </h3>
+            <span className="text-[11px] text-ink-soft">
+              Tus respuestas listas frente al dueño del gimnasio
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {[
+              {
+                objecion: "“Ya uso Excel y un cuaderno, me alcanza y es gratis”",
+                respuesta:
+                  "El Excel no le corta el paso al alumno que no pagó ni le manda el recordatorio automático por WhatsApp. Con SysGym recuperás entre 3 y 8 cuotas olvidadas por mes y te ahorrás 15 horas de cargar cobros manuales.",
+                gancho: "Ahorro de tiempo + Recupero de cuotas",
+              },
+              {
+                objecion: "“Mis alumnos son grandes y no van a querer usar una app”",
+                respuesta:
+                  "El sistema no los obliga a instalar nada. En la recepción podés darles ingreso en 1 segundo con su DNI o con un llavero/tarjeta. La app del alumno es un beneficio extra para los que quieran ver su rutina y progresos.",
+                gancho: "Cero fricción para alumnos mayores",
+              },
+              {
+                objecion: "“Tengo miedo de que AFIP me complique con la facturación”",
+                respuesta:
+                  "Todo lo contrario. SysGym emite facturas B o C electrónicas oficiales de AFIP en 1 clic con cada cobro. Te evita tener que entrar a la web lenta de AFIP o pagarle extra a un gestor.",
+                gancho: "Tranquilidad fiscal automática",
+              },
+              {
+                objecion: "“Es un lío pasar todos los alumnos que ya tengo anotados”",
+                respuesta:
+                  "Nosotros te damos soporte prioritario y migramos tu planilla de Excel actual directamente al sistema para que en menos de 24 horas estés funcionando sin perder ningún dato.",
+                gancho: "Migración asistida sin esfuerzo",
+              },
+            ].map((item, idx) => (
+              <div
+                key={idx}
+                className="rounded-[16px] border border-rule bg-paper p-4 flex flex-col justify-between gap-3 shadow-2xs hover:border-accent/40 transition-all"
+              >
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <span className="text-[10px] font-bold uppercase tracking-wide text-accent bg-accent/15 px-2 py-0.5 rounded-full">
+                      {item.gancho}
+                    </span>
+                    <span className="text-xs text-ink-soft">Objeción #{idx + 1}</span>
+                  </div>
+                  <h4 className="text-xs font-bold text-ink leading-snug">
+                    {item.objecion}
+                  </h4>
+                  <p className="text-xs text-ink-soft mt-2 leading-relaxed bg-paper-2/60 p-3 rounded-[12px] border border-rule/60">
+                    💡 <strong>Cómo responder:</strong> &ldquo;{item.respuesta}&rdquo;
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Bloque 5: Calculadora Interactiva de Ganancias para el Partner */}
+        <div className="space-y-3 pt-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-ink-soft flex items-center gap-1.5">
+              <span>🧮</span>
+              <span>Calculadora de Ganancias: ¿Cuánto podés ganar?</span>
+            </h3>
+            <span className="text-[11px] text-accent font-semibold">
+              Comisión inicial en efectivo + Bonos acumulativos
+            </span>
+          </div>
+
+          <div className="rounded-[20px] border border-rule bg-paper-2/50 p-5 sm:p-6 space-y-5">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-ink">
+                  ¿Cuántos gimnasios proyectás sumar a SysGym?
+                </label>
+                <span className="text-base font-black font-mono text-accent bg-accent/15 px-3 py-0.5 rounded-lg border border-accent/30">
+                  {simGyms} {simGyms === 1 ? "Gimnasio" : "Gimnasios"}
+                </span>
+              </div>
+              <input
+                type="range"
+                min={1}
+                max={20}
+                step={1}
+                value={simGyms}
+                onChange={(e) => {
+                  setSimGyms(Number(e.target.value));
+                  hapticos.suave();
+                }}
+                className="w-full accent-[#10e7a0] cursor-pointer"
+              />
+              <div className="flex justify-between text-[10px] text-ink-soft font-mono">
+                <span>1 gym</span>
+                <span>5 gyms (Bono $20k)</span>
+                <span>10 gyms (Bono $60k)</span>
+                <span>15+ gyms (Bono $100k)</span>
+              </div>
+            </div>
+
+            {/* Resultado del cálculo */}
+            {(() => {
+              // Estimamos ticket promedio plan Pro ~$45.000 ARS
+              const ticketPromedio = 45000;
+              const gymsArranque = Math.min(5, simGyms);
+              const gymsEstandar = Math.max(0, simGyms - 5);
+              const comisionTotal =
+                gymsArranque * ticketPromedio * (COMISION_ARRANQUE_PCT / 100) +
+                gymsEstandar * ticketPromedio * (COMISION_ESTANDAR_PCT / 100);
+
+              let bonosTotal = 0;
+              if (simGyms >= 5) bonosTotal += BONOS_HITO[5];
+              if (simGyms >= 10) bonosTotal += BONOS_HITO[10];
+              if (simGyms >= 15) bonosTotal += BONOS_HITO[15];
+
+              const totalEstimado = comisionTotal + bonosTotal;
+
+              return (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-2 border-t border-rule/80">
+                  <div className="p-3.5 rounded-[14px] bg-paper border border-rule">
+                    <span className="text-[11px] text-ink-soft uppercase font-bold tracking-wide">
+                      Comisiones Primer Pago
+                    </span>
+                    <p className="text-lg font-black font-mono text-ink mt-1">
+                      ${Math.round(comisionTotal).toLocaleString("es-AR")} ARS
+                    </p>
+                    <span className="text-[10px] text-ink-soft">
+                      {gymsArranque} gyms al 20% + {gymsEstandar} gyms al 15%
+                    </span>
+                  </div>
+
+                  <div className="p-3.5 rounded-[14px] bg-paper border border-rule">
+                    <span className="text-[11px] text-purple-600 dark:text-purple-400 uppercase font-bold tracking-wide">
+                      Bonos Extra por Hito
+                    </span>
+                    <p className="text-lg font-black font-mono text-purple-600 dark:text-purple-400 mt-1">
+                      +${bonosTotal.toLocaleString("es-AR")} ARS
+                    </p>
+                    <span className="text-[10px] text-ink-soft">
+                      {simGyms < 5
+                        ? "Te faltan " + (5 - simGyms) + " gyms para el bono de $20k"
+                        : "¡Premios en efectivo acreditados!"}
+                    </span>
+                  </div>
+
+                  <div className="p-3.5 rounded-[14px] bg-emerald-500/15 border border-emerald-500/40">
+                    <span className="text-[11px] text-[#10e7a0] uppercase font-black tracking-wide">
+                      Total Estimado a Cobrar
+                    </span>
+                    <p className="text-xl font-black font-mono text-emerald-600 dark:text-[#10e7a0] mt-1">
+                      ${Math.round(totalEstimado).toLocaleString("es-AR")} ARS
+                    </p>
+                    <span className="text-[10px] text-ink-soft">
+                      Retiro directo a tu Mercado Pago o CBU
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+
+        {/* Bloque 6: Enlace de Demostración en Vivo & Folleto Comercial */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+          {/* Tarjeta Demo en Vivo */}
+          <div className="rounded-[20px] border border-rule bg-paper p-5 flex flex-col justify-between gap-4">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <div className="size-8 rounded-xl bg-accent/15 text-accent flex items-center justify-center font-bold">
+                  <Play className="size-4" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-ink">
+                    Demostración en Vivo para Mostrarle al Dueño
+                  </h4>
+                  <p className="text-xs text-ink-soft">
+                    Mostrale la app funcionando desde tu propio teléfono o compartile el link.
+                  </p>
+                </div>
+              </div>
+              <p className="text-xs text-ink-soft bg-paper-2 p-3 rounded-[12px] border border-rule leading-relaxed">
+                Mostrale cómo el alumno registra una serie, cómo vibra el cronómetro háptico de descanso y cómo se genera el código QR para entrar al gimnasio.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-rule/60">
+              <Link
+                href="/mi"
+                target="_blank"
+                onClick={() => hapticos.medio()}
+                className="h-9 px-4 rounded-[10px] bg-accent text-accent-contrast font-bold text-xs inline-flex items-center gap-1.5 active:scale-95 transition-all shadow-xs"
+              >
+                <span>Abrir Demo de Alumno</span>
+                <ExternalLink className="size-3.5" />
+              </Link>
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    const demoUrl = `${window.location.origin}/mi`;
+                    await navigator.clipboard.writeText(demoUrl);
+                    setCopiadoDemo(true);
+                    hapticos.exito();
+                    setTimeout(() => setCopiadoDemo(false), 2000);
+                  } catch {
+                    hapticos.suave();
+                  }
+                }}
+                className="h-9 px-3.5 rounded-[10px] bg-paper-2 hover:bg-paper border border-rule text-ink font-semibold text-xs inline-flex items-center gap-1.5 active:scale-95 transition-all"
+              >
+                {copiadoDemo ? (
+                  <>
+                    <Check className="size-3.5 text-emerald-500" />
+                    <span className="text-emerald-500 font-bold">¡Copiado!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="size-3.5 text-ink-soft" />
+                    <span>Copiar link de Demo</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Tarjeta Folleto Comercial / Ficha Rápida */}
+          <div className="rounded-[20px] border border-rule bg-paper p-5 flex flex-col justify-between gap-4">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <div className="size-8 rounded-xl bg-purple-500/15 text-purple-400 flex items-center justify-center font-bold">
+                  <Download className="size-4" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-ink">
+                    Ficha Comercial y Presentación Digital
+                  </h4>
+                  <p className="text-xs text-ink-soft">
+                    Ficha en 1 carilla lista para imprimir o reenviar en formato imagen por WhatsApp.
+                  </p>
+                </div>
+              </div>
+              <div className="p-3 rounded-[12px] bg-paper-2 border border-rule text-xs text-ink-soft space-y-1">
+                <div className="flex items-center justify-between text-ink font-semibold">
+                  <span>Tu Código Oficial:</span>
+                  <span className="font-mono text-accent bg-paper px-2 py-0.5 rounded border border-rule">
+                    {partner.referral_code}
+                  </span>
+                </div>
+                <p className="text-[11px]">
+                  El flyer incluye: Control de accesos QR, Cobros con Mercado Pago, Facturación AFIP y App de Alumnos.
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-rule/60 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  hapticos.exito();
+                  window.print();
+                }}
+                className="w-full h-9 rounded-[10px] bg-paper-2 hover:bg-paper border border-rule hover:border-accent text-ink font-bold text-xs inline-flex items-center justify-center gap-2 active:scale-95 transition-all shadow-xs"
+              >
+                <Download className="size-3.5 text-accent" />
+                <span>Descargar / Imprimir Ficha Comercial</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Bloque 7: Canales de Soporte Directo para el Partner */}
+        <div className="p-4 sm:p-5 rounded-[18px] bg-gradient-to-r from-emerald-950/25 via-paper-2 to-paper-2 border border-emerald-500/30 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+              <h4 className="text-sm font-bold text-ink">¿Tenés una reunión con un gym y querés respaldo?</h4>
+            </div>
+            <p className="text-xs text-ink-soft">
+              Escribile a Santi antes de la reunión o sumate a la Comunidad de Partners para consultar dudas de cierre comercial.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+            <a
+              href="https://chat.whatsapp.com/BahGi6pehnB6Iq7M1fW5Y4"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => hapticos.suave()}
+              className="h-9 px-3.5 rounded-[10px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs inline-flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-xs"
+            >
+              <Users className="size-3.5" />
+              <span>Grupo de WhatsApp</span>
+            </a>
+
+            <a
+              href={`https://wa.me/5492920605208?text=${encodeURIComponent(
+                `¡Hola Santi! Soy partner oficial (${partner.nombre}, código: ${partner.referral_code}). Tengo una consulta para cerrar un gimnasio.`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => hapticos.medio()}
+              className="h-9 px-3.5 rounded-[10px] bg-paper hover:bg-paper-2 border border-rule hover:border-accent text-ink font-bold text-xs inline-flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-xs"
+            >
+              <MessageCircle className="size-3.5 text-emerald-500" />
+              <span>Chatear con Santi</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* ── 6. Arsenal de Difusión del Partner (Plantillas Listas) ─────── */}
       <div className="rounded-[24px] border border-rule bg-paper p-6 space-y-6 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-rule pb-4">
           <div>

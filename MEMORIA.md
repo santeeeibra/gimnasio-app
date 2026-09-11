@@ -4,6 +4,7 @@
 
 ## Últimos Cambios
 
+- **Kit Comercial & Arsenal Partner**: Añadidas guías completas en `/panel/partner`: comparativa de planes (Inicial, Pro, Elite con AFIP), pitch 'Por qué SysGym', paso a paso de alta de dueño, matriz mata-objeciones, calculadora interactiva de ganancias, demo en vivo de alumno y ficha comercial descargable.
 - 2780386 fix(partner): sacar referencias a sysgym.app sin DNS configurado
 - c8bdb6b fix(rutina): sacar el bump de mav del techo por rol + reestructurar PULL
 - b6d34e3 fix(login): tapar el cartel final quemado del video con blur + degradado
@@ -41,3 +42,4 @@
 - Humanización de avisos y errores (2026-09-11): Se reemplazó el JSON crudo en alertas de errores con humanizarError en lib/admin/errores.ts, mejorando títulos en español claro, desglose de causas técnicas, notificaciones push directas y desplegable en /admin/errores y /admin/salud.
 
 - Drop Sets: migración 0059 (registro_progreso.detalles_tecnica jsonb + serie_index), src/lib/progreso/tipos.ts (DropPaso, calcularPasosSugeridos), src/lib/rutina/dropset-actions.ts (guardarDropSetCliente, obtenerUltimoDropSetCliente). UI a cargo de Gemini en rutina-editor.tsx.
+- UI de Drop Sets: Creado PanelDropSet táctil con cálculo automático de reducciones del 20-25%, botones + / - y confirmación en 1 toque integrado en el tracker de series de rutina-editor.tsx con feedback háptico y persistencia local/remota.

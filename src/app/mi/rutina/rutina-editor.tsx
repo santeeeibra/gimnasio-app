@@ -30,6 +30,8 @@ import { BotonPedirAyuda } from "@/components/rutinas/boton-pedir-ayuda";
 import { DialVerticalProgreso } from "@/components/progreso/dial-vertical-progreso";
 import { HistorialEjercicio } from "@/components/progreso/historial-ejercicio";
 import { EquipamientoSugerido } from "@/components/monetizacion/equipamiento-sugerido";
+import { PanelDropSet } from "@/components/progreso/panel-dropset";
+import type { DropPaso } from "@/lib/progreso/tipos";
 import type { ColoresImagen } from "@/lib/logros/imagen";
 import {
   hapticoDial,
@@ -865,6 +867,9 @@ function ItemFila({
 
   const [mostrarEditorSeries, setMostrarEditorSeries] = useState(false);
   const [repsPorSerie, setRepsPorSerie] = useState<Record<number, number>>({});
+  const [mostrarDropSet, setMostrarDropSet] = useState(false);
+  const [dropsetGuardado, setDropsetGuardado] = useState<Record<number, DropPaso[]>>({});
+  const [pesoActualEjercicio, setPesoActualEjercicio] = useState<number>(20);
 
   useEffect(() => {
     try {
@@ -872,10 +877,26 @@ function ItemFila({
       if (guardado) {
         setRepsPorSerie(JSON.parse(guardado));
       }
+      const guardadoDS = localStorage.getItem(`gym.dropset.${item.id}`);
+      if (guardadoDS) {
+        setDropsetGuardado(JSON.parse(guardadoDS));
+      }
     } catch {
       /* ignore */
     }
   }, [item.id]);
+
+  function guardarDropSetLocal(serieIdx: number, pasos: DropPaso[]) {
+    setDropsetGuardado((prev) => {
+      const next = { ...prev, [serieIdx]: pasos };
+      try {
+        localStorage.setItem(`gym.dropset.${item.id}`, JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  }
 
   function cambiarRepsSerie(setIndex: number, delta: number) {
     hapticoDial();
@@ -1070,6 +1091,9 @@ function ItemFila({
                     creadoPor === "dueno"
                       ? await obtenerProgresoSocio(clienteId, eid, 1)
                       : await obtenerProgresoCliente(eid, 1);
+                  if (registros[0]?.peso) {
+                    setPesoActualEjercicio(registros[0].peso);
+                  }
                   return registros[0]
                     ? { peso: registros[0].peso, reps: registros[0].reps }
                     : null;
@@ -1217,6 +1241,23 @@ function ItemFila({
                   </svg>
                   <span>{mostrarEditorSeries ? "Cerrar" : "Reps"}</span>
                 </button>
+                {item.tecnica === "dropset" && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      hapticoImpactoSuave();
+                      setMostrarDropSet((v) => !v);
+                    }}
+                    className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-[6px] text-[10px] font-bold border transition-colors ${
+                      mostrarDropSet
+                        ? "bg-accent text-accent-ink border-accent"
+                        : "border-accent/40 bg-accent/10 text-accent hover:bg-accent/20"
+                    }`}
+                    aria-label="Registrar Drop Set"
+                  >
+                    <span>⚡ Drop Set</span>
+                  </button>
+                )}
               </div>
 
               <div className="flex flex-wrap items-center gap-1.5">
@@ -1227,6 +1268,9 @@ function ItemFila({
                   const tieneRepsPersonalizadas =
                     repsPorSerie[sIdx] !== undefined &&
                     repsPorSerie[sIdx] !== targetReps;
+                  const esDropSetSerie =
+                    (item.tecnica === "dropset" && sIdx === numSeries - 1) ||
+                    Boolean(dropsetGuardado[sIdx]);
 
                   return (
                     <div key={sIdx} className="relative">
@@ -1245,6 +1289,13 @@ function ItemFila({
                       <button
                         type="button"
                         onClick={() => {
+                          if (esDropSetSerie && !hecho) {
+                            // En 1 toque abre el panel de Drop Set con sugerencias
+                            hapticoImpactoSuave();
+                            setMostrarDropSet(true);
+                            return;
+                          }
+
                           if (!hecho) {
                             hapticoExito();
                             const segs = extraerSegundosDescanso(item.nota);
@@ -1260,10 +1311,14 @@ function ItemFila({
                           }
                           onToggleSet(sIdx);
                         }}
-                        aria-label={`Serie ${sIdx + 1} de ${numSeries} (${repsEstaSerie} reps) ${hecho ? "completada" : "pendiente"}`}
+                        aria-label={`Serie ${sIdx + 1} de ${numSeries} (${repsEstaSerie} reps) ${
+                          esDropSetSerie ? "Drop Set " : ""
+                        }${hecho ? "completada" : "pendiente"}`}
                         className={`grid size-11 min-w-[44px] place-items-center rounded-[10px] border font-bold transition-all duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${
                           hecho
                             ? "border-accent bg-accent text-accent-ink shadow-sm"
+                            : esDropSetSerie
+                            ? "border-accent/70 bg-accent/10 text-ink ring-1 ring-accent/40 hover:bg-accent/20"
                             : esObjetivoGuia
                             ? "border-accent bg-paper-2 text-ink ring-2 ring-accent ring-offset-2 ring-offset-paper animate-pulse"
                             : "border-rule bg-paper-2 text-ink-soft hover:border-ink/40"
@@ -1271,18 +1326,36 @@ function ItemFila({
                         style={{ fontFamily: "var(--font-hero)" }}
                       >
                         {hecho ? (
-                          tieneRepsPersonalizadas ? (
+                          esDropSetSerie ? (
+                            <div className="flex flex-col items-center leading-none">
+                              <span className="text-[11px]">✓</span>
+                              <span className="text-[8px] font-black text-accent-ink tracking-tight">
+                                ⚡DROP
+                              </span>
+                            </div>
+                          ) : tieneRepsPersonalizadas ? (
                             <div className="flex flex-col items-center leading-none">
                               <span className="text-[12px]">✓</span>
-                              <span className="text-[8.5px] font-extrabold opacity-95">{repsEstaSerie}</span>
+                              <span className="text-[8.5px] font-extrabold opacity-95">
+                                {repsEstaSerie}
+                              </span>
                             </div>
                           ) : (
                             <span className="text-sm">✓</span>
                           )
+                        ) : esDropSetSerie ? (
+                          <div className="flex flex-col items-center leading-none">
+                            <span className="text-[11px]">{sIdx + 1}</span>
+                            <span className="text-[9px] font-black text-accent leading-none">
+                              ⚡
+                            </span>
+                          </div>
                         ) : tieneRepsPersonalizadas ? (
                           <div className="flex flex-col items-center leading-none">
                             <span className="text-xs">{sIdx + 1}</span>
-                            <span className="text-[8.5px] font-bold text-accent">{repsEstaSerie}</span>
+                            <span className="text-[8.5px] font-bold text-accent">
+                              {repsEstaSerie}
+                            </span>
                           </div>
                         ) : (
                           <span className="text-sm">{sIdx + 1}</span>
@@ -1293,6 +1366,58 @@ function ItemFila({
                 })}
               </div>
             </div>
+
+            {/* Resumen de Drop Set registrado */}
+            {dropsetGuardado[numSeries - 1] && (
+              <div className="mt-2 flex items-center justify-between gap-1.5 rounded-[8px] border border-accent/30 bg-accent/5 px-2.5 py-1.5 text-[11px]">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="font-bold text-accent shrink-0">⚡ Drop Set:</span>
+                  <span className="truncate font-semibold text-ink">
+                    {dropsetGuardado[numSeries - 1]
+                      .map((p) => `${p.peso}kg (${p.reps}r)`)
+                      .join(" ➔ ")}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    hapticoImpactoSuave();
+                    setMostrarDropSet(true);
+                  }}
+                  className="shrink-0 text-[10px] font-bold text-accent hover:underline px-1 py-0.5"
+                >
+                  Ajustar
+                </button>
+              </div>
+            )}
+
+            {/* Panel de Registro de Drop Set (desplegado con 1 toque) */}
+            {mostrarDropSet && (
+              <PanelDropSet
+                ejercicioId={ej?.id ?? item.ejercicio?.id ?? item.id}
+                ejercicioNombre={ej?.nombre ?? item.ejercicio?.nombre ?? "Ejercicio"}
+                serieIndex={numSeries - 1}
+                pesoBase={pesoActualEjercicio}
+                repsBase={repsPorSerie[numSeries - 1] ?? targetReps}
+                pasosPrevios={dropsetGuardado[numSeries - 1]}
+                onCompletado={(pasos) => {
+                  guardarDropSetLocal(numSeries - 1, pasos);
+                  if (!setsCompletados.includes(numSeries - 1)) {
+                    onToggleSet(numSeries - 1);
+                  }
+                  setMostrarDropSet(false);
+                  const segs = extraerSegundosDescanso(item.nota);
+                  if (typeof window !== "undefined") {
+                    window.dispatchEvent(
+                      new CustomEvent("timer:iniciar", {
+                        detail: { segundos: segs },
+                      }),
+                    );
+                  }
+                }}
+                onCerrar={() => setMostrarDropSet(false)}
+              />
+            )}
 
             {/* Panel colapsable de edición de reps por serie individual */}
             {mostrarEditorSeries && (
@@ -1310,7 +1435,11 @@ function ItemFila({
                       className="flex items-center justify-between py-1 px-2 rounded-[8px] bg-paper-2/50 border border-rule/50"
                     >
                       <span className="text-xs font-semibold text-ink flex items-center gap-1.5">
-                        <span className={`size-2 rounded-full ${hecho ? "bg-accent" : "bg-ink-soft/30"}`} />
+                        <span
+                          className={`size-2 rounded-full ${
+                            hecho ? "bg-accent" : "bg-ink-soft/30"
+                          }`}
+                        />
                         Serie {sIdx + 1}
                       </span>
                       <div className="flex items-center gap-1.5">
