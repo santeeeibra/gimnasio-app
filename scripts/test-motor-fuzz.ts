@@ -271,6 +271,7 @@ const statsInvariantes = {
   invariante3_max4SeriesEj: 0,
   invariante4_sinDuplicadosDia: 0,
   invariante5_sinItemsNulos: 0,
+  invariante6_min3SeriesEj: 0,
 };
 
 let maxSeriesEncontradasEnDia = 0;
@@ -315,6 +316,7 @@ for (let i = 0; i < testCases.length; i++) {
   let casoValido3 = true;
   let casoValido4 = true;
   let casoValido5 = true;
+  let casoValido6 = true;
 
   for (let di = 0; di < plan.dias.length; di++) {
     const dia = plan.dias[di];
@@ -366,7 +368,7 @@ for (let i = 0; i < testCases.length; i++) {
       }
     }
 
-    // Invariante 3 & 5: Series por ejercicio e integridad de ítems
+    // Invariante 3, 5 & 6: Series por ejercicio e integridad de ítems
     for (const it of dia.items) {
       totalEjerciciosEvaluados++;
 
@@ -392,7 +394,19 @@ for (let i = 0; i < testCases.length; i++) {
         });
       }
 
-      // Invariante 3: Ningún ejercicio con > 4 series (salvo fst7 que permite 7)
+      // Invariante 6: ESTRICTAMENTE MÍNIMO 3 SERIES POR EJERCICIO (PROHIBIDO SERIES DE 2 O 1)
+      if (it && it.series < 3) {
+        casoValido6 = false;
+        violaciones.push({
+          caseId: tc.id,
+          categoria: tc.categoria,
+          invariante: "Invariante 6 (Prohibido series < 3)",
+          detalle: `Ejercicio '${it.ejercicio_slug}' tiene ${it.series} series (< 3 en Día ${di + 1})`,
+          entrada: tc.entrada,
+        });
+      }
+
+      // Invariante 3: Ningún ejercicio con > 4 series (salvo fst7 que permite 7, o primario de fuerza que permite 5)
       if (it) {
         if (it.series > maxSeriesEncontradasEnEj && it.tecnica !== "fst7") {
           maxSeriesEncontradasEnEj = it.series;
@@ -404,19 +418,20 @@ for (let i = 0; i < testCases.length; i++) {
             violaciones.push({
               caseId: tc.id,
               categoria: tc.categoria,
-              invariante: "Invariante 3 (> 4 series no fst7)",
+              invariante: "Invariante 3 (> 7 series fst7)",
               detalle: `Ejercicio FST-7 '${it.ejercicio_slug}' tiene ${it.series} series (> 7)`,
               entrada: tc.entrada,
             });
           }
         } else {
-          if (it.series > 4) {
+          const maxPermitido = tc.entrada.objetivo === "fuerza" && it.rol === "primario" ? 5 : 4;
+          if (it.series > maxPermitido) {
             casoValido3 = false;
             violaciones.push({
               caseId: tc.id,
               categoria: tc.categoria,
-              invariante: "Invariante 3 (> 4 series no fst7)",
-              detalle: `Ejercicio '${it.ejercicio_slug}' tiene ${it.series} series (> 4)`,
+              invariante: `Invariante 3 (> ${maxPermitido} series no fst7)`,
+              detalle: `Ejercicio '${it.ejercicio_slug}' tiene ${it.series} series (> ${maxPermitido})`,
               entrada: tc.entrada,
             });
           }
@@ -429,6 +444,7 @@ for (let i = 0; i < testCases.length; i++) {
   if (casoValido3) statsInvariantes.invariante3_max4SeriesEj++;
   if (casoValido4) statsInvariantes.invariante4_sinDuplicadosDia++;
   if (casoValido5) statsInvariantes.invariante5_sinItemsNulos++;
+  if (casoValido6) statsInvariantes.invariante6_min3SeriesEj++;
 }
 
 const tTotalMs = performance.now() - tInicio;
@@ -477,6 +493,11 @@ check(
   "5. Cero ítems nulos o vacíos en el catálogo y días",
   statsInvariantes.invariante5_sinItemsNulos === rutinasEvaluadas,
   statsInvariantes.invariante5_sinItemsNulos,
+);
+check(
+  "6. Estrictamente mínimo 3 series por ejercicio (cero series de 2 o 1)",
+  statsInvariantes.invariante6_min3SeriesEj === rutinasEvaluadas,
+  statsInvariantes.invariante6_min3SeriesEj,
 );
 
 if (totalFallos > 0) {

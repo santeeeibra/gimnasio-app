@@ -69,7 +69,7 @@ export function calcularBalanceVolumen(
         if (patron === "empuje_horizontal" || patron === "empuje_vertical") {
           sinergistas.push("triceps", "hombros");
         } else if (patron === "traccion_horizontal" || patron === "traccion_vertical") {
-          sinergistas.push("biceps");
+          sinergistas.push("biceps", "hombros");
         } else if (patron === "dominante_cadera" || patron === "dominante_rodilla") {
           sinergistas.push("gluteos");
         }

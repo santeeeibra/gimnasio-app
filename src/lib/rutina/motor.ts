@@ -295,7 +295,20 @@ function moldearPorObjetivo(ranuras: Ranura[], objetivo: Objetivo): Ranura[] {
     return [...compuestos, ...accesorias];
   }
   if (objetivo === "resistencia" || objetivo === "tonificar") {
-    return ranuras.some((r) => r.grupo === "core") ? ranuras : [...ranuras, A("core")];
+    if (ranuras.some((r) => r.grupo === "core")) return ranuras;
+    // Si la plantilla ya tiene 6 ranuras, se reemplaza el último accesorio por core
+    // para mantener la sesión en 6 ejercicios óptimos y no inflar el volumen a 7 ranuras.
+    if (ranuras.length >= 6) {
+      const out = [...ranuras];
+      const ultimoAisl = out
+        .map((r, i) => (r.rol === "aislamiento" ? i : -1))
+        .filter((i) => i >= 0);
+      if (ultimoAisl.length > 0) {
+        out[ultimoAisl[ultimoAisl.length - 1]] = A("core");
+        return out;
+      }
+    }
+    return [...ranuras, A("core")];
   }
   return ranuras;
 }
@@ -384,7 +397,15 @@ function intercambiarPorEnfasis(
     const grupoObjetivo =
       gruposZona.find((g) => gruposBase.has(g)) ?? gruposZona[0];
     const patron = PATRON_ENFASIS[grupoObjetivo];
+    const yaTieneRanuras = out.filter((r) => r.grupo === grupoObjetivo).length;
+    if (yaTieneRanuras >= 3) {
+      trace?.push(
+        `${tituloDia}: énfasis en ${zona} no agrega más ranuras (${yaTieneRanuras} ranuras existentes en ${grupoObjetivo}; techo anti-junk volume).`,
+      );
+      continue;
+    }
     for (let t = 0; t < trueques; t++) {
+      if (out.filter((r) => r.grupo === grupoObjetivo).length >= 3) break;
       const donante = elegirDonante(out, gruposEnfasis);
       if (donante === -1) break;
       trace?.push(
@@ -504,7 +525,7 @@ const ESQUEMA: Record<Objetivo, EsquemaObj> = {
   resistencia: {
     primario: { series: 3, reps: "15–20" },
     secundario: { series: 3, reps: "15–20" },
-    aislamiento: { series: 2, reps: "20+" },
+    aislamiento: { series: 3, reps: "20+" },
     descanso: "Descanso 30–45 s",
   },
   // Bajar grasa: se entrena IGUAL que fuerza/hipertrofia, NO con circuitos
@@ -516,7 +537,7 @@ const ESQUEMA: Record<Objetivo, EsquemaObj> = {
   bajar_grasa: {
     primario: { series: 4, reps: "6–8" },
     secundario: { series: 4, reps: "8–10" },
-    aislamiento: { series: 2, reps: "10–12" },
+    aislamiento: { series: 3, reps: "10–12" },
     descanso: "Descanso 2–3 min",
   },
 };
@@ -543,7 +564,7 @@ const ESQUEMA_RANGO: Record<
   metabolico: {
     primario: { series: 3, reps: "15–20" },
     secundario: { series: 3, reps: "15–20" },
-    aislamiento: { series: 2, reps: "20+" },
+    aislamiento: { series: 3, reps: "20+" },
     descanso: "Descanso 30–45 s",
   },
 };
@@ -563,7 +584,7 @@ const ESQUEMA_ONDULANTE: EsquemaObj[] = [
   {
     primario: { series: 3, reps: "10–12" },
     secundario: { series: 3, reps: "12–15" },
-    aislamiento: { series: 2, reps: "15–20" },
+    aislamiento: { series: 3, reps: "15–20" },
     descanso: "Día metabólico · Descanso 60–90 s · Hipertrofia en elongación (Nippard)",
   },
   {
@@ -614,25 +635,24 @@ const PRESUPUESTO_DIA: Record<Nivel, number> = {
 // Modo avanzado: el volumen semanal elegido escala el presupuesto del día.
 // Sin avanzado → factor 1 (estándar).
 const FACTOR_VOLUMEN: Record<string, number> = {
-  mev: 0.85,
+  mev: 0.9,
   estandar: 1,
   mav: 1.1,
 };
 
-// "Esfuerzo" (RIR) también escala el presupuesto: entrenar suave (2–3 reps en
-// reserva) implica menos volumen efectivo, así que RESTA series; cuanto más
-// cerca del fallo, más volumen se sostiene. Sin avanzado → "2-3" no aplica
-// (factor 1) porque el flujo simple no expone este control.
+// "Esfuerzo" (RIR) modula la proximidad al fallo en las notas de los ejercicios.
+// En la ciencia del entrenamiento (RP / Israetel, Helms), RIR 2–3 no recorta el presupuesto
+// de series efectivas por debajo del MEV (mínimo 3 series por ejercicio).
 const FACTOR_ESFUERZO: Record<string, number> = {
-  "2-3": 0.85, // Suave → factor adaptado para no recortar por debajo de series efectivas
-  "1-2": 1, // Exigente → volumen pleno
-  "0-1": 1, // Al límite → volumen pleno
+  "2-3": 1,
+  "1-2": 1,
+  "0-1": 1,
 };
 
 // Fase 2 · ajustarPorSexo: fisiología del ejercicio (Roberts et al. 2020; Hunter 2014):
 // las mujeres toleran igual o mayor volumen relativo que los hombres y se recuperan
-// más rápido. En intermedias y avanzadas se respeta el volumen pleno. En principiantes
-// se sostiene el volumen efectivo de base (piso de 3 series por ranura, 18 series en 6 ejercicios).
+// más rápido. En todos los géneros y niveles se garantiza el piso inviolable de
+// 3 series por ejercicio (18 series para 6 ranuras).
 function ajustarPorSexo(
   total: number,
   sexo: Sexo,
@@ -640,22 +660,23 @@ function ajustarPorSexo(
   nRanuras: number,
   trace?: string[],
 ): number {
-  if (sexo !== "mujer") return total;
+  const pisoRanuras = 3 * nRanuras;
+  const base = Math.max(pisoRanuras, total);
+  if (sexo !== "mujer") return base;
   if (nivel !== "principiante") {
     if (trace) {
       trace.push(
         `Sexo mujer (${nivel}): volumen pleno sostenido (evidencia: Roberts et al. 2020, mayor tolerancia y recuperación muscular).`,
       );
     }
-    return total;
+    return base;
   }
-  const final = Math.max(3 * nRanuras, total);
   if (trace) {
     trace.push(
-      `Sexo mujer (principiante): volumen efectivo sostenido (evidencia: Roberts et al. 2020; piso 3 series por ejercicio: ${final} series).`,
+      `Sexo mujer (principiante): volumen efectivo sostenido (evidencia: Roberts et al. 2020; piso 3 series por ejercicio: ${base} series).`,
     );
   }
-  return final;
+  return base;
 }
 
 // Techo duro por rol: evita la acumulación de más de 4 series en un mismo ejercicio
@@ -678,21 +699,20 @@ function resolverMaxPorRol(
   };
 }
 
-// Piso por rol: para hipertrofia y fuerza el piso es 3 series por ejercicio.
-// Solo en esquemas que explícitamente prescriben 2 series (resistencia o bajar grasa en aislamiento)
-// se permite 2 series.
+// Piso por rol: ESTRICTAMENTE mínimo 3 series por ejercicio en todos los roles y objetivos.
+// Queda terminantemente prohibido generar ejercicios de 2 o 1 series.
 function resolverMinPorRol(esquema: EsquemaObj): Record<Rol, number> {
   return {
-    primario: Math.min(3, esquema.primario.series),
-    secundario: Math.min(3, esquema.secundario.series),
-    aislamiento: Math.min(3, esquema.aislamiento.series),
+    primario: Math.max(3, Math.min(4, esquema.primario.series)),
+    secundario: Math.max(3, Math.min(4, esquema.secundario.series)),
+    aislamiento: 3,
   };
 }
 
 // Fase 4 · Reparte el presupuesto de series entre las ranuras del día en
 // proporción al peso de cada rol (primario > secundario > aislamiento), respetando
-// el piso por rol (minPorRol, mínimo 3 series en hipertrofia y fuerza) y el TECHO DURO
-// POR ROL (maxPorRol). Evita que los últimos ejercicios se degraden a 2 series.
+// el piso por rol (minPorRol, mínimo 3 series inviolable) y el TECHO DURO
+// POR ROL (maxPorRol). Garantiza que NINGÚN ejercicio quede con 2 series.
 function repartirSeries(
   roles: Rol[],
   presupuesto: number,
@@ -701,13 +721,13 @@ function repartirSeries(
 ): number[] {
   const n = roles.length;
   if (n === 0) return [];
-  const minPorRanura = roles.map((r) => minPorRol?.[r] ?? 3);
+  const minPorRanura = roles.map((r) => Math.max(3, minPorRol?.[r] ?? 3));
   // Techo por ranura = el valor de ESQUEMA para ese rol (nunca menor al piso).
   const cap = roles.map((r, i) => Math.max(minPorRanura[i], maxPorRol[r] || minPorRanura[i]));
   const techoTotal = cap.reduce((a, b) => a + b, 0);
   const pisoTotal = minPorRanura.reduce((a, b) => a + b, 0);
-  // El objetivo nunca supera la suma de los techos duros ni baja del piso:
-  const objetivo = Math.max(pisoTotal, Math.min(techoTotal, presupuesto));
+  // El objetivo nunca supera la suma de los techos duros ni baja del piso inviolable:
+  const objetivo = Math.max(pisoTotal, Math.min(techoTotal, Math.max(pisoTotal, presupuesto)));
   const sumaPeso = roles.reduce((s, r) => s + (maxPorRol[r] || 1), 0);
   const series = roles.map((r, i) =>
     Math.max(
@@ -740,7 +760,7 @@ function repartirSeries(
     }
     if (!movido) break;
   }
-  return series;
+  return series.map((s) => Math.max(3, s));
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -852,8 +872,19 @@ function ordenarBooteo(ranuras: Ranura[]): Ranura[] {
 // una misma sesión. Más allá de esto es "volumen basura por dispersión" (Helms):
 // mejor sumar series a un movimiento probado que agregar un 4º ejercicio del
 // mismo grupo. Al llegar al tope, la ranura reusa un ejercicio ya elegido del
-// grupo (concentra series) en vez de estrenar uno nuevo.
 const MAX_DISTINTOS_POR_GRUPO = 3;
+
+// Si un grupo ya completó sus 3 ranuras en la sesión (techo de fatiga y variedad),
+// la ranura excedente se redirige a un sinergista complementario o accesorio antagonista
+// para no perder series ni duplicar volumen basura en el mismo músculo.
+const REDIRECCION_GRUPO_SATURADO: Record<string, { grupo: string; patron?: string; rol: Rol }> = {
+  pecho: { grupo: "triceps", patron: "aislamiento", rol: "aislamiento" },
+  espalda: { grupo: "biceps", patron: "aislamiento", rol: "aislamiento" },
+  cuadriceps: { grupo: "gemelos", patron: "aislamiento", rol: "aislamiento" },
+  isquios: { grupo: "gluteos", patron: "aislamiento", rol: "aislamiento" },
+  gluteos: { grupo: "isquios", patron: "aislamiento", rol: "aislamiento" },
+  hombros: { grupo: "triceps", patron: "aislamiento", rol: "aislamiento" },
+};
 
 // Empuja la selección hacia el tipo de ejercicio que pide cada objetivo, para
 // que 4 objetivos con los mismos datos NO devuelvan la misma rutina.
@@ -1274,15 +1305,22 @@ export function generarPlan(
         `${tituloDia}: objetivo ${objetivo} moldea la sesión — ${bloque.ranuras.length} → ${esqueleto.length} ranuras.`,
       );
     }
-    const presupuesto = ajustarPorSexo(
-      Math.round(PRESUPUESTO_DIA[entrada.nivel] * factorVol * factorEsf),
-      sexo,
-      entrada.nivel,
-      esqueleto.length,
-      trace,
+    const pisoMinimoRanuras = esqueleto.length * 3;
+    const presupuestoCalculado = Math.round(
+      PRESUPUESTO_DIA[entrada.nivel] * factorVol * factorEsf,
+    );
+    const presupuesto = Math.max(
+      pisoMinimoRanuras,
+      ajustarPorSexo(
+        presupuestoCalculado,
+        sexo,
+        entrada.nivel,
+        esqueleto.length,
+        trace,
+      ),
     );
     trace?.push(
-      `${tituloDia}: presupuesto cerrado = ${presupuesto} series repartidas entre ${esqueleto.length} ranuras.`,
+      `${tituloDia}: presupuesto cerrado = ${presupuesto} series repartidas entre ${esqueleto.length} ranuras (piso mínimo garantizado: ${pisoMinimoRanuras} series).`,
     );
 
     // ── Fase 3 · Trueque por énfasis: redirige ranuras secundarias a la zona
@@ -1317,30 +1355,37 @@ export function generarPlan(
     const itemPorSlug = new Map<string, ItemGenerado>();
 
     ranuras.forEach((ranura, si) => {
-      const yaEnGrupo = distintosPorGrupo.get(ranura.grupo) ?? 0;
+      let ranuraEfectiva = ranura;
+      const yaEnGrupo = distintosPorGrupo.get(ranuraEfectiva.grupo) ?? 0;
 
-      // Firewall C · consolidación: si el grupo ya llegó al tope de ejercicios
-      // distintos, esta ranura NO estrena un 4º movimiento: suma sus series al
-      // ejercicio ya elegido para el grupo (concentra volumen, evita dispersión).
+      // Firewall C · consolidación y redirección sinérgica: si el grupo ya llegó al tope de ejercicios
+      // distintos (3), esta ranura NO estrena un 4º movimiento ni pierde sus series:
+      // se canaliza hacia un accesorio/sinergista complementario para mantener el volumen útil
+      // sin acumular fatiga redundante o superar techos articulares.
       if (yaEnGrupo >= MAX_DISTINTOS_POR_GRUPO) {
-        const slug = slugPorGrupo.get(ranura.grupo);
-        const prev = slug ? itemPorSlug.get(slug) : undefined;
-        if (prev) {
-          prev.series = Math.min(6, prev.series + seriesPorRanura[si]);
-          return;
+        const redir = REDIRECCION_GRUPO_SATURADO[ranuraEfectiva.grupo];
+        if (redir) {
+          ranuraEfectiva = {
+            grupo: redir.grupo,
+            patron: redir.patron,
+            rol: redir.rol,
+          };
         }
       }
+
+      const grupoFinal = ranuraEfectiva.grupo;
+      const distintosFinal = distintosPorGrupo.get(grupoFinal) ?? 0;
 
       // Firewall B · fatiga axial: este compuesto de pierna/espalda debe ser
       // estabilizado si ya hubo un lift axial pesado en el día.
       const evitarAxial =
         axialUsadoDia &&
-        ranura.rol !== "aislamiento" &&
-        GRUPOS_AXIALES.has(ranura.grupo);
+        ranuraEfectiva.rol !== "aislamiento" &&
+        GRUPOS_AXIALES.has(grupoFinal);
 
       const ej = elegir(
         ejercicios,
-        ranura,
+        ranuraEfectiva,
         equipoPrefs,
         entrada.nivel,
         objetivo,
@@ -1349,7 +1394,7 @@ export function generarPlan(
         usadosSemana,
         usadosDia,
         seed,
-        `${di}:${si}:${ranura.grupo}`,
+        `${di}:${si}:${grupoFinal}`,
         evitarAxial,
       );
       if (!ej || !ej.slug) return;
@@ -1359,25 +1404,25 @@ export function generarPlan(
         usadosSemana.add(key);
       }
       if (esAxialPesado(ej)) axialUsadoDia = true;
-      distintosPorGrupo.set(ranura.grupo, yaEnGrupo + 1);
-      if (!slugPorGrupo.has(ranura.grupo)) slugPorGrupo.set(ranura.grupo, ej.slug);
+      distintosPorGrupo.set(grupoFinal, distintosFinal + 1);
+      if (!slugPorGrupo.has(grupoFinal)) slugPorGrupo.set(grupoFinal, ej.slug);
 
       const nota = avanzado
-        ? esquema.descanso + notaRir(avanzado.rir, ranura.rol)
+        ? esquema.descanso + notaRir(avanzado.rir, ranuraEfectiva.rol)
         : esquema.descanso +
           (entrada.nivel === "principiante"
             ? " · RIR 2 (técnica estricta)"
             : " · RIR 1–2");
       const item: ItemGenerado = {
         ejercicio_slug: ej.slug,
-        series: seriesPorRanura[si],
-        repeticiones: esquema[ranura.rol].reps,
+        series: Math.max(3, seriesPorRanura[si]),
+        repeticiones: esquema[ranuraEfectiva.rol]?.reps ?? "8–12",
         nota,
-        rol: ranura.rol,
+        rol: ranuraEfectiva.rol,
       };
       itemPorSlug.set(ej.slug, item);
       items.push(item);
-      rolItems.push(ranura.rol);
+      rolItems.push(ranuraEfectiva.rol);
     });
 
     // Técnica de intensidad en la última serie de los últimos aislamientos.
@@ -1444,12 +1489,20 @@ export function validarYRepararPlan(
     ejercicios.filter((e) => e.slug).map((e) => [e.slug!, e]),
   );
 
+  const zonasDolor = (plan.entrada.zonasDolor ?? []).filter(
+    (z): z is Molestia => (MOLESTIAS as readonly string[]).includes(z),
+  );
+  const evitar: Molestia[] = [
+    ...new Set<Molestia>([...(plan.entrada.avanzado?.evitar ?? []), ...zonasDolor]),
+  ];
+  const equipoPrefs: readonly string[] = PREFERENCIAS_EQUIPO[plan.entrada.preferencia] ?? [];
+
   const diasReparados = plan.dias.map((dia) => {
     const items = [...dia.items];
     const slugsVistos = new Set<string>();
     let tieneAxialLibre = false;
 
-    // 1. Sanitizar y desduplicar
+    // 1. Sanitizar, desduplicar y garantizar invariantes
     const itemsLimpios: ItemGenerado[] = [];
     for (const it of items) {
       if (!it.ejercicio_slug || it.series <= 0) continue;
@@ -1457,38 +1510,71 @@ export function validarYRepararPlan(
       const itemActual: ItemGenerado = { ...it };
       const ejActual = ejercicioPorSlug.get(itemActual.ejercicio_slug);
 
-      // Capping de series individuales
-      if (itemActual.tecnica !== "fst7" && itemActual.series > 4) {
-        itemActual.series = 4;
+      // INVARIANTE INVIOLABLE: NUNCA SERIES DE 2 NI DE 1 (Piso estricto de 3 series por ejercicio)
+      if (itemActual.series < 3) {
+        itemActual.series = 3;
       }
 
-      // Desduplicación en el mismo día
+      // Capping de series individuales: máximo 4 series por ejercicio (5 en primarios de fuerza), salvo FST-7
+      const maxSeries =
+        itemActual.tecnica === "fst7"
+          ? 7
+          : itemActual.rol === "primario" && plan.entrada.objetivo === "fuerza"
+            ? 5
+            : 4;
+      if (itemActual.series > maxSeries) {
+        itemActual.series = maxSeries;
+      }
+
+      // Desduplicación en el mismo día (con validación de molestias articulares y equipo)
       if (slugsVistos.has(itemActual.ejercicio_slug)) {
         if (ejActual) {
           const alternativo = ejercicios.find(
             (alt) =>
               alt.slug &&
               alt.grupo_muscular === ejActual.grupo_muscular &&
-              !slugsVistos.has(alt.slug),
+              !slugsVistos.has(alt.slug) &&
+              !estaBloqueado(alt, evitar) &&
+              (equipoPrefs.length === 0 || (alt.equipo && equipoPrefs.includes(alt.equipo))),
           );
           if (alternativo && alternativo.slug) {
             itemActual.ejercicio_slug = alternativo.slug;
+          } else {
+            const fallback = obtenerFallbackSeguro(
+              ejActual.grupo_muscular ?? "core",
+              itemActual.rol ?? "secundario",
+              evitar,
+            );
+            if (fallback?.slug && !slugsVistos.has(fallback.slug)) {
+              itemActual.ejercicio_slug = fallback.slug;
+            }
           }
         }
       }
 
-      // Prevención de doble axial libre pesado
-      if (ejActual && esAxialPesado(ejActual)) {
+      // Prevención de doble axial libre pesado (con respeto a articulaciones)
+      const ejFinal = ejercicioPorSlug.get(itemActual.ejercicio_slug) ?? ejActual;
+      if (ejFinal && esAxialPesado(ejFinal)) {
         if (tieneAxialLibre) {
           const alternativoSeguro = ejercicios.find(
             (alt) =>
               alt.slug &&
-              alt.grupo_muscular === ejActual.grupo_muscular &&
+              alt.grupo_muscular === ejFinal.grupo_muscular &&
               (alt.equipo === "maquina" || alt.equipo === "polea" || alt.equipo === "mancuernas") &&
-              !slugsVistos.has(alt.slug),
+              !slugsVistos.has(alt.slug) &&
+              !estaBloqueado(alt, evitar),
           );
           if (alternativoSeguro && alternativoSeguro.slug) {
             itemActual.ejercicio_slug = alternativoSeguro.slug;
+          } else {
+            const fallback = obtenerFallbackSeguro(
+              ejFinal.grupo_muscular ?? "core",
+              itemActual.rol ?? "secundario",
+              evitar,
+            );
+            if (fallback?.slug && !slugsVistos.has(fallback.slug)) {
+              itemActual.ejercicio_slug = fallback.slug;
+            }
           }
         } else {
           tieneAxialLibre = true;
