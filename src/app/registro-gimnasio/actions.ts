@@ -183,6 +183,19 @@ export async function registrarGimnasio(
     return { error: `Error al guardar perfil: ${errProf.message}` };
   }
 
+  // Si es Atleta Solo, crear también su ficha de cliente (requerida por /mi/rutina, /mi/peso, etc.)
+  if (rol === "cliente") {
+    const { error: errCliente } = await admin.from("clientes").insert({
+      gimnasio_id: gymId,
+      profile_id: createdUser.user.id,
+      estado_cuota: "al_dia",
+      email: emailRecuperacion || null,
+    });
+    if (errCliente) {
+      return { error: `Error al guardar tu ficha de atleta: ${errCliente.message}` };
+    }
+  }
+
   // Iniciar sesión inmediatamente
   const supabase = await createClient();
   const { error: errLogin } = await supabase.auth.signInWithPassword({

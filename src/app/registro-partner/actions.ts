@@ -83,6 +83,16 @@ export async function registrarPartnerAction(
     email_recuperacion: email,
   });
 
+  // 3b. Crear también su ficha de cliente: el partner necesita poder generar
+  // y mostrar una rutina real (Mi Rutina / Mi Peso) como demo en vivo a los
+  // dueños de gimnasio que quiere sumar.
+  await admin.from("clientes").insert({
+    gimnasio_id: gymId,
+    profile_id: userId,
+    estado_cuota: "al_dia",
+    email,
+  });
+
   // 4. Crear registro de Partner
   let code = sugerirReferralCode(nombre);
   if (!esReferralCodeValido(code)) {
