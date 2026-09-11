@@ -94,6 +94,11 @@ export async function login(
     redirect(profile.rol === "dueno" ? "/bienvenida" : "/cambiar-clave");
   }
 
+  // Superadmin (vos): entrar directo al panel dev en vez del panel de gym normal.
+  if (authData.user.id === process.env.SUPERADMIN_ID) {
+    redirect("/admin");
+  }
+
   redirect(profile?.rol === "dueno" || profile?.rol === "staff" ? "/panel" : "/mi");
 }
 
