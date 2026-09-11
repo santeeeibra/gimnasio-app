@@ -608,6 +608,20 @@ function resolverEsquema(
   return ESQUEMA_RANGO[rango];
 }
 
+// Anti-falsa-DUP (SKILL §3.B, §2 tabla): ningún esquema metabólico (15-20+ reps,
+// descanso corto) puede recaer sobre un compuesto axial de carga LIBRE (sentadilla
+// con barra, peso muerto, remo con barra) — "prohibido series axiales pesadas a
+// 15-20 reps con descansos < 90s" por colapso postural y compresión lumbar. Se
+// identifican por referencia los EsquemaObj que prescriben ese rango alto/descanso
+// corto: resistencia, tonificar (objetivo) y sus equivalentes en modo avanzado
+// (rango "metabolico" y el día metabólico de la periodización ondulante).
+const ESQUEMAS_METABOLICOS = new Set<EsquemaObj>([
+  ESQUEMA.resistencia,
+  ESQUEMA.tonificar,
+  ESQUEMA_RANGO.metabolico,
+  ESQUEMA_ONDULANTE[1],
+]);
+
 // Texto de RIR que se anexa a la nota de cada ítem (SPEC §2.4). No toca
 // series/reps. Grgic et al. 2022; David Marchante (PowerExplosive).
 function notaRir(rir: OpcionesAvanzadas["rir"], rol: Rol): string {
@@ -701,10 +715,17 @@ function resolverMaxPorRol(
 
 // Piso por rol: ESTRICTAMENTE mínimo 3 series por ejercicio en todos los roles y objetivos.
 // Queda terminantemente prohibido generar ejercicios de 2 o 1 series.
-function resolverMinPorRol(esquema: EsquemaObj): Record<Rol, number> {
+// FIX auditoría (2026-09-11): antes el piso tomaba `min(4, esquema.series)`, que en
+// objetivos con secundario.series = 4 (fuerza, bajar_grasa) igualaba el piso al techo
+// duro de resolverMaxPorRol (que a propósito capa secundario en 3 — solo el primario
+// llega a 4). Un piso > techo hacía que `cap` en repartirSeries se recalculara al piso,
+// rompiendo el techo anti-junk-volume de 6-10 series/grupo por sesión (PULL con 2
+// ranuras secundarias de espalda salía en 4+4+4=12 en vez de 4+3+3=10). El piso es
+// SIEMPRE 3, nunca depende del esquema — el techo real vive solo en resolverMaxPorRol.
+function resolverMinPorRol(_esquema: EsquemaObj): Record<Rol, number> {
   return {
-    primario: Math.max(3, Math.min(4, esquema.primario.series)),
-    secundario: Math.max(3, Math.min(4, esquema.secundario.series)),
+    primario: 3,
+    secundario: 3,
     aislamiento: 3,
   };
 }
@@ -1292,6 +1313,9 @@ export function generarPlan(
     const rolItems: Rol[] = [];
     const esquema = resolverEsquema(objetivo, avanzado, di);
     const esFullBody = bloque.titulo.startsWith("Cuerpo completo");
+    // Día con prescripción metabólica (15-20+ reps, descanso corto) → los
+    // compuestos axiales de carga libre se estabilizan (ver ESQUEMAS_METABOLICOS).
+    const esMetabolico = ESQUEMAS_METABOLICOS.has(esquema);
 
     // ── Fase 1 · Esqueleto: qué músculos entrena el día, sin series todavía. ──
     const esqueleto = moldearPorObjetivo(bloque.ranuras, objetivo);
@@ -1376,10 +1400,14 @@ export function generarPlan(
       const grupoFinal = ranuraEfectiva.grupo;
       const distintosFinal = distintosPorGrupo.get(grupoFinal) ?? 0;
 
-      // Firewall B · fatiga axial: este compuesto de pierna/espalda debe ser
-      // estabilizado si ya hubo un lift axial pesado en el día.
+      // Firewall B · fatiga axial + anti-falsa-DUP: este compuesto de pierna/
+      // espalda debe ser estabilizado (máquina/polea/mancuerna) si ya hubo un
+      // lift axial pesado en el día, O si el esquema del día es metabólico
+      // (15-20+ reps, descanso corto) — un sentadilla/peso muerto/remo con
+      // barra jamás se prescribe con esa combinación (colapso postural,
+      // compresión L4-S1).
       const evitarAxial =
-        axialUsadoDia &&
+        (axialUsadoDia || esMetabolico) &&
         ranuraEfectiva.rol !== "aislamiento" &&
         GRUPOS_AXIALES.has(grupoFinal);
 
@@ -1583,6 +1611,37 @@ export function validarYRepararPlan(
 
       slugsVistos.add(itemActual.ejercicio_slug);
       itemsLimpios.push(itemActual);
+    }
+
+    // 1.5. Techo por grupo muscular en la sesión (Heaselgrave 2019 / Krieger 2020:
+    // el beneficio hipertrófico satura entre 6-10 series efectivas de un mismo
+    // grupo en una sesión; por encima es junk volume). Puede superarse cuando un
+    // bloque tiene varias ranuras del mismo grupo (ej. PULL con 2 secundarios de
+    // espalda) combinado con un preset de volumen alto (`mav`) que sube el techo
+    // por rol — cada ranura individual respeta su cap, pero la SUMA del grupo no.
+    // Se poda desde el final (aislamiento/secundario antes que el primario de
+    // arranque) sin bajar nunca del piso inviolable de 3 series por ejercicio.
+    const MAX_POR_GRUPO_SESION = 10;
+    const seriesPorGrupoSesion = new Map<string, number>();
+    for (const it of itemsLimpios) {
+      const ej = ejercicioPorSlug.get(it.ejercicio_slug);
+      const grupo = ej?.grupo_muscular;
+      if (!grupo) continue;
+      seriesPorGrupoSesion.set(grupo, (seriesPorGrupoSesion.get(grupo) ?? 0) + it.series);
+    }
+    for (const [grupo, total] of seriesPorGrupoSesion) {
+      let excedente = total - MAX_POR_GRUPO_SESION;
+      if (excedente <= 0) continue;
+      // Podar de atrás hacia adelante (los primeros ítems del grupo son los
+      // primarios/compuestos de arranque; se preservan lo más posible).
+      for (let i = itemsLimpios.length - 1; i >= 0 && excedente > 0; i--) {
+        const it = itemsLimpios[i];
+        if (ejercicioPorSlug.get(it.ejercicio_slug)?.grupo_muscular !== grupo) continue;
+        while (it.series > 3 && excedente > 0) {
+          it.series--;
+          excedente--;
+        }
+      }
     }
 
     // 2. Poda de series si la sesión supera 22 series totales (cero junk volume)

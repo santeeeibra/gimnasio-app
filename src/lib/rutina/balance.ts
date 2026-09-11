@@ -70,7 +70,12 @@ export function calcularBalanceVolumen(
           sinergistas.push("triceps", "hombros");
         } else if (patron === "traccion_horizontal" || patron === "traccion_vertical") {
           sinergistas.push("biceps", "hombros");
-        } else if (patron === "dominante_cadera" || patron === "dominante_rodilla") {
+        } else if (patron === "dominante_cadera") {
+          // SKILL §4 (Peso Muerto Rumano): 1.0 a isquios (directo) + 0.5 a
+          // glúteos Y erectores espinales. No hay grupo "erectores" en el
+          // canon; se acredita a "core" (misma función anti-flexión lumbar).
+          sinergistas.push("gluteos", "core");
+        } else if (patron === "dominante_rodilla") {
           sinergistas.push("gluteos");
         }
 
