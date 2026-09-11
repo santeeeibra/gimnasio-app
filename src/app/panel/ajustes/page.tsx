@@ -10,6 +10,7 @@ import { AjustesForm } from "./ajustes-form";
 import { AvisoMorosidadForm } from "./aviso-morosidad-form";
 import { ReposoCheckinForm } from "./reposo-checkin-form";
 import { DatosPagoForm } from "./datos-pago-form";
+import { AfipForm } from "./afip-form";
 import { EmailRecuperacionForm } from "./email-recuperacion-form";
 import { CredencialesIndividualForm } from "./credenciales-individual-form";
 import { ContactarSoporteForm } from "./contactar-soporte-form";
@@ -23,7 +24,7 @@ import { verificarPlanGimnasio } from "@/lib/plataforma/plan-gate";
 import { BloqueoEliteGate, BadgeElite } from "@/components/ui/bloqueo-elite-gate";
 
 import { AjustesSeccionModal } from "./ajustes-seccion-modal";
-import { Palette, Landmark, Bell, Smartphone, QrCode, KeyRound, HelpCircle } from "lucide-react";
+import { Palette, Landmark, Bell, Smartphone, QrCode, KeyRound, HelpCircle, Receipt } from "lucide-react";
 
 const ESTADO_LABEL: Record<string, string> = {
   prueba: "En prueba",
@@ -52,7 +53,7 @@ export default async function AjustesPage({
     supabase
       .from("gimnasios")
       .select(
-        "id, slug, nombre, tema, logo_url, dias_aviso_morosidad, estado, plan_plataforma_vence_el, pago_alias, pago_cbu, pago_titular, tipo_cuenta",
+        "id, slug, nombre, tema, logo_url, dias_aviso_morosidad, estado, plan_plataforma_vence_el, pago_alias, pago_cbu, pago_titular, tipo_cuenta, afip_habilitado, afip_cuit, afip_razon_social, afip_condicion_iva, afip_punto_venta",
       )
       .eq("id", profile.gimnasio_id)
       .maybeSingle(),
@@ -179,6 +180,29 @@ export default async function AjustesPage({
               alias={gym.pago_alias ?? null}
               cbu={gym.pago_cbu ?? null}
               titular={gym.pago_titular ?? null}
+            />
+          </AjustesSeccionModal>
+        ) : null}
+
+        {/* FACTURACIÓN ELECTRÓNICA AFIP */}
+        {gym ? (
+          <AjustesSeccionModal
+            titulo="Facturación AFIP"
+            subtitulo="Opcional: emití factura electrónica automáticamente por cada cobro."
+            icon={<Receipt className="size-4" />}
+            resumen={
+              <p className="text-[11px] text-ink-soft font-mono">
+                {gym.afip_habilitado ? "Habilitada" : "Deshabilitada"}
+              </p>
+            }
+          >
+            <AfipForm
+              gimnasioId={gym.id}
+              habilitado={gym.afip_habilitado ?? false}
+              cuit={gym.afip_cuit ?? null}
+              razonSocial={gym.afip_razon_social ?? null}
+              condicionIva={gym.afip_condicion_iva ?? null}
+              puntoVenta={gym.afip_punto_venta ?? null}
             />
           </AjustesSeccionModal>
         ) : null}

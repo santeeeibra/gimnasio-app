@@ -183,6 +183,71 @@ export async function actualizarDatosPago(
   return { ok: "Datos de transferencia guardados" };
 }
 
+const CONDICIONES_IVA = ["monotributo", "responsable_inscripto", "exento"] as const;
+
+/** Habilita/deshabilita facturación electrónica AFIP para el gimnasio (opt-in del dueño). */
+export async function actualizarDatosAfip(
+  _prev: AjustesState,
+  formData: FormData,
+): Promise<AjustesState> {
+  const dueno = await requireDueno();
+  const gimnasioId = String(formData.get("gimnasio_id") ?? "");
+
+  if (gimnasioId !== dueno.gimnasio_id) {
+    return { error: "No podés modificar este gimnasio" };
+  }
+
+  const habilitado = formData.get("afip_habilitado") === "on";
+
+  const limpiar = (v: FormDataEntryValue | null, max: number) =>
+    String(v ?? "").trim().slice(0, max) || null;
+
+  const cuit = limpiar(formData.get("afip_cuit"), 13);
+  const razonSocial = limpiar(formData.get("afip_razon_social"), 120);
+  const condicionIva = limpiar(formData.get("afip_condicion_iva"), 30);
+  const puntoVentaRaw = limpiar(formData.get("afip_punto_venta"), 6);
+  const puntoVenta = puntoVentaRaw ? Number(puntoVentaRaw) : null;
+
+  if (habilitado) {
+    if (!cuit || !/^\d{11}$/.test(cuit)) {
+      return { error: "El CUIT son 11 dígitos sin guiones" };
+    }
+    if (!razonSocial) {
+      return { error: "Falta la razón social" };
+    }
+    if (!condicionIva || !CONDICIONES_IVA.includes(condicionIva as (typeof CONDICIONES_IVA)[number])) {
+      return { error: "Elegí una condición frente al IVA válida" };
+    }
+    if (!puntoVenta || !Number.isInteger(puntoVenta) || puntoVenta <= 0) {
+      return { error: "El punto de venta tiene que ser un número mayor a 0" };
+    }
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("gimnasios")
+    .update({
+      afip_habilitado: habilitado,
+      afip_cuit: cuit,
+      afip_razon_social: razonSocial,
+      afip_condicion_iva: condicionIva,
+      afip_punto_venta: puntoVenta,
+    })
+    .eq("id", gimnasioId);
+
+  if (error) {
+    console.error("[actualizarDatosAfip]", error);
+    return { error: "No se pudieron guardar los datos de AFIP" };
+  }
+
+  revalidatePath("/panel/ajustes");
+  return {
+    ok: habilitado
+      ? "Facturación AFIP habilitada"
+      : "Facturación AFIP deshabilitada",
+  };
+}
+
 /**
  * Pantalla de reposo (screensaver) del modo check-in. Se guarda anidada en
  * `gimnasios.tema.reposoCheckin`; el resto del tema queda intacto.

@@ -7,6 +7,7 @@ import { DatosTransferencia } from "@/components/mi/datos-transferencia";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { estadoCobroAutomatico } from "@/lib/pagos/cobro-socio";
 import { PagarMpButton } from "./pagar-mp-button";
+import { DescargarComprobantePdf } from "@/components/pdf/descargar-comprobante-pdf";
 
 export const dynamic = "force-dynamic";
 
@@ -27,12 +28,14 @@ export default async function MisPagosPage() {
   const [{ data: gym }, { data: cli }] = await Promise.all([
     supabase
       .from("gimnasios")
-      .select("pago_alias, pago_cbu, pago_titular")
+      .select(
+        "nombre, logo_url, pago_alias, pago_cbu, pago_titular, afip_habilitado, afip_cuit, afip_razon_social, afip_condicion_iva, afip_punto_venta",
+      )
       .eq("id", profile.gimnasio_id)
       .single(),
     supabase
       .from("clientes")
-      .select("id, email, mp_preapproval_id, fecha_vencimiento, plan:planes(nombre, precio)")
+      .select("id, nombre, email, mp_preapproval_id, fecha_vencimiento, plan:planes(nombre, precio)")
       .eq("profile_id", profile.id)
       .maybeSingle(),
   ]);
@@ -131,9 +134,31 @@ export default async function MisPagosPage() {
                     {p.plan?.nombre ?? "Plan"} · cubre hasta {fecha(p.cubre_hasta)}
                   </p>
                 </div>
-                <span className="shrink-0 font-hero text-base font-bold tabular-nums text-ink">
-                  {money(Number(p.monto) || 0)}
-                </span>
+                <div className="flex shrink-0 flex-col items-end gap-1.5">
+                  <span className="font-hero text-base font-bold tabular-nums text-ink">
+                    {money(Number(p.monto) || 0)}
+                  </span>
+                  <DescargarComprobantePdf
+                    pagoId={p.id}
+                    fechaPago={p.fecha_pago}
+                    cubreHasta={p.cubre_hasta}
+                    monto={Number(p.monto) || 0}
+                    planNombre={p.plan?.nombre ?? "Plan"}
+                    clienteNombre={cli?.nombre ?? profile.nombre ?? "Socio"}
+                    gimnasioNombre={gym?.nombre ?? "Gimnasio"}
+                    logoUrl={gym?.logo_url ?? null}
+                    afip={
+                      gym?.afip_habilitado
+                        ? {
+                            razonSocial: gym.afip_razon_social ?? null,
+                            cuit: gym.afip_cuit ?? null,
+                            condicionIva: gym.afip_condicion_iva ?? null,
+                            puntoVenta: gym.afip_punto_venta ?? null,
+                          }
+                        : null
+                    }
+                  />
+                </div>
               </li>
             ))}
           </ul>

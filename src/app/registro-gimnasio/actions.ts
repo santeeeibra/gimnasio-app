@@ -20,6 +20,11 @@ export async function registrarGimnasio(
   const dniRaw = String(formData.get("dni") ?? "").trim();
   const emailRecuperacion = String(formData.get("email") ?? "").trim().toLowerCase();
   const clave = String(formData.get("clave") ?? "");
+  const aceptoTyc = formData.get("acepto_tyc") === "on";
+
+  if (!aceptoTyc) {
+    return { error: "Tenés que aceptar los Términos y Condiciones para continuar." };
+  }
 
   const dniLimpio = dniRaw.replace(/\D/g, "");
   if (!dniLimpio || dniLimpio.length < 5) {
@@ -171,6 +176,7 @@ export async function registrarGimnasio(
     nombre: nombreDueno,
     debe_cambiar_clave: false,
     email_recuperacion: emailRecuperacion || null,
+    tyc_aceptado_en: new Date().toISOString(),
   });
 
   if (errProf) {

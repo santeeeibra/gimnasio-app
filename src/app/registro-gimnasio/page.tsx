@@ -220,6 +220,23 @@ function RegistroGimnasioContenido() {
             />
           </div>
 
+          {/* Términos y Condiciones */}
+          <label className="flex items-start gap-2.5 text-xs text-neutral-400 select-none cursor-pointer">
+            <input
+              type="checkbox"
+              name="acepto_tyc"
+              required
+              className="mt-0.5 size-4 shrink-0 rounded border-white/20 bg-[#18181c] accent-[#c8ff00]"
+            />
+            <span>
+              Acepto los{" "}
+              <Link href="/terminos" target="_blank" className="text-[#c8ff00] font-semibold hover:underline">
+                Términos y Condiciones
+              </Link>{" "}
+              de SysGym.
+            </span>
+          </label>
+
           {/* Submit Button */}
           <button
             type="submit"
