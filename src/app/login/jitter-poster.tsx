@@ -44,11 +44,12 @@ export function JitterPoster() {
           <source src="/images/login-poster.mp4" type="video/mp4" />
         </video>
 
-        {/* Tapa la franja fea del final del clip (baked-in) con un blur en
-            tiempo real de lo que corre atrás, en vez de un bloque sólido. */}
-        <div
-          className="absolute inset-x-0 bottom-0 z-20 h-28 sm:h-32 backdrop-blur-2xl [mask-image:linear-gradient(to_bottom,transparent,black_55%)]"
-        />
+        {/* Tapa el cartel final quemado en el clip (texto + logo recortados
+            por el object-cover) con blur en tiempo real de lo que corre
+            atrás + un degradado oscuro encima para que quede opaco de
+            verdad, no solo desenfocado. */}
+        <div className="absolute inset-x-0 bottom-0 z-20 h-40 sm:h-48 lg:h-56 backdrop-blur-3xl [mask-image:linear-gradient(to_bottom,transparent,black_35%)]" />
+        <div className="absolute inset-x-0 bottom-0 z-20 h-40 sm:h-48 lg:h-56 bg-gradient-to-t from-[#0a0a0c] via-[#0a0a0c]/70 to-transparent" />
       </div>
 
       {/* ── Floating Badges (Header Layer) ── */}
