@@ -106,47 +106,19 @@ export async function obtenerODescargarPartnerAction(): Promise<{
     const milestones = milestoneAwardsData ?? [];
     const payouts = (payoutsData ?? []) as PartnerPayout[];
 
-    // Evaluar cuántos gimnasios referidos tienen pago activo (+40 alumnos y Pro/Elite vigente)
-    let gimnasiosPagoActivos = 0;
-    for (const g of gimnasios) {
-      const { count } = await admin
-        .from("clientes")
-        .select("id", { count: "exact", head: true })
-        .eq("gimnasio_id", g.id)
-        .eq("acceso_habilitado", true);
-
-      const planNombre = (g as { plan?: { nombre?: string } | null })?.plan?.nombre ?? "";
-      const planVigente =
-        !g.plan_plataforma_vence_el ||
-        new Date(g.plan_plataforma_vence_el) >= new Date();
-
-      if (
-        (count ?? 0) > 40 &&
-        g.estado === "activo" &&
-        (planNombre === "Pro" || planNombre === "Elite") &&
-        planVigente
-      ) {
-        gimnasiosPagoActivos++;
-      }
-    }
-
-    // Balance acumulado: comisiones + bonos - retiros pendientes o pagados
-    const totalComisiones = commissions.reduce(
-      (acc, c) => acc + Number(c.monto_comision_ars),
-      0,
+    // Evaluar cuántos gimnasios referidos tienen pago activo llamando a gimnasio_es_pago_activo() en SQL
+    const checks = await Promise.all(
+      gimnasios.map((g) =>
+        admin.rpc("gimnasio_es_pago_activo", { p_gimnasio_id: g.id }),
+      ),
     );
-    const totalBonos = milestones.reduce(
-      (acc, m) => acc + Number(m.bono_ars),
-      0,
-    );
-    const totalRetiradoOPendiente = payouts
-      .filter((p) => p.estado === "pendiente" || p.estado === "pagado")
-      .reduce((acc, p) => acc + Number(p.monto_ars), 0);
+    const gimnasiosPagoActivos = checks.filter((res) => res.data === true).length;
 
-    const balanceDisponible = Math.max(
-      0,
-      totalComisiones + totalBonos - totalRetiradoOPendiente,
-    );
+    // Balance oficial mediante la función SQL partner_balance()
+    const { data: balanceData } = await admin.rpc("partner_balance", {
+      p_partner_id: partnerId,
+    });
+    const balanceDisponible = Math.max(0, Number(balanceData ?? 0));
 
     // Comisiones de los últimos 30 días
     const hace30d = new Date();
@@ -288,39 +260,11 @@ export async function solicitarRetiroAction(
       };
     }
 
-    // Verificar balance disponible
-    const [{ data: commissions }, { data: milestones }, { data: payouts }] =
-      await Promise.all([
-        admin
-          .from("partner_commissions")
-          .select("monto_comision_ars")
-          .eq("partner_id", partner.id),
-        admin
-          .from("partner_milestone_awards")
-          .select("bono_ars")
-          .eq("partner_id", partner.id),
-        admin
-          .from("partner_payouts")
-          .select("monto_ars, estado")
-          .eq("partner_id", partner.id),
-      ]);
-
-    const totalComisiones = (commissions ?? []).reduce(
-      (acc, c) => acc + Number(c.monto_comision_ars),
-      0,
-    );
-    const totalBonos = (milestones ?? []).reduce(
-      (acc, m) => acc + Number(m.bono_ars),
-      0,
-    );
-    const totalRetiradoOPendiente = (payouts ?? [])
-      .filter((p) => p.estado === "pendiente" || p.estado === "pagado")
-      .reduce((acc, p) => acc + Number(p.monto_ars), 0);
-
-    const balanceDisponible = Math.max(
-      0,
-      totalComisiones + totalBonos - totalRetiradoOPendiente,
-    );
+    // Verificar balance disponible con la función oficial SQL partner_balance()
+    const { data: balanceData } = await admin.rpc("partner_balance", {
+      p_partner_id: partner.id,
+    });
+    const balanceDisponible = Math.max(0, Number(balanceData ?? 0));
 
     if (montoRaw > balanceDisponible) {
       return {
