@@ -1,8 +1,7 @@
 ﻿// Script: scripts/reset-single-gym.mjs
 // Resetea la base de datos de Supabase a UN SOLO gimnasio de prueba impecable:
 // Gimnasio: "Gimnasio Sante" (slug: "sante", plan Elite activo por 1 año)
-// Dueño: Santiago Dueño (DNI: 12345678, user: 182ddc81-d517-4021-a2db-9bae2cc5b932, clave: admin123)
-// Socio: Lucas Socio (DNI: 20000000, clave: gym2000, plan Pase Libre $25.000, rutina 4 ejercicios)
+// Credenciales de prueba: ver credenciales-locales.md (no versionado)
 
 import { readFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
@@ -148,7 +147,7 @@ async function main() {
   console.log("5️⃣ Configurando Dueño de prueba (Santiago Dueño)...");
   const duenoDni = "12345678";
   const duenoEmail = `${duenoDni}@sante.gym.local`;
-  const duenoClave = "admin123";
+  const duenoClave = "RQdvBXcNF90dZh";
 
   // Actualizar en Auth
   const { error: updAuthErr } = await db.auth.admin.updateUserById(SUPERADMIN_ID, {
@@ -196,7 +195,7 @@ async function main() {
   console.log("7️⃣ Configurando Cliente de prueba (Lucas Socio)...");
   const socioDni = "20000000";
   const socioEmail = `${socioDni}@sante.gym.local`;
-  const socioClave = "gym2000";
+  const socioClave = "Z7ITCjdWUs0W5M";
 
   const { data: createdSocioAuth, error: socioAuthErr } = await db.auth.admin.createUser({
     email: socioEmail,

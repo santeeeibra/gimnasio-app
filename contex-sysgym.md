@@ -39,6 +39,8 @@ usarlo para altas masivas).
 ## Decisiones de producto
 
 ### Cuentas y acceso
+  - **Fix UI (2026-09-11)**: Se ocultó con blur y degradado el cartel final quemado del video de fondo en la pantalla de login.
+
 - El dueño da de alta al cliente a mano (plan, teléfono, DNI, estado de cuota).
   No hay auto-registro.
 - Login = gimnasio (slug o nombre) + DNI + clave. Email sintético interno
@@ -187,26 +189,9 @@ SPEC `SPEC_MP_CONNECT_SOCIOS.md`. **Básico/Pro no cambian en nada.**
   (`/panel/clientes/[id]` → "Registrar un pago"). Se sacó el checkbox
   "Pago recibido" del alta (confuso). `registrarPago` sigue igual.
 
-### Gestor de morosidad (aviso automático de vencimiento) — SPEC `SPEC_GESTOR_MOROSIDAD.md`
-- Push automático al socio **N días antes** del vencimiento, con **N configurable
-  por gimnasio** (`gimnasios.dias_aviso_morosidad`, int default 5, rango 1-15).
-- Dedupe por ciclo: `clientes.ultimo_aviso_morosidad_enviado_en` (date nullable).
-  El cron no reenvía si ya avisó hoy; `registrarPago` lo resetea a `null` al
-  renovar la cuota, habilitando el aviso del próximo ciclo.
-- **Config**: `/panel/ajustes` → card "Aviso de vencimiento" (separada de la de
-  tema), input numérico 1-15. Server action propia
-  `actualizarDiasAvisoMorosidad` (`panel/ajustes/actions.ts`), componente
-  `panel/ajustes/aviso-morosidad-form.tsx`.
-- **Cron**: `src/app/api/cron/cuotas/route.ts` suma una 3ª vía a los avisos
-  fijos de 6/1 días (que quedan igual, para cliente + dueño). Por cada cliente
-  con `diasRestantes === dias_aviso_morosidad` de su gimnasio y sin aviso hoy →
-  `enviarPush` con texto fijo "Tu cuota vence en {X} días. Recordá renovarla
-  para seguir entrenando." + set de la fecha. Respuesta JSON incluye
-  `avisosMorosidad`.
-- Fuera de scope v1: WhatsApp, múltiples avisos por ciclo, texto personalizable.
-- Migración `0012_gestor_morosidad.sql` — ✅ aplicada (2026-09-03).
-
 ### Rutinas (motor + generación + editor hechos; seed de imágenes OK)
+  - **Mejoras y Fixes Biomecánicos (2026-09-11)**: Corrección de 3 bugs biomecánicos críticos (créditos de sinergistas faltantes). Se reestructuró la asignación de MAV (Maximal Adaptive Volume) retirando el bump artificial del techo por rol y rebalanceando rutinas PULL.
+
 - V1: motor de **reglas fijas** (sin IA). Variables: objetivo, nivel, días de
   entrenamiento, preferencia de equipo, **sexo** y **zonas a enfocar** (énfasis).
 - **`src/lib/rutina/tipos.ts`**: tipos y constantes principales
@@ -419,6 +404,9 @@ Cualquier `pointerdown` / `keydown` / `touchstart` / `wheel` /
   real de Postgres si la lectura del gimnasio falla (antes decía siempre "No se
   encontró el gimnasio" y tapaba el "column pin_ingresos does not exist").
 
+### Gestión de Gimnasios
+- **Eliminación**: Funcionalidad para eliminar de forma permanente un gimnasio y todos sus datos asociados (Hard delete).
+
 ### Consola de soporte (`/admin`) — superadmin de la plataforma
 
 - Segmento `src/app/admin/**`, fuera de `/panel` y `/mi`, sin ningún link desde
@@ -426,7 +414,7 @@ Cualquier `pointerdown` / `keydown` / `touchstart` / `wheel` /
   `requireSuperadmin()` → `notFound()` (no `redirect`, para no revelar la ruta)
   salvo que la sesión sea la cuenta cuyo `profile.id === SUPERADMIN_ID`.
 - **Cuenta superadmin**: gimnasio dedicado y vacío slug `sante`, login usuario
-  (DNI) `admin`, clave `43553838`. La crea `scripts/seed-superadmin.mjs`
+  (DNI) `admin`. Clave: ver `credenciales-locales.md` (no versionado). La crea `scripts/seed-superadmin.mjs`
   (idempotente), que imprime el `SUPERADMIN_ID` a copiar en `.env.local` y
   Vercel. `SUPERADMIN_ID` vive en env, no hay columna en DB.
 - **Monitor** (`/admin`): uso de Supabase, ya existía.
@@ -534,6 +522,11 @@ gimnasios B2B con métricas de uso reales en mano.
   divulgación visible. **Falta manual**: alta en ML Afiliados + envs.
 - **Costos Supabase**: el primer gym pagando ($30k–$60k ARS) financia 100% el
   plan Pro ($25 USD) antes de tocar límites de egress.
+
+
+### Programa de Partners (SysGym Partner)
+- **SysGym Partner**: Nuevo programa de partners implementado y verificado con E2E tests. Se ajustaron las reglas de gating (acceso) para referidos y afiliados.
+- **Infraestructura**: Se eliminaron las referencias hardcoreadas a sysgym.app que causaban problemas sin el DNS de producción configurado.
 
 ### Fase 2 — Métricas de uso y retención (2026-09-10)
 
@@ -874,7 +867,7 @@ Pendiente, prioridad sugerida:
 6. Logo: íconos PWA generados desde el logo; logo en `/login` (requiere resolver
    el gimnasio antes de enviar el form). Ambos fuera de scope del SPEC inicial.
 
-Login de prueba: cliente `migym/46697615/697615`, dueño `migym/30111222/gym1222`.
+Login de prueba: ver `credenciales-locales.md` (no versionado).
 
 ## Cómo trabajar (ahorrar tokens)
 
@@ -895,3 +888,5 @@ Reglas completas en **`REGLAS_DESARROLLO.md`**. Resumen:
 2. IP local: `ipconfig | findstr /i "IPv4"`.
 3. Firewall (una vez, admin): `New-NetFirewallRule -DisplayName "Next dev 3000" -Direction Inbound -LocalPort 3000 -Protocol TCP -Action Allow`.
 4. En el celu (misma WiFi): `http://<IP>:3000`.
+
+

@@ -18,7 +18,7 @@ for (const line of readFileSync(".env.local", "utf8").split("\n")) {
 const NOMBRE = "Sante";
 const SLUG = "sante";
 const DNI = "43553838";
-const CLAVE = "admin123";
+const CLAVE = "KbATGEojMkbkFP";
 const EMAIL = `${DNI}@${SLUG}.gym.local`;
 const EMAILS_VIEJOS = [`admin@${SLUG}.gym.local`];
 

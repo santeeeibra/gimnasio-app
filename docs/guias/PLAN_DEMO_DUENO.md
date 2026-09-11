@@ -125,5 +125,5 @@ Ya está la cuenta del dueño creada. Falta cargarle vida:
 ---
 
 ## Logins de prueba
-- Dueño: gimnasio `migym`, DNI `30111222`, clave `gym1222`
+- Dueño: gimnasio `migym` — ver `credenciales-locales.md` (no versionado)
 - (Para la reunión: usar la cuenta real del gym del dueño, ya creada.)
