@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireDueno } from "@/lib/auth";
+import { requireProfile } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sugerirReferralCode, esReferralCodeValido } from "@/lib/partners/codigos";
 import {
@@ -27,7 +27,7 @@ export async function obtenerODescargarPartnerAction(): Promise<{
   error?: string;
 }> {
   try {
-    const dueno = await requireDueno();
+    const dueno = await requireProfile();
     const admin = createAdminClient();
 
     // 1. Buscar partner existente
@@ -193,7 +193,7 @@ export async function actualizarDatosCobroAction(
   formData: FormData,
 ): Promise<{ ok?: boolean; error?: string; msg?: string }> {
   try {
-    const dueno = await requireDueno();
+    const dueno = await requireProfile();
     const admin = createAdminClient();
 
     const cbu_cvu = String(formData.get("cbu_cvu") ?? "").trim() || null;
@@ -238,7 +238,7 @@ export async function solicitarRetiroAction(
   formData: FormData,
 ): Promise<{ ok?: boolean; error?: string; msg?: string }> {
   try {
-    const dueno = await requireDueno();
+    const dueno = await requireProfile();
     const admin = createAdminClient();
 
     const montoRaw = Number(formData.get("monto_ars") ?? 0);

@@ -46,10 +46,20 @@ export default async function AdminPage() {
       .select("id, nombre, slug, estado, plan_plataforma_vence_el, plan:planes_plataforma(id, nombre, max_socios)")
       .eq("slug", "sante")
       .maybeSingle(),
-    admin.from("gimnasios").select("id", { count: "exact", head: true }),
+    // Cuentas individuales de Google (tipo_cuenta = "individual") no son
+    // gimnasios reales del negocio: se excluyen del conteo y del selector
+    // de abajo para no ensuciar el Cockpit (ver admin/gimnasios/page.tsx).
+    admin
+      .from("gimnasios")
+      .select("id", { count: "exact", head: true })
+      .eq("tipo_cuenta", "gym"),
     admin.from("clientes").select("id", { count: "exact", head: true }),
     admin.from("errores_app").select("id", { count: "exact", head: true }).gte("creado_en", hace24h),
-    admin.from("gimnasios").select("id, nombre, slug").order("nombre", { ascending: true }),
+    admin
+      .from("gimnasios")
+      .select("id, nombre, slug")
+      .eq("tipo_cuenta", "gym")
+      .order("nombre", { ascending: true }),
   ]);
 
   // Si no se encuentra 'sante', buscar primer gimnasio disponible

@@ -16,6 +16,7 @@ type Gym = {
   estado: string | null;
   creado_at: string | null;
   plan_plataforma_vence_el: string | null;
+  tipo_cuenta: string | null;
 };
 
 export default async function AdminGimnasiosPage() {
@@ -33,7 +34,7 @@ export default async function AdminGimnasiosPage() {
     db
       .from("gimnasios")
       .select(
-        "id, nombre, slug, estado, creado_at, plan_plataforma_vence_el",
+        "id, nombre, slug, estado, creado_at, plan_plataforma_vence_el, tipo_cuenta",
       )
       .order("creado_at", { ascending: true }),
     db.from("clientes").select("gimnasio_id, estado_cuota, en_prueba"),
@@ -99,9 +100,35 @@ export default async function AdminGimnasiosPage() {
     porGym.set(c.gimnasio_id, g);
   }
 
-  const lista = (gyms ?? []) as Gym[];
+  const todos = (gyms ?? []) as Gym[];
+  // Cuentas individuales (Google Sign-In, ver auth/callback/route.ts): son
+  // gimnasios "de un solo socio" con tipo_cuenta = 'individual' y nombre =
+  // el nombre real de la persona. No son gimnasios reales para el negocio:
+  // se muestran aparte, colapsadas, para no ensuciar la lista principal.
+  const lista = todos.filter((g) => (g.tipo_cuenta ?? "gym") === "gym");
+  const individuales = todos.filter((g) => g.tipo_cuenta === "individual");
 
   const filas: FilaGym[] = lista.map((g) => {
+    const stats = porGym.get(g.id) ?? { total: 0, vencidos: 0 };
+    const nErrores = erroresPorGym.get(g.id) ?? 0;
+    const dueno = duenoPorGym.get(g.id) ?? null;
+    return {
+      id: g.id,
+      nombre: g.nombre ?? "",
+      slug: g.slug ?? "",
+      estado: g.estado ?? "",
+      nivel: semaforo(nErrores),
+      nErrores,
+      socios: stats.total,
+      vencidos: stats.vencidos,
+      venceEl: g.plan_plataforma_vence_el,
+      duenoId: dueno?.id ?? null,
+      duenoNombre: dueno?.nombre ?? null,
+      tieneNota: conNota.has(g.id),
+    };
+  });
+
+  const filasIndividuales: FilaGym[] = individuales.map((g) => {
     const stats = porGym.get(g.id) ?? { total: 0, vencidos: 0 };
     const nErrores = erroresPorGym.get(g.id) ?? 0;
     const dueno = duenoPorGym.get(g.id) ?? null;
@@ -133,7 +160,11 @@ export default async function AdminGimnasiosPage() {
         </Link>
       </div>
       <p className="mb-4 text-sm text-ink-soft">
-        {lista.length} en total. Vista de soporte, solo lectura. La bolita marca
+        {lista.length} en total
+        {individuales.length > 0
+          ? ` (+ ${individuales.length} cuenta${individuales.length === 1 ? "" : "s"} individual${individuales.length === 1 ? "" : "es"} de Google, abajo)`
+          : ""}
+        . Vista de soporte, solo lectura. La bolita marca
         errores de las últimas 24 h:{" "}
         <span className="inline-block size-2 translate-y-px rounded-full bg-ok" />{" "}
         ninguno ·{" "}
@@ -187,6 +218,21 @@ export default async function AdminGimnasiosPage() {
       ) : null}
 
       <ListaGimnasios filas={filas} />
+
+      {filasIndividuales.length > 0 ? (
+        <details className="mt-8">
+          <summary className="cursor-pointer text-sm font-semibold text-ink-soft hover:text-ink">
+            Cuentas individuales de Google ({filasIndividuales.length})
+          </summary>
+          <p className="mb-3 mt-2 text-xs text-ink-soft">
+            Atletas que entraron con &quot;Ingresar con Google&quot; sin
+            pertenecer a un gimnasio: cada una es un gimnasio de un solo
+            socio (<code className="rounded bg-paper px-1 py-0.5">tipo_cuenta = &quot;individual&quot;</code>
+            ), separadas acá para no mezclarlas con los gimnasios reales.
+          </p>
+          <ListaGimnasios filas={filasIndividuales} />
+        </details>
+      ) : null}
     </div>
   );
 }

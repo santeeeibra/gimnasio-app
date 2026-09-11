@@ -1,12 +1,19 @@
 "use client";
 
+import { useRef, useState } from "react";
+
 export function JitterPoster() {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [videoListo, setVideoListo] = useState(false);
+
   return (
     <div className="relative w-full h-full min-h-[440px] sm:min-h-[540px] lg:min-h-[640px] overflow-hidden rounded-[24px] sm:rounded-[32px] border border-white/20 bg-[#0a0a0c] shadow-[0_24px_80px_rgba(0,0,0,0.9)] group">
-      
+
       {/* ── Video Player Completo de Jitter ── */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden bg-[#0a0a0c]">
-        {/* Imagen de fondo de alta definición (fallback si la reproducción de video se retrasa o bloquea en móvil/PC) */}
+        {/* Imagen de fondo de alta definición: fallback mientras el video buffer-ea
+            y base permanente contra cualquier frame negro del <video> (loop nativo
+            en Chrome/Firefox puede pintar un frame vacío al reiniciar). */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/images/login-poster.png"
@@ -14,13 +21,25 @@ export function JitterPoster() {
           className="absolute inset-0 w-full h-full object-cover object-center scale-[1.01] contrast-[1.05] brightness-[0.98]"
         />
         <video
+          ref={videoRef}
           autoPlay
-          loop
           muted
           playsInline
           preload="auto"
           poster="/images/login-poster.png"
-          className="relative z-10 w-full h-full object-cover object-center scale-[1.01] group-hover:scale-[1.04] transition-transform duration-700 ease-out filter contrast-[1.05] brightness-[0.98]"
+          onCanPlay={() => setVideoListo(true)}
+          // Reinicio manual del loop ANTES del último frame: evita el flash
+          // negro que produce el atributo `loop` nativo al recomenzar.
+          onTimeUpdate={(e) => {
+            const v = e.currentTarget;
+            if (v.duration && v.currentTime >= v.duration - 0.2) {
+              v.currentTime = 0;
+              v.play().catch(() => {});
+            }
+          }}
+          className={`relative z-10 w-full h-full object-cover object-center scale-[1.01] group-hover:scale-[1.04] transition-[transform,opacity] duration-700 ease-out filter contrast-[1.05] brightness-[0.98] ${
+            videoListo ? "opacity-100" : "opacity-0"
+          }`}
         >
           <source src="/images/login-poster.mp4" type="video/mp4" />
         </video>

@@ -1,12 +1,15 @@
-﻿import { redirect } from "next/navigation";
-import { requireDueno } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { getSessionProfile } from "@/lib/auth";
 import { obtenerODescargarPartnerAction } from "./actions";
 import { PartnerDashboardClient } from "./partner-client";
 
 export const dynamic = "force-dynamic";
 
 export default async function PartnerPage() {
-  await requireDueno();
+  const profile = await getSessionProfile();
+  if (!profile) {
+    redirect("/registro-partner");
+  }
 
   const data = await obtenerODescargarPartnerAction();
 

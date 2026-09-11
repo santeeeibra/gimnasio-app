@@ -59,9 +59,12 @@ export async function solicitarReset(
   try {
     const admin = createAdminClient();
 
+    // Excluye cuentas individuales de Google (ver login/actions.ts): no
+    // tienen DNI/contraseña propios, así que no pueden pedir este reset.
     const { data: gym } = await admin
       .from("gimnasios")
       .select("id, slug, nombre")
+      .eq("tipo_cuenta", "gym")
       .or(`slug.eq.${gimnasio},nombre.ilike.${gimnasio}`)
       .limit(1)
       .maybeSingle();

@@ -26,11 +26,16 @@ export async function login(
     return { error: "Ingresá un DNI numérico válido (al menos 5 dígitos)." };
   }
 
-  // Resolver el slug real del gimnasio (acepta nombre o slug)
+  // Resolver el slug real del gimnasio (acepta nombre o slug). Se excluyen
+  // las cuentas individuales creadas por Google Sign-In (tipo_cuenta =
+  // "individual"): esas no tienen DNI/contraseña propios, entran solo con
+  // Google, y su `nombre` es el nombre real de la persona — sin este filtro
+  // aparecían como si fueran un gimnasio real en el login por DNI.
   const admin = createAdminClient();
   const { data: gym } = await admin
     .from("gimnasios")
     .select("slug, nombre, estado")
+    .eq("tipo_cuenta", "gym")
     .or(`slug.eq.${gimnasio},nombre.ilike.${gimnasio}`)
     .limit(1)
     .maybeSingle();
