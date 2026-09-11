@@ -37,7 +37,9 @@ type AccionAdmin =
   | "eliminar_gimnasio_definitivo"
   | "crear_gimnasio_simulado"
   | "simular_pago_aprobado"
-  | "borrar_simulacion_e2e";
+  | "borrar_simulacion_e2e"
+  | "marcar_payout_pagado"
+  | "marcar_payout_rechazado";
 
 // Traduce (action, meta) a un texto legible para la notificación al
 // superadmin. El audit log (arriba) sigue guardando el JSON completo — esto

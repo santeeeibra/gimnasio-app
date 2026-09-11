@@ -4,6 +4,7 @@ import {
   PartnerAdminClient,
   type PartnerAdminItem,
   type GymSimuladoItem,
+  type PayoutPendienteItem,
 } from "./partner-admin-client";
 
 export const dynamic = "force-dynamic";
@@ -69,6 +70,27 @@ export default async function AdminPartnerPage() {
     partners.map((p) => [p.id, { nombre: p.nombre, codigo: p.referral_code }])
   );
 
+  // Retiros pendientes de todos los partners (cola a procesar manualmente)
+  const { data: payoutsPendientesRaw } = await db
+    .from("partner_payouts")
+    .select("id, partner_id, monto_ars, destino_snapshot, nota, solicitado_at")
+    .eq("estado", "pendiente")
+    .order("solicitado_at", { ascending: true });
+
+  const payoutsPendientes: PayoutPendienteItem[] = (payoutsPendientesRaw ?? []).map((p) => {
+    const info = partnersMap.get(p.partner_id);
+    return {
+      id: p.id,
+      partnerId: p.partner_id,
+      partnerNombre: info?.nombre ?? "Partner desconocido",
+      partnerCodigo: info?.codigo ?? "-",
+      monto_ars: Number(p.monto_ars),
+      destino_snapshot: p.destino_snapshot as { cbu_cvu: string | null; alias_mp: string | null } | null,
+      nota: p.nota,
+      solicitado_at: p.solicitado_at,
+    };
+  });
+
   // 2. Obtener gimnasios de simulación activos (SIM_ o DEMO_)
   const { data: gymsSimuladosRaw } = await db
     .from("gimnasios")
@@ -130,6 +152,7 @@ export default async function AdminPartnerPage() {
       <PartnerAdminClient
         partners={partners}
         gimnasiosSimulados={gimnasiosSimulados}
+        payoutsPendientes={payoutsPendientes}
       />
     </div>
   );

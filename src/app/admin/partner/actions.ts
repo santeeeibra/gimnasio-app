@@ -377,3 +377,90 @@ export async function borrarDatosSimulacionAction(): Promise<{
     },
   };
 }
+
+/**
+ * Marca una solicitud de retiro (partner_payouts) como pagada o rechazada.
+ * El pago en sí se hace por fuera del sistema (transferencia manual); esto
+ * solo actualiza el estado para llevar registro de a quién ya se le pagó.
+ */
+export async function marcarPayoutAction(
+  payoutId: string,
+  nuevoEstado: "pagado" | "rechazado",
+  comprobante?: string,
+): Promise<{ ok: boolean; msg: string }> {
+  const adminProfile = await requireSuperadmin();
+  const db = createAdminClient();
+
+  const { data: payout, error: fetchErr } = await db
+    .from("partner_payouts")
+    .select("id, partner_id, monto_ars, estado, nota")
+    .eq("id", payoutId)
+    .single();
+
+  if (fetchErr || !payout) {
+    return { ok: false, msg: "No se encontró la solicitud de retiro." };
+  }
+
+  if (payout.estado !== "pendiente") {
+    return {
+      ok: false,
+      msg: `Esta solicitud ya está en estado "${payout.estado}", no se puede modificar.`,
+    };
+  }
+
+  const notaFinal = comprobante
+    ? [payout.nota, `Comprobante/Ref: ${comprobante}`].filter(Boolean).join(" · ")
+    : payout.nota;
+
+  const { error: updErr } = await db
+    .from("partner_payouts")
+    .update({
+      estado: nuevoEstado,
+      procesado_at: new Date().toISOString(),
+      nota: notaFinal,
+    })
+    .eq("id", payoutId);
+
+  if (updErr) {
+    return { ok: false, msg: "No se pudo actualizar la solicitud de retiro." };
+  }
+
+  // Notificar al partner en la app
+  if (nuevoEstado === "pagado") {
+    try {
+      await db.from("partner_notifications").insert({
+        partner_id: payout.partner_id,
+        tipo: "retiro_pagado",
+        titulo: "¡Retiro acreditado!",
+        mensaje: `Tu retiro de $${Number(payout.monto_ars).toLocaleString("es-AR")} ARS fue procesado.${
+          comprobante ? ` Ref: ${comprobante}` : ""
+        }`,
+        metadata: {
+          payout_id: payoutId,
+          monto_ars: payout.monto_ars,
+          comprobante: comprobante ?? null,
+        },
+      });
+    } catch (notifErr) {
+      console.error("[marcarPayoutAction] Error al notificar partner:", notifErr);
+    }
+  }
+
+  await registrarAccionAdmin(
+    adminProfile.id,
+    nuevoEstado === "pagado" ? "marcar_payout_pagado" : "marcar_payout_rechazado",
+    payout.partner_id,
+    { payoutId, monto: payout.monto_ars, comprobante: comprobante ?? null },
+  );
+
+  revalidatePath("/admin/partner");
+  revalidatePath("/panel/partner");
+
+  return {
+    ok: true,
+    msg:
+      nuevoEstado === "pagado"
+        ? `Retiro de $${Number(payout.monto_ars).toLocaleString("es-AR")} marcado como pagado exitosamente.`
+        : `Retiro de $${Number(payout.monto_ars).toLocaleString("es-AR")} rechazado. El saldo volvió a estar disponible.`,
+  };
+}

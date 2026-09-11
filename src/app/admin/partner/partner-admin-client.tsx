@@ -22,6 +22,7 @@ import {
   crearGimnasioSimuladoAction,
   simularPagoAprobadoAction,
   borrarDatosSimulacionAction,
+  marcarPayoutAction,
 } from "./actions";
 
 export type PartnerAdminItem = {
@@ -42,6 +43,17 @@ export type PartnerAdminItem = {
   } | null;
 };
 
+export type PayoutPendienteItem = {
+  id: string;
+  partnerId: string;
+  partnerNombre: string;
+  partnerCodigo: string;
+  monto_ars: number;
+  destino_snapshot: { cbu_cvu: string | null; alias_mp: string | null } | null;
+  nota: string | null;
+  solicitado_at: string;
+};
+
 export type GymSimuladoItem = {
   id: string;
   nombre: string;
@@ -58,18 +70,62 @@ export type GymSimuladoItem = {
 export function PartnerAdminClient({
   partners,
   gimnasiosSimulados,
+  payoutsPendientes = [],
   defaultOrigin = "",
 }: {
   partners: PartnerAdminItem[];
   gimnasiosSimulados: GymSimuladoItem[];
+  payoutsPendientes?: PayoutPendienteItem[];
   defaultOrigin?: string;
 }) {
   const [copiadoCode, setCopiadoCode] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [payoutPendingId, setPayoutPendingId] = useState<string | null>(null);
   const [mensajeFeedback, setMensajeFeedback] = useState<{
     tipo: "ok" | "err" | "info";
     texto: string;
   } | null>(null);
+
+  const [copiadoCobroId, setCopiadoCobroId] = useState<string | null>(null);
+
+  const copiarDatoCobro = (id: string, texto: string) => {
+    if (navigator?.clipboard) {
+      navigator.clipboard.writeText(texto);
+      setCopiadoCobroId(id);
+      setTimeout(() => setCopiadoCobroId(null), 2000);
+    }
+  };
+
+  const handleMarcarPayout = (
+    payoutId: string,
+    nuevoEstado: "pagado" | "rechazado",
+    monto: number,
+    partnerNombre: string
+  ) => {
+    let comprobante: string | undefined = undefined;
+
+    if (nuevoEstado === "pagado") {
+      const resp = prompt(
+        `¿Confirmás marcar como PAGADO el retiro de $${monto.toLocaleString("es-AR")} a "${partnerNombre}"?\n\n(Opcional) Ingresá el código/número de comprobante de la transferencia:`,
+        ""
+      );
+      if (resp === null) return; // canceló el prompt
+      comprobante = resp.trim() || undefined;
+    } else {
+      const confirmacion = confirm(
+        `¿Confirmás RECHAZAR el retiro de $${monto.toLocaleString("es-AR")} de "${partnerNombre}"?\n\nEl importe volverá a quedar como saldo disponible en su billetera.`
+      );
+      if (!confirmacion) return;
+    }
+
+    setPayoutPendingId(payoutId);
+    startTransition(async () => {
+      setMensajeFeedback(null);
+      const res = await marcarPayoutAction(payoutId, nuevoEstado, comprobante);
+      setMensajeFeedback({ tipo: res.ok ? "ok" : "err", texto: res.msg });
+      setPayoutPendingId(null);
+    });
+  };
 
   // Estados de formularios
   const [selectedPartnerId, setSelectedPartnerId] = useState<string>(
@@ -391,6 +447,136 @@ export function PartnerAdminClient({
             </div>
           )}
         </div>
+
+        {/* COLA DE RETIROS PENDIENTES */}
+        {payoutsPendientes.length === 0 ? (
+          <div className="card-cut rounded-[18px] border border-rule bg-paper-2 p-4 flex items-center justify-between">
+            <div className="flex items-center gap-2.5 text-xs text-ink-soft">
+              <div className="flex size-7 items-center justify-center rounded-full bg-ok/10 text-ok border border-ok/20 shrink-0">
+                <Check className="size-4" />
+              </div>
+              <span>
+                <strong className="text-ink font-semibold">Cola de Retiros al día:</strong> No hay solicitudes de liquidación pendientes en este momento.
+              </span>
+            </div>
+            <span className="text-[11px] font-mono font-semibold text-ink-soft bg-paper px-2 py-0.5 rounded border border-rule">
+              0 pendientes
+            </span>
+          </div>
+        ) : (
+          <div className="card-cut rounded-[18px] border border-warn/40 bg-warn/5 overflow-hidden shadow-sm">
+            <div className="p-4 border-b border-warn/30 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <BadgeAlert className="size-4 text-warn" />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-ink">
+                  Retiros Pendientes de Liquidación ({payoutsPendientes.length})
+                </h3>
+              </div>
+              <span className="text-[11px] text-ink-soft">
+                Transferí el dinero por tu banco/MP y marcá acá como pagado.
+              </span>
+            </div>
+            <ul className="divide-y divide-warn/20">
+              {payoutsPendientes.map((payout) => {
+                const procesando = isPending && payoutPendingId === payout.id;
+                const datoCobro =
+                  payout.destino_snapshot?.cbu_cvu ||
+                  payout.destino_snapshot?.alias_mp ||
+                  null;
+                const esCopiado = copiadoCobroId === payout.id;
+
+                return (
+                  <li
+                    key={payout.id}
+                    className="p-4 flex flex-wrap items-center justify-between gap-3"
+                  >
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-ink">{payout.partnerNombre}</span>
+                        <span className="font-mono text-[11px] bg-paper px-1.5 py-0.5 rounded border border-rule text-ink-soft">
+                          {payout.partnerCodigo}
+                        </span>
+                        <span className="text-[11px] text-ink-soft">
+                          · {new Date(payout.solicitado_at).toLocaleDateString("es-AR")}
+                        </span>
+                      </div>
+
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
+                        <span className="text-ink-soft">Destino:</span>
+                        {datoCobro ? (
+                          <button
+                            type="button"
+                            onClick={() => copiarDatoCobro(payout.id, datoCobro)}
+                            title="Copiar CBU/Alias"
+                            className={`inline-flex items-center gap-1 rounded bg-paper px-2 py-0.5 font-mono text-[11px] font-semibold border transition-colors ${
+                              esCopiado
+                                ? "border-ok text-ok"
+                                : "border-rule text-ink hover:border-ink"
+                            }`}
+                          >
+                            {esCopiado ? <Check className="size-3" /> : <Copy className="size-3 text-ink-soft" />}
+                            <span>{datoCobro}</span>
+                          </button>
+                        ) : (
+                          <span className="text-danger italic">Sin datos de cobro registrados</span>
+                        )}
+                      </div>
+
+                      {payout.nota && (
+                        <div className="mt-1 text-[11px] text-ink-soft italic">
+                          Nota: {payout.nota}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="text-right">
+                        <span className="font-display font-bold text-ink text-lg block leading-none">
+                          ${payout.monto_ars.toLocaleString("es-AR")}
+                        </span>
+                        <span className="text-[10px] text-ink-soft font-mono">ARS</span>
+                      </div>
+
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          disabled={procesando}
+                          onClick={() =>
+                            handleMarcarPayout(
+                              payout.id,
+                              "rechazado",
+                              payout.monto_ars,
+                              payout.partnerNombre
+                            )
+                          }
+                          className="inline-flex h-8 items-center gap-1.5 rounded-[8px] border border-rule bg-paper px-3 text-xs font-semibold text-ink-soft hover:border-danger hover:text-danger disabled:opacity-50 transition-colors"
+                        >
+                          Rechazar
+                        </button>
+                        <button
+                          type="button"
+                          disabled={procesando}
+                          onClick={() =>
+                            handleMarcarPayout(
+                              payout.id,
+                              "pagado",
+                              payout.monto_ars,
+                              payout.partnerNombre
+                            )
+                          }
+                          className="inline-flex h-8 items-center gap-1.5 rounded-[8px] bg-ok px-3.5 text-xs font-bold text-paper shadow-sm hover:brightness-110 active:scale-95 disabled:opacity-50 transition-all"
+                        >
+                          <Check className="size-3.5" />
+                          <span>{procesando ? "Procesando..." : "Marcar Pagado"}</span>
+                        </button>
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
       </section>
 
       {/* ───────────────────────────────────────────────────────────── */}
