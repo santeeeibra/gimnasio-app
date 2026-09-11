@@ -38,3 +38,6 @@
 
 - **URL Producción (Vercel):** https://gimnasio-app-rose.vercel.app
 - **Supabase Auth Callback:** https://adrkdortznimrlungwoy.supabase.co/auth/v1/callback- Diagnóstico y fix error rutina_items_tecnica_check (2026-09-11): Creada migración 0058 para incluir 'fst7' en el CHECK constraint de rutina_items.tecnica.
+- Humanización de avisos y errores (2026-09-11): Se reemplazó el JSON crudo en alertas de errores con humanizarError en lib/admin/errores.ts, mejorando títulos en español claro, desglose de causas técnicas, notificaciones push directas y desplegable en /admin/errores y /admin/salud.
+
+- Drop Sets: migración 0059 (registro_progreso.detalles_tecnica jsonb + serie_index), src/lib/progreso/tipos.ts (DropPaso, calcularPasosSugeridos), src/lib/rutina/dropset-actions.ts (guardarDropSetCliente, obtenerUltimoDropSetCliente). UI a cargo de Gemini en rutina-editor.tsx.
