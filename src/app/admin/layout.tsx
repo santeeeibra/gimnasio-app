@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireSuperadmin } from "@/lib/auth";
 import { AdminNavLinks } from "./nav-links";
-import { Terminal, ArrowUpRight, ShieldCheck } from "lucide-react";
+import { Terminal, ArrowUpRight, ShieldCheck, UserPlus } from "lucide-react";
 
 export default async function AdminLayout({
   children,
@@ -48,6 +48,14 @@ export default async function AdminLayout({
 
           {/* LADO DERECHO: ACCIONES DIRECTAS */}
           <div className="flex items-center gap-2">
+            <Link
+              href="/registro-partner"
+              target="_blank"
+              className="inline-flex h-8 items-center gap-1.5 rounded-[8px] border border-rule bg-paper-2 px-3 text-xs font-semibold text-ink transition-colors hover:bg-paper hover:border-ink"
+            >
+              <UserPlus className="size-3.5 text-ink-soft" />
+              <span>Link Invitar Partner</span>
+            </Link>
             <Link
               href="/panel"
               className="inline-flex h-8 items-center gap-1.5 rounded-[8px] border border-rule bg-paper-2 px-3 text-xs font-semibold text-ink transition-colors hover:bg-paper hover:border-ink"
