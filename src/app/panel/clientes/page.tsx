@@ -7,6 +7,7 @@ import { type ClienteVista } from "./cliente-row";
 import { ListadoClientes } from "./listado-clientes";
 import { CacheAlVuelo } from "@/components/offline/cache-al-vuelo";
 import { ConflictosOffline } from "@/components/offline/conflictos";
+import { GatingPlanInicialBanner } from "@/components/plataforma/gating-plan-inicial";
 
 export default async function ClientesPage({
   searchParams,
@@ -81,6 +82,12 @@ export default async function ClientesPage({
           gimnasioId={dueno.gimnasio_id}
         />
       </div>
+
+      <GatingPlanInicialBanner
+        usados={cupo.usados}
+        max={cupo.max ?? 40}
+        esGratuito={cupo.esGratuito}
+      />
 
       <ConflictosOffline variante="card" />
 

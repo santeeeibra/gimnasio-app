@@ -6,6 +6,7 @@ import { logout } from "@/app/actions";
 import { pillClasses } from "@/components/ui";
 import { hapticoSeleccion } from "@/lib/ui/hapticos";
 import {
+  Award,
   CreditCard,
   Dumbbell,
   Inbox,
@@ -60,6 +61,7 @@ export function getNavItems(tipoCuenta: string = "gym"): NavItem[] {
     { href: "/panel/buzon", label: "Buzón", Icono: Inbox },
     { href: "/panel/ingresos", label: "Ingresos", Icono: Wallet },
     { href: "/panel/plantillas", label: "Compartir rutina", corto: "Compartir", soloDesktop: true, Icono: Share2 },
+    { href: "/panel/partner", label: "Partner", corto: "Partner", soloDesktop: true, Icono: Award },
     { href: "/panel/plan", label: "Mi plan", soloDesktop: true, Icono: CreditCard },
     { href: "/panel/ajustes", label: "Ajustes", Icono: Settings },
   ];

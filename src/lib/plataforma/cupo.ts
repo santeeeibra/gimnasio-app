@@ -1,59 +1,60 @@
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { LIMITE_ALUMNOS_GRATIS } from "@/types/partner";
 
 export type CupoInfo = {
   ok: boolean; // true si todavía se puede agregar un socio
   usados: number;
-  max: number | null; // null = plan ilimitado o sin plan asignado
+  max: number | null; // null = plan ilimitado
   plan: string | null;
+  esGratuito: boolean;
 };
 
 // Cuenta socios (filas en `clientes`, un profile = un asiento; los `en_prueba`
 // también cuentan) y lo compara con el tope del plan de plataforma del gym.
-// Sin plan asignado => siempre ok, para no romper gimnasios existentes.
-// Pasar un cliente con permisos de lectura sobre planes_plataforma
-// (service_role, o el RLS que corresponda).
+// Si no tiene plan de plataforma asignado, rige el Plan Inicial Gratuito
+// con límite estricto de 40 alumnos activos (LIMITE_ALUMNOS_GRATIS).
 export async function cupoSocios(
   db: SupabaseClient,
   gimnasioId: string,
 ): Promise<CupoInfo> {
   const { data: gym } = await db
     .from("gimnasios")
-    .select("plan:planes_plataforma(nombre, max_socios)")
+    .select("plan_plataforma_id, plan:planes_plataforma(nombre, max_socios)")
     .eq("id", gimnasioId)
     .single();
 
-  let plan = (gym?.plan ?? null) as {
+  const tienePlanAsignado = !!gym?.plan_plataforma_id;
+  const plan = (gym?.plan ?? null) as {
     nombre: string;
     max_socios: number | null;
   } | null;
 
-  // Si no tiene plan asignado (ej. gimnasio nuevo o en prueba sin plan explícito),
-  // el free tier de 14 días activa el plan Básico (50 socios).
-  if (!plan) {
-    const { data: planBasico } = await db
-      .from("planes_plataforma")
-      .select("nombre, max_socios")
-      .eq("nombre", "Básico")
-      .maybeSingle();
-
-    if (planBasico) {
-      plan = planBasico;
-    }
-  }
-
   const { count } = await db
     .from("clientes")
     .select("id", { count: "exact", head: true })
-    .eq("gimnasio_id", gimnasioId);
+    .eq("gimnasio_id", gimnasioId)
+    .eq("acceso_habilitado", true);
   const usados = count ?? 0;
 
-  const max = plan?.max_socios ?? 50;
+  if (!tienePlanAsignado || !plan) {
+    return {
+      ok: usados < LIMITE_ALUMNOS_GRATIS,
+      usados,
+      max: LIMITE_ALUMNOS_GRATIS,
+      plan: "Plan Inicial Gratuito",
+      esGratuito: true,
+    };
+  }
+
+  const max = plan.max_socios;
   return {
     ok: max == null || usados < max,
     usados,
     max,
-    plan: plan?.nombre ?? "Básico",
+    plan: plan.nombre,
+    esGratuito: false,
   };
 }
+

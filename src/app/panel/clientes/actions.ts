@@ -90,6 +90,12 @@ async function altaClienteInterno(
 
   const cupo = await cupoSocios(admin, dueno.gimnasio_id);
   if (!cupo.ok) {
+    if (cupo.esGratuito) {
+      return {
+        error:
+          "Llegaste al límite de 40 alumnos activos del Plan Inicial Gratuito. Pasate a un plan Pro o Elite en Mi Plan para seguir sumando socios.",
+      };
+    }
     return {
       error: `Llegaste al límite de socios de tu plan${
         cupo.plan ? ` (${cupo.plan})` : ""
