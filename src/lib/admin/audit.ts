@@ -34,7 +34,10 @@ type AccionAdmin =
   | "resetear_clave"
   | "actualizar_nota_interna"
   | "importar_socios"
-  | "eliminar_gimnasio_definitivo";
+  | "eliminar_gimnasio_definitivo"
+  | "crear_gimnasio_simulado"
+  | "simular_pago_aprobado"
+  | "borrar_simulacion_e2e";
 
 // Traduce (action, meta) a un texto legible para la notificación al
 // superadmin. El audit log (arriba) sigue guardando el JSON completo — esto
@@ -92,6 +95,12 @@ function formatearAccionAdmin(
       return `Vieron el detalle de ${gym}`;
     case "editar_planes_plataforma":
       return "Editaron los planes de la plataforma";
+    case "crear_gimnasio_simulado":
+      return `Crearon el gimnasio de prueba ${gym}`;
+    case "simular_pago_aprobado":
+      return `Simularon pago aprobado sobre ${gym}`;
+    case "borrar_simulacion_e2e":
+      return "Limpieza de datos de simulación E2E ejecutada";
     default:
       return `Acción: ${action}`;
   }

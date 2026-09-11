@@ -17,6 +17,9 @@ import {
   Activity,
   Layers,
   Users,
+  Wallet,
+  Sparkles,
+  ShieldAlert,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -38,6 +41,8 @@ export default async function AdminPage() {
     { count: totalSocios },
     { count: errores24h },
     { data: todosGyms },
+    { count: totalPartners },
+    { count: totalSimulados },
   ] = await Promise.all([
     admin.rpc("db_size_bytes"),
     admin.from("monitor_db_estado").select("umbral_avisado, actualizado_at").eq("id", 1).single(),
@@ -60,6 +65,11 @@ export default async function AdminPage() {
       .select("id, nombre, slug")
       .eq("tipo_cuenta", "gym")
       .order("nombre", { ascending: true }),
+    admin.from("partners").select("id", { count: "exact", head: true }),
+    admin
+      .from("gimnasios")
+      .select("id", { count: "exact", head: true })
+      .or("nombre.ilike.SIM_%,nombre.ilike.DEMO_%,slug.ilike.sim-%,slug.ilike.demo-%"),
   ]);
 
   // Si no se encuentra 'sante', buscar primer gimnasio disponible
@@ -130,6 +140,24 @@ export default async function AdminPage() {
               <span className="text-xs font-bold text-ink">{totalSocios ?? 0}</span>
               <span className="text-[11px] text-ink-soft">socios</span>
             </div>
+            <Link
+              href="/admin/partner"
+              className="flex items-center gap-2 rounded-[12px] border border-rule bg-paper-2/70 px-3 py-1.5 hover:border-ink transition-colors"
+            >
+              <Wallet className="size-4 text-ink-soft" />
+              <span className="text-xs font-bold text-ink">{totalPartners ?? 0}</span>
+              <span className="text-[11px] text-ink-soft">partners</span>
+            </Link>
+            {(totalSimulados ?? 0) > 0 && (
+              <Link
+                href="/admin/partner"
+                className="flex items-center gap-1.5 rounded-[12px] border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 hover:bg-amber-500/20 transition-colors"
+              >
+                <ShieldAlert className="size-4 text-amber-500" />
+                <span className="text-xs font-bold text-amber-500">{totalSimulados}</span>
+                <span className="text-[11px] text-amber-500 font-semibold">sim</span>
+              </Link>
+            )}
             <div className="flex items-center gap-2 rounded-[12px] border border-rule bg-paper-2/70 px-3 py-1.5">
               <AlertTriangle className={`size-4 ${(errores24h ?? 0) > 0 ? "text-warn" : "text-ok"}`} />
               <span className="text-xs font-bold text-ink">{errores24h ?? 0}</span>
@@ -286,6 +314,34 @@ export default async function AdminPage() {
 
         {/* Accesos rápidos a herramientas de la consola */}
         <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+          <Link
+            href="/admin/partner"
+            className="group flex flex-col justify-between rounded-[14px] border border-rule bg-paper-2 p-4 transition-all hover:border-ink hover:shadow-sm"
+          >
+            <div>
+              <div className="flex items-center justify-between">
+                <div className="flex size-8 items-center justify-center rounded-[8px] bg-paper text-ink border border-rule">
+                  <Wallet className="size-4 text-volt-ink" />
+                </div>
+                <div className="flex items-center gap-1.5">
+                  {(totalSimulados ?? 0) > 0 && (
+                    <span className="rounded bg-amber-500/20 px-1.5 py-0.5 font-mono text-[9px] font-bold text-amber-500 uppercase">
+                      {totalSimulados} sim
+                    </span>
+                  )}
+                  <ArrowRight className="size-4 text-ink-soft group-hover:text-ink group-hover:translate-x-0.5 transition-transform" />
+                </div>
+              </div>
+              <h4 className="mt-3 text-sm font-bold text-ink">Programa Partner & Simulación</h4>
+              <p className="mt-1 text-xs text-ink-soft">
+                Links de invitación, balances, simulación de gimnasios/pagos y limpieza E2E.
+              </p>
+            </div>
+            <span className="mt-3 text-[11px] font-semibold text-ink-soft group-hover:underline">
+              Ver partners ({totalPartners ?? 0}) →
+            </span>
+          </Link>
+
           <Link
             href="/admin/gimnasios"
             className="group flex flex-col justify-between rounded-[14px] border border-rule bg-paper-2 p-4 transition-all hover:border-ink hover:shadow-sm"

@@ -10,12 +10,14 @@ import {
   BellRing,
   Dumbbell,
   HeartPulse,
+  Users,
 } from "lucide-react";
 
 const NAV = [
   { href: "/admin", label: "Cockpit", icon: Gauge },
   { href: "/admin/salud", label: "Salud", icon: HeartPulse },
   { href: "/admin/gimnasios", label: "Gimnasios", icon: Building2 },
+  { href: "/admin/partner", label: "Partners & Sim", icon: Users },
   { href: "/admin/errores", label: "Errores", icon: AlertTriangle },
   { href: "/admin/planes", label: "Planes", icon: CreditCard },
   { href: "/admin/push-prueba", label: "Push Test", icon: BellRing },

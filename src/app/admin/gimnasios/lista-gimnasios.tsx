@@ -115,10 +115,18 @@ export function ListaGimnasios({ filas }: { filas: FilaGym[] }) {
                     aria-label={SEMAFORO_TITULO[g.nivel]}
                   />
                   <span className="min-w-0">
-                    <span className="flex items-center gap-1.5">
-                      <span className="truncate text-base">
+                    <span className="flex flex-wrap items-center gap-1.5">
+                      <span className="truncate text-base font-medium text-ink">
                         {g.nombre || "(sin nombre)"}
                       </span>
+                      {(g.nombre?.toUpperCase().startsWith("SIM_") ||
+                        g.nombre?.toUpperCase().startsWith("DEMO_") ||
+                        g.slug?.toLowerCase().startsWith("sim-") ||
+                        g.slug?.toLowerCase().startsWith("demo-")) && (
+                        <span className="inline-flex items-center rounded bg-amber-500/15 border border-amber-500/30 px-1.5 py-0.5 font-mono text-[10px] font-bold text-amber-500 uppercase tracking-wider">
+                          DATO DE SIMULACIÓN
+                        </span>
+                      )}
                       {g.tieneNota ? (
                         <StickyNote
                           className="size-3.5 shrink-0 text-ink-soft"
