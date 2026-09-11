@@ -1,4 +1,4 @@
-﻿-- Migración 0045: Fast-Start Bonus (20% primeros 5 gyms, 15% siguientes)
+-- Migración 0045: Fast-Start Bonus (20% primeros 5 gyms, 15% siguientes)
 -- + Bonos reajustados por hitos: 5 ($20k), 10 ($60k), 15 ($100k).
 -- Solo comisiona el primer pago de cada gimnasio. Del mes 2 en adelante 100% SysGym.
 
