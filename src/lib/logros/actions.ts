@@ -76,7 +76,19 @@ export async function obtenerRachaCliente(): Promise<ResultadoRacha> {
     .limit(400);
 
   const fechas = (data ?? []).map((r) => String(r.creado_en).slice(0, 10));
-  return calcularRacha(fechas);
+  const resultado = calcularRacha(fechas);
+
+  // Idempotente (unique cliente_id+tipo_logro+clave_logro) — se puede llamar
+  // en cada carga de /mi sin duplicar el logro en el feed.
+  if (resultado.enHito) {
+    await registrarLogroEnFeed(
+      "racha",
+      String(resultado.dias),
+      `${resultado.dias} días seguidos entrenando`,
+    );
+  }
+
+  return resultado;
 }
 
 // ── Reacciones internas (Parte 1b) ──────────────────────────────────────────
@@ -167,6 +179,95 @@ export async function alternarReaccionLogro(
     miReaccion,
     total: await contar(supabase, input.autorId, input.tipoLogro, input.claveLogro),
   };
+}
+
+/**
+ * Registra el logro en el feed del gimnasio (best-effort — si falla no debe
+ * romper el flujo de guardado de progreso/racha que lo dispara).
+ * Idempotente vía el unique (cliente_id, tipo_logro, clave_logro).
+ */
+export async function registrarLogroEnFeed(
+  tipoLogro: TipoLogro,
+  claveLogro: string,
+  titulo: string,
+): Promise<void> {
+  const res = await resolverCliente();
+  if (!res) return;
+  const { supabase, clienteId, gimnasioId } = res;
+  await supabase.from("logros_gimnasio").upsert(
+    {
+      gimnasio_id: gimnasioId,
+      cliente_id: clienteId,
+      tipo_logro: tipoLogro,
+      clave_logro: claveLogro,
+      titulo,
+    },
+    { onConflict: "cliente_id,tipo_logro,clave_logro", ignoreDuplicates: true },
+  );
+}
+
+// ── Feed de logros del gimnasio ─────────────────────────────────────────────
+
+export type LogroFeedItem = {
+  id: string;
+  clienteId: string;
+  clienteNombre: string;
+  tipoLogro: TipoLogro;
+  claveLogro: string;
+  titulo: string;
+  creadoEn: string;
+  totalReacciones: number;
+  miReaccion: boolean;
+};
+
+/** Últimos logros del gimnasio del cliente logueado, con conteo de reacciones. */
+export async function obtenerFeedLogrosGimnasio(
+  limite = 20,
+): Promise<LogroFeedItem[]> {
+  const res = await resolverCliente();
+  if (!res) return [];
+  const { supabase, clienteId } = res;
+
+  const { data: logros } = await supabase
+    .from("logros_gimnasio")
+    .select("id, cliente_id, tipo_logro, clave_logro, titulo, creado_en, clientes(nombre)")
+    .order("creado_en", { ascending: false })
+    .limit(limite);
+
+  if (!logros || logros.length === 0) return [];
+
+  const { data: reacciones } = await supabase
+    .from("reacciones_logro")
+    .select("autor_id, tipo_logro, clave_logro, reactor_id");
+
+  return (logros as Array<{
+    id: string;
+    cliente_id: string;
+    tipo_logro: TipoLogro;
+    clave_logro: string;
+    titulo: string;
+    creado_en: string;
+    clientes: { nombre: string } | { nombre: string }[] | null;
+  }>).map((l) => {
+    const relacionadas = (reacciones ?? []).filter(
+      (r) =>
+        r.autor_id === l.cliente_id &&
+        r.tipo_logro === l.tipo_logro &&
+        r.clave_logro === l.clave_logro,
+    );
+    const nombreRaw = Array.isArray(l.clientes) ? l.clientes[0] : l.clientes;
+    return {
+      id: l.id,
+      clienteId: l.cliente_id,
+      clienteNombre: nombreRaw?.nombre ?? "Un compañero",
+      tipoLogro: l.tipo_logro,
+      claveLogro: l.clave_logro,
+      titulo: l.titulo,
+      creadoEn: l.creado_en,
+      totalReacciones: relacionadas.length,
+      miReaccion: relacionadas.some((r) => r.reactor_id === clienteId),
+    };
+  });
 }
 
 /** Cuenta de reacciones de un logro + si el cliente logueado ya reaccionó. */

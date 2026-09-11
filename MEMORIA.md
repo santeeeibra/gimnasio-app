@@ -44,3 +44,5 @@
 - Drop Sets: migración 0059 (registro_progreso.detalles_tecnica jsonb + serie_index), src/lib/progreso/tipos.ts (DropPaso, calcularPasosSugeridos), src/lib/rutina/dropset-actions.ts (guardarDropSetCliente, obtenerUltimoDropSetCliente). UI a cargo de Gemini en rutina-editor.tsx.
 - UI de Drop Sets: Creado PanelDropSet táctil con cálculo automático de reducciones del 20-25%, botones + / - y confirmación en 1 toque integrado en el tracker de series de rutina-editor.tsx con feedback háptico y persistencia local/remota.
 - Soporte multi-usuario staff (rol 'staff', migración 0062, requireStaffODueno, panel reducido, alta/desactivación en /panel/ajustes y protección de bajas).
+- Marca de agua sutil SysGym (Hecho con SysGym • Gestioná tu progreso así • sysgym.app) en cartel de logro compartido por el socio, con Web Share nativo y branding de gimnasio intacto.
+- feed-logros.tsx estilizado con Apple HIG, variantes record/racha (ámbar/trofeo y esmeralda/llama), PulpoCard y hápticoSeleccion.

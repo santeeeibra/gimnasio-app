@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireProfile, requireDueno } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { evaluarRecordCliente } from "@/lib/logros/actions";
+import { evaluarRecordCliente, registrarLogroEnFeed } from "@/lib/logros/actions";
 import type { ResultadoRecord } from "@/lib/logros/tipos";
 
 export type ProgresoState = {
@@ -75,6 +75,19 @@ export async function guardarProgresoCliente(
   let record: ResultadoRecord | undefined;
   try {
     record = await evaluarRecordCliente(ejercicioId, pesoRaw);
+    if (record.esRecord) {
+      const { data: ejercicio } = await supabase
+        .from("ejercicios")
+        .select("nombre")
+        .eq("id", ejercicioId)
+        .maybeSingle();
+      const nombreEjercicio = (ejercicio as { nombre: string } | null)?.nombre ?? "un ejercicio";
+      await registrarLogroEnFeed(
+        "record",
+        `${ejercicioId}:${pesoRaw}`,
+        `Nuevo récord en ${nombreEjercicio}: ${pesoRaw}kg`,
+      );
+    }
   } catch {
     record = undefined;
   }

@@ -21,6 +21,12 @@ export type OpcionesImagenLogro = {
   colores?: ColoresImagen;
   ancho?: number;
   alto?: number;
+  /**
+   * Marca de agua sutil de SysGym ("Hecho con SysGym • Gestioná tu progreso así").
+   * Se incluye sólo cuando el socio comparte/exporta fuera de la app (default: true).
+   * En el panel del dueño se desactiva (false).
+   */
+  incluirMarcaSysGym?: boolean;
 };
 
 export type OpcionesImagenDiaCompletado = {
@@ -31,6 +37,11 @@ export type OpcionesImagenDiaCompletado = {
   gimnasioNombre?: string;
   logoUrl?: string | null;
   colores?: ColoresImagen;
+  /**
+   * Marca de agua sutil de SysGym ("Hecho con SysGym • Gestioná tu progreso así").
+   * Se incluye sólo cuando el socio comparte/exporta fuera de la app (default: true).
+   */
+  incluirMarcaSysGym?: boolean;
 };
 
 function cargarImagen(url: string): Promise<HTMLImageElement | null> {
@@ -434,20 +445,24 @@ export async function generarImagenDiaCompletado(
   ctx.textBaseline = "middle";
 
   ctx.fillStyle = "#ffffff";
-  ctx.font = "900 40px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif";
-  ctx.fillText("SYSGYM", centroX, footerY + 155);
+  ctx.font = "900 36px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif";
+  ctx.fillText("SYSGYM", centroX, footerY + 148);
+
+  ctx.fillStyle = volt;
+  ctx.font = "800 16px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif";
+  ctx.fillText("• HECHO CON SYSGYM •", centroX, footerY + 180);
 
   ctx.fillStyle = "#a1a1aa";
   ctx.font = "600 20px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif";
-  ctx.fillText("Sistema de Entrenamiento Inteligente", centroX, footerY + 195);
+  ctx.fillText("Gestioná tu progreso así", centroX, footerY + 212);
 
   // Pastilla de llamado a la acción con URL
-  const pillW = 460;
-  const pillH = 50;
-  const pillY = footerY + 225;
+  const pillW = 420;
+  const pillH = 48;
+  const pillY = footerY + 236;
   ctx.fillStyle = `${volt}20`;
   ctx.beginPath();
-  ctx.roundRect((W - pillW) / 2, pillY, pillW, pillH, 25);
+  ctx.roundRect((W - pillW) / 2, pillY, pillW, pillH, 24);
   ctx.fill();
 
   ctx.strokeStyle = volt;
@@ -455,8 +470,8 @@ export async function generarImagenDiaCompletado(
   ctx.stroke();
 
   ctx.fillStyle = volt;
-  ctx.font = "800 20px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif";
-  ctx.fillText("🔥 ENTRENÁ GRATIS EN SYSGYM.APP", centroX, pillY + pillH / 2 + 1);
+  ctx.font = "800 19px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, monospace";
+  ctx.fillText("SYSGYM.APP", centroX, pillY + pillH / 2 + 1);
 
   // Footer branding legal sutil
   if (opts.gimnasioNombre && opts.gimnasioNombre !== "SysGym") {
@@ -513,7 +528,12 @@ export async function generarImagenLogro(
   ctx.fillStyle = glow;
   ctx.fillRect(0, 200, W, 1200);
 
-  // Header HUD
+  // Header HUD con marca del gimnasio
+  const gymNombre =
+    opts.gimnasioNombre && opts.gimnasioNombre.trim().length > 0
+      ? opts.gimnasioNombre.trim()
+      : "SYSGYM";
+
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
   ctx.fillStyle = volt;
@@ -523,7 +543,7 @@ export async function generarImagenLogro(
 
   ctx.fillStyle = "#ffffff";
   ctx.font = "800 24px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif";
-  ctx.fillText("SYSGYM // ATHLETIC PR", 115, 130);
+  ctx.fillText(`${gymNombre.toUpperCase()} // ATHLETIC PR`, 115, 130);
 
   ctx.textAlign = "right";
   ctx.fillStyle = "#71717a";
@@ -540,7 +560,7 @@ export async function generarImagenLogro(
 
   // Badge PR
   const badgeY = 360;
-  const badgeW = 320;
+  const badgeW = 340;
   const badgeH = 54;
   ctx.fillStyle = `${volt}20`;
   ctx.beginPath();
@@ -569,43 +589,124 @@ export async function generarImagenLogro(
     envolverTexto(ctx, opts.subtitulo, W / 2, H / 2 + 130, W - 200, 48);
   }
 
-  // Footer con marca y llamada a la acción
-  const footerY = H - 360;
-  const cardW = W - 180;
-  const footerH = 260;
+  // Mención de sede si es gimnasio externo
+  if (gymNombre !== "SYSGYM") {
+    ctx.fillStyle = "#71717a";
+    ctx.font = "700 20px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif";
+    ctx.fillText(`ENTRENANDO EN ${gymNombre.toUpperCase()}`, W / 2, H / 2 + 210);
+  }
 
-  ctx.fillStyle = "rgba(12, 14, 20, 0.95)";
-  ctx.beginPath();
-  ctx.roundRect((W - cardW) / 2, footerY, cardW, footerH, 28);
-  ctx.fill();
+  // Footer sutil de SysGym: sólo cuando el socio comparte/exporta fuera de la app
+  const incluirSysGym = opts.incluirMarcaSysGym !== false;
+  if (incluirSysGym) {
+    const footerY = H - 290;
+    const cardW = W - 180;
+    const footerH = 145;
+    const cardX = (W - cardW) / 2;
 
-  ctx.strokeStyle = `${volt}40`;
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
+    // Fondo oscuro translúcido estilo Liquid Glass
+    const gradCard = ctx.createLinearGradient(0, footerY, 0, footerY + footerH);
+    gradCard.addColorStop(0, "rgba(16, 19, 28, 0.92)");
+    gradCard.addColorStop(1, "rgba(8, 10, 15, 0.96)");
+    ctx.fillStyle = gradCard;
+    ctx.beginPath();
+    ctx.roundRect(cardX, footerY, cardW, footerH, 24);
+    ctx.fill();
 
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "900 38px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif";
-  ctx.fillText("SYSGYM", W / 2, footerY + 75);
+    // Borde sutil Volt
+    ctx.strokeStyle = "rgba(16, 231, 160, 0.35)";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
 
-  ctx.fillStyle = "#a1a1aa";
-  ctx.font = "600 19px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif";
-  ctx.fillText("Superá tus marcas con ciencia y tracking", W / 2, footerY + 120);
+    // Crucetas técnicas decorativas
+    dibujarCruceta(ctx, cardX + 16, footerY + 16, 5, "rgba(16, 231, 160, 0.4)");
+    dibujarCruceta(ctx, cardX + cardW - 16, footerY + footerH - 16, 5, "rgba(16, 231, 160, 0.4)");
 
-  const pillW = 440;
-  const pillH = 50;
-  const pillY = footerY + 160;
-  ctx.fillStyle = `${volt}20`;
-  ctx.beginPath();
-  ctx.roundRect((W - pillW) / 2, pillY, pillW, pillH, 25);
-  ctx.fill();
+    // Squircle logo SysGym
+    const logoSize = 64;
+    const logoX = cardX + 36;
+    const logoY = footerY + (footerH - logoSize) / 2;
 
-  ctx.strokeStyle = volt;
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
+    const gradLogo = ctx.createLinearGradient(logoX, logoY, logoX + logoSize, logoY + logoSize);
+    gradLogo.addColorStop(0, volt);
+    gradLogo.addColorStop(1, "#00c282");
+    ctx.fillStyle = gradLogo;
+    ctx.beginPath();
+    ctx.roundRect(logoX, logoY, logoSize, logoSize, 16);
+    ctx.fill();
 
-  ctx.fillStyle = volt;
-  ctx.font = "800 19px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif";
-  ctx.fillText("👉 PROBALA GRATIS EN SYSGYM.APP", W / 2, pillY + pillH / 2 + 1);
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Rayo Volt atlético en el logo
+    ctx.fillStyle = "#050608";
+    ctx.beginPath();
+    const lx = logoX + logoSize / 2;
+    const ly = logoY + logoSize / 2;
+    ctx.moveTo(lx + 2, ly - 17);
+    ctx.lineTo(lx - 12, ly + 2);
+    ctx.lineTo(lx - 1, ly + 2);
+    ctx.lineTo(lx - 4, ly + 17);
+    ctx.lineTo(lx + 12, ly - 2);
+    ctx.lineTo(lx + 1, ly - 2);
+    ctx.closePath();
+    ctx.fill();
+
+    // Textos de marca de agua
+    const textStartX = logoX + logoSize + 24;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
+
+    // Fila 1: SYSGYM • HECHO CON SYSGYM
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "900 26px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif";
+    ctx.fillText("SYSGYM", textStartX, footerY + 58);
+
+    const wSysGym = ctx.measureText("SYSGYM").width;
+    ctx.fillStyle = volt;
+    ctx.font = "800 16px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif";
+    ctx.fillText("• HECHO CON SYSGYM", textStartX + wSysGym + 10, footerY + 57);
+
+    // Fila 2: Texto gancho hacia afuera
+    ctx.fillStyle = "#a1a1aa";
+    ctx.font = "600 20px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif";
+    ctx.fillText("Gestioná tu progreso así", textStartX, footerY + 100);
+
+    // Pastilla CTA con link sysgym.app
+    const pillText = "sysgym.app";
+    ctx.font = "800 19px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, monospace";
+    const pillTextW = ctx.measureText(pillText).width;
+    const pillW = pillTextW + 36;
+    const pillH = 44;
+    const pillX = cardX + cardW - pillW - 28;
+    const pillY = footerY + (footerH - pillH) / 2;
+
+    ctx.fillStyle = `${volt}20`;
+    ctx.beginPath();
+    ctx.roundRect(pillX, pillY, pillW, pillH, 22);
+    ctx.fill();
+
+    ctx.strokeStyle = `${volt}70`;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = volt;
+    ctx.fillText(pillText, pillX + pillW / 2, pillY + pillH / 2);
+  }
+
+  // Footer branding sutil al pie
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "#52525b";
+  ctx.font = "600 17px -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif";
+  if (gymNombre !== "SYSGYM") {
+    ctx.fillText(`Sede de entrenamiento: ${gymNombre}`, W / 2, H - 45);
+  } else {
+    ctx.fillText("SYSGYM • SCIENCE-BASED WORKOUT ARCHITECTURE", W / 2, H - 45);
+  }
 
   return canvas.toDataURL("image/png");
 }

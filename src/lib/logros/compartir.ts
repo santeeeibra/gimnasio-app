@@ -25,11 +25,11 @@ export function mensajeWhatsAppRecord(
   pesoKg: number,
   ejercicio: string,
 ): string {
-  return `¡Nuevo récord en ${gimnasio}! 💪 ${pesoKg} kg en ${ejercicio}. Te adjunto la imagen 👇`;
+  return `¡Nuevo récord en ${gimnasio}! 💪 ${pesoKg} kg en ${ejercicio}. Gestioná tu progreso así en sysgym.app 🔥 Mirá la tarjeta 👇`;
 }
 
 export function mensajeWhatsAppRacha(gimnasio: string, dias: number): string {
-  return `¡${dias} días seguidos entrenando en ${gimnasio}! 🔥 Te adjunto la imagen 👇`;
+  return `¡${dias} días seguidos entrenando en ${gimnasio}! 🔥 Gestioná tu progreso así en sysgym.app 💪 Mirá la tarjeta 👇`;
 }
 
 // ── Descarga de la imagen generada ──────────────────────────────────────────

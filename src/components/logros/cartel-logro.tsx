@@ -43,6 +43,10 @@ export type CartelLogroProps = {
   /** Datos para el texto de WhatsApp según el tipo. */
   whatsapp: { pesoKg?: number; ejercicio?: string; dias?: number };
   onCerrar?: () => void;
+  /** Si es llamado desde el panel del dueño, no se agrega marca externa de SysGym */
+  esDueno?: boolean;
+  /** Control explícito sobre la marca de agua SysGym (default: true para socios) */
+  incluirMarcaSysGym?: boolean;
 };
 
 export function CartelLogro(props: CartelLogroProps) {
@@ -72,6 +76,7 @@ export function CartelLogro(props: CartelLogroProps) {
         gimnasioNombre: props.gimnasioNombre,
         logoUrl: props.logoUrl ?? null,
         colores: props.colores,
+        incluirMarcaSysGym: props.incluirMarcaSysGym ?? !props.esDueno,
       });
       setImagen(dataUrl);
       return dataUrl;
@@ -93,7 +98,7 @@ export function CartelLogro(props: CartelLogroProps) {
   async function compartirWhatsApp() {
     iniciarAudioHaptico();
     hapticoImpactoMedio();
-    if (!imagen) await generar();
+    const dataUrl = imagen ?? (await generar());
     const msg =
       props.tipo === "record"
         ? mensajeWhatsAppRecord(
@@ -102,6 +107,26 @@ export function CartelLogro(props: CartelLogroProps) {
             props.whatsapp.ejercicio ?? "",
           )
         : mensajeWhatsAppRacha(props.gimnasioNombre, props.whatsapp.dias ?? 0);
+
+    // Intentar Web Share API con archivo nativo en móviles (Instagram Stories / WhatsApp / etc.)
+    if (dataUrl && typeof navigator !== "undefined" && navigator.canShare) {
+      try {
+        const res = await fetch(dataUrl);
+        const blob = await res.blob();
+        const file = new File([blob], `logro-${props.tipo}.png`, { type: "image/png" });
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: `¡Logro en ${props.gimnasioNombre}! 🔥`,
+            text: msg,
+          });
+          return;
+        }
+      } catch {
+        // Fallback a wa.me link si el usuario cancela o el navegador falla
+      }
+    }
+
     window.open(linkWhatsAppLogro(msg), "_blank", "noopener");
   }
 
@@ -156,6 +181,13 @@ export function CartelLogro(props: CartelLogroProps) {
             }
           />
         </div>
+
+        {/* Sede del gimnasio */}
+        {props.gimnasioNombre && props.gimnasioNombre !== "SysGym" && (
+          <p className="text-xs font-bold tracking-widest uppercase text-zinc-400 mb-1">
+            {props.gimnasioNombre}
+          </p>
+        )}
 
         {/* Título y Subtítulo */}
         <h2 className="text-2xl font-black font-display tracking-tight text-white mb-1">
