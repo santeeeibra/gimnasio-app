@@ -446,22 +446,27 @@ export function DialVerticalProgreso({
         </button>
       </div>
 
-      {/* Botón guardar rápido de 1 tap */}
+      {/* Botón guardar rápido de 1 tap (Feedback optimista instantáneo 0ms) */}
       <button
         type="submit"
-        disabled={pending}
-        onClick={() => iniciarAudioHaptico()}
+        disabled={pending && !feedbackOk}
+        onClick={() => {
+          iniciarAudioHaptico();
+          hapticoExito();
+          setFeedbackOk(true);
+          setTimeout(() => setFeedbackOk(false), 2000);
+        }}
         aria-label="Guardar peso y reps de este ejercicio"
         className={`w-full h-6 rounded-[6px] text-[10px] font-bold tracking-tight transition-all duration-150 flex items-center justify-center gap-1 active:scale-95 disabled:opacity-50 my-0.5 ${
           feedbackOk
-            ? "bg-ok text-ok-ink border border-ok"
+            ? "bg-ok text-ok-ink border border-ok shadow-sm"
             : "bg-[#ff9f0a]/20 hover:bg-[#ff9f0a]/30 border border-[#ff9f0a]/40 text-[#ff9f0a]"
         }`}
       >
-        {pending ? (
-          <Spinner className="size-3 text-[#ff9f0a]" />
-        ) : feedbackOk ? (
+        {feedbackOk ? (
           <span>✓ Listo</span>
+        ) : pending ? (
+          <Spinner className="size-3 text-[#ff9f0a]" />
         ) : (
           <span>Guardar</span>
         )}

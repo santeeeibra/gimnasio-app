@@ -48,6 +48,22 @@ export type ReposoCheckin = {
   intensidad: ReposoIntensidad;
 };
 
+/**
+ * Fondo visual de la pantalla de check-in (kiosko). Se anida en
+ * `gimnasios.tema` (jsonb), mismo patrón que `reposoCheckin`. `imagenUrl`
+ * apunta a un preset de SysGym (`/checkin-fondos/*.webp` en `public/`) o a
+ * una imagen propia subida por el dueño (bucket `checkin-fondos`).
+ */
+export type CheckinFondoOrigen = "preset" | "propio";
+
+export type CheckinFondo = {
+  activo: boolean;
+  imagenUrl: string | null;
+  origen: CheckinFondoOrigen | null;
+  /** Oscurecido sobre la imagen para que el DNI siga siendo legible (0–90). */
+  oscurecido: number;
+};
+
 export type Tema = {
   paper: string; // fondo de la app        -> --paper
   paper2: string; // tarjetas / barras     -> --paper-2
@@ -73,6 +89,8 @@ export type Tema = {
 
   // Pantalla de reposo del modo check-in (vive en el mismo jsonb).
   reposoCheckin: ReposoCheckin;
+  // Fondo de la pantalla de check-in con el DNI (vive en el mismo jsonb).
+  checkinFondo: CheckinFondo;
 };
 
 export const DEFAULT_REPOSO_CHECKIN: ReposoCheckin = {
@@ -82,6 +100,13 @@ export const DEFAULT_REPOSO_CHECKIN: ReposoCheckin = {
   mostrarReloj: true,
   mostrarLogo: true,
   intensidad: "normal",
+};
+
+export const DEFAULT_CHECKIN_FONDO: CheckinFondo = {
+  activo: false,
+  imagenUrl: null,
+  origen: null,
+  oscurecido: 55,
 };
 
 export const DEFAULT_TEMA: Tema = {
@@ -106,6 +131,7 @@ export const DEFAULT_TEMA: Tema = {
   navegacionDesktop: "sidebar",
   densidad: "comfortable",
   reposoCheckin: DEFAULT_REPOSO_CHECKIN,
+  checkinFondo: DEFAULT_CHECKIN_FONDO,
 };
 
 const STACK = "ui-sans-serif, system-ui, sans-serif";
@@ -214,6 +240,7 @@ export const TEMA_OBSIDIAN: Tema = {
   navegacionDesktop: "sidebar",
   densidad: "comfortable",
   reposoCheckin: DEFAULT_REPOSO_CHECKIN,
+  checkinFondo: DEFAULT_CHECKIN_FONDO,
 };
 
 export const TEMA_TITANIUM: Tema = {
@@ -233,6 +260,7 @@ export const TEMA_TITANIUM: Tema = {
   navegacionDesktop: "sidebar",
   densidad: "comfortable",
   reposoCheckin: DEFAULT_REPOSO_CHECKIN,
+  checkinFondo: DEFAULT_CHECKIN_FONDO,
 };
 
 export const TEMA_CRIMSON: Tema = {
@@ -252,6 +280,7 @@ export const TEMA_CRIMSON: Tema = {
   navegacionDesktop: "sidebar",
   densidad: "compact",
   reposoCheckin: DEFAULT_REPOSO_CHECKIN,
+  checkinFondo: DEFAULT_CHECKIN_FONDO,
 };
 
 export type PresetTema = {
@@ -584,6 +613,23 @@ export function parseTema(raw: unknown): Tema {
       : DEFAULT_REPOSO_CHECKIN.intensidad,
   };
 
+  const cf = (t.checkinFondo ?? {}) as Record<string, unknown>;
+  const checkinFondo: CheckinFondo = {
+    activo:
+      typeof cf.activo === "boolean" ? cf.activo : DEFAULT_CHECKIN_FONDO.activo,
+    imagenUrl:
+      typeof cf.imagenUrl === "string" && cf.imagenUrl.trim()
+        ? cf.imagenUrl
+        : DEFAULT_CHECKIN_FONDO.imagenUrl,
+    origen: ["preset", "propio"].includes(cf.origen as string)
+      ? (cf.origen as CheckinFondoOrigen)
+      : DEFAULT_CHECKIN_FONDO.origen,
+    oscurecido:
+      typeof cf.oscurecido === "number" && cf.oscurecido >= 0 && cf.oscurecido <= 90
+        ? Math.round(cf.oscurecido)
+        : DEFAULT_CHECKIN_FONDO.oscurecido,
+  };
+
   return {
     paper: hex(t.paper, DEFAULT_TEMA.paper),
     paper2: hex(t.paper2, DEFAULT_TEMA.paper2),
@@ -601,6 +647,7 @@ export function parseTema(raw: unknown): Tema {
     navegacionDesktop,
     densidad,
     reposoCheckin,
+    checkinFondo,
   };
 }
 

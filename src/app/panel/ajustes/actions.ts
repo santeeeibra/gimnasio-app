@@ -11,6 +11,8 @@ import {
   FUENTES,
   isHex,
   parseTema,
+  type CheckinFondo,
+  type CheckinFondoOrigen,
   type EstiloVisual,
   type FuenteKey,
   type ReposoCheckin,
@@ -317,6 +319,140 @@ export async function actualizarReposoCheckin(
   revalidatePath("/panel/ajustes");
   revalidatePath("/checkin", "layout");
   return { ok: "Pantalla de reposo actualizada" };
+}
+
+/**
+ * Fija la imagen de fondo de la pantalla de check-in (preset de SysGym o
+ * subida propia del dueño, ya comprimida y ubicada en el bucket
+ * `checkin-fondos` antes de llamar esto). Activa el fondo automáticamente.
+ */
+export async function guardarCheckinFondoImagen(
+  gimnasioId: string,
+  imagenUrl: string,
+  origen: CheckinFondoOrigen,
+): Promise<AjustesState> {
+  const dueno = await requireDueno();
+  if (gimnasioId !== dueno.gimnasio_id) {
+    return { error: "No podés modificar este gimnasio" };
+  }
+  if (!/^\/|^https?:\/\//.test(imagenUrl)) {
+    return { error: "URL de imagen inválida" };
+  }
+
+  const supabase = await createClient();
+  const planInfo = await verificarPlanGimnasio(supabase, dueno.gimnasio_id);
+  if (!planInfo.permiteCheckin) {
+    return { error: "El fondo de check-in es una función exclusiva del Plan Elite." };
+  }
+
+  const { data: prevRow } = await supabase
+    .from("gimnasios")
+    .select("tema")
+    .eq("id", gimnasioId)
+    .single();
+
+  const tema = parseTema(prevRow?.tema);
+  const checkinFondo: CheckinFondo = {
+    ...tema.checkinFondo,
+    activo: true,
+    imagenUrl,
+    origen,
+  };
+  tema.checkinFondo = checkinFondo;
+
+  const { error } = await supabase
+    .from("gimnasios")
+    .update({ tema })
+    .eq("id", gimnasioId);
+
+  if (error) {
+    console.error("[guardarCheckinFondoImagen]", error);
+    return { error: "No se pudo guardar el fondo de check-in" };
+  }
+
+  revalidatePath("/panel/ajustes");
+  revalidatePath("/checkin", "layout");
+  return { ok: "Fondo de check-in actualizado" };
+}
+
+/** Quita la imagen de fondo (vuelve a la pantalla de check-in lisa). */
+export async function quitarCheckinFondoImagen(
+  gimnasioId: string,
+): Promise<AjustesState> {
+  const dueno = await requireDueno();
+  if (gimnasioId !== dueno.gimnasio_id) {
+    return { error: "No podés modificar este gimnasio" };
+  }
+
+  const supabase = await createClient();
+  const { data: prevRow } = await supabase
+    .from("gimnasios")
+    .select("tema")
+    .eq("id", gimnasioId)
+    .single();
+
+  const tema = parseTema(prevRow?.tema);
+  tema.checkinFondo = { activo: false, imagenUrl: null, origen: null, oscurecido: tema.checkinFondo.oscurecido };
+
+  const { error } = await supabase
+    .from("gimnasios")
+    .update({ tema })
+    .eq("id", gimnasioId);
+
+  if (error) {
+    console.error("[quitarCheckinFondoImagen]", error);
+    return { error: "No se pudo quitar el fondo de check-in" };
+  }
+
+  revalidatePath("/panel/ajustes");
+  revalidatePath("/checkin", "layout");
+  return { ok: "Fondo de check-in quitado" };
+}
+
+/** Toggle de activo/desactivo + intensidad del oscurecido sobre la imagen. */
+export async function actualizarCheckinFondoAjustes(
+  _prev: AjustesState,
+  formData: FormData,
+): Promise<AjustesState> {
+  const dueno = await requireDueno();
+  const gimnasioId = String(formData.get("gimnasio_id") ?? "");
+
+  if (gimnasioId !== dueno.gimnasio_id) {
+    return { error: "No podés modificar este gimnasio" };
+  }
+
+  const oscurecido = Number(formData.get("oscurecido"));
+  if (!Number.isFinite(oscurecido) || oscurecido < 0 || oscurecido > 90) {
+    return { error: "El oscurecido va entre 0 y 90." };
+  }
+
+  const supabase = await createClient();
+  const { data: prevRow } = await supabase
+    .from("gimnasios")
+    .select("tema")
+    .eq("id", gimnasioId)
+    .single();
+
+  const tema = parseTema(prevRow?.tema);
+  tema.checkinFondo = {
+    ...tema.checkinFondo,
+    activo: formData.get("activo") === "on",
+    oscurecido: Math.round(oscurecido),
+  };
+
+  const { error } = await supabase
+    .from("gimnasios")
+    .update({ tema })
+    .eq("id", gimnasioId);
+
+  if (error) {
+    console.error("[actualizarCheckinFondoAjustes]", error);
+    return { error: "No se pudo guardar el fondo de check-in" };
+  }
+
+  revalidatePath("/panel/ajustes");
+  revalidatePath("/checkin", "layout");
+  return { ok: "Fondo de check-in actualizado" };
 }
 
 export async function actualizarTema(

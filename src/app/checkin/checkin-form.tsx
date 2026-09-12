@@ -91,7 +91,7 @@ export function CheckinForm() {
   const tono = tonoKey ? TONO[tonoKey] : null;
 
   return (
-    <div className="w-full max-w-md">
+    <div className="w-full max-w-md rounded-[20px] border border-rule/60 bg-paper-2/90 p-6 shadow-lg backdrop-blur-xl sm:p-8">
       <h1 className="font-display text-3xl leading-tight">Marcá tu ingreso</h1>
       <p className="mt-1 text-[15px] text-ink-soft">
         Escribí tu DNI y tocá el botón.

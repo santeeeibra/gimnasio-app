@@ -9,6 +9,7 @@ import { diasRestantes } from "@/lib/cuota";
 import { AjustesForm } from "./ajustes-form";
 import { AvisoMorosidadForm } from "./aviso-morosidad-form";
 import { ReposoCheckinForm } from "./reposo-checkin-form";
+import { CheckinFondoUploader } from "./checkin-fondo-uploader";
 import { DatosPagoForm } from "./datos-pago-form";
 import { AfipForm } from "./afip-form";
 import { EmailRecuperacionForm } from "./email-recuperacion-form";
@@ -290,6 +291,32 @@ export default async function AjustesPage({
               <ReposoCheckinForm
                 gimnasioId={gym.id}
                 reposo={parseTema(gym.tema).reposoCheckin}
+              />
+            </BloqueoEliteGate>
+          </AjustesSeccionModal>
+        ) : null}
+
+        {/* FONDO DE LA PANTALLA DE CHECK-IN */}
+        {gym ? (
+          <AjustesSeccionModal
+            titulo="Fondo del Check-in"
+            subtitulo="Imagen de fondo detrás del DNI en la tablet de mostrador."
+            badge={<BadgeElite />}
+            icon={<Smartphone className="size-4" />}
+          >
+            <BloqueoEliteGate
+              bloqueado={!planInfo.permiteCheckin}
+              titulo="Fondo Personalizado de Terminal"
+              descripcion="Vestí la pantalla de check-in con una imagen propia o precargada por SysGym, además del logo de tu gimnasio."
+              beneficios={[
+                "Galería de fondos precargados",
+                "Subida de imagen propia",
+                "Legibilidad garantizada sobre el DNI",
+              ]}
+            >
+              <CheckinFondoUploader
+                gimnasioId={gym.id}
+                fondo={parseTema(gym.tema).checkinFondo}
               />
             </BloqueoEliteGate>
           </AjustesSeccionModal>
