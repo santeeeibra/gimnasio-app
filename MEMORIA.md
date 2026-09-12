@@ -48,5 +48,5 @@
 - feed-logros.tsx estilizado con Apple HIG, variantes record/racha (ámbar/trofeo y esmeralda/llama), PulpoCard y hápticoSeleccion.
 - Celebración en vivo de récord personal en /mi/rutina: componente ConfetiCelebracion nativo en Canvas 60fps/120fps, aura lumínica, fanfarria inmediata y apertura garantizada de CartelLogro.
 
-- 2026-09-12: feature/asistente-ia-n8n — migracion 0064, endpoint /api/n8n/notificar, card Asistente IA en /panel/ajustes. Falta: Santeee levanta VM n8n, carga workflows, setea N8N_SYSGYM_SECRET y ANTHROPIC_API_KEY.
+- 2026-09-12: feature/asistente-ia-n8n — migración 0064, card Asistente IA en /panel/ajustes, endpoint /api/cron/asistente-ia y workflow diario en GitHub Actions (0 costo, sin Oracle ni tarjetas).
 - Implementado Módulo de Control de Caja Diaria, Turnos y Arqueo Ciego (Plan Elite): migración 0065, gating en plan-gate.ts, actions en /panel/caja y vinculación automática con cobros manuales de cuotas.

@@ -2,6 +2,8 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { PLAN_COBRO_AUTOMATICO } from "@/lib/pagos/cobro-socio";
+import { enviarPush } from "@/lib/push/enviar";
+import { notificarSuperadmin } from "@/lib/admin/notificar";
 
 // SPEC_ASISTENTE_IA_N8N.md — lógica de negocio del asistente con IA. n8n solo
 // manda datos crudos acá adentro; el prompt vive en el código, nunca en el
@@ -221,4 +223,113 @@ ${JSON.stringify(contexto)}`;
   const texto = data.content?.find((b) => b.type === "text")?.text?.trim();
   if (!texto) throw new Error("Respuesta vacía de Anthropic");
   return texto;
+}
+
+export function tituloPorTipo(tipo: TipoAvisoIa): string {
+  switch (tipo) {
+    case "riesgo_abandono":
+      return "¡Te extrañamos!";
+    case "cumpleanos":
+      return "🎉 Feliz cumpleaños";
+    case "resumen_mensual":
+      return "Resumen del mes";
+  }
+}
+
+export type ResultadoEnvioAvisoIa =
+  | { ok: true; texto: string; destinatarioId: string }
+  | { ok: false; motivo: string; code: number };
+
+export async function procesarEnvioAvisoIa(
+  admin: SupabaseClient,
+  gimnasioId: string,
+  clienteId: string | null,
+  tipoAviso: TipoAvisoIa,
+  promptContexto: Record<string, unknown>,
+): Promise<ResultadoEnvioAvisoIa> {
+  const gate = await verificarGateAsistenteIa(admin, gimnasioId);
+  if (!gate.ok) {
+    return { ok: false, motivo: gate.motivo, code: 403 };
+  }
+
+  const techo = await verificarYResetearTecho(admin, gimnasioId);
+  if (!techo.ok) {
+    await notificarSuperadmin(
+      "Gimnasio llegó al techo de asistente IA",
+      `gimnasioId=${gimnasioId} tipo=${tipoAviso} techo=${TECHO_LLAMADAS_IA_MES}/mes`,
+    );
+    return { ok: false, motivo: techo.motivo, code: 429 };
+  }
+
+  const yaEnviado = await yaSeEnvioRecientemente(admin, gimnasioId, clienteId, tipoAviso);
+  if (yaEnviado) {
+    return {
+      ok: false,
+      motivo: "Ya se envió un aviso de este tipo recientemente (dedupe)",
+      code: 409,
+    };
+  }
+
+  const texto = await redactarAvisoIa(tipoAviso, promptContexto);
+
+  let destinatarioProfileId: string | null = null;
+  if (clienteId) {
+    const { data: cliente } = await admin
+      .from("clientes")
+      .select("profile_id, gimnasio_id")
+      .eq("id", clienteId)
+      .maybeSingle();
+    if (!cliente || cliente.gimnasio_id !== gimnasioId) {
+      return { ok: false, motivo: "Cliente inválido para este gimnasio", code: 400 };
+    }
+    destinatarioProfileId = cliente.profile_id as string;
+  } else {
+    const { data: dueno } = await admin
+      .from("profiles")
+      .select("id")
+      .eq("gimnasio_id", gimnasioId)
+      .eq("rol", "dueno")
+      .maybeSingle();
+    destinatarioProfileId = (dueno?.id as string) ?? null;
+  }
+
+  if (!destinatarioProfileId) {
+    return { ok: false, motivo: "No se encontró destinatario", code: 404 };
+  }
+
+  await admin.from("avisos_ia").insert({
+    gimnasio_id: gimnasioId,
+    cliente_id: clienteId,
+    tipo: tipoAviso,
+    contenido: texto,
+  });
+
+  const { data: msg } = await admin
+    .from("mensajes")
+    .insert({
+      gimnasio_id: gimnasioId,
+      remitente_id: destinatarioProfileId,
+      cuerpo: texto,
+      es_masivo: false,
+      respondible: false,
+    })
+    .select("id")
+    .single();
+
+  if (msg) {
+    await admin
+      .from("mensaje_destinatarios")
+      .insert({ mensaje_id: msg.id, profile_id: destinatarioProfileId });
+  }
+
+  await enviarPush([destinatarioProfileId], {
+    title: tituloPorTipo(tipoAviso),
+    body: texto,
+    url: clienteId ? "/mi/buzon" : "/panel/buzon",
+    tag: `asistente-ia-${tipoAviso}`,
+  });
+
+  await incrementarContadorIa(admin, gimnasioId);
+
+  return { ok: true, texto, destinatarioId: destinatarioProfileId };
 }

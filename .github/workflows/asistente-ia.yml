@@ -1,0 +1,30 @@
+name: Asistente IA SysGym (Diario)
+
+on:
+  schedule:
+    # 13:00 UTC = 10:00 AM Argentina (UTC-3) todos los días
+    - cron: '0 13 * * *'
+  workflow_dispatch: # Permite disparar manualmente con 1 clic desde GitHub
+
+jobs:
+  ejecutar-asistente:
+    name: Procesar Avisos de IA
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ejecutar Cron Asistente IA en Producción
+        run: |
+          echo "Disparando Asistente IA SysGym..."
+          RESPUESTA=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -X POST "https://gimnasio-app-rose.vercel.app/api/cron/asistente-ia" \
+            -H "x-n8n-secret: ${{ secrets.N8N_SYSGYM_SECRET || '949e934f9446ada159395f1381b093d897bdc82d7b510f11afa1c08d908ae4e6' }}" \
+            -H "Content-Type: application/json")
+          
+          BODY=$(echo "$RESPUESTA" | sed -e '$d')
+          STATUS=$(echo "$RESPUESTA" | tail -n1 | cut -d':' -f2)
+          
+          echo "Respuesta del servidor (HTTP $STATUS):"
+          echo "$BODY"
+          
+          if [ "$STATUS" -ne 200 ]; then
+            echo "Error: El cron retorno HTTP $STATUS"
+            exit 1
+          fi
