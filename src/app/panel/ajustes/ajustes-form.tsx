@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useMemo, useState } from "react";
 import { actualizarTema, type AjustesState } from "./actions";
 import { Button, Toggle, linkClasses } from "@/components/ui";
+import { useHapticos } from "@/lib/ui/hapticos";
 import {
   CAMPOS_COLOR,
   DEFAULT_TEMA,
@@ -89,19 +90,56 @@ export function AjustesForm({
   const resultado = chequearContraste(draft);
   const bloqueos = chequearBloqueos(draft);
 
+  const hapticos = useHapticos();
+
   // Reset del checkbox cuando cambia el draft
   useEffect(() => {
     setConfirmarBajoContraste(false);
   }, [draft]);
+
+  useEffect(() => {
+    if (state.ok) {
+      hapticos.exito();
+    } else if (state.error) {
+      hapticos.error();
+    }
+  }, [state.ok, state.error, hapticos]);
 
   return (
     <div className="min-w-0 space-y-6">
       <form action={formAction} className="min-w-0 space-y-6">
         <input type="hidden" name="gimnasio_id" value={gimnasioId} />
 
-        {/* Vista previa compacta, sticky arriba mientras se editan los controles */}
-        <div className="sticky top-0 z-10 -mt-1 rounded-[12px] border border-rule bg-paper-2 p-3">
-          <MiniPreview tema={draft} />
+        {/* Vista previa compacta + Guardar rápido, sticky arriba sin scroll */}
+        <div className="sticky top-0 z-10 -mt-1 rounded-[14px] border border-rule bg-paper-2/95 backdrop-blur shadow-md p-3 space-y-2">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <MiniPreview tema={draft} />
+            </div>
+            <Button
+              type="submit"
+              loading={pending}
+              disabled={
+                bloqueos.bloqueado ||
+                (resultado.hayFallos && !confirmarBajoContraste)
+              }
+              className="h-9 px-3.5 text-xs font-semibold shrink-0"
+            >
+              {pending ? "Guardando…" : "Guardar cambios"}
+            </Button>
+          </div>
+
+          {state.ok ? (
+            <div className="rounded-[8px] border border-ok/40 bg-ok/10 px-3 py-1.5 flex items-center gap-2 text-xs font-semibold text-ok animate-fade-in">
+              <span className="text-sm font-bold">✓</span> {state.ok}
+            </div>
+          ) : null}
+
+          {state.error ? (
+            <div className="rounded-[8px] border border-danger/40 bg-danger/10 px-3 py-1.5 flex items-center gap-2 text-xs font-medium text-danger animate-fade-in">
+              <span className="text-sm font-bold">⚠</span> {state.error}
+            </div>
+          ) : null}
         </div>
 
         {/* Logo del gimnasio + paletas derivadas de su color */}

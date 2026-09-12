@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export type InfoPlanGimnasio = {
   nombre: string;
@@ -21,11 +22,15 @@ export type InfoPlanGimnasio = {
 /**
  * Verifica el plan actual del gimnasio y evalúa qué características
  * avanzadas (Elite / Pro) tiene habilitadas.
+ * 
+ * Siempre consulta con createAdminClient() (service_role) para que RLS
+ * en planes_plataforma no bloquee las consultas a usuarios autenticados.
  */
 export async function verificarPlanGimnasio(
-  db: SupabaseClient,
+  _db: SupabaseClient | null | undefined,
   gimnasioId: string,
 ): Promise<InfoPlanGimnasio> {
+  const db = createAdminClient();
   const { data: gym } = await db
     .from("gimnasios")
     .select(

@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, useEffect } from "react";
 import { actualizarReposoCheckin, type AjustesState } from "./actions";
 import { Radios } from "./radios";
 import { Button, Toggle } from "@/components/ui";
+import { useHapticos } from "@/lib/ui/hapticos";
 import type { ReposoCheckin } from "@/lib/tema";
 
 const INPUT_CLS =
@@ -26,10 +27,28 @@ export function ReposoCheckinForm({
   const [intensidad, setIntensidad] = useState<ReposoCheckin["intensidad"]>(
     reposo.intensidad,
   );
+  const hapticos = useHapticos();
+
+  useEffect(() => {
+    if (state.ok) hapticos.exito();
+    else if (state.error) hapticos.error();
+  }, [state.ok, state.error, hapticos]);
 
   return (
     <form action={formAction} className="space-y-5">
       <input type="hidden" name="gimnasio_id" value={gimnasioId} />
+
+      {state.ok ? (
+        <div className="rounded-[10px] border border-ok/40 bg-ok/10 px-3 py-2 text-xs font-semibold text-ok flex items-center gap-2 animate-fade-in">
+          <span>✓</span> {state.ok}
+        </div>
+      ) : null}
+
+      {state.error ? (
+        <div className="rounded-[10px] border border-danger/40 bg-danger/10 px-3 py-2 text-xs font-medium text-danger flex items-center gap-2 animate-fade-in" role="alert">
+          <span>⚠</span> {state.error}
+        </div>
+      ) : null}
 
       <Toggle
         name="activo"

@@ -524,15 +524,15 @@ export async function actualizarAsistenteIa(
     return { error: "No podés modificar este gimnasio" };
   }
 
-  const supabase = await createClient();
-  const planInfo = await verificarPlanGimnasio(supabase, dueno.gimnasio_id);
+  const admin = createAdminClient();
+  const planInfo = await verificarPlanGimnasio(admin, dueno.gimnasio_id);
   if (!planInfo.permiteAsistenteIa) {
     return { error: "El asistente IA es una función exclusiva del Plan Elite." };
   }
 
   const activo = formData.get("activo") === "on";
 
-  const { error } = await supabase
+  const { error } = await admin
     .from("gimnasios")
     .update({ asistente_ia_activo: activo })
     .eq("id", gimnasioId);
@@ -543,6 +543,6 @@ export async function actualizarAsistenteIa(
   }
 
   revalidatePath("/panel/ajustes");
-  return { ok: activo ? "Asistente IA activado" : "Asistente IA desactivado" };
+  return { ok: activo ? "Asistente IA activado correctamente" : "Asistente IA desactivado correctamente" };
 }
 

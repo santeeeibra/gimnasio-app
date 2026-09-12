@@ -1,8 +1,10 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, useEffect } from "react";
 import { actualizarAsistenteIa, type AjustesState } from "./actions";
-import { Toggle } from "@/components/ui";
+import { Button, Toggle } from "@/components/ui";
+import { useHapticos } from "@/lib/ui/hapticos";
+import { Check, AlertCircle } from "lucide-react";
 
 export function AsistenteIaForm({
   gimnasioId,
@@ -20,29 +22,106 @@ export function AsistenteIaForm({
     {},
   );
   const [checked, setChecked] = useState(activo);
+  const hapticos = useHapticos();
+
+  useEffect(() => {
+    if (state.ok) {
+      hapticos.exito();
+    } else if (state.error) {
+      hapticos.error();
+    }
+  }, [state.ok, state.error, hapticos]);
 
   return (
-    <form
-      action={formAction}
-      onChange={(e) => (e.currentTarget as HTMLFormElement).requestSubmit()}
-      className="space-y-4"
-    >
+    <form action={formAction} className="space-y-4">
       <input type="hidden" name="gimnasio_id" value={gimnasioId} />
 
-      <Toggle
-        name="activo"
-        checked={checked}
-        onCheckedChange={setChecked}
-        label="Activar asistente IA"
-        hint="Avisos de riesgo de abandono, cumpleaños y balance mensual redactados automáticamente por inteligencia artificial."
-        disabled={pending}
-      />
+      {/* FEEDBACK INMEDIATO AL TOPE (CERO SCROLL) */}
+      {state.ok ? (
+        <div className="rounded-[12px] border border-ok/40 bg-ok/10 p-3.5 flex items-center gap-3 animate-fade-in">
+          <div className="size-6 rounded-full bg-ok/20 text-ok grid place-items-center shrink-0">
+            <Check className="size-3.5 stroke-[3]" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs font-bold text-ok">{state.ok}</p>
+            <p className="text-[11px] text-ink-soft">
+              Los cambios ya se guardaron y están activos en tu gimnasio.
+            </p>
+          </div>
+        </div>
+      ) : null}
 
-      <div className="rounded-[10px] border border-rule bg-paper-2 p-3 flex items-center justify-between">
-        <span className="text-xs text-ink-soft">Llamadas a la IA este mes</span>
-        <span className="text-xs font-mono font-bold text-ink">
-          {llamadasUsadas} / {techoMensual}
-        </span>
+      {state.error ? (
+        <div
+          className="rounded-[12px] border border-danger/40 bg-danger/10 p-3.5 flex items-center gap-3 animate-fade-in"
+          role="alert"
+        >
+          <div className="size-6 rounded-full bg-danger/20 text-danger grid place-items-center shrink-0">
+            <AlertCircle className="size-3.5 stroke-[2.5]" />
+          </div>
+          <p className="text-xs font-medium text-danger">{state.error}</p>
+        </div>
+      ) : null}
+
+      {/* TARJETA PRINCIPAL DEL SWITCH (MÁXIMA VISIBILIDAD) */}
+      <div
+        className={`rounded-[16px] border p-4 transition-all duration-200 ${
+          checked
+            ? "border-volt/60 bg-volt/5 shadow-[0_0_24px_rgba(16,231,160,0.12)]"
+            : "border-rule bg-paper-2"
+        }`}
+      >
+        <div className="flex items-center justify-between gap-4">
+          <div className="space-y-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <span
+                className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                  checked
+                    ? "bg-volt/20 text-volt border border-volt/40"
+                    : "bg-paper-3 text-ink-soft border border-rule"
+                }`}
+              >
+                <span
+                  className={`size-1.5 rounded-full ${
+                    checked ? "bg-volt animate-pulse" : "bg-ink-soft/40"
+                  }`}
+                />
+                {checked ? "Asistente Activado" : "Asistente Desactivado"}
+              </span>
+            </div>
+            <h3 className="text-sm font-bold text-ink">Activar asistente IA</h3>
+            <p className="text-xs text-ink-soft leading-relaxed">
+              Avisos por riesgo de abandono, cumpleaños y balance mensual redactados automáticamente por inteligencia artificial.
+            </p>
+          </div>
+
+          <div className="shrink-0 flex items-center pt-1">
+            <Toggle
+              name="activo"
+              checked={checked}
+              onCheckedChange={setChecked}
+              disabled={pending}
+            />
+          </div>
+        </div>
+
+        {/* BARRA DE ACCIÓN DIRECTA (BOTÓN VISIBLE SIN SCROLL) */}
+        <div className="mt-4 pt-3 border-t border-rule/60 flex items-center justify-between gap-3">
+          <span className="text-[11px] text-ink-soft font-mono">
+            Uso mensual:{" "}
+            <strong className="text-ink">
+              {llamadasUsadas} / {techoMensual}
+            </strong>
+          </span>
+
+          <Button
+            type="submit"
+            loading={pending}
+            className="h-9 px-4 text-xs font-semibold"
+          >
+            {pending ? "Guardando…" : "Guardar cambios"}
+          </Button>
+        </div>
       </div>
 
       {/* GUÍA DE FUNCIONAMIENTO Y CASOS DE USO */}
@@ -112,13 +191,6 @@ export function AsistenteIaForm({
           </p>
         </div>
       </div>
-
-      {state.error ? (
-        <p className="text-sm text-danger" role="alert">
-          {state.error}
-        </p>
-      ) : null}
-      {state.ok ? <p className="text-sm text-ok">{state.ok}</p> : null}
     </form>
   );
 }

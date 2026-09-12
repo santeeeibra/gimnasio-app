@@ -202,11 +202,11 @@ export function Toggle({
         />
         <span
           aria-hidden
-          className="block h-[30px] w-[50px] rounded-full border border-rule bg-paper-3 transition-colors duration-200 [transition-timing-function:var(--ease-out)] peer-checked:border-volt peer-checked:bg-volt peer-focus-visible:ring-2 peer-focus-visible:ring-ink/25"
+          className="block h-[30px] w-[52px] rounded-full border-2 border-rule bg-paper-3 transition-all duration-200 [transition-timing-function:var(--ease-out)] peer-checked:border-volt peer-checked:bg-volt peer-checked:shadow-[0_0_12px_rgba(16,231,160,0.35)] peer-focus-visible:ring-2 peer-focus-visible:ring-volt/40"
         />
         <span
           aria-hidden
-          className="pointer-events-none absolute left-[3px] top-[3px] size-[24px] rounded-full bg-paper shadow-[0_1px_3px_rgb(0_0_0_/_0.28)] transition-transform duration-200 [transition-timing-function:var(--ease-spring)] peer-checked:translate-x-[20px] peer-active:scale-95"
+          className="pointer-events-none absolute left-[3px] top-[3px] size-[24px] rounded-full bg-white shadow-[0_2px_6px_rgba(0,0,0,0.4)] transition-transform duration-200 [transition-timing-function:var(--ease-spring)] peer-checked:translate-x-[22px] peer-active:scale-95"
         />
       </span>
       {label || hint ? (
