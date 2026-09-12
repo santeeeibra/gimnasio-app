@@ -50,3 +50,6 @@
 
 - 2026-09-12: feature/asistente-ia-n8n — migración 0064, card Asistente IA en /panel/ajustes, endpoint /api/cron/asistente-ia y workflow diario en GitHub Actions (0 costo, sin Oracle ni tarjetas).
 - Implementado Módulo de Control de Caja Diaria, Turnos y Arqueo Ciego (Plan Elite): migración 0065, gating en plan-gate.ts, actions en /panel/caja y vinculación automática con cobros manuales de cuotas.
+
+- Login rediseñado "SysGym Motion" (src/app/login/login-form.tsx): tabs Cuenta individual/Con DNI, login social Google/Facebook/X y boton "Probar app (demo)" sin registro; ya estaba en produccion, se documento recien ahora en MAPA_PROYECTO.md.
+- Consola Dev Cockpit en /admin (superadmin, gimnasio sante): switcher 1-click Duenio/Socio, credenciales de testing, reset rapido de claves, selector de plan Elite/Pro/Basico y diagnostico de uso de Supabase; ya estaba en produccion, se documento recien ahora en MAPA_PROYECTO.md.
