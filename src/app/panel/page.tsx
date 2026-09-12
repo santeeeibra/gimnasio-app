@@ -12,6 +12,9 @@ import {
   ChevronRight,
   Clock,
   AlertCircle,
+  Coins,
+  Receipt,
+  MessageSquare,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { linkClasses } from "@/components/ui";
@@ -19,6 +22,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireStaffODueno } from "@/lib/auth";
 import { diasRestantes, estadoDesdeDias } from "@/lib/cuota";
 import { cupoSocios } from "@/lib/plataforma/cupo";
+import { verificarPlanGimnasio } from "@/lib/plataforma/plan-gate";
 import type { ClienteVista } from "./clientes/cliente-row";
 import { OnboardingDueno } from "./onboarding-dueno";
 import { BotonInstalarApp } from "@/components/pwa/boton-instalar-app";
@@ -59,6 +63,8 @@ export default async function ResumenPage() {
     asistenciasRes,
     { data: progresoData },
     { data: entradasData },
+    { data: sesionCajaRaw },
+    planInfo,
   ] = await Promise.all([
     supabase
       .from("gimnasios")
@@ -115,7 +121,28 @@ export default async function ResumenPage() {
       .select("cliente_id, creado_en")
       .eq("gimnasio_id", dueno.gimnasio_id)
       .gte("creado_en", `${hace30Str}T00:00:00.000Z`),
+    adminDb
+      .from("caja_sesiones")
+      .select(`
+        id,
+        turno_nombre,
+        abierta_en,
+        monto_inicial_efectivo,
+        perfil_abrio:profiles!caja_sesiones_abierta_por_fkey(nombre)
+      `)
+      .eq("gimnasio_id", dueno.gimnasio_id)
+      .eq("estado", "abierta")
+      .maybeSingle(),
+    verificarPlanGimnasio(adminDb, dueno.gimnasio_id),
   ]);
+
+  const sesionCaja = (sesionCajaRaw as unknown as {
+    id: string;
+    turno_nombre: string;
+    abierta_en: string;
+    monto_inicial_efectivo: number;
+    perfil_abrio: { nombre: string } | null;
+  } | null);
 
   const pedidosActivos = pedidosRes?.pedidos ?? [];
   const estadoGimnasio = gym?.estado ?? "prueba";
@@ -358,271 +385,222 @@ export default async function ResumenPage() {
       ) : null}
 
       {/* ─────────────────────────────────────────────────────────────
-          GRID DE MÉTRICAS OPERATIVAS REALES (Mobile: 1 col, Desktop: 2-4 cols)
+          MOSTRADOR OPERATIVO: ESTADO DE CAJA, ATAJOS Y ATENCIÓN DEL DÍA
           ───────────────────────────────────────────────────────────── */}
-      <div>
-        <div className="flex items-center justify-between mb-3 px-0.5">
-          <span className="text-[11px] uppercase tracking-[0.08em] text-ink-soft font-semibold">
-            {esStaff ? "Métricas Operativas" : "Métricas del Gimnasio"}
-          </span>
-          <span className="text-xs text-ink-soft font-medium">
-            {ahora.toLocaleDateString("es-AR", { month: "long", year: "numeric" })}
-          </span>
-        </div>
 
-        <div className={esStaff ? "grid grid-cols-1 sm:grid-cols-3 gap-3.5" : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5"}>
-          {/* 1. Ingresos del Mes Actual (Solo Dueño) */}
-          {!esStaff ? (
-            <div className="rounded-[14px] border border-rule bg-paper-2 p-4 sm:p-5 flex flex-col justify-between shadow-sm">
-              <div>
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-[11px] uppercase tracking-[0.08em] text-ink-soft font-semibold">
-                    Ingresos del Mes
+      {/* 1. Estado de Caja del Turno */}
+      {planInfo?.permiteControlCaja ? (
+        sesionCaja ? (
+          <div className="rounded-[16px] border border-emerald-500/30 bg-emerald-500/5 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+            <div className="flex items-center gap-3.5 min-w-0">
+              <div className="size-11 rounded-[12px] bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 grid place-items-center shrink-0">
+                <Coins className="size-6" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1 text-xs font-black uppercase tracking-wider text-emerald-400">
+                    <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
+                    Caja Abierta · {sesionCaja.turno_nombre}
                   </span>
-                  <span className="size-7 rounded-[8px] bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 grid place-items-center shrink-0">
-                    <CreditCard className="size-3.5" />
-                  </span>
+                  {sesionCaja.perfil_abrio?.nombre ? (
+                    <span className="text-xs text-ink-soft truncate">
+                      por {sesionCaja.perfil_abrio.nombre}
+                    </span>
+                  ) : null}
                 </div>
-                <p className="mt-3 text-2xl sm:text-3xl font-display font-bold tracking-tight text-ink">
-                  ${ingresosMesActual.toLocaleString("es-AR")}
+                <p className="text-sm sm:text-base font-bold text-ink mt-0.5">
+                  Fondo inicial: ${sesionCaja.monto_inicial_efectivo.toLocaleString("es-AR")}
                 </p>
               </div>
-
-              <div className="mt-3 pt-3 border-t border-rule/60 flex items-center justify-between gap-2">
-                {variacionPct !== null ? (
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <span
-                      className={`inline-flex items-center gap-0.5 text-[11px] font-semibold px-1.5 py-0.5 rounded-[6px] shrink-0 ${
-                        variacionPositiva
-                          ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/25"
-                          : "bg-danger/15 text-danger border border-danger/25"
-                      }`}
-                    >
-                      {variacionPositiva ? (
-                        <TrendingUp className="size-3" />
-                      ) : (
-                        <TrendingDown className="size-3" />
-                      )}
-                      {variacionPositiva ? "▲" : "▼"} {Math.abs(variacionPct)}%
-                    </span>
-                    <span className="text-[11px] text-ink-soft truncate">
-                      vs mes anterior (${ingresosMesAnterior.toLocaleString("es-AR")})
-                    </span>
-                  </div>
-                ) : (
-                  <span className="text-[11px] text-ink-soft truncate">
-                    Sin cobros anteriores registrados
-                  </span>
-                )}
-              </div>
             </div>
-          ) : null}
-
-          {/* 2. Socios Activos vs Total */}
-          <div className="rounded-[14px] border border-rule bg-paper-2 p-4 sm:p-5 flex flex-col justify-between shadow-sm">
-            <div>
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[11px] uppercase tracking-[0.08em] text-ink-soft font-semibold">
-                  Socios Activos
-                </span>
-                <span className="size-7 rounded-[8px] bg-volt/20 border border-volt/30 text-ink grid place-items-center shrink-0">
-                  <Users className="size-3.5 text-volt" />
-                </span>
-              </div>
-              <div className="mt-3 flex items-baseline gap-1.5">
-                <span className="text-2xl sm:text-3xl font-display font-bold tracking-tight text-ink">
-                  {sociosActivos}
-                </span>
-                <span className="text-sm font-medium text-ink-soft">
-                  / {totalSocios} total
-                </span>
-                <span className="ml-auto text-xs font-semibold text-volt">
-                  {pctActivos}%
-                </span>
-              </div>
-
-              {/* Barra de progreso de socios activos */}
-              <div className="mt-2.5 h-1.5 w-full rounded-full bg-paper border border-rule overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-volt transition-all duration-500"
-                  style={{ width: `${pctActivos}%` }}
-                />
-              </div>
-            </div>
-
-            <div className="mt-3 pt-3 border-t border-rule/60 flex items-center justify-between text-[11px] text-ink-soft">
-              <span>{alDiaCount} al día</span>
-              <span>·</span>
-              <span className={porVencerCount > 0 ? "text-ink font-medium" : ""}>
-                {porVencerCount} por vencer
-              </span>
-              <span>·</span>
-              <span className={vencidosCount > 0 ? "text-danger font-medium" : ""}>
-                {vencidosCount} vencidos
-              </span>
-            </div>
-          </div>
-
-          {/* 4. Asistencias de Hoy */}
-          <div className="rounded-[14px] border border-rule bg-paper-2 p-4 sm:p-5 flex flex-col justify-between shadow-sm">
-            <div>
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[11px] uppercase tracking-[0.08em] text-ink-soft font-semibold">
-                  Asistencias Hoy
-                </span>
-                <span className="size-7 rounded-[8px] bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 grid place-items-center shrink-0">
-                  <Activity className="size-3.5" />
-                </span>
-              </div>
-              <p className="mt-3 text-2xl sm:text-3xl font-display font-bold tracking-tight text-ink">
-                {asistenciasHoy}
-              </p>
-            </div>
-
-            <div className="mt-3 pt-3 border-t border-rule/60 flex items-center justify-between text-[11px] text-ink-soft">
-              <span>Check-ins de recepción</span>
-              <span className="size-2 rounded-full bg-cyan-400 animate-pulse" />
-            </div>
-          </div>
-
-          {/* 5. En prueba sin convertir */}
-          <div className="rounded-[14px] border border-rule bg-paper-2 p-4 sm:p-5 flex flex-col justify-between shadow-sm">
-            <div>
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[11px] uppercase tracking-[0.08em] text-ink-soft font-semibold">
-                  En Prueba Sin Convertir
-                </span>
-                <span className="size-7 rounded-[8px] bg-amber-500/10 border border-amber-500/20 text-amber-400 grid place-items-center shrink-0">
-                  <Clock className="size-3.5" />
-                </span>
-              </div>
-              <p className="mt-3 text-2xl sm:text-3xl font-display font-bold tracking-tight text-ink">
-                {enPruebaCount}
-              </p>
-            </div>
-
-            <div className="mt-3 pt-3 border-t border-rule/60 flex items-center justify-between text-[11px]">
-              <span className="text-ink-soft">Día de prueba gratis</span>
+            <div className="flex items-center gap-2 shrink-0">
               <Link
-                href="/panel/clientes"
-                className="text-ink hover:text-volt font-medium inline-flex items-center gap-0.5 transition-colors"
+                href="/panel/caja"
+                className="px-4 py-2 rounded-[10px] bg-ink text-paper text-xs font-bold hover:opacity-90 transition-opacity inline-flex items-center gap-1.5 shadow-xs"
               >
-                Ver socios <ChevronRight className="size-3" />
+                Gestionar Turno <ArrowUpRight className="size-3.5" />
               </Link>
             </div>
+          </div>
+        ) : (
+          <div className="rounded-[16px] border border-amber-500/30 bg-amber-500/5 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+            <div className="flex items-center gap-3.5 min-w-0">
+              <div className="size-11 rounded-[12px] bg-amber-500/15 border border-amber-500/25 text-amber-400 grid place-items-center shrink-0">
+                <Coins className="size-6" />
+              </div>
+              <div className="min-w-0">
+                <span className="text-xs font-black uppercase tracking-wider text-amber-400">
+                  ○ Sin turno de caja abierto
+                </span>
+                <p className="text-xs sm:text-sm text-ink-soft mt-0.5">
+                  Abrí el turno para registrar cobros en efectivo y controlar gastos de mostrador.
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/panel/caja"
+              className="px-4 py-2 rounded-[10px] bg-[#10e7a0] text-black text-xs font-black hover:brightness-105 transition-all inline-flex items-center gap-1.5 shadow-xs shrink-0"
+            >
+              + Abrir Turno de Caja
+            </Link>
+          </div>
+        )
+      ) : null}
+
+      {/* 2. Acciones Frecuentes / Atajos Rápidos */}
+      <div className="space-y-2.5">
+        <span className="text-[11px] uppercase tracking-[0.08em] text-ink-soft font-bold px-0.5">
+          Atajos Rápidos de Mostrador
+        </span>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
+          {/* Cobrar Cuota */}
+          <Link
+            href="/panel/clientes"
+            className="group p-4 rounded-[16px] border border-rule bg-paper-2 hover:border-volt/40 hover:bg-paper-2/80 active:scale-[0.98] transition-all flex flex-col justify-between shadow-xs min-h-[110px]"
+          >
+            <div className="size-10 rounded-[10px] bg-emerald-500/15 text-emerald-400 grid place-items-center group-hover:scale-105 transition-transform">
+              <CreditCard className="size-5" />
+            </div>
+            <div className="mt-2.5">
+              <p className="text-sm font-bold text-ink group-hover:text-emerald-400 transition-colors">
+                Cobrar Cuota
+              </p>
+              <p className="text-[11px] text-ink-soft mt-0.5">
+                Buscar socio y cobrar
+              </p>
+            </div>
+          </Link>
+
+          {/* Nuevo Socio */}
+          <Link
+            href="/panel/clientes"
+            className="group p-4 rounded-[16px] border border-rule bg-paper-2 hover:border-volt/40 hover:bg-paper-2/80 active:scale-[0.98] transition-all flex flex-col justify-between shadow-xs min-h-[110px]"
+          >
+            <div className="size-10 rounded-[10px] bg-cyan-400/15 text-cyan-400 grid place-items-center group-hover:scale-105 transition-transform">
+              <UserPlus className="size-5" />
+            </div>
+            <div className="mt-2.5">
+              <p className="text-sm font-bold text-ink group-hover:text-cyan-400 transition-colors">
+                Nuevo Socio
+              </p>
+              <p className="text-[11px] text-ink-soft mt-0.5">
+                Alta rápida con DNI
+              </p>
+            </div>
+          </Link>
+
+          {/* Caja Diaria */}
+          <Link
+            href="/panel/caja"
+            className="group p-4 rounded-[16px] border border-rule bg-paper-2 hover:border-volt/40 hover:bg-paper-2/80 active:scale-[0.98] transition-all flex flex-col justify-between shadow-xs min-h-[110px]"
+          >
+            <div className="size-10 rounded-[10px] bg-volt/15 text-volt grid place-items-center group-hover:scale-105 transition-transform">
+              <Coins className="size-5" />
+            </div>
+            <div className="mt-2.5">
+              <p className="text-sm font-bold text-ink group-hover:text-volt transition-colors">
+                Caja y Turnos
+              </p>
+              <p className="text-[11px] text-ink-soft mt-0.5">
+                Fondo, gastos y arqueo
+              </p>
+            </div>
+          </Link>
+
+          {/* Modo Check-in */}
+          <Link
+            href="/checkin"
+            className="group p-4 rounded-[16px] border border-rule bg-paper-2 hover:border-volt/40 hover:bg-paper-2/80 active:scale-[0.98] transition-all flex flex-col justify-between shadow-xs min-h-[110px]"
+          >
+            <div className="size-10 rounded-[10px] bg-purple-500/15 text-purple-400 grid place-items-center group-hover:scale-105 transition-transform">
+              <ScanLine className="size-5" />
+            </div>
+            <div className="mt-2.5">
+              <div className="flex items-center gap-1.5">
+                <p className="text-sm font-bold text-ink group-hover:text-purple-400 transition-colors">
+                  Modo Check-in
+                </p>
+                <span className="rounded-full bg-volt/20 px-1.5 py-0.2 text-[8px] font-bold uppercase text-ink">
+                  Elite
+                </span>
+              </div>
+              <p className="text-[11px] text-ink-soft mt-0.5">
+                Terminal para recepción
+              </p>
+            </div>
+          </Link>
+        </div>
+      </div>
+
+      {/* 3. Indicadores Operativos del Día */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+        <div className="rounded-[14px] border border-rule bg-paper-2 p-4 shadow-xs flex items-center justify-between">
+          <div>
+            <span className="text-[11px] uppercase tracking-wider text-ink-soft font-semibold">Check-ins Hoy</span>
+            <p className="text-2xl font-display font-bold text-ink mt-0.5">{asistenciasHoy}</p>
+            <span className="text-[11px] text-ink-soft">Socios que ingresaron</span>
+          </div>
+          <div className="size-10 rounded-[10px] bg-volt/15 text-volt grid place-items-center shrink-0">
+            <Users className="size-5" />
+          </div>
+        </div>
+
+        <div className="rounded-[14px] border border-rule bg-paper-2 p-4 shadow-xs flex items-center justify-between">
+          <div>
+            <span className="text-[11px] uppercase tracking-wider text-ink-soft font-semibold">Cuotas Vencidas</span>
+            <p className={`text-2xl font-display font-bold mt-0.5 ${vencidosCount > 0 ? "text-danger" : "text-ink"}`}>
+              {vencidosCount}
+            </p>
+            <span className="text-[11px] text-ink-soft">Para cobrar en recepción</span>
+          </div>
+          <div className={`size-10 rounded-[10px] grid place-items-center shrink-0 ${vencidosCount > 0 ? "bg-danger/15 text-danger" : "bg-paper-3 text-ink-soft"}`}>
+            <AlertCircle className="size-5" />
+          </div>
+        </div>
+
+        <div className="rounded-[14px] border border-rule bg-paper-2 p-4 shadow-xs flex items-center justify-between">
+          <div>
+            <span className="text-[11px] uppercase tracking-wider text-ink-soft font-semibold">Vencen Esta Semana</span>
+            <p className="text-2xl font-display font-bold text-ink mt-0.5">{porVencerCount}</p>
+            <span className="text-[11px] text-ink-soft">Próximos 7 días</span>
+          </div>
+          <div className="size-10 rounded-[10px] bg-amber-500/15 text-amber-400 grid place-items-center shrink-0">
+            <CalendarClock className="size-5" />
           </div>
         </div>
       </div>
 
-      {/* ─────────────────────────────────────────────────────────────
-          CONSTANCIA DE ENTRENAMIENTO (uso real de la app)
-          ───────────────────────────────────────────────────────────── */}
-      <section className="space-y-3">
-        <div className="flex items-baseline justify-between px-0.5">
-          <span className="text-[11px] uppercase tracking-[0.08em] text-ink-soft font-semibold">
-            Constancia de Entrenamiento
-          </span>
-          <span className="text-xs text-ink-soft font-medium">Últimos 30 días</span>
+      {/* 4. Distribución Operativa en 2 Columnas (Desktop) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
+        {/* Columna Izquierda: Sala en Vivo & Pedidos */}
+        <div className="space-y-4">
+          <WidgetAsistenciaSala
+            iniciales={pedidosActivos}
+            gimnasioId={dueno.gimnasio_id}
+          />
         </div>
 
-        <div className="rounded-[14px] border border-rule bg-paper-2 p-4 sm:p-5 shadow-sm">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-2xl sm:text-3xl font-display font-bold tracking-tight text-ink">
-                  {activos7Count}
-                </span>
-                <span className="text-sm font-medium text-ink-soft">
-                  / {totalSocios} entrenando
-                </span>
-              </div>
-              <p className="mt-1 text-xs text-ink-soft">
-                Registraron un entrenamiento en los últimos 7 días
-                {activos30Count > activos7Count
-                  ? ` · ${activos30Count} en el mes`
-                  : ""}
-              </p>
-            </div>
-            <span className="text-sm font-semibold text-volt shrink-0">
-              {pctEntrenando}%
-            </span>
-          </div>
-
-          {activos30Count === 0 ? (
-            <p className="mt-4 text-xs text-ink-soft">
-              Todavía nadie registra entrenamientos. Cuando tus socios usen la
-              rutina en la app, vas a ver acá quiénes son constantes.
-            </p>
-          ) : (
-            <>
-              <div className="mt-4 flex items-end justify-between gap-1.5 h-16">
-                {entrenosPorDow.map((n, i) => (
-                  <div
-                    key={i}
-                    className="flex-1 flex flex-col items-center gap-1 min-w-0"
-                  >
-                    <div
-                      className="w-full max-w-[28px] rounded-[4px] bg-volt/70"
-                      style={{ height: `${Math.round((n / maxDow) * 100)}%` }}
-                      title={`${n} entrenamientos`}
-                    />
-                    <span className="text-[10px] text-ink-soft">
-                      {dowLabels[i]}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              {dowTopNombre && (
-                <p className="mt-3 pt-3 border-t border-rule/60 text-[11px] text-ink-soft">
-                  Tu día más concurrido son los{" "}
-                  <span className="text-ink font-medium">{dowTopNombre}</span>.
-                </p>
-              )}
-            </>
-          )}
-        </div>
-      </section>
-
-      {/* ─────────────────────────────────────────────────────────────
-          SECCIÓN DETALLE: VENCEN ESTA SEMANA & ACCIONES RÁPIDAS
-          ───────────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-2">
-        {/* 3. Vencen esta semana (2 columnas en desktop) */}
-        <section className="lg:col-span-2 space-y-3">
+        {/* Columna Derecha: Socios con atención pendiente (Vencidos o por vencer) */}
+        <div className="space-y-3">
           <div className="flex items-baseline justify-between px-0.5">
-            <div className="flex items-center gap-2">
-              <h2 className="text-base font-display font-semibold text-ink">
-                Vencen esta semana
-              </h2>
-              {porVencerCount > 0 && (
-                <span className="rounded-full bg-volt/20 px-2 py-0.5 text-[11px] font-semibold text-ink border border-volt/30">
-                  {porVencerCount}
-                </span>
-              )}
-            </div>
-            <Link
-              href="/panel/clientes"
-              className={`text-xs ${linkClasses.inline}`}
-            >
-              Ver todos los clientes
+            <span className="text-sm font-bold text-ink">
+              Cobros y Vencimientos Próximos
+            </span>
+            <Link href="/panel/clientes" className={`text-xs ${linkClasses.inline}`}>
+              Ver todos los clientes →
             </Link>
           </div>
 
           {vencenEstaSemana.length === 0 ? (
             <div className="rounded-[14px] border border-rule bg-paper-2 px-5 py-8 text-center">
-              <span
-                aria-hidden
-                className="mx-auto mb-3 block size-2 rounded-full bg-volt"
-              />
-              <p className="font-display text-base font-semibold text-ink">
-                Nadie vence esta semana
-              </p>
+              <span aria-hidden="true" className="mx-auto mb-2 block size-2 rounded-full bg-volt" />
+              <p className="text-sm font-semibold text-ink">Al día</p>
               <p className="mt-1 text-xs text-ink-soft">
-                Todos los socios tienen su cuota al día o ya regularizada.
+                No hay cuotas por vencer en los próximos 7 días.
               </p>
             </div>
           ) : (
-            <ul className="divide-y divide-rule rounded-[14px] border border-rule bg-paper-2 overflow-hidden shadow-sm">
+            <ul className="divide-y divide-rule rounded-[14px] border border-rule bg-paper-2 overflow-hidden shadow-xs">
               {vencenEstaSemana.map((c) => {
                 const iniciales = c.profile?.nombre
                   ? c.profile.nombre
@@ -648,27 +626,27 @@ export default async function ResumenPage() {
                           <img
                             src={c.foto_url}
                             alt=""
-                            className="size-9 rounded-full object-cover shrink-0 border border-rule bg-paper-3"
+                            className="size-8.5 rounded-full object-cover shrink-0 border border-rule bg-paper-3"
                           />
                         ) : (
-                          <span className="size-9 rounded-full bg-paper-3 text-ink-soft border border-rule grid place-items-center text-xs font-semibold shrink-0 uppercase tracking-wider">
+                          <span className="size-8.5 rounded-full bg-paper-3 text-ink-soft border border-rule grid place-items-center text-xs font-semibold shrink-0 uppercase tracking-wider">
                             {iniciales}
                           </span>
                         )}
 
                         <div className="min-w-0">
-                          <p className="text-sm font-medium text-ink truncate leading-snug">
+                          <p className="text-sm font-semibold text-ink truncate leading-snug">
                             {c.profile?.nombre ?? "Socio sin nombre"}
                           </p>
-                          <p className="text-xs text-ink-soft truncate mt-0.5">
-                            {c.plan?.nombre ?? "Sin plan asignado"} · DNI {c.profile?.dni ?? "—"}
+                          <p className="text-[11px] text-ink-soft truncate mt-0.5">
+                            {c.plan?.nombre ?? "Sin plan"} · DNI {c.profile?.dni ?? "—"}
                           </p>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-2 shrink-0">
                         <span
-                          className={`rounded-[8px] px-2.5 py-1 text-xs font-semibold border ${
+                          className={`rounded-[6px] px-2 py-0.5 text-xs font-bold border ${
                             esHoy
                               ? "bg-danger/15 text-danger border-danger/30"
                               : "bg-volt/15 text-ink border-volt/30"
@@ -677,8 +655,8 @@ export default async function ResumenPage() {
                           {esHoy
                             ? "Vence hoy"
                             : c.dias === 1
-                              ? "Queda 1 día"
-                              : `Quedan ${c.dias} días`}
+                              ? "1 día"
+                              : `${c.dias} días`}
                         </span>
                         <ChevronRight className="size-4 text-ink-soft/50" />
                       </div>
@@ -688,90 +666,23 @@ export default async function ResumenPage() {
               })}
             </ul>
           )}
-        </section>
 
-        {/* Acciones Rápidas del Día a Día (1 columna en desktop) */}
-        <section className="space-y-3">
-          <div className="flex items-center gap-2 px-0.5">
-            <span className="text-[11px] uppercase tracking-[0.08em] text-ink-soft font-semibold">
-              Operativa Rápida
-            </span>
-          </div>
-
-          <div className="flex flex-col gap-2.5">
-            {/* Cobrar cuota */}
-            <Link
-              href="/panel/clientes"
-              className="flex items-center justify-between p-3.5 rounded-[12px] border border-rule bg-paper-2 hover:bg-paper-3 hover:border-ink/20 active:scale-[0.98] transition-all min-h-11 shadow-sm group"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="size-9 rounded-[10px] bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 grid place-items-center shrink-0 group-hover:scale-105 transition-transform">
-                  <CreditCard className="size-4" />
-                </div>
-                <div className="min-w-0">
-                  <span className="block text-sm font-semibold text-ink leading-tight">
-                    Cobrar cuota
-                  </span>
-                  <span className="block text-xs text-ink-soft mt-0.5 truncate">
-                    Buscar socio y registrar pago
-                  </span>
-                </div>
-              </div>
-              <ArrowUpRight className="size-4 text-ink-soft group-hover:text-ink transition-colors shrink-0 ml-2" />
-            </Link>
-
-            {/* Nuevo socio */}
-            <Link
-              href="/panel/clientes"
-              className="flex items-center justify-between p-3.5 rounded-[12px] border border-rule bg-paper-2 hover:bg-paper-3 hover:border-ink/20 active:scale-[0.98] transition-all min-h-11 shadow-sm group"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="size-9 rounded-[10px] bg-volt/20 border border-volt/35 text-ink grid place-items-center shrink-0 group-hover:scale-105 transition-transform">
-                  <UserPlus className="size-4 text-volt" />
-                </div>
-                <div className="min-w-0">
-                  <span className="block text-sm font-semibold text-ink leading-tight">
-                    Nuevo socio
-                  </span>
-                  <span className="block text-xs text-ink-soft mt-0.5 truncate">
-                    Alta rápida con DNI
-                  </span>
-                </div>
-              </div>
-              <ArrowUpRight className="size-4 text-ink-soft group-hover:text-ink transition-colors shrink-0 ml-2" />
-            </Link>
-
-            {/* Modo Check-in (Desktop) */}
-            <div className="hidden md:block">
+          {/* Banner discreto para finanzas / métricas completas */}
+          {!esStaff ? (
+            <div className="pt-2">
               <Link
-                href="/checkin"
-                className="flex items-center justify-between p-3.5 rounded-[12px] border border-rule bg-paper-2 hover:bg-paper-3 hover:border-ink/20 active:scale-[0.98] transition-all min-h-11 shadow-sm group"
+                href="/panel/ingresos"
+                className="w-full flex items-center justify-between p-3 rounded-[12px] border border-rule bg-paper-2 hover:bg-paper-3 transition-colors text-xs text-ink-soft hover:text-ink"
               >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="size-9 rounded-[10px] bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 grid place-items-center shrink-0 group-hover:scale-105 transition-transform">
-                    <ScanLine className="size-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="block text-sm font-semibold text-ink leading-tight">
-                        Modo Check-in
-                      </span>
-                      <span className="rounded-full bg-volt/20 px-1.5 py-0.2 text-[9px] font-semibold uppercase text-ink">
-                        Elite
-                      </span>
-                    </div>
-                    <span className="block text-xs text-ink-soft mt-0.5 truncate">
-                      Terminal de recepción
-                    </span>
-                  </div>
-                </div>
-                <ArrowUpRight className="size-4 text-ink-soft group-hover:text-ink transition-colors shrink-0 ml-2" />
+                <span>📈 ¿Querés ver los ingresos y facturación histórica?</span>
+                <span className="font-semibold text-ink inline-flex items-center gap-1">
+                  Ir a Ingresos →
+                </span>
               </Link>
             </div>
-          </div>
-        </section>
+          ) : null}
+        </div>
       </div>
     </div>
   );
 }
-

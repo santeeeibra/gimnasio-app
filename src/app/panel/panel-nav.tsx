@@ -15,6 +15,7 @@ import {
   LifeBuoy,
   MessageSquare,
   Scale,
+  ScanLine,
   Settings,
   Share2,
   Tags,
@@ -28,54 +29,59 @@ type NavItem = {
   label: string;
   corto?: string;
   soloDesktop?: boolean;
+  seccion?: "operativo" | "gestion" | "sistema";
+  badge?: string;
   Icono: LucideIcon;
 };
 
 export function getNavItems(tipoCuenta: string = "gym", rol: string = "dueno"): NavItem[] {
   if (rol === "staff") {
     return [
-      { href: "/panel", label: "Resumen", Icono: LayoutDashboard },
-      { href: "/panel/clientes", label: "Clientes", Icono: Users },
-      { href: "/panel/caja", label: "Caja Turno", Icono: Coins },
-      { href: "/panel/mensajes", label: "Mensajes", Icono: MessageSquare },
+      { href: "/panel", label: "Mostrador", corto: "Resumen", seccion: "operativo", Icono: LayoutDashboard },
+      { href: "/panel/clientes", label: "Clientes", seccion: "operativo", Icono: Users },
+      { href: "/panel/caja", label: "Caja y Turnos", corto: "Caja", seccion: "operativo", Icono: Coins },
+      { href: "/checkin", label: "Modo Check-in", corto: "Check-in", seccion: "operativo", soloDesktop: true, badge: "Elite", Icono: ScanLine },
+      { href: "/panel/mensajes", label: "Mensajes", seccion: "operativo", Icono: MessageSquare },
     ];
   }
 
   if (tipoCuenta === "individual") {
     return [
-      { href: "/panel", label: "Resumen", Icono: LayoutDashboard },
-      { href: "/mi/rutina", label: "Mi Rutina", corto: "Rutina", Icono: Dumbbell },
-      { href: "/mi/peso", label: "Mi Peso", corto: "Peso", Icono: Scale },
-      { href: "/panel/plantillas", label: "Compartir rutina", corto: "Compartir", Icono: Share2 },
-      { href: "/panel/plan", label: "Mi plan", soloDesktop: true, Icono: CreditCard },
-      { href: "/panel/ajustes", label: "Ajustes", Icono: Settings },
+      { href: "/panel", label: "Resumen", seccion: "operativo", Icono: LayoutDashboard },
+      { href: "/mi/rutina", label: "Mi Rutina", corto: "Rutina", seccion: "operativo", Icono: Dumbbell },
+      { href: "/mi/peso", label: "Mi Peso", corto: "Peso", seccion: "operativo", Icono: Scale },
+      { href: "/panel/plantillas", label: "Compartir rutina", corto: "Compartir", seccion: "gestion", Icono: Share2 },
+      { href: "/panel/plan", label: "Mi plan", soloDesktop: true, seccion: "sistema", Icono: CreditCard },
+      { href: "/panel/ajustes", label: "Ajustes", seccion: "sistema", Icono: Settings },
     ];
   }
 
   if (tipoCuenta === "negocio_liviano") {
     return [
-      { href: "/panel", label: "Resumen", Icono: LayoutDashboard },
-      { href: "/panel/clientes", label: "Clientes", Icono: Users },
-      { href: "/panel/caja", label: "Caja Turno", Icono: Coins },
-      { href: "/panel/mensajes", label: "Mensajes", Icono: MessageSquare },
-      { href: "/panel/plan", label: "Mi plan", soloDesktop: true, Icono: CreditCard },
-      { href: "/panel/ajustes", label: "Ajustes", Icono: Settings },
+      { href: "/panel", label: "Mostrador", corto: "Resumen", seccion: "operativo", Icono: LayoutDashboard },
+      { href: "/panel/clientes", label: "Clientes", seccion: "operativo", Icono: Users },
+      { href: "/panel/caja", label: "Caja Turno", seccion: "operativo", Icono: Coins },
+      { href: "/checkin", label: "Modo Check-in", corto: "Check-in", seccion: "operativo", soloDesktop: true, badge: "Elite", Icono: ScanLine },
+      { href: "/panel/mensajes", label: "Mensajes", seccion: "operativo", Icono: MessageSquare },
+      { href: "/panel/plan", label: "Mi plan", soloDesktop: true, seccion: "sistema", Icono: CreditCard },
+      { href: "/panel/ajustes", label: "Ajustes", seccion: "sistema", Icono: Settings },
     ];
   }
 
   // gym completo
   return [
-    { href: "/panel", label: "Resumen", Icono: LayoutDashboard },
-    { href: "/panel/clientes", label: "Clientes", Icono: Users },
-    { href: "/panel/caja", label: "Caja y Turnos", corto: "Caja", Icono: Coins },
-    { href: "/panel/planes", label: "Planes de socios", corto: "Planes", Icono: Tags },
-    { href: "/panel/mensajes", label: "Mensajes", Icono: MessageSquare },
-    { href: "/panel/buzon", label: "Buzón", Icono: Inbox },
-    { href: "/panel/ingresos", label: "Ingresos", Icono: Wallet },
-    { href: "/panel/plantillas", label: "Compartir rutina", corto: "Compartir", soloDesktop: true, Icono: Share2 },
-    { href: "/panel/partner", label: "Partner", corto: "Partner", soloDesktop: true, Icono: Award },
-    { href: "/panel/plan", label: "Mi plan", soloDesktop: true, Icono: CreditCard },
-    { href: "/panel/ajustes", label: "Ajustes", Icono: Settings },
+    { href: "/panel", label: "Mostrador", corto: "Resumen", seccion: "operativo", Icono: LayoutDashboard },
+    { href: "/panel/clientes", label: "Clientes", seccion: "operativo", Icono: Users },
+    { href: "/panel/caja", label: "Caja y Turnos", corto: "Caja", seccion: "operativo", Icono: Coins },
+    { href: "/checkin", label: "Modo Check-in", corto: "Check-in", seccion: "operativo", soloDesktop: true, badge: "Elite", Icono: ScanLine },
+    { href: "/panel/planes", label: "Planes de socios", corto: "Planes", seccion: "gestion", Icono: Tags },
+    { href: "/panel/mensajes", label: "Mensajes", seccion: "gestion", Icono: MessageSquare },
+    { href: "/panel/buzon", label: "Buzón", seccion: "gestion", Icono: Inbox },
+    { href: "/panel/ingresos", label: "Ingresos", seccion: "gestion", Icono: Wallet },
+    { href: "/panel/plantillas", label: "Compartir rutina", corto: "Compartir", soloDesktop: true, seccion: "gestion", Icono: Share2 },
+    { href: "/panel/partner", label: "Partner", corto: "Partner", soloDesktop: true, seccion: "gestion", Icono: Award },
+    { href: "/panel/plan", label: "Mi plan", soloDesktop: true, seccion: "sistema", Icono: CreditCard },
+    { href: "/panel/ajustes", label: "Ajustes", seccion: "sistema", Icono: Settings },
   ];
 }
 
@@ -105,7 +111,7 @@ function LogoMark({
   if (!logo) return null;
   return (
     <span
-      className={`${size} shrink-0 overflow-hidden rounded-[6px] border border-rule bg-paper-2`}
+      className={`${size} shrink-0 overflow-hidden rounded-[8px] border border-rule bg-paper-2 shadow-xs`}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
@@ -119,7 +125,13 @@ function LogoMark({
   );
 }
 
-/** Desktop: columna fija a la izquierda. */
+const SECCION_TITULOS: Record<string, string> = {
+  operativo: "Mostrador",
+  gestion: "Gestión",
+  sistema: "Configuración",
+};
+
+/** Desktop: columna fija a la izquierda con iconos grandes y legibles. */
 export function PanelSidebar({
   nombre,
   dueno,
@@ -138,71 +150,93 @@ export function PanelSidebar({
   const pathname = usePathname();
   const items = getNavItems(tipoCuenta, rol);
 
+  // Agrupar items por sección si corresponde
+  const secciones = ["operativo", "gestion", "sistema"] as const;
+
   return (
-    <aside className="hidden md:flex md:flex-col gap-6 border-r border-rule p-5 md:sticky md:top-0 md:h-screen">
-      <div className="flex items-center gap-2.5">
-        <LogoMark logo={logo} size="size-9" />
-        <div className="min-w-0">
-          <p className="font-display text-lg leading-tight truncate">{nombre}</p>
-          <div className="flex items-center gap-1.5 mt-0.5">
-            <p className="text-xs text-ink-soft truncate">{dueno}</p>
-            {rol === "staff" ? (
-              <span className="rounded bg-paper-3 px-1.5 py-0.2 text-[10px] font-semibold text-ink-soft border border-rule">
-                Staff
-              </span>
-            ) : null}
+    <aside className="hidden md:flex md:flex-col justify-between border-r border-rule p-4 md:sticky md:top-0 md:h-screen bg-paper select-none">
+      <div className="flex flex-col gap-5 min-h-0">
+        {/* Marca y gym */}
+        <div className="flex items-center gap-3 px-2 pt-1">
+          <LogoMark logo={logo} size="size-10" />
+          <div className="min-w-0">
+            <p className="font-display text-base font-bold leading-tight truncate text-ink">{nombre}</p>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <p className="text-xs text-ink-soft truncate">{dueno}</p>
+              {rol === "staff" ? (
+                <span className="rounded bg-paper-3 px-1.5 py-0.2 text-[9px] font-bold text-ink-soft border border-rule uppercase">
+                  Staff
+                </span>
+              ) : null}
+            </div>
           </div>
         </div>
+
+        {/* Navegación agrupada */}
+        <nav className="flex flex-col gap-4 flex-1 overflow-y-auto pr-1">
+          {secciones.map((secKey) => {
+            const secItems = items.filter((i) => i.seccion === secKey);
+            if (secItems.length === 0) return null;
+
+            return (
+              <div key={secKey} className="flex flex-col gap-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-ink-soft/70 px-2.5 pb-0.5">
+                  {SECCION_TITULOS[secKey]}
+                </span>
+                {secItems.map((item) => {
+                  const active = isActive(pathname, item.href);
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      prefetch={true}
+                      aria-current={active ? "page" : undefined}
+                      className={`px-3 py-2 rounded-[10px] text-[13.5px] transition-colors duration-150 inline-flex items-center justify-between ${
+                        active
+                          ? "bg-ink text-paper font-semibold shadow-xs"
+                          : "text-ink-soft hover:bg-paper-2 hover:text-ink font-medium"
+                      }`}
+                    >
+                      <div className="inline-flex items-center gap-3 min-w-0">
+                        <item.Icono aria-hidden strokeWidth={active ? 2.2 : 2} className="size-5 shrink-0" />
+                        <span className="truncate">{item.label}</span>
+                      </div>
+                      {item.badge ? (
+                        <span className={`rounded-full px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider ${
+                          active
+                            ? "bg-volt/30 text-volt border border-volt/40"
+                            : "bg-volt/15 text-ink border border-volt/25"
+                        }`}>
+                          {item.badge}
+                        </span>
+                      ) : null}
+                    </Link>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </nav>
       </div>
-      <nav className="flex flex-col gap-0.5 flex-1">
-        {items.map((item) => {
-          const active = isActive(pathname, item.href);
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              prefetch={true}
-              aria-current={active ? "page" : undefined}
-              className={`px-3 py-2 rounded-[5px] text-sm transition-colors duration-150 [transition-timing-function:var(--ease-out)] ${
-                active
-                  ? "bg-ink text-paper"
-                  : "text-ink-soft hover:bg-paper-2 hover:text-ink"
-              } inline-flex items-center gap-2.5`}
-            >
-              <item.Icono aria-hidden strokeWidth={1.8} className="size-4 shrink-0" />
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
-      <div className="flex flex-col gap-3">
-        {tipoCuenta === "gym" && (
-          <Link
-            href="/checkin"
-            className="inline-flex h-9 items-center justify-between rounded-[5px] border border-rule px-3 text-sm text-ink transition-colors duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper-2 active:scale-[0.98]"
-          >
-            <span>Modo check-in</span>
-            <span className="rounded-[4px] bg-volt/20 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-ink">
-              Elite
-            </span>
-          </Link>
-        )}
+
+      {/* Pie de sidebar */}
+      <div className="flex flex-col gap-2 pt-3 border-t border-rule mt-2">
         <a
           href={whatsappReporteUrl(nombre)}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex h-9 items-center justify-center rounded-[5px] border border-rule px-3 text-sm text-ink transition-colors duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper-2 active:scale-[0.98]"
+          className="inline-flex h-8.5 items-center justify-center rounded-[8px] border border-rule px-3 text-xs font-medium text-ink-soft hover:text-ink hover:bg-paper-2 transition-colors"
         >
-          Reportar un problema
+          Reportar problema
         </a>
         {esSuper ? (
-          <Link href="/admin" className={pillClasses.neutra}>
-            <LifeBuoy aria-hidden strokeWidth={2} className="size-4" />
+          <Link href="/admin" className={`h-8.5 text-xs ${pillClasses.neutra}`}>
+            <LifeBuoy aria-hidden strokeWidth={2} className="size-3.5" />
             Soporte (dev)
           </Link>
         ) : null}
         <form action={logout}>
-          <button className={`w-full ${pillClasses.destructiva}`}>Salir</button>
+          <button className={`w-full h-8.5 text-xs ${pillClasses.destructiva}`}>Salir</button>
         </form>
       </div>
     </aside>

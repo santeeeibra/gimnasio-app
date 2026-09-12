@@ -31,7 +31,7 @@ export default async function PanelLayout({
 
   return (
     <div
-      className="capa-ambiental min-h-screen bg-paper text-ink md:grid md:grid-cols-[220px_1fr]"
+      className="capa-ambiental min-h-screen bg-paper text-ink md:grid md:grid-cols-[256px_1fr]"
       style={temaVars}
       data-estilo-visual={tema.estiloVisual}
       data-theme-polarity={polaridadTema(tema)}
@@ -59,7 +59,7 @@ export default async function PanelLayout({
           esSuper={esSuper}
           rol={profile.rol}
         />
-        <main className="w-full max-w-[1600px] mx-auto flex-1 p-4 sm:p-6 pb-28 md:p-8 md:pb-10">
+        <main className="w-full max-w-[1360px] mx-auto flex-1 p-4 sm:p-6 pb-28 md:p-8 md:pb-10">
           <PullToRefresh>{children}</PullToRefresh>
         </main>
         <PanelBottomNav tipoCuenta={gym?.tipo_cuenta ?? "gym"} rol={profile.rol} />

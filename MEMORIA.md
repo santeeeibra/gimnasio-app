@@ -53,3 +53,4 @@
 
 - Login rediseñado "SysGym Motion" (src/app/login/login-form.tsx): tabs Cuenta individual/Con DNI, login social Google/Facebook/X y boton "Probar app (demo)" sin registro; ya estaba en produccion, se documento recien ahora en MAPA_PROYECTO.md.
 - Consola Dev Cockpit en /admin (superadmin, gimnasio sante): switcher 1-click Duenio/Socio, credenciales de testing, reset rapido de claves, selector de plan Elite/Pro/Basico y diagnostico de uso de Supabase; ya estaba en produccion, se documento recien ahora en MAPA_PROYECTO.md.
+- Rediseño Mostrador Operativo y Navegación PC (2026-09-12): /panel transformado en Centro de Operaciones sin gráficos pesados (estado en vivo de caja del turno, grid de atajos rápidos con iconos de 20px [Cobrar Cuota, Nuevo Socio, Caja, Modo Check-in], métricas operativas del día y distribución en 2 columnas); menú lateral en PC ensanchado a 256px con iconos grandes y categorías semánticas (Mostrador, Gestión, Configuración).
