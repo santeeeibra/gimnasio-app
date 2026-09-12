@@ -9,6 +9,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { PulpoCard } from "@/components/mascota/pulpo";
+import { aceptarRutinaExpressRetencion } from "@/app/mi/rutina/actions";
 import { hapticoExito, hapticoImpactoSuave, iniciarAudioHaptico } from "@/lib/ui/hapticos";
 
 type NotificacionPendiente = {
@@ -50,13 +51,8 @@ export function PulpoRetencionCard() {
     hapticoImpactoSuave();
     setEnviando(true);
 
-    const supabase = createClient();
-    const { error } = await supabase
-      .from("notificaciones_pendientes")
-      .update({ estado: "enviado" })
-      .eq("id", aviso.id);
-
-    if (error) {
+    const res = await aceptarRutinaExpressRetencion(aviso.id);
+    if (res.error) {
       setEnviando(false);
       return;
     }

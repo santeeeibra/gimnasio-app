@@ -405,3 +405,36 @@ export async function sustituirEjercicio(
   revalidatePath("/mi/rutina");
   return { ok: "Ejercicio cambiado." };
 }
+
+export async function aceptarRutinaExpressRetencion(avisoId: string): Promise<{ error?: string; ok?: string }> {
+  const { supabase, cliente } = await clienteActual();
+  if (!cliente) return { error: "No encontramos tu ficha de cliente." };
+
+  await supabase
+    .from("notificaciones_pendientes")
+    .update({ estado: "enviado" })
+    .eq("id", avisoId)
+    .eq("cliente_id", cliente.id);
+
+  const seed = Math.floor(Math.random() * 1_000_000_000);
+  const res = await generarYGuardar(supabase, {
+    gimnasioId: cliente.gimnasio_id,
+    clienteId: cliente.id,
+    entrada: {
+      objetivo: "tonificar",
+      nivel: "principiante",
+      preferencia: "gimnasio",
+      dias: 2,
+      sexo: "sin_especificar",
+      enfasis: [],
+      zonasDolor: [],
+      seed,
+    },
+  });
+
+  if (res.error) return { error: res.error };
+
+  revalidatePath("/mi/rutina");
+  revalidatePath("/mi");
+  return { ok: "Rutina Express lista" };
+}
