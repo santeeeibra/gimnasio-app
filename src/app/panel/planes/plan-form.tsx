@@ -76,7 +76,18 @@ export function PlanForm({ planInicial, onCancel }: PlanFormProps) {
   }
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form
+      action={formAction}
+      onSubmit={(e) => {
+        if (precioNum <= 0) {
+          const ok = window.confirm(
+            "¿Seguro que querés crear este plan sin precio?"
+          );
+          if (!ok) e.preventDefault();
+        }
+      }}
+      className="space-y-4"
+    >
       {esEdicion ? (
         <input type="hidden" name="id" value={planInicial!.id} />
       ) : null}

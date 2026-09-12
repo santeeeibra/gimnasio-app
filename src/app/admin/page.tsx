@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { LIMITE_BYTES, mb, pctUso, umbralCruzado } from "@/lib/monitor-db";
 import { impersonacionActiva } from "@/lib/impersonation";
@@ -6,6 +7,7 @@ import { VistaSwitcher } from "./vista-switcher";
 import { CredencialesCard } from "./credenciales-card";
 import { SelectorPlanRapido } from "./selector-plan-rapido";
 import { ResetClavesDev } from "./reset-claves-dev";
+import { VincularGmail } from "./vincular-gmail";
 import {
   Building2,
   AlertTriangle,
@@ -228,6 +230,16 @@ export default async function AdminPage() {
           gimnasioNombre={gymTarget?.nombre ?? "Sante"}
           planActualInicial={planNombreActual}
         />
+      </section>
+
+      {/* SECCIÓN 4.5: VINCULAR GMAIL PERSONAL (SOLO SUPERADMIN) */}
+      <section className="space-y-3">
+        <h2 className="text-xs font-black uppercase tracking-[0.16em] text-ink-soft">
+          Acceso con Google (Superadmin)
+        </h2>
+        <Suspense fallback={null}>
+          <VincularGmail />
+        </Suspense>
       </section>
 
       {/* SECCIÓN 5: DIAGNÓSTICO Y MONITOR DE PLATAFORMA */}
