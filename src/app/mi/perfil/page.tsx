@@ -5,6 +5,7 @@ import { CardPeso } from "@/components/peso/card-peso";
 import { guardarPesoCliente, obtenerPesosCliente } from "@/lib/peso/actions";
 import { linkClasses, pillClasses } from "@/components/ui";
 import { User, Dumbbell, ShieldCheck, Calendar, Phone, Mail, IdCard } from "lucide-react";
+import { ArchivosSeccion } from "@/components/archivos/archivos-seccion";
 
 export const dynamic = "force-dynamic";
 
@@ -141,6 +142,16 @@ export default async function MiPerfilPage() {
           </li>
         </ul>
       </div>
+
+      {/* ── SECCIÓN 2.5: Mis archivos (apto médico, dieta, etc.) ── */}
+      {c?.id && (
+        <div className="card-cut border border-rule bg-paper-2 p-5 space-y-3">
+          <h2 className="text-xs font-bold uppercase tracking-[0.1em] text-ink-soft">
+            Mis archivos
+          </h2>
+          <ArchivosSeccion clienteId={c.id} />
+        </div>
+      )}
 
       {/* ── SECCIÓN 3: Preferencias y Seguridad ── */}
       <div className="flex flex-col gap-2">

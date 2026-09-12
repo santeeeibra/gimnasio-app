@@ -43,6 +43,7 @@ import type { DiaEditable } from "@/app/mi/rutina/rutina-editor";
 
 import { RegistrarPagoModal } from "./registrar-pago-modal";
 import { ClienteTabsSeccion } from "./cliente-tabs-seccion";
+import { ArchivosSeccion } from "@/components/archivos/archivos-seccion";
 
 export default async function ClienteDetallePage({
   params,
@@ -485,6 +486,12 @@ export default async function ClienteDetallePage({
                   action={guardarPesoSocio.bind(null, c.id)}
                   fetchRegistros={obtenerPesosSocio.bind(null, c.id)}
                 />
+              </Panel>
+            }
+            archivosContent={
+              <Panel className="p-5">
+                <h2 className="text-lg font-semibold text-ink mb-4">Archivos del Socio</h2>
+                <ArchivosSeccion clienteId={c.id} puedeBorrar />
               </Panel>
             }
           />
