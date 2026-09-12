@@ -46,7 +46,7 @@ export function WidgetAsistenciaSala({
     const supabase = createClient();
 
     const canal = supabase
-      .channel("pedidos_asistencia_sala")
+      .channel(`pedidos_asistencia_sala_${gimnasioId}_${Date.now()}`)
       .on(
         "postgres_changes",
         {
