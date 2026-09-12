@@ -7,6 +7,7 @@ import { pillClasses } from "@/components/ui";
 import { hapticoSeleccion } from "@/lib/ui/hapticos";
 import {
   Award,
+  Coins,
   CreditCard,
   Dumbbell,
   Inbox,
@@ -35,6 +36,7 @@ export function getNavItems(tipoCuenta: string = "gym", rol: string = "dueno"): 
     return [
       { href: "/panel", label: "Resumen", Icono: LayoutDashboard },
       { href: "/panel/clientes", label: "Clientes", Icono: Users },
+      { href: "/panel/caja", label: "Caja Turno", Icono: Coins },
       { href: "/panel/mensajes", label: "Mensajes", Icono: MessageSquare },
     ];
   }
@@ -54,6 +56,7 @@ export function getNavItems(tipoCuenta: string = "gym", rol: string = "dueno"): 
     return [
       { href: "/panel", label: "Resumen", Icono: LayoutDashboard },
       { href: "/panel/clientes", label: "Clientes", Icono: Users },
+      { href: "/panel/caja", label: "Caja Turno", Icono: Coins },
       { href: "/panel/mensajes", label: "Mensajes", Icono: MessageSquare },
       { href: "/panel/plan", label: "Mi plan", soloDesktop: true, Icono: CreditCard },
       { href: "/panel/ajustes", label: "Ajustes", Icono: Settings },
@@ -64,6 +67,7 @@ export function getNavItems(tipoCuenta: string = "gym", rol: string = "dueno"): 
   return [
     { href: "/panel", label: "Resumen", Icono: LayoutDashboard },
     { href: "/panel/clientes", label: "Clientes", Icono: Users },
+    { href: "/panel/caja", label: "Caja y Turnos", corto: "Caja", Icono: Coins },
     { href: "/panel/planes", label: "Planes de socios", corto: "Planes", Icono: Tags },
     { href: "/panel/mensajes", label: "Mensajes", Icono: MessageSquare },
     { href: "/panel/buzon", label: "Buzón", Icono: Inbox },

@@ -25,6 +25,7 @@ import {
   type Sexo,
 } from "@/lib/rutina/tipos";
 import { LIMIT_EXCEEDED_UPGRADE_REQUIRED } from "@/types/partner";
+import { vincularPagoCuotaACaja } from "@/app/panel/caja/actions";
 
 export type AltaState = {
   error?: string;
@@ -268,18 +269,36 @@ async function registrarPagoInterno(
     fechaManual,
   );
 
-  const { error: pagoErr } = await admin.from("pagos").insert({
+  const montoFinal = monto || plan.precio;
+  const { data: pagoInsertado, error: pagoErr } = await admin.from("pagos").insert({
     gimnasio_id: dueno.gimnasio_id,
     cliente_id: clienteId,
     plan_id: planId,
-    monto: monto || plan.precio,
+    monto: montoFinal,
     cubre_hasta: cubreHasta,
     registrado_por: dueno.id,
     comprobante_ref: comprobanteRef,
-  });
+  }).select("id").maybeSingle();
   if (pagoErr) {
     await registrarError(dueno.gimnasio_id, "pago", pagoErr);
   }
+
+  // Vincular a la sesión de caja activa si existe
+  const { data: cliProfile } = await admin
+    .from("clientes")
+    .select("profile:profiles(nombre)")
+    .eq("id", clienteId)
+    .maybeSingle();
+  const nombreSocio = (cliProfile as { profile?: { nombre?: string } | null } | null)?.profile?.nombre || "Socio";
+  await vincularPagoCuotaACaja(
+    admin,
+    dueno.gimnasio_id,
+    pagoInsertado?.id ?? "",
+    montoFinal,
+    comprobanteRef ? "transferencia" : "efectivo",
+    `Cuota: ${nombreSocio} (${plan.duracion_dias}d)`,
+    dueno.id,
+  );
 
   const upd = await aplicarCuotaAlDia(admin, clienteId, planId, cubreHasta);
   if (!upd.ok) {
@@ -288,6 +307,7 @@ async function registrarPagoInterno(
 
   revalidatePath(`/panel/clientes/${clienteId}`);
   revalidatePath("/panel/clientes");
+  revalidatePath("/panel/caja");
   revalidatePath("/panel");
   return { ok: `Pago registrado. Cuota al día hasta ${cubreHasta}.` };
 }

@@ -15,6 +15,7 @@ export type InfoPlanGimnasio = {
   permiteAvisosMorosidad: boolean;
   permiteReposoCheckin: boolean;
   permiteAsistenteIa: boolean;
+  permiteControlCaja: boolean;
 };
 
 /**
@@ -60,5 +61,6 @@ export async function verificarPlanGimnasio(
     permiteAvisosMorosidad: esElite,
     permiteReposoCheckin: esElite,
     permiteAsistenteIa: esElite,
+    permiteControlCaja: esElite,
   };
 }
