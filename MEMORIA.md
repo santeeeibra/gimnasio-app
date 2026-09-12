@@ -47,3 +47,5 @@
 - Marca de agua sutil SysGym (Hecho con SysGym • Gestioná tu progreso así • sysgym.app) en cartel de logro compartido por el socio, con Web Share nativo y branding de gimnasio intacto.
 - feed-logros.tsx estilizado con Apple HIG, variantes record/racha (ámbar/trofeo y esmeralda/llama), PulpoCard y hápticoSeleccion.
 - Celebración en vivo de récord personal en /mi/rutina: componente ConfetiCelebracion nativo en Canvas 60fps/120fps, aura lumínica, fanfarria inmediata y apertura garantizada de CartelLogro.
+
+- 2026-09-12: feature/asistente-ia-n8n — migracion 0064, endpoint /api/n8n/notificar, card Asistente IA en /panel/ajustes. Falta: Santeee levanta VM n8n, carga workflows, setea N8N_SYSGYM_SECRET y ANTHROPIC_API_KEY.

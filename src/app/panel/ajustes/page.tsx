@@ -25,7 +25,9 @@ import { BloqueoEliteGate, BadgeElite } from "@/components/ui/bloqueo-elite-gate
 
 import { AjustesSeccionModal } from "./ajustes-seccion-modal";
 import { StaffForm, type StaffItem } from "./staff-form";
-import { Palette, Landmark, Bell, Smartphone, QrCode, KeyRound, HelpCircle, Receipt, Users } from "lucide-react";
+import { Palette, Landmark, Bell, Smartphone, QrCode, KeyRound, HelpCircle, Receipt, Users, Sparkles } from "lucide-react";
+import { AsistenteIaForm } from "./asistente-ia-form";
+import { TECHO_LLAMADAS_IA_MES } from "@/lib/n8n/asistente-ia";
 
 const ESTADO_LABEL: Record<string, string> = {
   prueba: "En prueba",
@@ -55,7 +57,7 @@ export default async function AjustesPage({
     supabase
       .from("gimnasios")
       .select(
-        "id, slug, nombre, tema, logo_url, dias_aviso_morosidad, estado, plan_plataforma_vence_el, pago_alias, pago_cbu, pago_titular, tipo_cuenta, afip_habilitado, afip_cuit, afip_razon_social, afip_condicion_iva, afip_punto_venta",
+        "id, slug, nombre, tema, logo_url, dias_aviso_morosidad, estado, plan_plataforma_vence_el, pago_alias, pago_cbu, pago_titular, tipo_cuenta, afip_habilitado, afip_cuit, afip_razon_social, afip_condicion_iva, afip_punto_venta, asistente_ia_activo, asistente_ia_llamadas_mes",
       )
       .eq("id", profile.gimnasio_id)
       .maybeSingle(),
@@ -288,6 +290,39 @@ export default async function AjustesPage({
               <ReposoCheckinForm
                 gimnasioId={gym.id}
                 reposo={parseTema(gym.tema).reposoCheckin}
+              />
+            </BloqueoEliteGate>
+          </AjustesSeccionModal>
+        ) : null}
+
+        {/* ASISTENTE IA (n8n) */}
+        {gym ? (
+          <AjustesSeccionModal
+            titulo="Asistente IA"
+            subtitulo="Avisos de riesgo de abandono, cumpleaños y resumen mensual redactados solos."
+            badge={<BadgeElite />}
+            icon={<Sparkles className="size-4" />}
+            resumen={
+              <p className="text-[11px] text-ink-soft font-mono">
+                {gym.asistente_ia_llamadas_mes ?? 0}/{TECHO_LLAMADAS_IA_MES} llamadas este mes
+              </p>
+            }
+          >
+            <BloqueoEliteGate
+              bloqueado={!planInfo.permiteAsistenteIa}
+              titulo="Asistente con Inteligencia Artificial"
+              descripcion="Detecta socios en riesgo de abandono, saluda cumpleaños y te manda un resumen mensual, todo redactado por IA sin que escribas nada."
+              beneficios={[
+                "Detección automática de riesgo de abandono",
+                "Saludos de cumpleaños sin que te acuerdes",
+                "Resumen ejecutivo del mes al dueño",
+              ]}
+            >
+              <AsistenteIaForm
+                gimnasioId={gym.id}
+                activo={gym.asistente_ia_activo ?? false}
+                llamadasUsadas={gym.asistente_ia_llamadas_mes ?? 0}
+                techoMensual={TECHO_LLAMADAS_IA_MES}
               />
             </BloqueoEliteGate>
           </AjustesSeccionModal>

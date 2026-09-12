@@ -513,3 +513,36 @@ export async function actualizarCredencialesIndividuales(
   };
 }
 
+/** Prende/apaga el asistente IA (SPEC_ASISTENTE_IA_N8N.md). Exclusivo Elite. */
+export async function actualizarAsistenteIa(
+  _prev: AjustesState,
+  formData: FormData,
+): Promise<AjustesState> {
+  const dueno = await requireDueno();
+  const gimnasioId = String(formData.get("gimnasio_id") ?? "");
+  if (gimnasioId !== dueno.gimnasio_id) {
+    return { error: "No podés modificar este gimnasio" };
+  }
+
+  const supabase = await createClient();
+  const planInfo = await verificarPlanGimnasio(supabase, dueno.gimnasio_id);
+  if (!planInfo.permiteAsistenteIa) {
+    return { error: "El asistente IA es una función exclusiva del Plan Elite." };
+  }
+
+  const activo = formData.get("activo") === "on";
+
+  const { error } = await supabase
+    .from("gimnasios")
+    .update({ asistente_ia_activo: activo })
+    .eq("id", gimnasioId);
+
+  if (error) {
+    console.error("[actualizarAsistenteIa]", error);
+    return { error: "No se pudo guardar el asistente IA" };
+  }
+
+  revalidatePath("/panel/ajustes");
+  return { ok: activo ? "Asistente IA activado" : "Asistente IA desactivado" };
+}
+
