@@ -388,27 +388,42 @@ export default async function ResumenPage() {
           MOSTRADOR OPERATIVO: ESTADO DE CAJA, ATAJOS Y ATENCIÓN DEL DÍA
           ───────────────────────────────────────────────────────────── */}
 
+      {/* Encabezado */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl sm:text-3xl 2xl:text-4xl font-bold tracking-tight text-ink">Mostrador Operativo</h1>
+          <p className="text-xs sm:text-sm 2xl:text-base text-ink-soft mt-0.5">
+            Turno de recepción, cobro de cuotas y atención diaria de socios.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs 2xl:text-sm text-ink-soft font-mono bg-paper-2 border border-rule px-3 2xl:px-4 py-1.5 2xl:py-2 rounded-[8px] 2xl:rounded-[10px] capitalize">
+            {ahora.toLocaleDateString("es-AR", { weekday: "short", day: "numeric", month: "short" })}
+          </span>
+        </div>
+      </div>
+
       {/* 1. Estado de Caja del Turno */}
       {planInfo?.permiteControlCaja ? (
         sesionCaja ? (
-          <div className="rounded-[16px] border border-emerald-500/30 bg-emerald-500/5 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
-            <div className="flex items-center gap-3.5 min-w-0">
-              <div className="size-11 rounded-[12px] bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 grid place-items-center shrink-0">
-                <Coins className="size-6" />
+          <div className="rounded-[16px] 2xl:rounded-[22px] border border-emerald-500/30 bg-emerald-500/5 p-4 sm:p-5 2xl:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+            <div className="flex items-center gap-3.5 2xl:gap-4.5 min-w-0">
+              <div className="size-11 2xl:size-14 rounded-[12px] 2xl:rounded-[16px] bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 grid place-items-center shrink-0">
+                <Coins className="size-6 2xl:size-7" />
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1 text-xs font-black uppercase tracking-wider text-emerald-400">
-                    <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="inline-flex items-center gap-1.5 text-xs 2xl:text-sm font-black uppercase tracking-wider text-emerald-400">
+                    <span className="size-2 2xl:size-2.5 rounded-full bg-emerald-400 animate-pulse" />
                     Caja Abierta · {sesionCaja.turno_nombre}
                   </span>
                   {sesionCaja.perfil_abrio?.nombre ? (
-                    <span className="text-xs text-ink-soft truncate">
+                    <span className="text-xs 2xl:text-sm text-ink-soft truncate">
                       por {sesionCaja.perfil_abrio.nombre}
                     </span>
                   ) : null}
                 </div>
-                <p className="text-sm sm:text-base font-bold text-ink mt-0.5">
+                <p className="text-sm sm:text-base 2xl:text-xl font-bold text-ink mt-0.5">
                   Fondo inicial: ${sesionCaja.monto_inicial_efectivo.toLocaleString("es-AR")}
                 </p>
               </div>
@@ -416,30 +431,30 @@ export default async function ResumenPage() {
             <div className="flex items-center gap-2 shrink-0">
               <Link
                 href="/panel/caja"
-                className="px-4 py-2 rounded-[10px] bg-ink text-paper text-xs font-bold hover:opacity-90 transition-opacity inline-flex items-center gap-1.5 shadow-xs"
+                className="px-4 2xl:px-5 py-2 2xl:py-2.5 rounded-[10px] 2xl:rounded-[12px] bg-ink text-paper text-xs 2xl:text-sm font-bold hover:opacity-90 transition-opacity inline-flex items-center gap-1.5 shadow-xs"
               >
-                Gestionar Turno <ArrowUpRight className="size-3.5" />
+                Gestionar Turno <ArrowUpRight className="size-3.5 2xl:size-4" />
               </Link>
             </div>
           </div>
         ) : (
-          <div className="rounded-[16px] border border-amber-500/30 bg-amber-500/5 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
-            <div className="flex items-center gap-3.5 min-w-0">
-              <div className="size-11 rounded-[12px] bg-amber-500/15 border border-amber-500/25 text-amber-400 grid place-items-center shrink-0">
-                <Coins className="size-6" />
+          <div className="rounded-[16px] 2xl:rounded-[22px] border border-amber-500/30 bg-amber-500/5 p-4 sm:p-5 2xl:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+            <div className="flex items-center gap-3.5 2xl:gap-4.5 min-w-0">
+              <div className="size-11 2xl:size-14 rounded-[12px] 2xl:rounded-[16px] bg-amber-500/15 border border-amber-500/25 text-amber-400 grid place-items-center shrink-0">
+                <Coins className="size-6 2xl:size-7" />
               </div>
               <div className="min-w-0">
-                <span className="text-xs font-black uppercase tracking-wider text-amber-400">
+                <span className="text-xs 2xl:text-sm font-black uppercase tracking-wider text-amber-400">
                   ○ Sin turno de caja abierto
                 </span>
-                <p className="text-xs sm:text-sm text-ink-soft mt-0.5">
+                <p className="text-xs sm:text-sm 2xl:text-base text-ink-soft mt-0.5">
                   Abrí el turno para registrar cobros en efectivo y controlar gastos de mostrador.
                 </p>
               </div>
             </div>
             <Link
               href="/panel/caja"
-              className="px-4 py-2 rounded-[10px] bg-[#10e7a0] text-black text-xs font-black hover:brightness-105 transition-all inline-flex items-center gap-1.5 shadow-xs shrink-0"
+              className="px-4 2xl:px-5 py-2 2xl:py-2.5 rounded-[10px] 2xl:rounded-[12px] bg-[#10e7a0] text-black text-xs 2xl:text-sm font-black hover:brightness-105 transition-all inline-flex items-center gap-1.5 shadow-xs shrink-0"
             >
               + Abrir Turno de Caja
             </Link>
@@ -449,23 +464,23 @@ export default async function ResumenPage() {
 
       {/* 2. Acciones Frecuentes / Atajos Rápidos */}
       <div className="space-y-2.5">
-        <span className="text-[11px] uppercase tracking-[0.08em] text-ink-soft font-bold px-0.5">
+        <span className="text-[11px] 2xl:text-xs uppercase tracking-[0.08em] text-ink-soft font-bold px-0.5">
           Atajos Rápidos de Mostrador
         </span>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 2xl:gap-5">
           {/* Cobrar Cuota */}
           <Link
             href="/panel/clientes"
-            className="group p-4 rounded-[16px] border border-rule bg-paper-2 hover:border-volt/40 hover:bg-paper-2/80 active:scale-[0.98] transition-all flex flex-col justify-between shadow-xs min-h-[110px]"
+            className="group p-4 2xl:p-5.5 rounded-[16px] 2xl:rounded-[20px] border border-rule bg-paper-2 hover:border-volt/40 hover:bg-paper-2/80 active:scale-[0.98] transition-all flex flex-col justify-between shadow-xs min-h-[110px] 2xl:min-h-[135px]"
           >
-            <div className="size-10 rounded-[10px] bg-emerald-500/15 text-emerald-400 grid place-items-center group-hover:scale-105 transition-transform">
-              <CreditCard className="size-5" />
+            <div className="size-10 2xl:size-12 rounded-[10px] 2xl:rounded-[14px] bg-emerald-500/15 text-emerald-400 grid place-items-center group-hover:scale-105 transition-transform">
+              <CreditCard className="size-5 2xl:size-6" />
             </div>
             <div className="mt-2.5">
-              <p className="text-sm font-bold text-ink group-hover:text-emerald-400 transition-colors">
+              <p className="text-sm 2xl:text-base font-bold text-ink group-hover:text-emerald-400 transition-colors">
                 Cobrar Cuota
               </p>
-              <p className="text-[11px] text-ink-soft mt-0.5">
+              <p className="text-[11px] 2xl:text-xs text-ink-soft mt-0.5">
                 Buscar socio y cobrar
               </p>
             </div>
@@ -474,16 +489,16 @@ export default async function ResumenPage() {
           {/* Nuevo Socio */}
           <Link
             href="/panel/clientes"
-            className="group p-4 rounded-[16px] border border-rule bg-paper-2 hover:border-volt/40 hover:bg-paper-2/80 active:scale-[0.98] transition-all flex flex-col justify-between shadow-xs min-h-[110px]"
+            className="group p-4 2xl:p-5.5 rounded-[16px] 2xl:rounded-[20px] border border-rule bg-paper-2 hover:border-volt/40 hover:bg-paper-2/80 active:scale-[0.98] transition-all flex flex-col justify-between shadow-xs min-h-[110px] 2xl:min-h-[135px]"
           >
-            <div className="size-10 rounded-[10px] bg-cyan-400/15 text-cyan-400 grid place-items-center group-hover:scale-105 transition-transform">
-              <UserPlus className="size-5" />
+            <div className="size-10 2xl:size-12 rounded-[10px] 2xl:rounded-[14px] bg-cyan-400/15 text-cyan-400 grid place-items-center group-hover:scale-105 transition-transform">
+              <UserPlus className="size-5 2xl:size-6" />
             </div>
             <div className="mt-2.5">
-              <p className="text-sm font-bold text-ink group-hover:text-cyan-400 transition-colors">
+              <p className="text-sm 2xl:text-base font-bold text-ink group-hover:text-cyan-400 transition-colors">
                 Nuevo Socio
               </p>
-              <p className="text-[11px] text-ink-soft mt-0.5">
+              <p className="text-[11px] 2xl:text-xs text-ink-soft mt-0.5">
                 Alta rápida con DNI
               </p>
             </div>
@@ -492,16 +507,16 @@ export default async function ResumenPage() {
           {/* Caja Diaria */}
           <Link
             href="/panel/caja"
-            className="group p-4 rounded-[16px] border border-rule bg-paper-2 hover:border-volt/40 hover:bg-paper-2/80 active:scale-[0.98] transition-all flex flex-col justify-between shadow-xs min-h-[110px]"
+            className="group p-4 2xl:p-5.5 rounded-[16px] 2xl:rounded-[20px] border border-rule bg-paper-2 hover:border-volt/40 hover:bg-paper-2/80 active:scale-[0.98] transition-all flex flex-col justify-between shadow-xs min-h-[110px] 2xl:min-h-[135px]"
           >
-            <div className="size-10 rounded-[10px] bg-volt/15 text-volt grid place-items-center group-hover:scale-105 transition-transform">
-              <Coins className="size-5" />
+            <div className="size-10 2xl:size-12 rounded-[10px] 2xl:rounded-[14px] bg-volt/15 text-volt grid place-items-center group-hover:scale-105 transition-transform">
+              <Coins className="size-5 2xl:size-6" />
             </div>
             <div className="mt-2.5">
-              <p className="text-sm font-bold text-ink group-hover:text-volt transition-colors">
+              <p className="text-sm 2xl:text-base font-bold text-ink group-hover:text-volt transition-colors">
                 Caja y Turnos
               </p>
-              <p className="text-[11px] text-ink-soft mt-0.5">
+              <p className="text-[11px] 2xl:text-xs text-ink-soft mt-0.5">
                 Fondo, gastos y arqueo
               </p>
             </div>
@@ -510,21 +525,21 @@ export default async function ResumenPage() {
           {/* Modo Check-in */}
           <Link
             href="/checkin"
-            className="group p-4 rounded-[16px] border border-rule bg-paper-2 hover:border-volt/40 hover:bg-paper-2/80 active:scale-[0.98] transition-all flex flex-col justify-between shadow-xs min-h-[110px]"
+            className="group p-4 2xl:p-5.5 rounded-[16px] 2xl:rounded-[20px] border border-rule bg-paper-2 hover:border-volt/40 hover:bg-paper-2/80 active:scale-[0.98] transition-all flex flex-col justify-between shadow-xs min-h-[110px] 2xl:min-h-[135px]"
           >
-            <div className="size-10 rounded-[10px] bg-purple-500/15 text-purple-400 grid place-items-center group-hover:scale-105 transition-transform">
-              <ScanLine className="size-5" />
+            <div className="size-10 2xl:size-12 rounded-[10px] 2xl:rounded-[14px] bg-purple-500/15 text-purple-400 grid place-items-center group-hover:scale-105 transition-transform">
+              <ScanLine className="size-5 2xl:size-6" />
             </div>
             <div className="mt-2.5">
               <div className="flex items-center gap-1.5">
-                <p className="text-sm font-bold text-ink group-hover:text-purple-400 transition-colors">
+                <p className="text-sm 2xl:text-base font-bold text-ink group-hover:text-purple-400 transition-colors">
                   Modo Check-in
                 </p>
-                <span className="rounded-full bg-volt/20 px-1.5 py-0.2 text-[8px] font-bold uppercase text-ink">
+                <span className="rounded-full bg-volt/20 px-1.5 py-0.2 text-[8px] 2xl:text-[9px] font-bold uppercase text-ink">
                   Elite
                 </span>
               </div>
-              <p className="text-[11px] text-ink-soft mt-0.5">
+              <p className="text-[11px] 2xl:text-xs text-ink-soft mt-0.5">
                 Terminal para recepción
               </p>
             </div>
@@ -533,39 +548,39 @@ export default async function ResumenPage() {
       </div>
 
       {/* 3. Indicadores Operativos del Día */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-        <div className="rounded-[14px] border border-rule bg-paper-2 p-4 shadow-xs flex items-center justify-between">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 2xl:gap-5">
+        <div className="rounded-[14px] 2xl:rounded-[18px] border border-rule bg-paper-2 p-4 2xl:p-5 shadow-xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] uppercase tracking-wider text-ink-soft font-semibold">Check-ins Hoy</span>
-            <p className="text-2xl font-display font-bold text-ink mt-0.5">{asistenciasHoy}</p>
-            <span className="text-[11px] text-ink-soft">Socios que ingresaron</span>
+            <span className="text-[11px] 2xl:text-xs uppercase tracking-wider text-ink-soft font-semibold">Check-ins Hoy</span>
+            <p className="text-2xl 2xl:text-3xl font-display font-bold text-ink mt-0.5">{asistenciasHoy}</p>
+            <span className="text-[11px] 2xl:text-xs text-ink-soft">Socios que ingresaron</span>
           </div>
-          <div className="size-10 rounded-[10px] bg-volt/15 text-volt grid place-items-center shrink-0">
-            <Users className="size-5" />
+          <div className="size-10 2xl:size-12 rounded-[10px] 2xl:rounded-[14px] bg-volt/15 text-volt grid place-items-center shrink-0">
+            <Users className="size-5 2xl:size-6" />
           </div>
         </div>
 
-        <div className="rounded-[14px] border border-rule bg-paper-2 p-4 shadow-xs flex items-center justify-between">
+        <div className="rounded-[14px] 2xl:rounded-[18px] border border-rule bg-paper-2 p-4 2xl:p-5 shadow-xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] uppercase tracking-wider text-ink-soft font-semibold">Cuotas Vencidas</span>
-            <p className={`text-2xl font-display font-bold mt-0.5 ${vencidosCount > 0 ? "text-danger" : "text-ink"}`}>
+            <span className="text-[11px] 2xl:text-xs uppercase tracking-wider text-ink-soft font-semibold">Cuotas Vencidas</span>
+            <p className={`text-2xl 2xl:text-3xl font-display font-bold mt-0.5 ${vencidosCount > 0 ? "text-danger" : "text-ink"}`}>
               {vencidosCount}
             </p>
-            <span className="text-[11px] text-ink-soft">Para cobrar en recepción</span>
+            <span className="text-[11px] 2xl:text-xs text-ink-soft">Para cobrar en recepción</span>
           </div>
-          <div className={`size-10 rounded-[10px] grid place-items-center shrink-0 ${vencidosCount > 0 ? "bg-danger/15 text-danger" : "bg-paper-3 text-ink-soft"}`}>
-            <AlertCircle className="size-5" />
+          <div className={`size-10 2xl:size-12 rounded-[10px] 2xl:rounded-[14px] grid place-items-center shrink-0 ${vencidosCount > 0 ? "bg-danger/15 text-danger" : "bg-paper-3 text-ink-soft"}`}>
+            <AlertCircle className="size-5 2xl:size-6" />
           </div>
         </div>
 
-        <div className="rounded-[14px] border border-rule bg-paper-2 p-4 shadow-xs flex items-center justify-between">
+        <div className="rounded-[14px] 2xl:rounded-[18px] border border-rule bg-paper-2 p-4 2xl:p-5 shadow-xs flex items-center justify-between">
           <div>
-            <span className="text-[11px] uppercase tracking-wider text-ink-soft font-semibold">Vencen Esta Semana</span>
-            <p className="text-2xl font-display font-bold text-ink mt-0.5">{porVencerCount}</p>
-            <span className="text-[11px] text-ink-soft">Próximos 7 días</span>
+            <span className="text-[11px] 2xl:text-xs uppercase tracking-wider text-ink-soft font-semibold">Vencen Esta Semana</span>
+            <p className="text-2xl 2xl:text-3xl font-display font-bold text-ink mt-0.5">{porVencerCount}</p>
+            <span className="text-[11px] 2xl:text-xs text-ink-soft">Próximos 7 días</span>
           </div>
-          <div className="size-10 rounded-[10px] bg-amber-500/15 text-amber-400 grid place-items-center shrink-0">
-            <CalendarClock className="size-5" />
+          <div className="size-10 2xl:size-12 rounded-[10px] 2xl:rounded-[14px] bg-amber-500/15 text-amber-400 grid place-items-center shrink-0">
+            <CalendarClock className="size-5 2xl:size-6" />
           </div>
         </div>
       </div>
