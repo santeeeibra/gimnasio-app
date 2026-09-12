@@ -8,7 +8,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { generarYGuardar } from "@/lib/rutina/generar";
 import { cupoSocios } from "@/lib/plataforma/cupo";
 import { registrarError } from "@/lib/admin/errores";
-import { aplicarCuotaAlDia, calcularCubreHasta } from "@/lib/pagos/cobro-socio";
+import { aplicarCuotaAlDia, calcularCubreHasta, sumarDias } from "@/lib/pagos/cobro-socio";
 import {
   ENFASIS,
   MAX_ENFASIS,
@@ -252,22 +252,24 @@ async function registrarPagoInterno(
   }
 
   const admin = createAdminClient();
-  const { data: plan } = await admin
-    .from("planes")
-    .select("duracion_dias, precio")
-    .eq("id", planId)
-    .single();
+
+  // Lectura en paralelo: Plan y Cliente
+  const [{ data: plan }, { data: cliData }] = await Promise.all([
+    admin.from("planes").select("duracion_dias, precio").eq("id", planId).single(),
+    admin
+      .from("clientes")
+      .select("fecha_vencimiento, profile:profiles(nombre)")
+      .eq("id", clienteId)
+      .maybeSingle(),
+  ]);
+
   if (!plan) return { error: "Plan inválido." };
 
-  // Si eligió fecha manual, se respeta tal cual. Si no: si todavía tiene
-  // días, se suma sobre el vencimiento; si no, desde hoy. Misma lógica que
-  // usa el webhook del cobro automático (src/lib/pagos/cobro-socio.ts).
-  const cubreHasta = await calcularCubreHasta(
-    admin,
-    clienteId,
-    plan.duracion_dias,
-    fechaManual,
-  );
+  const base =
+    !fechaManual && cliData?.fecha_vencimiento && new Date(cliData.fecha_vencimiento) > new Date()
+      ? new Date(cliData.fecha_vencimiento)
+      : new Date();
+  const cubreHasta = fechaManual || sumarDias(base, plan.duracion_dias);
 
   const montoFinal = monto || plan.precio;
   const { data: pagoInsertado, error: pagoErr } = await admin.from("pagos").insert({
@@ -279,37 +281,33 @@ async function registrarPagoInterno(
     registrado_por: dueno.id,
     comprobante_ref: comprobanteRef,
   }).select("id").maybeSingle();
+
   if (pagoErr) {
     await registrarError(dueno.gimnasio_id, "pago", pagoErr);
   }
 
-  // Vincular a la sesión de caja activa si existe
-  const { data: cliProfile } = await admin
-    .from("clientes")
-    .select("profile:profiles(nombre)")
-    .eq("id", clienteId)
-    .maybeSingle();
-  const nombreSocio = (cliProfile as { profile?: { nombre?: string } | null } | null)?.profile?.nombre || "Socio";
-  await vincularPagoCuotaACaja(
-    admin,
-    dueno.gimnasio_id,
-    pagoInsertado?.id ?? "",
-    montoFinal,
-    comprobanteRef ? "transferencia" : "efectivo",
-    `Cuota: ${nombreSocio} (${plan.duracion_dias}d)`,
-    dueno.id,
-  );
+  const profile = Array.isArray(cliData?.profile) ? cliData.profile[0] : cliData?.profile;
+  const nombreSocio = (profile as { nombre?: string } | null)?.nombre || "Socio";
 
-  const upd = await aplicarCuotaAlDia(admin, clienteId, planId, cubreHasta);
-  if (!upd.ok) {
-    await registrarError(dueno.gimnasio_id, "pago", upd.msg);
-  }
+  // Actualización de cuota y vinculación con caja en paralelo
+  await Promise.all([
+    aplicarCuotaAlDia(admin, clienteId, planId, cubreHasta),
+    vincularPagoCuotaACaja(
+      admin,
+      dueno.gimnasio_id,
+      pagoInsertado?.id ?? "",
+      montoFinal,
+      comprobanteRef ? "transferencia" : "efectivo",
+      `Cuota: ${nombreSocio} (${plan.duracion_dias}d)`,
+      dueno.id,
+    ),
+  ]);
 
   revalidatePath(`/panel/clientes/${clienteId}`);
   revalidatePath("/panel/clientes");
   revalidatePath("/panel/caja");
-  revalidatePath("/panel");
   return { ok: `Pago registrado. Cuota al día hasta ${cubreHasta}.` };
+
 }
 
 // El dueño vuelve la contraseña del socio a la inicial (gym + últimos 4 del
