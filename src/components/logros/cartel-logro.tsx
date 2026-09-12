@@ -11,6 +11,7 @@
  */
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   generarImagenLogro,
   type ColoresImagen,
@@ -54,8 +55,29 @@ export function CartelLogro(props: CartelLogroProps) {
   const [generando, setGenerando] = useState(false);
   const [imagen, setImagen] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   const esRecord = props.tipo === "record";
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Bloquear scroll de fondo y soportar cerrar con Escape
+  useEffect(() => {
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        props.onCerrar?.();
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [props.onCerrar]);
 
   // Disparar micro-interacción sonora/háptica al montar si es un récord o hito
   useEffect(() => {
@@ -137,12 +159,16 @@ export function CartelLogro(props: CartelLogroProps) {
     props.onCerrar?.();
   }
 
-  return (
+  if (!mounted || typeof document === "undefined") return null;
+
+  return createPortal(
     <div
       role="dialog"
+      aria-modal="true"
       aria-label={props.titulo}
       data-logro={props.tipo}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md transition-all duration-200 animate-in fade-in"
+      onClick={handleCerrar}
+      className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md transition-all duration-200 animate-in fade-in"
     >
       {/* Lluvia de confeti festivo (Canvas 60fps) */}
       <ConfetiCelebracion activo={true} tipo={props.tipo} />
@@ -154,7 +180,10 @@ export function CartelLogro(props: CartelLogroProps) {
         }`}
       />
 
-      <div className="relative w-full max-w-sm rounded-[22px] border border-white/10 bg-zinc-950/95 p-6 shadow-2xl backdrop-blur-2xl text-white animate-in zoom-in-95 duration-200 flex flex-col items-center text-center overflow-hidden z-10">
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-[22px] border border-white/10 bg-zinc-950/95 p-6 shadow-2xl backdrop-blur-2xl text-white animate-in zoom-in-95 duration-200 flex flex-col items-center text-center z-10"
+      >
         {/* Botón de cerrar superior */}
         {props.onCerrar && (
           <button
@@ -270,7 +299,8 @@ export function CartelLogro(props: CartelLogroProps) {
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
