@@ -17,6 +17,7 @@ import { DatosTransferencia } from "@/components/mi/datos-transferencia";
 import { CacheAlVuelo } from "@/components/offline/cache-al-vuelo";
 import { BotonInstalarApp } from "@/components/pwa/boton-instalar-app";
 import { BotonActualizar } from "@/components/ui/boton-actualizar";
+import { PulpoRetencionCard } from "@/components/mi/pulpo-retencion-card";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -203,6 +204,8 @@ export default async function MiPage() {
           </div>
         </div>
       )}
+
+      <PulpoRetencionCard />
 
       {racha ? (
         <RachaConstancia dias={racha.dias} total={racha.total} />
