@@ -28,6 +28,7 @@ import { StickyProgresoDia } from "@/components/rutinas/sticky-progreso-dia";
 import { LogroDiaCompletado } from "@/components/rutinas/logro-dia-completado";
 import { BotonPedirAyuda } from "@/components/rutinas/boton-pedir-ayuda";
 import { PulpoAsistenteChat } from "@/components/mi/pulpo-asistente-chat";
+import { Sparkles } from "lucide-react";
 import { DialVerticalProgreso } from "@/components/progreso/dial-vertical-progreso";
 import { HistorialEjercicio } from "@/components/progreso/historial-ejercicio";
 import { EquipamientoSugerido } from "@/components/monetizacion/equipamiento-sugerido";
@@ -1139,13 +1140,15 @@ function ItemFila({
               ) : null}
               <PulpoAsistenteChat
                 ejercicioId={ej?.id}
+                ejercicioNombre={ej?.nombre}
+                onSeleccionarAlternativa={cambiar}
                 trigger={
                   <button
                     type="button"
-                    aria-label="Preguntar a Volt IA"
-                    className="grid size-8 shrink-0 place-items-center rounded-[8px] text-emerald-500 hover:text-emerald-400 bg-emerald-500/10 transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-90 active:bg-emerald-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+                    aria-label="Asistente de ejercicio IA"
+                    className="grid size-8 shrink-0 place-items-center rounded-[8px] text-accent hover:text-accent/80 bg-accent/10 transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-90 active:bg-accent/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                   >
-                    <span className="text-[17px]">🐙</span>
+                    <Sparkles className="size-4" />
                   </button>
                 }
               />

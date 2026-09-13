@@ -1,180 +1,465 @@
 "use client";
 
 import { useState } from "react";
-import { PulpoCard } from "@/components/mascota/pulpo";
-import { hapticoImpactoSuave, iniciarAudioHaptico, hapticoExito } from "@/lib/ui/hapticos";
-import { buscarReemplazoMaquinaOcupada, obtenerTipsTecnica } from "@/app/mi/rutina/asistente-actions";
+import {
+  Sparkles,
+  RefreshCw,
+  HelpCircle,
+  X,
+  ChevronRight,
+  ChevronLeft,
+  Check,
+  AlertCircle,
+  Loader2,
+  Dumbbell,
+  Send,
+} from "lucide-react";
+import {
+  hapticoImpactoSuave,
+  iniciarAudioHaptico,
+  hapticoExito,
+  hapticoError,
+  hapticoSeleccion,
+} from "@/lib/ui/hapticos";
+import {
+  buscarReemplazoMaquinaOcupada,
+  obtenerTipsTecnica,
+  reportarEjercicioFaltante,
+} from "@/app/mi/rutina/asistente-actions";
 
-type Mensaje = { id: string; role: "pulpo" | "user"; tipo: "texto" | "alternativas"; contenido: string; payload?: any };
+interface Alternativa {
+  id: string;
+  nombre: string;
+  equipo: string;
+  imagen_url: string | null;
+}
 
-export function PulpoAsistenteChat({ ejercicioId, trigger }: { ejercicioId?: string; trigger: React.ReactNode }) {
+interface Props {
+  ejercicioId?: string;
+  ejercicioNombre?: string;
+  trigger?: React.ReactNode;
+  onSeleccionarAlternativa?: (nuevo: any) => void;
+}
+
+type Vista = "menu" | "maquina" | "tecnica";
+
+export function PulpoAsistenteChat({
+  ejercicioId,
+  ejercicioNombre,
+  trigger,
+  onSeleccionarAlternativa,
+}: Props) {
   const [abierto, setAbierto] = useState(false);
-  const [posePulpo, setPosePulpo] = useState<'saludo' | 'buscando' | 'tecnica' | 'exito' | 'error'>('saludo');
+  const [vista, setVista] = useState<Vista>("menu");
   const [cargando, setCargando] = useState(false);
-  const [mensajes, setMensajes] = useState<Mensaje[]>([
-    { id: "1", role: "pulpo", tipo: "texto", contenido: "¡Hola! Soy Volt 🐙. ¿Con qué te ayudo en este ejercicio?" }
-  ]);
+  const [alternativas, setAlternativas] = useState<Alternativa[]>([]);
+  const [tecnicaData, setTecnicaData] = useState<{
+    nombre: string;
+    descripcion: string | null;
+    imagen_url: string | null;
+  } | null>(null);
+  const [faltaContenidoTecnica, setFaltaContenidoTecnica] = useState(false);
+  const [reporteEnviado, setReporteEnviado] = useState(false);
+  const [mensajeError, setMensajeError] = useState<string | null>(null);
 
   const abrir = () => {
     iniciarAudioHaptico();
     hapticoImpactoSuave();
+    setVista("menu");
+    setMensajeError(null);
+    setReporteEnviado(false);
     setAbierto(true);
   };
 
   const cerrar = () => {
     hapticoImpactoSuave();
     setAbierto(false);
-    setTimeout(() => setMensajes([mensajes[0]]), 300); // reset al cerrar
+    setTimeout(() => {
+      setVista("menu");
+      setMensajeError(null);
+    }, 250);
+  };
+
+  const volverAlMenu = () => {
+    hapticoSeleccion();
+    setVista("menu");
+    setMensajeError(null);
   };
 
   const handleMaquinaOcupada = async () => {
-    if (!ejercicioId) return;
-    hapticoImpactoSuave();
-    setMensajes((prev) => [...prev, { id: Date.now().toString(), role: "user", tipo: "texto", contenido: "La máquina está ocupada" }]);
-    setCargando(true); setPosePulpo('buscando');
-    
-    const res = await buscarReemplazoMaquinaOcupada(ejercicioId);
-    setCargando(false);
-    
-    if (!res.ok) { 
-      setPosePulpo('error');
-      setMensajes((prev) => [...prev, { id: Date.now().toString(), role: "pulpo", tipo: "texto", contenido: res.error || "Mmm, hubo un error buscando. ¡Avisale al staff!" }]);
+    if (!ejercicioId) {
+      setMensajeError("No se identificó el ejercicio actual.");
+      setVista("maquina");
       return;
     }
-    
-    if (res.alternativas.length === 0) { setPosePulpo('error');
-      setMensajes((prev) => [...prev, { id: Date.now().toString(), role: "pulpo", tipo: "texto", contenido: "Parece que no hay alternativas registradas para este músculo en tu gym actual." }]);
+    hapticoImpactoSuave();
+    setVista("maquina");
+    setCargando(true);
+    setMensajeError(null);
+
+    const res = await buscarReemplazoMaquinaOcupada(ejercicioId);
+    setCargando(false);
+
+    if (!res.ok) {
+      hapticoError();
+      setMensajeError(res.error || "No se pudieron buscar alternativas.");
       return;
     }
 
-    hapticoExito(); setPosePulpo('exito');
-    setMensajes((prev) => [
-      ...prev,
-      { 
-        id: Date.now().toString(), 
-        role: "pulpo", 
-        tipo: "alternativas", 
-        contenido: "¡Acá tenés alternativas que trabajan igual pero con otro equipo!", 
-        payload: res.alternativas 
-      }
-    ]);
+    if (res.alternativas.length === 0) {
+      hapticoError();
+      setAlternativas([]);
+      setMensajeError(
+        "No encontramos ejercicios alternativos cargados en la base de datos para este patrón. Ya notificamos al panel de desarrollo para agregarlos con su GIF."
+      );
+      return;
+    }
+
+    hapticoExito();
+    setAlternativas(res.alternativas as Alternativa[]);
   };
 
   const handleTecnica = async () => {
-    if (!ejercicioId) return;
+    if (!ejercicioId) {
+      setMensajeError("No se identificó el ejercicio actual.");
+      setVista("tecnica");
+      return;
+    }
     hapticoImpactoSuave();
-    setMensajes((prev) => [...prev, { id: Date.now().toString(), role: "user", tipo: "texto", contenido: "No sé hacer esto" }]);
-    setCargando(true); setPosePulpo('buscando');
-    
+    setVista("tecnica");
+    setCargando(true);
+    setMensajeError(null);
+
     const res = await obtenerTipsTecnica(ejercicioId);
     setCargando(false);
 
-    if (!res.ok) { 
-      setPosePulpo('error');
-      setMensajes((prev) => [...prev, { id: Date.now().toString(), role: "pulpo", tipo: "texto", contenido: res.error || "No tengo los tips de este ejercicio en la base." }]);
+    if (!res.ok) {
+      hapticoError();
+      setMensajeError(
+        res.error || "Este ejercicio no está registrado en la base de datos."
+      );
       return;
     }
 
-    hapticoExito(); setPosePulpo("tecnica");
-    setMensajes((prev) => [
-      ...prev,
-      { id: Date.now().toString(), role: "pulpo", tipo: "texto", contenido: res.ejercicio.descripcion || "¡Mantené la espalda recta y controlá la bajada!" }
-    ]);
+    hapticoExito();
+    setTecnicaData(res.ejercicio);
+    setFaltaContenidoTecnica(Boolean(res.faltaContenido));
+  };
+
+  const handleSeleccionar = (alt: Alternativa) => {
+    hapticoExito();
+    if (onSeleccionarAlternativa) {
+      onSeleccionarAlternativa(alt);
+    }
+    cerrar();
+  };
+
+  const handleReportarFaltante = async () => {
+    hapticoImpactoSuave();
+    setReporteEnviado(true);
+    await reportarEjercicioFaltante({
+      ejercicioId,
+      ejercicioNombre,
+      motivo: "El usuario solicitó cargar el ejercicio y su GIF en el catálogo.",
+    });
+    hapticoExito();
   };
 
   return (
     <>
-      <div onClick={abrir}>{trigger}</div>
+      <div onClick={abrir} className="inline-flex">
+        {trigger ?? (
+          <button
+            type="button"
+            aria-label="Asistente de ejercicio"
+            className="grid size-8 shrink-0 place-items-center rounded-[8px] text-accent hover:text-accent/80 bg-accent/10 transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-90 active:bg-accent/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+          >
+            <Sparkles className="size-4" />
+          </button>
+        )}
+      </div>
 
-      {/* Backdrop */}
+      {/* Backdrop estilo iOS */}
       {abierto && (
-        <div 
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-opacity" 
+        <div
+          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px] transition-opacity duration-200"
           onClick={cerrar}
           aria-hidden
         />
       )}
 
-      {/* Bottom Sheet */}
-      <div 
-        className={"fixed inset-x-0 bottom-0 z-50 transform transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] " + 
-        (abierto ? "translate-y-0" : "translate-y-full")}
+      {/* Action Sheet Bottom Sheet */}
+      <div
+        className={`fixed inset-x-0 bottom-0 z-50 transform transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+          abierto ? "translate-y-0" : "translate-y-full pointer-events-none"
+        }`}
+        role="dialog"
+        aria-modal="true"
       >
-        <div className="mx-auto max-w-md bg-zinc-950 rounded-t-[24px] shadow-2xl border-t border-zinc-800 flex flex-col h-[75vh] overflow-hidden">
-          {/* Header */}
-          <div className="flex items-center gap-3 p-4 border-b border-zinc-800">
-            <div className="flex-shrink-0 w-12 h-12 rounded-[12px] bg-zinc-950 border border-emerald-500/30 overflow-hidden shadow-[0_0_15px_rgba(16,231,160,0.15)] grid place-items-center"><img src={`/mascota/chat/${posePulpo}.${posePulpo === "error" ? "png" : "svg"}`} alt="Volt" className="w-10 h-10 object-contain drop-shadow-md transition-all duration-300" /></div>
-            <div>
-              <h3 className="text-white font-bold tracking-wide text-sm">Volt IA</h3>
-              <p className="text-emerald-400 text-xs font-medium">Asistente en línea</p>
+        <div className="mx-auto max-w-md bg-paper border-t border-rule rounded-t-[24px] shadow-2xl flex flex-col max-h-[85vh] overflow-hidden">
+          {/* Grab Handle */}
+          <div className="w-9 h-1 rounded-full bg-rule-light mx-auto mt-2.5 mb-1" />
+
+          {/* Header del Sheet */}
+          <div className="flex items-center justify-between px-4 py-2.5 border-b border-rule/70">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="size-7 rounded-[8px] bg-accent/10 text-accent grid place-items-center shrink-0">
+                <Sparkles className="size-4" />
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-sm font-semibold text-ink truncate leading-tight">
+                  {vista === "menu"
+                    ? "Asistente de Ejercicio"
+                    : vista === "maquina"
+                    ? "Máquina Ocupada"
+                    : "Técnica & Consejos"}
+                </h3>
+                <p className="text-[11px] text-ink-muted truncate">
+                  {ejercicioNombre ? ejercicioNombre : "Guía rápida & variantes"}
+                </p>
+              </div>
             </div>
-            <button onClick={cerrar} className="ml-auto w-8 h-8 flex items-center justify-center rounded-full bg-zinc-900 text-zinc-400 active:scale-95 transition-transform">
-              ✕
+
+            <button
+              onClick={cerrar}
+              aria-label="Cerrar"
+              className="size-7 rounded-full bg-rule/50 text-ink-muted hover:text-ink grid place-items-center active:scale-95 transition-transform"
+            >
+              <X className="size-4" />
             </button>
           </div>
 
-          {/* Chat Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {mensajes.map((m) => (
-              <div key={m.id} className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}>
-                <div className={`px-4 py-2.5 rounded-[18px] max-w-[85%] text-sm ${m.role === "user" ? "bg-emerald-500 text-black" : "bg-zinc-900 text-zinc-100 border border-zinc-800"}`}>
-                  {m.contenido}
-                </div>
+          {/* Contenido del Sheet */}
+          <div className="p-4 overflow-y-auto space-y-3 pb-8">
+            {/* VISTA 1: MENÚ PRINCIPAL */}
+            {vista === "menu" && (
+              <div className="space-y-2.5">
+                <button
+                  type="button"
+                  onClick={handleMaquinaOcupada}
+                  className="w-full text-left bg-canvas border border-rule hover:border-rule-strong rounded-[14px] p-3.5 flex items-center justify-between gap-3 active:scale-[0.99] transition-[transform,border-color]"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="size-9 rounded-[10px] bg-amber-500/10 text-amber-500 grid place-items-center shrink-0">
+                      <RefreshCw className="size-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-ink">
+                        Máquina o equipo ocupado
+                      </p>
+                      <p className="text-xs text-ink-muted">
+                        3 alternativas con el mismo patrón muscular
+                      </p>
+                    </div>
+                  </div>
+                  <ChevronRight className="size-4 text-ink-muted shrink-0" />
+                </button>
 
-                {m.tipo === "alternativas" && m.payload && (
-                  <div className="mt-2 space-y-2 w-full max-w-[85%]">
-                    {m.payload.map((alt: any) => (
-                      <div key={alt.id} className="p-3 bg-zinc-900 rounded-[14px] border border-zinc-800 flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-semibold text-white">{alt.nombre}</p>
-                          <p className="text-xs text-zinc-500 capitalize">{alt.equipo}</p>
+                <button
+                  type="button"
+                  onClick={handleTecnica}
+                  className="w-full text-left bg-canvas border border-rule hover:border-rule-strong rounded-[14px] p-3.5 flex items-center justify-between gap-3 active:scale-[0.99] transition-[transform,border-color]"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="size-9 rounded-[10px] bg-accent/10 text-accent grid place-items-center shrink-0">
+                      <HelpCircle className="size-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-ink">
+                        ¿Cómo se hace? Técnica & GIF
+                      </p>
+                      <p className="text-xs text-ink-muted">
+                        Postura adecuada y ejecución correcta
+                      </p>
+                    </div>
+                  </div>
+                  <ChevronRight className="size-4 text-ink-muted shrink-0" />
+                </button>
+
+                {/* Reporte rápido opcional */}
+                <div className="pt-2 text-center">
+                  {reporteEnviado ? (
+                    <div className="inline-flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-full">
+                      <Check className="size-3.5" />
+                      <span>Reporte enviado al panel dev para sumar el GIF</span>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleReportarFaltante}
+                      className="inline-flex items-center gap-1.5 text-xs text-ink-muted hover:text-ink underline underline-offset-2 py-1"
+                    >
+                      <Send className="size-3" />
+                      <span>¿Falta el ejercicio o el GIF? Avisar al panel dev</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* VISTA 2: ALTERNATIVAS (MÁQUINA OCUPADA) */}
+            {vista === "maquina" && (
+              <div className="space-y-3">
+                <button
+                  type="button"
+                  onClick={volverAlMenu}
+                  className="inline-flex items-center gap-1 text-xs font-medium text-ink-muted hover:text-ink active:scale-95 transition-transform"
+                >
+                  <ChevronLeft className="size-3.5" />
+                  <span>Volver a opciones</span>
+                </button>
+
+                {cargando ? (
+                  <div className="py-8 flex flex-col items-center justify-center gap-2 text-ink-muted">
+                    <Loader2 className="size-6 animate-spin text-accent" />
+                    <p className="text-xs font-medium">
+                      Buscando variantes con otro equipo...
+                    </p>
+                  </div>
+                ) : mensajeError ? (
+                  <div className="bg-canvas border border-rule rounded-[14px] p-4 text-center space-y-3">
+                    <AlertCircle className="size-6 text-amber-500 mx-auto" />
+                    <p className="text-xs text-ink-muted leading-relaxed">
+                      {mensajeError}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={volverAlMenu}
+                      className="px-4 py-2 rounded-[10px] bg-rule/50 text-xs font-medium text-ink active:scale-95 transition-transform"
+                    >
+                      Volver
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <p className="text-xs text-ink-muted font-medium">
+                      Variantes directas que podés usar ya mismo:
+                    </p>
+                    {alternativas.map((alt) => (
+                      <div
+                        key={alt.id}
+                        className="bg-canvas border border-rule rounded-[14px] p-3 flex items-center justify-between gap-3"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          {alt.imagen_url ? (
+                            <img
+                              src={alt.imagen_url}
+                              alt={alt.nombre}
+                              className="size-11 rounded-[8px] object-cover bg-rule/30 shrink-0 border border-rule/50"
+                            />
+                          ) : (
+                            <div className="size-11 rounded-[8px] bg-rule/30 text-ink-muted grid place-items-center shrink-0">
+                              <Dumbbell className="size-5" />
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-ink truncate">
+                              {alt.nombre}
+                            </p>
+                            <span className="inline-block text-[11px] px-1.5 py-0.5 rounded-full bg-rule text-ink-muted font-medium capitalize">
+                              {alt.equipo}
+                            </span>
+                          </div>
                         </div>
-                        <button className="text-xs font-bold bg-zinc-800 text-emerald-400 px-3 py-1.5 rounded-full active:scale-95 transition-transform">
-                          Cambiar
+
+                        <button
+                          type="button"
+                          onClick={() => handleSeleccionar(alt)}
+                          className="px-3.5 py-1.5 rounded-[10px] bg-accent text-accent-fg text-xs font-semibold shrink-0 active:scale-95 transition-transform shadow-sm"
+                        >
+                          Elegir
                         </button>
                       </div>
                     ))}
                   </div>
                 )}
               </div>
-            ))}
-            
-            {cargando && (
-              <div className="flex items-start">
-                <div className="px-4 py-3 bg-zinc-800 rounded-[18px] rounded-bl-sm text-emerald-400 flex gap-1">
-                  <span className="animate-bounce">●</span>
-                  <span className="animate-bounce delay-100">●</span>
-                  <span className="animate-bounce delay-200">●</span>
-                </div>
+            )}
+
+            {/* VISTA 3: TÉCNICA Y GIF */}
+            {vista === "tecnica" && (
+              <div className="space-y-3">
+                <button
+                  type="button"
+                  onClick={volverAlMenu}
+                  className="inline-flex items-center gap-1 text-xs font-medium text-ink-muted hover:text-ink active:scale-95 transition-transform"
+                >
+                  <ChevronLeft className="size-3.5" />
+                  <span>Volver a opciones</span>
+                </button>
+
+                {cargando ? (
+                  <div className="py-8 flex flex-col items-center justify-center gap-2 text-ink-muted">
+                    <Loader2 className="size-6 animate-spin text-accent" />
+                    <p className="text-xs font-medium">
+                      Cargando guía técnica...
+                    </p>
+                  </div>
+                ) : mensajeError ? (
+                  <div className="bg-canvas border border-rule rounded-[14px] p-4 text-center space-y-3">
+                    <AlertCircle className="size-6 text-amber-500 mx-auto" />
+                    <p className="text-xs text-ink-muted leading-relaxed">
+                      {mensajeError}
+                    </p>
+                    <p className="text-[11px] text-ink-muted/80 bg-rule/30 p-2 rounded-[8px]">
+                      Aviso enviado automáticamente al panel dev para cargar la ficha con GIF.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={volverAlMenu}
+                      className="px-4 py-2 rounded-[10px] bg-rule/50 text-xs font-medium text-ink active:scale-95 transition-transform"
+                    >
+                      Volver
+                    </button>
+                  </div>
+                ) : tecnicaData ? (
+                  <div className="space-y-3">
+                    {tecnicaData.imagen_url ? (
+                      <div className="rounded-[14px] overflow-hidden border border-rule bg-canvas flex items-center justify-center max-h-52">
+                        <img
+                          src={tecnicaData.imagen_url}
+                          alt={tecnicaData.nombre}
+                          className="w-full max-h-52 object-contain"
+                        />
+                      </div>
+                    ) : (
+                      <div className="bg-canvas border border-rule rounded-[14px] p-3 text-center space-y-1">
+                        <p className="text-xs font-medium text-amber-500">
+                          GIF en preparación
+                        </p>
+                        <p className="text-[11px] text-ink-muted">
+                          Ya enviamos un reporte al panel dev para incorporar la animación gráfica de este ejercicio.
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="bg-canvas border border-rule rounded-[14px] p-3.5 space-y-2">
+                      <p className="text-xs font-bold text-ink uppercase tracking-wider">
+                        Puntos Clave de Ejecución
+                      </p>
+                      <p className="text-xs text-ink leading-relaxed whitespace-pre-line">
+                        {tecnicaData.descripcion ||
+                          "• Mantené la columna en posición neutra durante todo el movimiento.\n• Controlá la fase excéntrica (bajada) en 2 segundos.\n• Exhalá con el esfuerzo máximo y evitá tirones bruscos."}
+                      </p>
+                    </div>
+
+                    {faltaContenidoTecnica && (
+                      <p className="text-[11px] text-ink-muted text-center italic">
+                        Nota: Se registró una solicitud automática en el panel de desarrollo para completar la ficha oficial con GIF.
+                      </p>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={cerrar}
+                      className="w-full py-2.5 rounded-[12px] bg-rule/50 hover:bg-rule text-ink font-semibold text-xs active:scale-95 transition-transform"
+                    >
+                      Entendido
+                    </button>
+                  </div>
+                ) : null}
               </div>
             )}
-          </div>
-
-          {/* Quick Actions Footer */}
-          <div className="p-4 border-t border-zinc-900 bg-zinc-950 space-y-2 pb-safe">
-            <p className="text-xs text-zinc-500 font-medium px-1 mb-2">ACCIONES RÁPIDAS</p>
-            <div className="flex gap-2 overflow-x-auto snap-x pb-2 hide-scrollbar">
-              <button 
-                onClick={handleMaquinaOcupada}
-                disabled={cargando || !ejercicioId}
-                className="snap-start shrink-0 bg-zinc-900 border border-zinc-800 text-zinc-200 px-4 py-2 rounded-full text-sm font-medium active:scale-95 transition-transform disabled:opacity-50"
-              >
-                🔄 Máquina Ocupada
-              </button>
-              <button 
-                onClick={handleTecnica}
-                disabled={cargando || !ejercicioId}
-                className="snap-start shrink-0 bg-zinc-900 border border-zinc-800 text-zinc-200 px-4 py-2 rounded-full text-sm font-medium active:scale-95 transition-transform disabled:opacity-50"
-              >
-                ❓ No sé hacerlo
-              </button>
-              <button 
-                disabled={true}
-                className="snap-start shrink-0 bg-zinc-900 border border-zinc-800 text-zinc-500 px-4 py-2 rounded-full text-sm font-medium opacity-60"
-              >
-                ⬆️ Muy fácil
-              </button>
-            </div>
           </div>
         </div>
       </div>
