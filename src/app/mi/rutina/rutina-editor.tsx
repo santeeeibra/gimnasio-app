@@ -38,6 +38,10 @@ import {
   PillCalculadoraDiscos,
 } from "@/components/rutinas/calculadora-discos";
 import {
+  ModalRampaCalentamiento,
+  PillRampaCalentamiento,
+} from "@/components/rutinas/modal-rampa-calentamiento";
+import {
   ModalSustitutoExpress,
   BotonMaquinaOcupada,
 } from "@/components/rutinas/modal-sustituto-express";
@@ -882,6 +886,7 @@ function ItemFila({
   const [pesoActualEjercicio, setPesoActualEjercicio] = useState<number>(20);
   const [mostrarCalculadoraDiscos, setMostrarCalculadoraDiscos] = useState(false);
   const [mostrarSustitutoExpress, setMostrarSustitutoExpress] = useState(false);
+  const [mostrarRampaCalentamiento, setMostrarRampaCalentamiento] = useState(false);
 
   const tipoEquipoItem = useMemo(() => {
     const eq = (ej?.equipo || item.ejercicio?.equipo || "").toLowerCase();
@@ -1240,7 +1245,19 @@ function ItemFila({
                 onOpen={() => setMostrarCalculadoraDiscos(true)}
               />
             ) : null}
+            <PillRampaCalentamiento
+              onOpen={() => setMostrarRampaCalentamiento(true)}
+            />
           </div>
+
+          {mostrarRampaCalentamiento ? (
+            <ModalRampaCalentamiento
+              open={mostrarRampaCalentamiento}
+              onClose={() => setMostrarRampaCalentamiento(false)}
+              pesoObjetivo={pesoActualEjercicio}
+              ejercicioNombre={ej?.nombre ?? item.ejercicio?.nombre}
+            />
+          ) : null}
 
           {mostrarCalculadoraDiscos ? (
             <CalculadoraDiscosModal
