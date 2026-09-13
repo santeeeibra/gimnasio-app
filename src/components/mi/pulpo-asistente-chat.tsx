@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import {
   Sparkles,
   RefreshCw,
@@ -179,23 +180,26 @@ export function PulpoAsistenteChat({
         )}
       </div>
 
-      {/* Backdrop estilo iOS */}
-      {abierto && (
-        <div
-          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px] transition-opacity duration-200"
-          onClick={cerrar}
-          aria-hidden
-        />
-      )}
+      {typeof document !== "undefined" &&
+        createPortal(
+          <>
+            {/* Backdrop estilo iOS */}
+            {abierto && (
+              <div
+                className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px] transition-opacity duration-200"
+                onClick={cerrar}
+                aria-hidden
+              />
+            )}
 
-      {/* Action Sheet Bottom Sheet */}
-      <div
-        className={`fixed inset-x-0 bottom-0 z-50 transform transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
-          abierto ? "translate-y-0" : "translate-y-full pointer-events-none"
-        }`}
-        role="dialog"
-        aria-modal="true"
-      >
+            {/* Action Sheet Bottom Sheet */}
+            <div
+              className={`fixed inset-x-0 bottom-0 z-50 transform transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+                abierto ? "translate-y-0" : "translate-y-full pointer-events-none"
+              }`}
+              role="dialog"
+              aria-modal="true"
+            >
         <div className="mx-auto max-w-md bg-paper border-t border-rule rounded-t-[24px] shadow-2xl flex flex-col max-h-[85vh] overflow-hidden">
           {/* Grab Handle */}
           <div className="w-9 h-1 rounded-full bg-rule-light mx-auto mt-2.5 mb-1" />
@@ -463,6 +467,9 @@ export function PulpoAsistenteChat({
           </div>
         </div>
       </div>
+          </>,
+          document.body
+        )}
     </>
   );
 }
