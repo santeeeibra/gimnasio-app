@@ -42,7 +42,7 @@ import {
   PillRampaCalentamiento,
 } from "@/components/rutinas/modal-rampa-calentamiento";
 import { useWakeLock } from "@/lib/ui/use-wake-lock";
-import { Focus } from "lucide-react";
+import { Focus, Sun } from "lucide-react";
 import type { DropPaso } from "@/lib/progreso/tipos";
 import type { ColoresImagen } from "@/lib/logros/imagen";
 import {
@@ -319,7 +319,11 @@ export function RutinaEditor({
   useWakeLock(zenMode);
 
   function toggleZenMode() {
-    hapticoSeleccion();
+    if (!zenMode) {
+      hapticoExito();
+    } else {
+      hapticoSeleccion();
+    }
     setZenMode((v) => !v);
   }
 
@@ -456,21 +460,24 @@ export function RutinaEditor({
           type="button"
           onClick={toggleZenMode}
           aria-pressed={zenMode}
-          aria-label={zenMode ? "Salir del modo Zen" : "Activar modo Zen / Foco"}
-          className={`inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full border px-3 text-[11px] font-bold transition-[transform,color,background-color,border-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${
+          aria-label={zenMode ? "Desactivar Modo Foco Gym" : "Activar Modo Foco Gym (Pantalla Encendida)"}
+          className={`inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs font-bold transition-[transform,color,background-color,border-color,box-shadow] duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${
             zenMode
-              ? "border-accent bg-accent text-accent-ink shadow-sm"
-              : "border-rule bg-paper text-ink-soft"
+              ? "border-accent bg-accent text-accent-ink shadow-[0_0_12px_rgba(16,231,160,0.3)]"
+              : "border-rule bg-paper text-ink-soft hover:text-ink"
           }`}
         >
-          <Focus className="size-4" />
-          {zenMode ? "Zen activo" : "Modo Zen"}
+          {zenMode ? <Sun className="size-4 animate-spin-slow" /> : <Focus className="size-4" />}
+          <span>{zenMode ? "☀️ Foco Gym Activo" : "Modo Foco Gym"}</span>
         </button>
       </div>
       {zenMode ? (
-        <p className="-mt-4 text-[11px] text-ink-soft">
-          Pantalla siempre encendida · targets grandes · sin distracciones.
-        </p>
+        <div className="-mt-2 flex items-center gap-2 rounded-xl border border-accent/40 bg-accent/10 px-3.5 py-2 text-xs font-medium text-ink shadow-[0_0_12px_rgba(16,231,160,0.1)]">
+          <Sun className="size-4 shrink-0 text-accent" />
+          <span>
+            <strong>Modo Foco Gym Activo:</strong> Pantalla siempre encendida · Botones XL táctiles · Sin distracciones.
+          </span>
+        </div>
       ) : null}
       <div key={activo} className="stagger space-y-8">
         {visibles.map((dia) => {
