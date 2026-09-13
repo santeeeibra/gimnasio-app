@@ -13,7 +13,7 @@ export async function buscarReemplazoMaquinaOcupada(ejercicioActualId: string) {
     .eq("profile_id", profile.id)
     .single();
 
-  if (!cliente) return { error: "No se encontró el cliente." };
+  if (!cliente) return { ok: false as const, error: "No se encontró el cliente." };
 
   const { data: actual } = await supabase
     .from("ejercicios")
@@ -21,7 +21,7 @@ export async function buscarReemplazoMaquinaOcupada(ejercicioActualId: string) {
     .eq("id", ejercicioActualId)
     .single();
 
-  if (!actual) return { error: "Ejercicio no encontrado." };
+  if (!actual) return { ok: false as const, error: "Ejercicio no encontrado." };
 
   const { data: alternativas } = await supabase
     .from("ejercicios")
@@ -30,10 +30,10 @@ export async function buscarReemplazoMaquinaOcupada(ejercicioActualId: string) {
     .eq("patron", actual.patron)
     .neq("id", actual.id)
     .neq("equipo", actual.equipo)
-    .or(gimnasio_id.is.null,gimnasio_id.eq. + cliente.gimnasio_id)
+    .or(`gimnasio_id.is.null,gimnasio_id.eq.${cliente.gimnasio_id}`)
     .limit(3);
 
-  return { ok: true, actual: actual.nombre, alternativas: alternativas ?? [] };
+  return { ok: true as const, actual: actual.nombre, alternativas: alternativas ?? [] };
 }
 
 export async function obtenerTipsTecnica(ejercicioId: string) {
@@ -44,5 +44,5 @@ export async function obtenerTipsTecnica(ejercicioId: string) {
     .eq("id", ejercicioId)
     .single();
     
-  return data ? { ok: true, ejercicio: data } : { error: "No encontrado" };
+  return data ? { ok: true as const, ejercicio: data } : { ok: false as const, error: "No encontrado" };
 }

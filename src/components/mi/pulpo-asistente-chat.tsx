@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { PulpoCard } from "@/components/mascota/pulpo";
@@ -36,8 +36,9 @@ export function PulpoAsistenteChat({ ejercicioId, trigger }: { ejercicioId?: str
     const res = await buscarReemplazoMaquinaOcupada(ejercicioId);
     setCargando(false);
     
-    if (res.error) { setPosePulpo('error');
-      setMensajes((prev) => [...prev, { id: Date.now().toString(), role: "pulpo", tipo: "texto", contenido: "Mmm, hubo un error buscando. ¡Avisale al staff!" }]);
+    if (!res.ok) { 
+      setPosePulpo('error');
+      setMensajes((prev) => [...prev, { id: Date.now().toString(), role: "pulpo", tipo: "texto", contenido: res.error || "Mmm, hubo un error buscando. ¡Avisale al staff!" }]);
       return;
     }
     
@@ -68,8 +69,9 @@ export function PulpoAsistenteChat({ ejercicioId, trigger }: { ejercicioId?: str
     const res = await obtenerTipsTecnica(ejercicioId);
     setCargando(false);
 
-    if (res.error) { setPosePulpo('error');
-      setMensajes((prev) => [...prev, { id: Date.now().toString(), role: "pulpo", tipo: "texto", contenido: "No tengo los tips de este ejercicio en la base." }]);
+    if (!res.ok) { 
+      setPosePulpo('error');
+      setMensajes((prev) => [...prev, { id: Date.now().toString(), role: "pulpo", tipo: "texto", contenido: res.error || "No tengo los tips de este ejercicio en la base." }]);
       return;
     }
 
