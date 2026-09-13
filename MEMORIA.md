@@ -76,6 +76,8 @@
 
 
 
+- **Fundamentación Científica y Entrenadores Profesionales en Rutinas (2026-09-13)**: Actualizado `src/lib/rutina/explicar.ts` integrando citas científicas explícitas (Schoenfeld, Israetel/RP, Beardsley, Grgic/PowerExplosive, Pradells, Glass, Nippard, Saladino) y dinamizado el desglose por día para eliminar frases genéricas repetitivas.
+
 ## Backlog de Features Innovadoras (Socio ↔ Gimnasio)
 1. **Mapa de Ocupación por Zona & Espera en Máquinas (Equipment Live Radar)**: Disponibilidad estimada por áreas del gym basada en series registradas en tiempo real.
 2. **Leaderboard & Desafíos Semanales del Gimnasio (Gym Challenges)**: Puntos automáticos por series/asistencia con ranking en vivo y medallas vectoriales del Pulpo Volt.
