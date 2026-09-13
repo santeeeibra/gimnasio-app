@@ -33,7 +33,23 @@ export async function enviarPush(
   profileIds: string[],
   payload: PushPayload,
 ): Promise<void> {
-  const ids = [...new Set(profileIds.filter(Boolean))];
+  await enviarPushPorColumna("profile_id", profileIds, payload);
+}
+
+// Igual que enviarPush pero para partners (push_subscriptions.partner_id).
+export async function enviarPushPartner(
+  partnerIds: string[],
+  payload: PushPayload,
+): Promise<void> {
+  await enviarPushPorColumna("partner_id", partnerIds, payload);
+}
+
+async function enviarPushPorColumna(
+  columna: "profile_id" | "partner_id",
+  ids0: string[],
+  payload: PushPayload,
+): Promise<void> {
+  const ids = [...new Set(ids0.filter(Boolean))];
   if (ids.length === 0) return;
   if (!configurar()) return;
 
@@ -42,7 +58,7 @@ export async function enviarPush(
     const { data: subs, error } = await supabase
       .from("push_subscriptions")
       .select("endpoint, p256dh, auth")
-      .in("profile_id", ids);
+      .in(columna, ids);
 
     if (error) {
       await registrarError(null, "push", error);

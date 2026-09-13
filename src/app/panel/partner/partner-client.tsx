@@ -41,6 +41,8 @@ import {
 } from "lucide-react";
 import { PulpoCard } from "@/components/mascota/pulpo";
 import { useHapticos } from "@/lib/ui/hapticos";
+import { ActivarNotificacionesPartner } from "./activar-notificaciones-partner";
+import { MensajesPartner } from "./mensajes-partner";
 import {
   type ResumenPartner,
   type PartnerCommission,
@@ -310,6 +312,10 @@ export function PartnerDashboardClient({
           </div>
         </div>
       </div>
+
+      {/* ── 1.1. Push + Mensajería directa con Santi ─────────────────────── */}
+      <ActivarNotificacionesPartner />
+      <MensajesPartner />
 
       {/* ── 1.2. Centro de Notificaciones en Tiempo Real ─────────────────── */}
       {notificaciones.length > 0 && (

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireSuperadmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { registrarAccionAdmin } from "@/lib/admin/audit";
+import { enviarPushPartner } from "@/lib/push/enviar";
 
 function limpiarSlug(s: string): string {
   return s
@@ -462,4 +463,46 @@ export async function marcarPayoutAction(
         ? `Retiro de $${Number(payout.monto_ars).toLocaleString("es-AR")} marcado como pagado exitosamente.`
         : `Retiro de $${Number(payout.monto_ars).toLocaleString("es-AR")} rechazado. El saldo volvió a estar disponible.`,
   };
+}
+
+// Vos (superadmin) le mandás un mensaje puntual a un partner: queda en su
+// bandeja (/panel/partner) y le llega como push.
+export async function enviarMensajeAdminAPartnerAction(
+  partnerId: string,
+  cuerpo: string,
+): Promise<{ ok: boolean; msg: string }> {
+  const adminProfile = await requireSuperadmin();
+  const texto = cuerpo.trim();
+  if (!texto) return { ok: false, msg: "Escribí un mensaje." };
+
+  const db = createAdminClient();
+  const { data: partner } = await db
+    .from("partners")
+    .select("id, nombre")
+    .eq("id", partnerId)
+    .maybeSingle();
+  if (!partner) return { ok: false, msg: "Partner no encontrado." };
+
+  const { error } = await db.from("partner_mensajes").insert({
+    partner_id: partnerId,
+    autor: "admin",
+    cuerpo: texto,
+  });
+  if (error) return { ok: false, msg: "No se pudo enviar el mensaje." };
+
+  await enviarPushPartner([partnerId], {
+    title: "SysGym",
+    body: texto.slice(0, 120),
+    url: "/panel/partner",
+    tag: "admin-mensaje",
+  });
+
+  await registrarAccionAdmin(adminProfile.id, "mensaje_a_partner", partnerId, {
+    largo: texto.length,
+  });
+
+  revalidatePath("/admin/partner");
+  revalidatePath("/panel/partner");
+
+  return { ok: true, msg: `Mensaje enviado a ${partner.nombre}.` };
 }

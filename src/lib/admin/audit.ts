@@ -41,6 +41,7 @@ type AccionAdmin =
   | "borrar_simulacion_e2e"
   | "marcar_payout_pagado"
   | "marcar_payout_rechazado"
+  | "mensaje_a_partner"
   | "partner_cambiar_datos_cobro"
   | "partner_solicitar_retiro";
 

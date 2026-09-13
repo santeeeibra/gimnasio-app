@@ -19,12 +19,15 @@ import {
   RefreshCw,
   AlertOctagon,
   Flame,
+  Send,
+  MessageCircle,
 } from "lucide-react";
 import {
   crearGimnasioSimuladoAction,
   simularPagoAprobadoAction,
   borrarDatosSimulacionAction,
   marcarPayoutAction,
+  enviarMensajeAdminAPartnerAction,
 } from "./actions";
 import type { AlertaFraude } from "@/lib/partners/anti-fraude";
 
@@ -109,6 +112,27 @@ export function PartnerAdminClient({
   }, [alertasFraude]);
 
   const [copiadoCobroId, setCopiadoCobroId] = useState<string | null>(null);
+
+  // Mensaje directo a un partner puntual (push + bandeja)
+  const [mensajeAbiertoId, setMensajeAbiertoId] = useState<string | null>(null);
+  const [textoMensaje, setTextoMensaje] = useState("");
+  const [enviandoMensajeId, setEnviandoMensajeId] = useState<string | null>(null);
+
+  const handleEnviarMensaje = (partnerId: string) => {
+    const cuerpo = textoMensaje.trim();
+    if (!cuerpo) return;
+    setEnviandoMensajeId(partnerId);
+    startTransition(async () => {
+      setMensajeFeedback(null);
+      const res = await enviarMensajeAdminAPartnerAction(partnerId, cuerpo);
+      setMensajeFeedback({ tipo: res.ok ? "ok" : "err", texto: res.msg });
+      if (res.ok) {
+        setTextoMensaje("");
+        setMensajeAbiertoId(null);
+      }
+      setEnviandoMensajeId(null);
+    });
+  };
 
   const copiarDatoCobro = (id: string, texto: string) => {
     if (navigator?.clipboard) {
@@ -457,13 +481,15 @@ export function PartnerAdminClient({
                     <th className="py-2.5 px-4 font-semibold text-center">Gyms Referidos</th>
                     <th className="py-2.5 px-4 font-semibold text-right">Balance Disponible</th>
                     <th className="py-2.5 px-4 font-semibold">Último Retiro</th>
+                    <th className="py-2.5 px-4 font-semibold">Mensaje</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-rule/60">
                   {partners.map((p) => {
                     const esCopiado = copiadoCode === p.referral_code;
+                    const mensajeAbierto = mensajeAbiertoId === p.id;
                     return (
-                      <tr key={p.id} className="hover:bg-paper/60 transition-colors">
+                      <tr key={p.id} className="hover:bg-paper/60 transition-colors align-top">
                         <td className="py-3 px-4">
                           <div className="font-bold text-ink">{p.nombre}</div>
                           <div className="flex items-center gap-1.5 mt-0.5">
@@ -541,6 +567,45 @@ export function PartnerAdminClient({
                             </div>
                           ) : (
                             <span className="text-ink-soft italic text-[11px]">Sin retiros</span>
+                          )}
+                        </td>
+
+                        <td className="py-3 px-4">
+                          {mensajeAbierto ? (
+                            <div className="flex items-center gap-1.5 min-w-[220px]">
+                              <input
+                                type="text"
+                                autoFocus
+                                value={textoMensaje}
+                                onChange={(e) => setTextoMensaje(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") handleEnviarMensaje(p.id);
+                                  if (e.key === "Escape") setMensajeAbiertoId(null);
+                                }}
+                                placeholder="Escribir mensaje..."
+                                className="w-full rounded-[8px] border border-rule bg-paper px-2 py-1.5 text-xs text-ink focus:border-ink focus:outline-none"
+                              />
+                              <button
+                                type="button"
+                                disabled={enviandoMensajeId === p.id || !textoMensaje.trim()}
+                                onClick={() => handleEnviarMensaje(p.id)}
+                                className="shrink-0 size-7 inline-flex items-center justify-center rounded-[8px] bg-ink text-paper disabled:opacity-40"
+                              >
+                                <Send className="size-3.5" />
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setMensajeAbiertoId(p.id);
+                                setTextoMensaje("");
+                              }}
+                              className="inline-flex items-center gap-1.5 rounded-[8px] border border-rule bg-paper px-2.5 py-1.5 text-xs font-semibold text-ink-soft hover:border-ink hover:text-ink transition-colors"
+                            >
+                              <MessageCircle className="size-3.5" />
+                              <span>Escribir</span>
+                            </button>
                           )}
                         </td>
                       </tr>
