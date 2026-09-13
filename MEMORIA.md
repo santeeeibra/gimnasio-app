@@ -67,6 +67,11 @@
 
 
 - **Aforo en Tiempo Real (2026-09-13)**: Medidor de aforo animado Liquid Glass en `/mi` y `/mi/rutina` (ventana 90min sobre `registros_entrada`) + control de `capacidad_maxima` con stepper táctil en `/panel/ajustes`.
+- **Trilogía de Features Táctiles para Socio (2026-09-13)**:
+  1. *Calculadora Visual de Discos* (`calculadora-discos.tsx`): Desglose gráfico de discos por lado para barra olímpica/liviana/W/Smith.
+  2. *ATP Recovery Engine* (`timer-descanso.tsx`): Timer de descanso dinámico adaptado por RIR (0/fallo=180s, RIR 1-2=120s, RIR 3+=60s) con barra 60fps de recuperación de potencia.
+  3. *Sustituto Express 1-Tap* (`modal-sustituto-express.tsx`): Reemplazo instantáneo de máquina ocupada por alternativas biomecánicas equivalentes.
+
 
 ## Backlog de Features Innovadoras (Socio ↔ Gimnasio)
 1. **Mapa de Ocupación por Zona & Espera en Máquinas (Equipment Live Radar)**: Disponibilidad estimada por áreas del gym basada en series registradas en tiempo real.
