@@ -307,59 +307,62 @@ function BarraVisual({
   const pila = discos.flatMap((d) => Array.from({ length: d.cantidad }, () => d.peso));
 
   return (
-    <div className="relative flex flex-col items-center justify-center min-h-[125px] w-full px-3 py-4 bg-paper-2/60 rounded-[18px] border border-rule/80 overflow-hidden select-none">
+    <div className="relative flex flex-col items-center justify-center min-h-[135px] w-full px-3 py-4 bg-paper-2/60 rounded-[18px] border border-rule/80 overflow-hidden select-none">
       <div className="relative flex items-center justify-center w-full max-w-[340px]">
-        {/* LADO IZQUIERDO: Discos montados en el manguito izquierdo */}
-        <div className="flex items-center justify-end z-10 shrink-0">
-          {[...pila].reverse().map((peso, i) => (
-            <div
-              key={`l-${i}`}
-              className="rounded-[3px] border border-black/30 shrink-0 shadow-md transition-all duration-150"
-              style={{
-                width: DISCO_ANCHO[peso],
-                height: DISCO_ALTO[peso],
-                backgroundColor: DISCO_COLOR[peso],
-                marginRight: -1,
-              }}
-            />
-          ))}
+        {/* LADO IZQUIERDO: Manguito de acero con discos pegados al tope */}
+        <div className="relative flex-1 flex items-center justify-end min-h-[90px]">
+          {/* Manguito de carga cromado detrás de los discos */}
+          <div className="absolute right-0 top-1/2 -translate-y-1/2 h-3.5 w-full max-w-[120px] bg-gradient-to-b from-zinc-300 via-zinc-100 to-zinc-400 border-y border-zinc-400 rounded-l-[3px] shadow-inner" />
+
+          {/* Discos montados: el más grande queda a la derecha (tocando el tope) */}
+          <div className="relative z-10 flex items-center justify-end">
+            {[...pila].reverse().map((peso, i) => (
+              <div
+                key={`l-${i}`}
+                className="rounded-[3px] border border-black/30 shrink-0 shadow-md transition-all duration-150"
+                style={{
+                  width: DISCO_ANCHO[peso],
+                  height: DISCO_ALTO[peso],
+                  backgroundColor: DISCO_COLOR[peso],
+                  marginRight: -1,
+                }}
+              />
+            ))}
+          </div>
         </div>
 
-        {/* Manguito izquierdo de la barra / máquina */}
-        <div className="h-3.5 min-w-[20px] flex-1 max-w-[36px] bg-gradient-to-b from-zinc-300 via-zinc-400 to-zinc-500 rounded-l-[3px] shadow-inner shrink-0 -mr-0.5" />
-
-        {/* TOPE IZQUIERDO DE LA BARRA */}
-        <div className="h-14 w-2 bg-gradient-to-b from-zinc-200 via-zinc-400 to-zinc-600 rounded-l-[2px] border-r border-black/30 shadow-md shrink-0 z-10" />
+        {/* TOPE IZQUIERDO (COLLAR DE ACERO) */}
+        <div className="h-14 w-2 bg-gradient-to-b from-zinc-200 via-zinc-400 to-zinc-600 rounded-l-[2px] border-r border-black/30 shadow-md shrink-0 z-20" />
 
         {/* EJE CENTRAL SEGÚN TIPO */}
         {barra === "olimpica" && (
-          <div className="h-2.5 flex-1 min-w-[70px] max-w-[110px] bg-gradient-to-b from-zinc-300 via-zinc-100 to-zinc-400 border-y border-zinc-500/40 shadow-inner shrink-0 flex items-center justify-center">
+          <div className="h-2.5 flex-1 min-w-[60px] max-w-[100px] bg-gradient-to-b from-zinc-300 via-zinc-100 to-zinc-400 border-y border-zinc-500/40 shadow-inner shrink-0 flex items-center justify-center">
             <div className="w-full h-full opacity-20 bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:4px_4px]" />
           </div>
         )}
 
         {barra === "liviana" && (
-          <div className="h-1.5 flex-1 min-w-[70px] max-w-[110px] bg-gradient-to-b from-zinc-300 via-zinc-200 to-zinc-400 border-y border-zinc-500/40 shadow-inner shrink-0" />
+          <div className="h-1.5 flex-1 min-w-[60px] max-w-[100px] bg-gradient-to-b from-zinc-300 via-zinc-200 to-zinc-400 border-y border-zinc-500/40 shadow-inner shrink-0" />
         )}
 
         {barra === "wz" && (
-          <div className="flex-1 min-w-[80px] max-w-[110px] h-10 shrink-0 flex items-center justify-center px-1">
+          <div className="flex-1 min-w-[70px] max-w-[100px] h-10 shrink-0 flex items-center justify-center px-0.5">
             <svg
               viewBox="0 0 100 30"
               className="w-full h-full drop-shadow-sm"
               fill="none"
             >
               <path
-                d="M 0,15 Q 12,15 20,8 T 40,8 T 60,22 T 80,22 Q 88,15 100,15"
+                d="M 0,15 C 10,15 15,6 25,6 C 35,6 40,24 50,24 C 60,24 65,6 75,6 C 85,6 90,15 100,15"
                 stroke="#475569"
-                strokeWidth="6"
+                strokeWidth="5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
               <path
-                d="M 0,15 Q 12,15 20,8 T 40,8 T 60,22 T 80,22 Q 88,15 100,15"
-                stroke="#cbd5e1"
-                strokeWidth="3.5"
+                d="M 0,15 C 10,15 15,6 25,6 C 35,6 40,24 50,24 C 60,24 65,6 75,6 C 85,6 90,15 100,15"
+                stroke="#e2e8f0"
+                strokeWidth="3"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
@@ -368,9 +371,9 @@ function BarraVisual({
         )}
 
         {barra === "multipower" && (
-          <div className="relative flex-1 min-w-[80px] max-w-[110px] h-14 shrink-0 flex items-center justify-center">
-            <div className="absolute inset-y-0 -left-2 w-1.5 bg-gradient-to-b from-zinc-400 via-zinc-200 to-zinc-500 rounded-full shadow-sm" />
-            <div className="absolute inset-y-0 -right-2 w-1.5 bg-gradient-to-b from-zinc-400 via-zinc-200 to-zinc-500 rounded-full shadow-sm" />
+          <div className="relative flex-1 min-w-[70px] max-w-[100px] h-14 shrink-0 flex items-center justify-center">
+            <div className="absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b from-zinc-400 via-zinc-200 to-zinc-500 rounded-full shadow-sm" />
+            <div className="absolute inset-y-0 right-0 w-1.5 bg-gradient-to-b from-zinc-400 via-zinc-200 to-zinc-500 rounded-full shadow-sm" />
             <div className="h-2.5 w-full bg-gradient-to-b from-zinc-300 via-zinc-100 to-zinc-400 border-y border-zinc-500/40 shrink-0 flex items-center justify-around">
               <div className="w-2 h-4 -mt-3 bg-zinc-600 rounded-t-[2px] border border-zinc-800" />
               <div className="w-2 h-4 -mt-3 bg-zinc-600 rounded-t-[2px] border border-zinc-800" />
@@ -379,38 +382,41 @@ function BarraVisual({
         )}
 
         {barra === "prensa" && (
-          <div className="relative flex-1 min-w-[90px] max-w-[120px] py-1 shrink-0 flex flex-col items-center justify-center">
-            <div className="relative z-10 w-full px-2 py-1.5 bg-gradient-to-b from-zinc-800 to-zinc-900 border border-zinc-700 rounded-[8px] shadow-lg flex flex-col items-center justify-center">
+          <div className="relative flex-1 min-w-[85px] max-w-[110px] py-1 shrink-0 flex flex-col items-center justify-center">
+            <div className="relative z-10 w-full px-2 py-2 bg-gradient-to-b from-zinc-800 to-zinc-900 border border-zinc-700 rounded-[10px] shadow-lg flex flex-col items-center justify-center">
               <span className="text-[10px] font-bold text-accent tracking-wider uppercase leading-none">
                 Prensa 45°
               </span>
-              <span className="text-[9px] font-mono text-zinc-300 mt-0.5 leading-none">
+              <span className="text-[9px] font-mono text-zinc-300 mt-1 leading-none">
                 Carro 30kg
               </span>
             </div>
           </div>
         )}
 
-        {/* TOPE DERECHO DE LA BARRA */}
-        <div className="h-14 w-2 bg-gradient-to-b from-zinc-200 via-zinc-400 to-zinc-600 rounded-r-[2px] border-l border-black/30 shadow-md shrink-0 z-10" />
+        {/* TOPE DERECHO (COLLAR DE ACERO) */}
+        <div className="h-14 w-2 bg-gradient-to-b from-zinc-200 via-zinc-400 to-zinc-600 rounded-r-[2px] border-l border-black/30 shadow-md shrink-0 z-20" />
 
-        {/* Manguito derecho de la barra / máquina */}
-        <div className="h-3.5 min-w-[20px] flex-1 max-w-[36px] bg-gradient-to-b from-zinc-300 via-zinc-400 to-zinc-500 rounded-r-[3px] shadow-inner shrink-0 -ml-0.5" />
+        {/* LADO DERECHO: Manguito de acero con discos pegados al tope */}
+        <div className="relative flex-1 flex items-center justify-start min-h-[90px]">
+          {/* Manguito de carga cromado detrás de los discos */}
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 h-3.5 w-full max-w-[120px] bg-gradient-to-b from-zinc-300 via-zinc-100 to-zinc-400 border-y border-zinc-400 rounded-r-[3px] shadow-inner" />
 
-        {/* LADO DERECHO: Discos montados en el manguito derecho */}
-        <div className="flex items-center justify-start z-10 shrink-0">
-          {pila.map((peso, i) => (
-            <div
-              key={`r-${i}`}
-              className="rounded-[3px] border border-black/30 shrink-0 shadow-md transition-all duration-150"
-              style={{
-                width: DISCO_ANCHO[peso],
-                height: DISCO_ALTO[peso],
-                backgroundColor: DISCO_COLOR[peso],
-                marginLeft: -1,
-              }}
-            />
-          ))}
+          {/* Discos montados: el más grande queda a la izquierda (tocando el tope) */}
+          <div className="relative z-10 flex items-center justify-start">
+            {pila.map((peso, i) => (
+              <div
+                key={`r-${i}`}
+                className="rounded-[3px] border border-black/30 shrink-0 shadow-md transition-all duration-150"
+                style={{
+                  width: DISCO_ANCHO[peso],
+                  height: DISCO_ALTO[peso],
+                  backgroundColor: DISCO_COLOR[peso],
+                  marginLeft: -1,
+                }}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </div>
