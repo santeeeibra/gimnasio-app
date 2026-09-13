@@ -68,3 +68,10 @@
 
 - **Aforo en Tiempo Real (2026-09-13)**: Medidor de aforo animado Liquid Glass en `/mi` y `/mi/rutina` (ventana 90min sobre `registros_entrada`) + control de `capacidad_maxima` con stepper táctil en `/panel/ajustes`.
 
+## Backlog de Features Innovadoras (Socio ↔ Gimnasio)
+1. **Mapa de Ocupación por Zona & Espera en Máquinas (Equipment Live Radar)**: Disponibilidad estimada por áreas del gym basada en series registradas en tiempo real.
+2. **Leaderboard & Desafíos Semanales del Gimnasio (Gym Challenges)**: Puntos automáticos por series/asistencia con ranking en vivo y medallas vectoriales del Pulpo Volt.
+3. **Gym Jukebox (Votación de Playlist del Gym en Vivo)**: Socios con check-in activo votan/sugieren los temas que suenan en la sala.
+4. **Asistente "Busco Spotter / Compañero de Carga" (Gym Buddy)**: Solicitud de ayuda en 1-tap para tirar Récord Personal en ejercicios pesados con aviso sutil al staff/socios en sala.
+
+

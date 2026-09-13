@@ -33,6 +33,10 @@ import { DialVerticalProgreso } from "@/components/progreso/dial-vertical-progre
 import { HistorialEjercicio } from "@/components/progreso/historial-ejercicio";
 import { EquipamientoSugerido } from "@/components/monetizacion/equipamiento-sugerido";
 import { PanelDropSet } from "@/components/progreso/panel-dropset";
+import {
+  CalculadoraDiscosModal,
+  PillCalculadoraDiscos,
+} from "@/components/rutinas/calculadora-discos";
 import type { DropPaso } from "@/lib/progreso/tipos";
 import type { ColoresImagen } from "@/lib/logros/imagen";
 import {
@@ -872,6 +876,14 @@ function ItemFila({
   const [mostrarDropSet, setMostrarDropSet] = useState(false);
   const [dropsetGuardado, setDropsetGuardado] = useState<Record<number, DropPaso[]>>({});
   const [pesoActualEjercicio, setPesoActualEjercicio] = useState<number>(20);
+  const [mostrarCalculadoraDiscos, setMostrarCalculadoraDiscos] = useState(false);
+
+  const tipoEquipoItem = useMemo(() => {
+    const eq = (ej?.equipo || item.ejercicio?.equipo || "").toLowerCase();
+    const nom = (ej?.nombre || item.ejercicio?.nombre || "").toLowerCase();
+    if (eq === "barra" || nom.includes("barra")) return "barra" as const;
+    return "otro" as const;
+  }, [ej, item.ejercicio]);
 
   useEffect(() => {
     try {
@@ -1205,7 +1217,21 @@ function ItemFila({
                 {TECNICA_LABEL[item.tecnica]}
               </span>
             ) : null}
+            {tipoEquipoItem === "barra" ? (
+              <PillCalculadoraDiscos
+                onOpen={() => setMostrarCalculadoraDiscos(true)}
+              />
+            ) : null}
           </div>
+
+          {mostrarCalculadoraDiscos ? (
+            <CalculadoraDiscosModal
+              open={mostrarCalculadoraDiscos}
+              onClose={() => setMostrarCalculadoraDiscos(false)}
+              pesoInicial={pesoActualEjercicio}
+              ejercicioNombre={ej?.nombre ?? item.ejercicio?.nombre}
+            />
+          ) : null}
 
           {item.nota ? (
             <div className="mt-2 flex items-center gap-1.5 rounded-[8px] border border-accent/20 bg-accent/5 px-2.5 py-1 text-[11px] text-ink-soft">
