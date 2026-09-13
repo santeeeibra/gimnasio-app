@@ -9,8 +9,8 @@
  * - Micro-interacciones hápticas en acciones de compartir.
  */
 
+import Image from "next/image";
 import { RACHA_MINIMA_VISIBLE, type ResultadoRacha } from "@/lib/logros/tipos";
-import { PulpoCard } from "@/components/mascota/pulpo";
 import { hapticoImpactoMedio, iniciarAudioHaptico } from "@/lib/ui/hapticos";
 import { Share2, Flame, ShieldCheck } from "lucide-react";
 
@@ -35,12 +35,17 @@ export function RachaCard({ racha, onCompartir }: RachaCardProps) {
       className="relative w-full rounded-[16px] border border-emerald-500/25 bg-zinc-900/90 p-4 shadow-xl backdrop-blur-xl transition-all duration-200"
     >
       <div className="flex items-center justify-between gap-3.5">
-        {/* Mascota en tarjeta de fondo fijo (Regla SysGym) */}
-        <PulpoCard
-          size={52}
-          pose="festejo"
-          cardClassName="flex-shrink-0 w-16 h-16 !p-1.5 !rounded-[14px] border-emerald-500/30"
-        />
+        {/* Icono de Racha Activa de Pulpo Volt en tarjeta oscura (Regla SysGym) */}
+        <div className="relative flex-shrink-0 w-16 h-16 rounded-[14px] bg-zinc-950 border border-emerald-500/30 p-1 shadow-xl overflow-hidden flex items-center justify-center">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(16,231,160,0.25)_0%,transparent_70%)] pointer-events-none" />
+          <Image
+            src="/mascota/racha-activa.png"
+            alt="Pulpo Racha Activa"
+            width={56}
+            height={56}
+            className="object-cover rounded-[10px] select-none"
+          />
+        </div>
 
         {/* Información de la racha */}
         <div className="flex-1 min-w-0">

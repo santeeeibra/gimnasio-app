@@ -3,6 +3,8 @@
 > **Regla de Cierre:** Al finalizar cada feature o sesión, el agente debe actualizar este archivo con 1 o 2 viñetas telegráficas sobre lo que acaba de hacer (en UTF-8). NO leas el contexto completo para actualizar esto.
 
 ## Últimos Cambios
+- **Mascota Racha Activa**: Reemplazado el icono de racha activa por la nueva ilustración de Pulpo Volt muscular en `public/mascota/racha-activa.png`, integrado en `RachaCard`, `FeedLogros` y `CartelLogro`.
+- **Rediseño DiaTabs (iOS Segmented Control)**: Píldoras flotantes con `whitespace-nowrap` (soluciona salto de línea en "Día 1, 2, 3"), indicador cyan pulsante, micro-interacciones 60fps y haptics.
 
 - **Kit Comercial & Arsenal Partner**: Añadidas guías completas en `/panel/partner`: comparativa de planes (Inicial, Pro, Elite con AFIP), pitch 'Por qué SysGym', paso a paso de alta de dueño, matriz mata-objeciones, calculadora interactiva de ganancias, demo en vivo de alumno y ficha comercial descargable.
 - 2780386 fix(partner): sacar referencias a sysgym.app sin DNS configurado

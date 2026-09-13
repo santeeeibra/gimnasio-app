@@ -11,6 +11,7 @@
  * - Animaciones fluidas compositor-only (GPU transform + opacity).
  */
 
+import Image from "next/image";
 import { useState, useTransition } from "react";
 import { alternarReaccionLogro } from "@/lib/logros/actions";
 import type { LogroFeedItem } from "@/lib/logros/actions";
@@ -94,15 +95,24 @@ function ItemLogro({ item }: { item: LogroFeedItem }) {
     >
       {/* Mascota en tarjeta fija oscura + badge identificador */}
       <div className="relative shrink-0">
-        <PulpoCard
-          size={34}
-          pose="festejo"
-          cardClassName={`w-11 h-11 !p-1 !rounded-[12px] shadow-md transition-transform duration-200 group-hover:scale-105 ${
-            esRecord
-              ? "border-amber-500/40 bg-zinc-950"
-              : "border-emerald-500/40 bg-zinc-950"
-          }`}
-        />
+        {esRecord ? (
+          <PulpoCard
+            size={34}
+            pose="festejo"
+            cardClassName="w-11 h-11 !p-1 !rounded-[12px] shadow-md transition-transform duration-200 group-hover:scale-105 border-amber-500/40 bg-zinc-950"
+          />
+        ) : (
+          <div className="relative w-11 h-11 rounded-[12px] bg-zinc-950 border border-emerald-500/40 p-0.5 shadow-md flex items-center justify-center overflow-hidden transition-transform duration-200 group-hover:scale-105">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(16,231,160,0.2)_0%,transparent_70%)] pointer-events-none" />
+            <Image
+              src="/mascota/racha-activa.png"
+              alt="Racha activa"
+              width={38}
+              height={38}
+              className="object-cover rounded-[8px] select-none"
+            />
+          </div>
+        )}
         <span
           className={`absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full border shadow-sm ${
             esRecord

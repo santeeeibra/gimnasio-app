@@ -680,7 +680,7 @@ export function RutinaEditor({
   );
 }
 
-/** Selector de días: pestañas Obsidian con esquinas redondeadas 12px */
+/** Selector de días: Segmented Control iOS ultra-moderno con pill activa y haptics */
 function DiaTabs({
   dias,
   activo,
@@ -691,9 +691,14 @@ function DiaTabs({
   onSelect: (n: number) => void;
 }) {
   return (
-    <div className="flex gap-2">
+    <div className="inline-flex items-center gap-1.5 rounded-full border border-rule/70 bg-paper-2/80 p-1 shadow-inner backdrop-blur-md overflow-x-auto no-scrollbar max-w-full">
       {dias.map((d) => {
         const on = d.numero === activo;
+        const diaTexto = (() => {
+          const m = d.titulo.match(/d[ií]a\s*(\d+)/i);
+          return m ? `Día ${m[1]}` : `Día ${d.numero}`;
+        })();
+
         return (
           <button
             key={d.numero}
@@ -703,16 +708,16 @@ function DiaTabs({
               onSelect(d.numero);
             }}
             aria-pressed={on}
-            className={`flex-1 rounded-[12px] border px-3 py-2.5 text-xs font-semibold transition-[transform,color,background-color,border-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${
+            className={`relative inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full px-3.5 text-xs font-bold transition-all duration-200 ease-out active:scale-95 whitespace-nowrap select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${
               on
-                ? "border-accent bg-accent text-accent-ink shadow-sm"
-                : "border-rule bg-paper-2 text-ink hover:border-ink/40"
+                ? "bg-accent text-accent-ink font-black shadow-md shadow-accent/25 ring-1 ring-accent/30"
+                : "text-ink-soft hover:bg-paper-3/70 hover:text-ink"
             }`}
           >
-            {(() => {
-              const m = d.titulo.match(/d[ií]a\s*(\d+)/i);
-              return m ? `Día ${m[1]}` : `Día ${d.numero}`;
-            })()}
+            {on && (
+              <span className="size-1.5 rounded-full bg-accent-ink animate-pulse" />
+            )}
+            {diaTexto}
           </button>
         );
       })}
