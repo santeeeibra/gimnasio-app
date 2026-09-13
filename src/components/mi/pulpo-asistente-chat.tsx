@@ -14,6 +14,9 @@ import {
   Loader2,
   Dumbbell,
   Send,
+  PartyPopper,
+  Flame,
+  Trophy,
 } from "lucide-react";
 import {
   hapticoImpactoSuave,
@@ -26,13 +29,32 @@ import {
   buscarReemplazoMaquinaOcupada,
   obtenerTipsTecnica,
   reportarEjercicioFaltante,
+  obtenerResumenSesionHoy,
 } from "@/app/mi/rutina/asistente-actions";
+import { obtenerClasificacionEjercicio } from "@/lib/rutina/clasificacion-muscular";
 
 interface Alternativa {
   id: string;
   nombre: string;
   equipo: string;
   imagen_url: string | null;
+  grupo_muscular?: string | null;
+}
+
+// Detección de molestia articular por lenguaje natural: regex local,
+// 0ms de latencia, sin llamadas a IA. Mapea la palabra clave al grupo
+// anatómico a evitar en las alternativas sugeridas.
+const MOLESTIA_REGEX: { patron: RegExp; etiqueta: string; evitarGrupo: string[] }[] = [
+  { patron: /hombro/i, etiqueta: "hombro", evitarGrupo: ["hombros"] },
+  { patron: /rodill/i, etiqueta: "rodilla", evitarGrupo: ["piernas"] },
+  { patron: /codo/i, etiqueta: "codo", evitarGrupo: ["biceps", "triceps"] },
+  { patron: /espalda|lumbar/i, etiqueta: "espalda baja", evitarGrupo: ["espalda"] },
+  { patron: /muñeca|muneca/i, etiqueta: "muñeca", evitarGrupo: ["biceps", "triceps", "hombros"] },
+  { patron: /cadera/i, etiqueta: "cadera", evitarGrupo: ["piernas"] },
+];
+
+function detectarMolestia(texto: string) {
+  return MOLESTIA_REGEX.find((m) => m.patron.test(texto)) ?? null;
 }
 
 interface Props {
@@ -44,7 +66,9 @@ interface Props {
   onSeleccionarAlternativa?: (nuevo: any) => void;
 }
 
-type Vista = "menu" | "maquina" | "tecnica";
+type Vista = "menu" | "maquina" | "tecnica" | "resumen";
+
+type ResumenSesion = { kgTotales: number; prs: number; rachaDias: number };
 
 export function PulpoAsistenteChat({
   ejercicioId,
@@ -64,6 +88,9 @@ export function PulpoAsistenteChat({
   const [faltaContenidoTecnica, setFaltaContenidoTecnica] = useState(false);
   const [reporteEnviado, setReporteEnviado] = useState(false);
   const [mensajeError, setMensajeError] = useState<string | null>(null);
+  const [textoLibre, setTextoLibre] = useState("");
+  const [molestiaDetectada, setMolestiaDetectada] = useState<string | null>(null);
+  const [resumen, setResumen] = useState<ResumenSesion | null>(null);
 
   const abrir = () => {
     iniciarAudioHaptico();
@@ -87,9 +114,10 @@ export function PulpoAsistenteChat({
     hapticoSeleccion();
     setVista("menu");
     setMensajeError(null);
+    setMolestiaDetectada(null);
   };
 
-  const handleMaquinaOcupada = async () => {
+  const handleMaquinaOcupada = async (evitarGrupo?: string[]) => {
     if (!ejercicioId) {
       setMensajeError("No se identificó el ejercicio actual.");
       setVista("maquina");
@@ -118,8 +146,54 @@ export function PulpoAsistenteChat({
       return;
     }
 
+    let lista = res.alternativas as Alternativa[];
+    if (evitarGrupo?.length) {
+      const filtrada = lista.filter(
+        (a) => !evitarGrupo.includes(obtenerClasificacionEjercicio(a).grupo),
+      );
+      // Si el filtro deja la lista vacía, mostramos igual las originales
+      // (mejor una alternativa imperfecta que ninguna).
+      lista = filtrada.length > 0 ? filtrada : lista;
+    }
+
     hapticoExito();
-    setAlternativas(res.alternativas as Alternativa[]);
+    setAlternativas(lista);
+  };
+
+  // Detección de molestia por lenguaje natural: regex local sobre el texto
+  // libre, sin IA. Si matchea, dispara la sustitución evitando esa zona.
+  const handleTextoLibre = () => {
+    const texto = textoLibre.trim();
+    if (!texto) return;
+    const match = detectarMolestia(texto);
+    hapticoImpactoSuave();
+    setTextoLibre("");
+    if (match) {
+      setMolestiaDetectada(match.etiqueta);
+      handleMaquinaOcupada(match.evitarGrupo);
+    } else {
+      setMolestiaDetectada(null);
+      setVista("maquina");
+      setMensajeError(
+        "No reconocimos una articulación en el mensaje. Probá con: hombro, rodilla, codo, espalda, muñeca o cadera.",
+      );
+    }
+  };
+
+  const handleResumen = async () => {
+    hapticoImpactoSuave();
+    setVista("resumen");
+    setCargando(true);
+    setMensajeError(null);
+    const res = await obtenerResumenSesionHoy();
+    setCargando(false);
+    if (!res.ok) {
+      hapticoError();
+      setMensajeError(res.error || "No se pudo calcular el resumen.");
+      return;
+    }
+    hapticoExito();
+    setResumen({ kgTotales: res.kgTotales, prs: res.prs, rachaDias: res.rachaDias });
   };
 
   const handleTecnica = async () => {
@@ -216,6 +290,8 @@ export function PulpoAsistenteChat({
                     ? "Asistente de Ejercicio"
                     : vista === "maquina"
                     ? "Máquina Ocupada"
+                    : vista === "resumen"
+                    ? "Resumen de Sesión"
                     : "Técnica & Consejos"}
                 </h3>
                 <p className="text-[11px] text-ink-muted truncate">
@@ -240,7 +316,7 @@ export function PulpoAsistenteChat({
               <div className="space-y-2.5">
                 <button
                   type="button"
-                  onClick={handleMaquinaOcupada}
+                  onClick={() => handleMaquinaOcupada()}
                   className="w-full text-left bg-canvas border border-rule hover:border-rule-strong rounded-[14px] p-3.5 flex items-center justify-between gap-3 active:scale-[0.99] transition-[transform,border-color]"
                 >
                   <div className="flex items-center gap-3 min-w-0">
@@ -279,6 +355,53 @@ export function PulpoAsistenteChat({
                   </div>
                   <ChevronRight className="size-4 text-ink-muted shrink-0" />
                 </button>
+
+                <button
+                  type="button"
+                  onClick={handleResumen}
+                  className="w-full text-left bg-canvas border border-rule hover:border-rule-strong rounded-[14px] p-3.5 flex items-center justify-between gap-3 active:scale-[0.99] transition-[transform,border-color]"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="size-9 rounded-[10px] bg-emerald-500/10 text-emerald-500 grid place-items-center shrink-0">
+                      <PartyPopper className="size-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-ink">
+                        Resumen de hoy
+                      </p>
+                      <p className="text-xs text-ink-muted">
+                        Kg movidos, PRs y racha actual
+                      </p>
+                    </div>
+                  </div>
+                  <ChevronRight className="size-4 text-ink-muted shrink-0" />
+                </button>
+
+                {/* Texto libre: detección de molestia por lenguaje natural */}
+                <div className="bg-canvas border border-rule rounded-[14px] p-3 space-y-2">
+                  <p className="text-xs font-medium text-ink">
+                    ¿Te molesta algo? Contale al Pulpo
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={textoLibre}
+                      onChange={(e) => setTextoLibre(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleTextoLibre()}
+                      placeholder="Ej: me duele el hombro"
+                      className="flex-1 min-w-0 h-9 rounded-[10px] border border-rule bg-paper px-3 text-sm text-ink placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-accent/40"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleTextoLibre}
+                      disabled={!textoLibre.trim()}
+                      aria-label="Enviar"
+                      className="size-9 shrink-0 grid place-items-center rounded-[10px] bg-accent text-accent-fg disabled:opacity-40 active:scale-95 transition-transform"
+                    >
+                      <Send className="size-4" />
+                    </button>
+                  </div>
+                </div>
 
                 {/* Reporte rápido opcional */}
                 <div className="pt-2 text-center">
@@ -336,45 +459,59 @@ export function PulpoAsistenteChat({
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    <p className="text-xs text-ink-muted font-medium">
-                      Variantes directas que podés usar ya mismo:
-                    </p>
-                    {alternativas.map((alt) => (
-                      <div
-                        key={alt.id}
-                        className="bg-canvas border border-rule rounded-[14px] p-3 flex items-center justify-between gap-3"
-                      >
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          {alt.imagen_url ? (
-                            <img
-                              src={alt.imagen_url}
-                              alt={alt.nombre}
-                              className="size-11 rounded-[8px] object-cover bg-rule/30 shrink-0 border border-rule/50"
-                            />
-                          ) : (
-                            <div className="size-11 rounded-[8px] bg-rule/30 text-ink-muted grid place-items-center shrink-0">
-                              <Dumbbell className="size-5" />
-                            </div>
-                          )}
-                          <div className="min-w-0">
-                            <p className="text-sm font-semibold text-ink truncate">
-                              {alt.nombre}
-                            </p>
-                            <span className="inline-block text-[11px] px-1.5 py-0.5 rounded-full bg-rule text-ink-muted font-medium capitalize">
-                              {alt.equipo}
-                            </span>
-                          </div>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => handleSeleccionar(alt)}
-                          className="px-3.5 py-1.5 rounded-[10px] bg-accent text-accent-fg text-xs font-semibold shrink-0 active:scale-95 transition-transform shadow-sm"
+                    {molestiaDetectada ? (
+                      <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium bg-emerald-500/10 rounded-[10px] px-2.5 py-1.5">
+                        Detectamos molestia en {molestiaDetectada}: priorizamos variantes que no la fuerzan.
+                      </p>
+                    ) : (
+                      <p className="text-xs text-ink-muted font-medium">
+                        Variantes directas que podés usar ya mismo:
+                      </p>
+                    )}
+                    {alternativas.map((alt) => {
+                      const clasif = obtenerClasificacionEjercicio(alt);
+                      return (
+                        <div
+                          key={alt.id}
+                          className="bg-canvas border border-rule rounded-[14px] p-3 flex items-center justify-between gap-3"
                         >
-                          Elegir
-                        </button>
-                      </div>
-                    ))}
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            {alt.imagen_url ? (
+                              <img
+                                src={alt.imagen_url}
+                                alt={alt.nombre}
+                                className="size-11 rounded-[8px] object-cover bg-rule/30 shrink-0 border border-rule/50"
+                              />
+                            ) : (
+                              <div className="size-11 rounded-[8px] bg-rule/30 text-ink-muted grid place-items-center shrink-0">
+                                <Dumbbell className="size-5" />
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold text-ink truncate">
+                                {alt.nombre}
+                              </p>
+                              <div className="mt-0.5 flex flex-wrap items-center gap-1">
+                                <span className="inline-block text-[11px] px-1.5 py-0.5 rounded-full bg-rule text-ink-muted font-medium capitalize">
+                                  {alt.equipo}
+                                </span>
+                                <span className="inline-block text-[10.5px] px-1.5 py-0.5 rounded-full bg-accent/10 text-accent font-medium">
+                                  {clasif.label}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => handleSeleccionar(alt)}
+                            className="px-3.5 py-1.5 rounded-[10px] bg-accent text-accent-fg text-xs font-semibold shrink-0 active:scale-95 transition-transform shadow-sm"
+                          >
+                            Elegir
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -460,6 +597,58 @@ export function PulpoAsistenteChat({
                     >
                       Entendido
                     </button>
+                  </div>
+                ) : null}
+              </div>
+            )}
+
+            {/* VISTA 4: RESUMEN DE SESIÓN */}
+            {vista === "resumen" && (
+              <div className="space-y-3">
+                <button
+                  type="button"
+                  onClick={volverAlMenu}
+                  className="inline-flex items-center gap-1 text-xs font-medium text-ink-muted hover:text-ink active:scale-95 transition-transform"
+                >
+                  <ChevronLeft className="size-3.5" />
+                  <span>Volver a opciones</span>
+                </button>
+
+                {cargando ? (
+                  <div className="py-8 flex flex-col items-center justify-center gap-2 text-ink-muted">
+                    <Loader2 className="size-6 animate-spin text-accent" />
+                    <p className="text-xs font-medium">Calculando resumen de hoy...</p>
+                  </div>
+                ) : mensajeError ? (
+                  <div className="bg-canvas border border-rule rounded-[14px] p-4 text-center space-y-3">
+                    <AlertCircle className="size-6 text-amber-500 mx-auto" />
+                    <p className="text-xs text-ink-muted leading-relaxed">{mensajeError}</p>
+                  </div>
+                ) : resumen ? (
+                  <div className="rounded-[16px] border border-emerald-500/30 bg-gradient-to-b from-emerald-500/10 to-transparent p-4 text-center space-y-3">
+                    <div className="size-12 mx-auto rounded-full bg-emerald-500/15 text-emerald-500 grid place-items-center">
+                      <PartyPopper className="size-6" />
+                    </div>
+                    <p className="text-sm font-bold text-ink">¡Buen entreno de hoy! 🐙</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="bg-canvas border border-rule rounded-[12px] p-2.5">
+                        <Dumbbell className="size-4 text-accent mx-auto mb-1" />
+                        <p className="text-base font-bold text-ink leading-none">{resumen.kgTotales}</p>
+                        <p className="text-[10px] text-ink-muted mt-1">kg movidos</p>
+                      </div>
+                      <div className="bg-canvas border border-rule rounded-[12px] p-2.5">
+                        <Trophy className="size-4 text-amber-500 mx-auto mb-1" />
+                        <p className="text-base font-bold text-ink leading-none">{resumen.prs}</p>
+                        <p className="text-[10px] text-ink-muted mt-1">
+                          {resumen.prs === 1 ? "PR nuevo" : "PRs nuevos"}
+                        </p>
+                      </div>
+                      <div className="bg-canvas border border-rule rounded-[12px] p-2.5">
+                        <Flame className="size-4 text-orange-500 mx-auto mb-1" />
+                        <p className="text-base font-bold text-ink leading-none">{resumen.rachaDias}</p>
+                        <p className="text-[10px] text-ink-muted mt-1">días de racha</p>
+                      </div>
+                    </div>
                   </div>
                 ) : null}
               </div>

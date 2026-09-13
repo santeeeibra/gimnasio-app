@@ -43,10 +43,6 @@ import {
 } from "@/components/rutinas/modal-rampa-calentamiento";
 import { useWakeLock } from "@/lib/ui/use-wake-lock";
 import { Focus } from "lucide-react";
-import {
-  ModalSustitutoExpress,
-  BotonMaquinaOcupada,
-} from "@/components/rutinas/modal-sustituto-express";
 import type { DropPaso } from "@/lib/progreso/tipos";
 import type { ColoresImagen } from "@/lib/logros/imagen";
 import {
@@ -925,7 +921,6 @@ function ItemFila({
   const [dropsetGuardado, setDropsetGuardado] = useState<Record<number, DropPaso[]>>({});
   const [pesoActualEjercicio, setPesoActualEjercicio] = useState<number>(20);
   const [mostrarCalculadoraDiscos, setMostrarCalculadoraDiscos] = useState(false);
-  const [mostrarSustitutoExpress, setMostrarSustitutoExpress] = useState(false);
   const [mostrarRampaCalentamiento, setMostrarRampaCalentamiento] = useState(false);
 
   const tipoEquipoItem = useMemo(() => {
@@ -1088,14 +1083,6 @@ function ItemFila({
       .slice(0, 8);
   }, [alternativasFiltradas, porcionesOcupadas]);
 
-  // Sustituto Express: top 3 equivalentes biomecánicos (mismo patrón +
-  // grupo muscular), priorizando los que no solapan porción muscular ya
-  // trabajada hoy por otro ejercicio.
-  const sustitutosExpress = useMemo(
-    () => alternativasProcesadas.slice(0, 3).map((a) => a.ejercicio),
-    [alternativasProcesadas],
-  );
-
   function handleSeleccionarAlternativa(altItem: {
     ejercicio: Ejercicio;
     solapaCon?: { nombre: string; indice: number; porcionLabel: string };
@@ -1225,11 +1212,6 @@ function ItemFila({
                   onSeleccionarAlternativa={cambiar}
                 />
               ) : null}
-              {ej && !zenMode ? (
-                <BotonMaquinaOcupada
-                  onOpen={() => setMostrarSustitutoExpress(true)}
-                />
-              ) : null}
               {!zenMode ? (
               <button
                 type="button"
@@ -1249,9 +1231,7 @@ function ItemFila({
                 }
                 aria-expanded={abrirCambio}
                 aria-label={
-                  abrirCambio
-                    ? "Cerrar alternativas"
-                    : "No conozco este ejercicio o me molesta"
+                  abrirCambio ? "Cerrar alternativas" : "Cambiar ejercicio"
                 }
                 className="grid size-8 shrink-0 place-items-center rounded-[8px] text-ink-soft transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-90 active:bg-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20"
               >
@@ -1332,19 +1312,6 @@ function ItemFila({
               onClose={() => setMostrarCalculadoraDiscos(false)}
               pesoInicial={pesoActualEjercicio}
               ejercicioNombre={ej?.nombre ?? item.ejercicio?.nombre}
-            />
-          ) : null}
-
-          {mostrarSustitutoExpress && ej ? (
-            <ModalSustitutoExpress
-              open={mostrarSustitutoExpress}
-              onClose={() => setMostrarSustitutoExpress(false)}
-              ejercicioActual={ej}
-              candidatos={sustitutosExpress}
-              onSeleccionar={(nuevo) => {
-                cambiar(nuevo);
-                setMostrarSustitutoExpress(false);
-              }}
             />
           ) : null}
 
