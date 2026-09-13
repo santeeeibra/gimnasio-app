@@ -183,11 +183,20 @@ export function PartnerDashboardClient({
   const notificacionesNoLeidas = notificaciones.filter((n) => !n.leido).length;
 
   const marcarComoLeida = async (id: string) => {
+    // Update optimista: marcamos leido en el acto y revertimos si el server falla,
+    // asi la notificacion no queda "leida" en pantalla pero sin leer en la base.
     setNotificaciones((prev) =>
       prev.map((n) => (n.id === id ? { ...n, leido: true } : n))
     );
     hapticos.suave();
-    await marcarNotificacionPartnerLeidaAction(id);
+    try {
+      await marcarNotificacionPartnerLeidaAction(id);
+    } catch {
+      setNotificaciones((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, leido: false } : n))
+      );
+      hapticos.error();
+    }
   };
 
   return (

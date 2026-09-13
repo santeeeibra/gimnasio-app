@@ -3,8 +3,8 @@ import { requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { parseTema, type TemaPersonalizado } from "@/lib/tema";
 import { AjustesSocioForm } from "./ajustes-socio-form";
-import { linkClasses } from "@/components/ui";
-import { ArrowLeft } from "lucide-react";
+import { pillClasses } from "@/components/ui";
+import { ChevronLeft } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -36,11 +36,8 @@ export default async function MiAjustesPage() {
   return (
     <main className="stagger max-w-md mx-auto min-h-full p-6 pb-24 space-y-6">
       <div>
-        <Link
-          href="/mi"
-          className={`inline-flex items-center gap-1.5 text-xs text-ink-soft hover:text-ink mb-3 transition-colors ${linkClasses.inline}`}
-        >
-          <ArrowLeft className="size-3.5" />
+        <Link href="/mi" className={`${pillClasses.neutra} mb-3`}>
+          <ChevronLeft aria-hidden strokeWidth={2} className="size-4 shrink-0" />
           Volver a inicio
         </Link>
         <h1 className="text-2xl font-display font-semibold text-ink">

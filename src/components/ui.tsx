@@ -48,10 +48,14 @@ export function Button({
 }
 
 /**
- * Estilo ÚNICO para links de texto (navegación inline y acciones terciarias:
- * "Salir", "← Volver", "Ver de nuevo", "Modo avanzado", `<summary>` que hacen
- * de link). Ningún `<a>`/`<Link>`/`<button>` textual arma su className a mano.
- * Ver REGLAS_UI_EMIL.md §11/§12/§20.
+ * Estilo ÚNICO para links de texto EN PROSA (navegación inline y acciones
+ * terciarias dentro de un bloque de texto: "Modo avanzado", `<summary>` que
+ * hacen de link). Ningún `<a>`/`<Link>`/`<button>` textual arma su className
+ * a mano. Ver REGLAS_UI_EMIL.md §11/§12/§20.
+ *
+ * OJO: las acciones de CABECERA ("Salir", "← Volver", "Ver tutorial de nuevo",
+ * "Cambiar PIN") NO van acá: son controles y usan `pillClasses` (§3). Dejarlas
+ * como texto suelto subrayado está prohibido.
  *
  * - `inline`: dentro de un párrafo. Subrayado sutil, hereda el tamaño.
  * - `accion`: control suelto. Sin subrayado en reposo, padding para el target

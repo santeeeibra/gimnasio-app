@@ -193,11 +193,16 @@ export async function editarItem(
   const repeticiones = campos.repeticiones.trim().slice(0, 30) || "10";
   const nota = campos.nota.trim().slice(0, 120);
 
-  const { error } = await supabase
+  // .select() para saber cuantas filas toco: si RLS filtra el item por el USING
+  // (itemId de otra rutina / stale), el update devuelve 0 filas SIN error y el
+  // usuario veria "Guardado." sin que se haya guardado nada.
+  const { data: tocados, error } = await supabase
     .from("rutina_items")
     .update({ series, repeticiones, nota })
-    .eq("id", itemId);
+    .eq("id", itemId)
+    .select("id");
   if (error) return { error: "No se pudo guardar el cambio." };
+  if (!tocados?.length) return { error: "No se pudo guardar el cambio." };
 
   revalidatePath("/mi/rutina");
   return { ok: "Guardado." };
@@ -372,11 +377,13 @@ export async function editarTecnica(
   const supabase = await createClient();
 
   const t = TECNICAS_VALIDAS.has(tecnica) ? tecnica : "ninguna";
-  const { error } = await supabase
+  const { data: tocados, error } = await supabase
     .from("rutina_items")
     .update({ tecnica: t === "ninguna" ? null : t })
-    .eq("id", itemId);
+    .eq("id", itemId)
+    .select("id");
   if (error) return { error: "No se pudo guardar la técnica." };
+  if (!tocados?.length) return { error: "No se pudo guardar la técnica." };
 
   revalidatePath("/mi/rutina");
   return { ok: "Guardado." };
@@ -396,11 +403,13 @@ export async function sustituirEjercicio(
     .maybeSingle();
   if (!ej) return { error: "Ese ejercicio no existe." };
 
-  const { error } = await supabase
+  const { data: tocados, error } = await supabase
     .from("rutina_items")
     .update({ ejercicio_id: ejercicioId })
-    .eq("id", itemId);
+    .eq("id", itemId)
+    .select("id");
   if (error) return { error: "No se pudo cambiar el ejercicio." };
+  if (!tocados?.length) return { error: "No se pudo cambiar el ejercicio." };
 
   revalidatePath("/mi/rutina");
   return { ok: "Ejercicio cambiado." };

@@ -1,13 +1,41 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { createPortal } from "react-dom";
+import { useState, useEffect, type ReactNode } from "react";
+import { createPortal, useFormStatus } from "react-dom";
 import { pillClasses } from "@/components/ui";
 import { PlanForm } from "./plan-form";
 import { alternarPlan, eliminarPlan, type DescuentoPlan } from "./actions";
 
 import { Plus, X } from "lucide-react";
 import { useHapticos } from "@/lib/ui/hapticos";
+
+/**
+ * Submit que se autodeshabilita mientras la server action esta en vuelo.
+ * Evita el doble submit en acciones destructivas (eliminar/alternar plan),
+ * que son las unicas dos del panel que no pasan por useActionState.
+ */
+function BotonSubmit({
+  className,
+  title,
+  children,
+}: {
+  className: string;
+  title?: string;
+  children: ReactNode;
+}) {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      title={title}
+      aria-busy={pending}
+      className={`${className} disabled:opacity-50 disabled:pointer-events-none`}
+    >
+      {children}
+    </button>
+  );
+}
 
 export interface PlanItem {
   id: string;
@@ -240,7 +268,7 @@ export function PlanesManager({ planes }: PlanesManagerProps) {
                       name="activo"
                       value={String(p.activo)}
                     />
-                    <button
+                    <BotonSubmit
                       className={
                         p.activo
                           ? pillClasses.destructiva
@@ -248,7 +276,7 @@ export function PlanesManager({ planes }: PlanesManagerProps) {
                       }
                     >
                       {p.activo ? "Desactivar" : "Reactivar"}
-                    </button>
+                    </BotonSubmit>
                   </form>
 
                   <form
@@ -264,13 +292,12 @@ export function PlanesManager({ planes }: PlanesManagerProps) {
                     }}
                   >
                     <input type="hidden" name="id" value={p.id} />
-                    <button
-                      type="submit"
+                    <BotonSubmit
                       className="h-8 px-2.5 rounded-[5px] border border-rule bg-paper text-xs font-medium text-ink-soft hover:text-danger hover:border-danger/40 transition-colors"
                       title="Eliminar este plan permanentemente"
                     >
                       🗑️ Borrar
-                    </button>
+                    </BotonSubmit>
                   </form>
                 </div>
               </li>

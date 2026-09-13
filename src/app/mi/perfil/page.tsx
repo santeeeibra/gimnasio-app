@@ -3,8 +3,8 @@ import { requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { CardPeso } from "@/components/peso/card-peso";
 import { guardarPesoCliente, obtenerPesosCliente } from "@/lib/peso/actions";
-import { linkClasses, pillClasses } from "@/components/ui";
-import { User, Dumbbell, ShieldCheck, Calendar, Phone, Mail, IdCard } from "lucide-react";
+import { pillClasses } from "@/components/ui";
+import { User, Dumbbell, ShieldCheck, Calendar, Phone, Mail, IdCard, ChevronLeft } from "lucide-react";
 import { ArchivosSeccion } from "@/components/archivos/archivos-seccion";
 
 export const dynamic = "force-dynamic";
@@ -39,8 +39,9 @@ export default async function MiPerfilPage() {
   return (
     <main className="stagger max-w-md mx-auto min-h-full p-6 pb-24 space-y-6">
       {/* Breadcrumb / Volver */}
-      <Link href="/mi" className={`text-sm ${linkClasses.inline}`}>
-        ← Volver al inicio
+      <Link href="/mi" className={pillClasses.neutra}>
+        <ChevronLeft aria-hidden strokeWidth={2} className="size-4 shrink-0" />
+        Volver al inicio
       </Link>
 
       {/* Cabecera del perfil */}

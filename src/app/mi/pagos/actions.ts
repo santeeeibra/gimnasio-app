@@ -149,12 +149,17 @@ export async function crearSuscripcionMP(
     .select(
       "id, nombre, email, plan_id, mp_preapproval_id, plan:planes(id, nombre, precio, duracion_dias)",
     )
-    .eq("gimnasio_id", profile.gimnasio_id);
+    .eq("gimnasio_id", profile.gimnasio_id)
+    // SIEMPRE scopeado al profile autenticado. clienteId llega como prop desde
+    // el navegador y este handler corre con el admin client (sin RLS): si se
+    // acepta clienteId SIN cotejar profile_id, un socio puede crear/pisar la
+    // suscripcion de MP de otro socio del mismo gimnasio.
+    .eq("profile_id", profile.id);
 
+  // clienteId queda solo como filtro adicional, nunca como reemplazo del dueno
+  // de la ficha.
   if (clienteId) {
     query = query.eq("id", clienteId);
-  } else {
-    query = query.eq("profile_id", profile.id);
   }
 
   const { data: cli } = await query.maybeSingle();

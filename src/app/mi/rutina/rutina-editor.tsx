@@ -1142,15 +1142,6 @@ function ItemFila({
                 ejercicioId={ej?.id}
                 ejercicioNombre={ej?.nombre}
                 onSeleccionarAlternativa={cambiar}
-                trigger={
-                  <button
-                    type="button"
-                    aria-label="Asistente de ejercicio IA"
-                    className="grid size-8 shrink-0 place-items-center rounded-[8px] text-accent hover:text-accent/80 bg-accent/10 transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-90 active:bg-accent/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
-                  >
-                    <Sparkles className="size-4" />
-                  </button>
-                }
               />
               <button
                 type="button"

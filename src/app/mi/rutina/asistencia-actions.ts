@@ -98,14 +98,21 @@ export async function cancelarAsistencia(
   const profile = await requireProfile();
   const supabase = await createClient();
 
-  const { error } = await supabase
+  // RLS (socio_update_asistencia_propia) ya impide cancelar el pedido de otro,
+  // pero filtra por USING: devuelve 0 filas SIN error. Sin el .select() la UI
+  // festejaba "cancelado" con un pedidoId ajeno o ya resuelto.
+  const { data: tocados, error } = await supabase
     .from("pedidos_asistencia")
     .update({ estado: "cancelado" })
     .eq("id", pedidoId)
-    .in("estado", ["pendiente", "en_camino"]);
+    .in("estado", ["pendiente", "en_camino"])
+    .select("id");
 
   if (error) {
     return { ok: false, error: "No se pudo cancelar el pedido." };
+  }
+  if (!tocados?.length) {
+    return { ok: false, error: "Ese pedido ya no está activo." };
   }
 
   return { ok: true };

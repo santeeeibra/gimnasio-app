@@ -38,6 +38,8 @@ interface Alternativa {
 interface Props {
   ejercicioId?: string;
   ejercicioNombre?: string;
+  /** Contenido del disparador. Debe ser NO interactivo (un icono):
+   *  se renderiza dentro del <button> del asistente. */
   trigger?: React.ReactNode;
   onSeleccionarAlternativa?: (nuevo: any) => void;
 }
@@ -168,17 +170,14 @@ export function PulpoAsistenteChat({
 
   return (
     <>
-      <div onClick={abrir} className="inline-flex">
-        {trigger ?? (
-          <button
-            type="button"
-            aria-label="Asistente de ejercicio"
-            className="grid size-8 shrink-0 place-items-center rounded-[8px] text-accent hover:text-accent/80 bg-accent/10 transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-90 active:bg-accent/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
-          >
-            <Sparkles className="size-4" />
-          </button>
-        )}
-      </div>
+      <button
+        type="button"
+        onClick={abrir}
+        aria-label="Asistente de ejercicio"
+        className="grid size-8 shrink-0 place-items-center rounded-[8px] text-accent hover:text-accent/80 bg-accent/10 transition-[transform,background-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-90 active:bg-accent/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+      >
+        {trigger ?? <Sparkles className="size-4" />}
+      </button>
 
       {typeof document !== "undefined" &&
         createPortal(
