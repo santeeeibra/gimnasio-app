@@ -95,7 +95,7 @@ export function PulpoAsistenteChat({ ejercicioId, trigger }: { ejercicioId?: str
 
       {/* Bottom Sheet */}
       <div 
-        className={ixed inset-x-0 bottom-0 z-50 transform transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]  + 
+        className={"fixed inset-x-0 bottom-0 z-50 transform transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] " + 
         (abierto ? "translate-y-0" : "translate-y-full")}
       >
         <div className="mx-auto max-w-md bg-zinc-950 rounded-t-[24px] shadow-2xl border-t border-zinc-800 flex flex-col h-[75vh] overflow-hidden">

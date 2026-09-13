@@ -1,15 +1,16 @@
 ---
 name: sysgym-mascot-skill
 description: |
-  Guía y estándar supremo para la mascota oficial de SysGym (Pulpo Volt verde #10e7a0 con muñequera deportiva).
+  Guía y estándar supremo para la mascota oficial de SysGym (Pulpo Volt, verde flúo, con cinta deportiva negra en la cabeza).
   Gobierna el uso de <Pulpo />, <PulpoCard />, indicadores de carga <MascotaLoading />, <PullToRefresh />,
-  y tarjetas de logros/racha. Prohíbe imágenes PNG sueltas con cajas blancas y solapamientos sobre headers de la UI.
-version: 1.0.0
+  tarjetas de logros/racha, y el asistente de chat <PulpoAsistenteChat /> con sus 5 poses emocionales.
+  Prohíbe imágenes PNG sueltas con cajas blancas y solapamientos sobre headers de la UI.
+version: 2.0.0
 ---
 
 # Mascota Oficial de SysGym (Pulpo Volt — Mascot Design & Usage Skill)
 
-> **Regla de Oro de Usabilidad e Identidad**: La mascota oficial de SysGym es el **Pulpo Verde-Volt (`#10e7a0`) con muñequera deportiva**, símbolo de constancia, fuerza y energía de la plataforma. Este estándar rige la integración visual y comportamiento de la mascota en todas las pantallas de SysGym.
+> **Regla de Oro de Usabilidad e Identidad**: La mascota oficial de SysGym es el **Pulpo Volt, verde flúo (`#10e7a0`), con cinta deportiva negra en la cabeza**, símbolo de constancia, fuerza y energía de la plataforma. Es una mascota **amigable pero no tierna/infantil** — actitud atlética y de carácter, no de bebé. Este estándar rige la integración visual y comportamiento de la mascota en todas las pantallas de SysGym.
 
 ---
 
@@ -17,7 +18,7 @@ version: 1.0.0
 
 1. **Cero Cajas Blancas / PNGs Sueltos**:
    - Queda **estrictamente prohibido** usar etiquetas `<img>` con PNGs que posean fondo blanco rectangular o sin transparencia sobre temas oscuros o dinámicos del gimnasio.
-   - Toda mascota debe ser renderizada vía componentes **vectoriales SVG** (`<Pulpo />` o `<PulpoCard />` de `src/components/mascota/pulpo.tsx`).
+   - Toda mascota debe ser renderizada vía componentes **vectoriales SVG** (`<Pulpo />` / `<PulpoCard />` de `src/components/mascota/pulpo.tsx`, o los SVG vectorizados del asistente de chat).
 
 2. **Fondo Fijo de Plataforma (No apoyarse directo en `bg-paper`)**:
    - La mascota **NUNCA** se apoya directamente sobre el fondo del tema del gimnasio (`bg-paper` / `bg-paper-2`).
@@ -25,12 +26,17 @@ version: 1.0.0
    - Usar el componente estándar: `<PulpoCard size={...} pose="festejo" />`.
 
 3. **Color de Plataforma FIJO (No configurable por el gimnasio)**:
-   - Color constante: `PULPO_VERDE = "#10e7a0"`.
+   - Color constante: `PULPO_VERDE = "#10e7a0"` (verde flúo/neón).
    - Representa la identidad de SysGym a nivel plataforma; nunca debe mutar con la paleta de colores del gimnasio ni con el tema del cliente.
 
-4. **Detalle de la Ilustración (Flat Vector Athletic Style)**:
-   - Ojos glossy nítidos, mejillas deportivas, sonrisa expresiva.
-   - Muñequera deportiva (*wristband*) en uno de los tentáculos en todas las variaciones (`festejo` o `neutral`).
+4. **Detalle de la Ilustración (Flat Vector Athletic Style)** — diseño oficial vigente:
+   - **Cabeza redondeada** (no ovalada/alargada — evitar aspecto "marciano" o alien).
+   - **Cinta deportiva negra (headband)** rodeando la cabeza — accesorio de identidad obligatorio en todas las poses.
+   - Ojos expresivos y con carácter (no ojos redondos tipo bebé), cejas marcadas — mirada determinada/con actitud, no dulce.
+   - Musculatura marcada en los tentáculos superiores (brazos), transmite fuerza atlética.
+   - Remera/musculosa negra con franja verde diagonal en el torso (en las poses de cuerpo completo).
+   - Contornos gruesos y limpios, sombreado mínimo, estilo flat vector — nada de gradientes fotorrealistas.
+   - **Tono general: amigable pero no tierno.** Es una mascota deportiva con onda, no un personaje infantil.
 
 ---
 
@@ -73,6 +79,25 @@ import { PullToRefresh } from "@/components/mascota/pull-to-refresh";
 <PullToRefresh>{children}</PullToRefresh>
 ```
 
+### E. `<PulpoAsistenteChat />` (Mascota del Asistente Conversacional)
+Usa el set de 5 ilustraciones vectorizadas (diseño oficial con cinta negra) según el `estadoChat`. Cambia automáticamente de pose para dar feedback visual del estado del asistente:
+
+| `estadoChat` | Pose / Archivo base | Uso |
+|---|---|---|
+| `saludo` | Volt sonriendo y saludando con un tentáculo | Al abrir el chat |
+| `buscando` | Volt con lupa, concentrado investigando | Mientras se muestra el loader tras tocar un botón |
+| `entrenador` | Volt con silbato al cuello, señalando una tablilla | Al tocar "No sé hacer esto" / tips de técnica |
+| `exito` | Volt sonriendo orgulloso, flexionando un tentáculo como bíceps | Al encontrar el reemplazo de máquina |
+| `oops` | Volt encogiendo los tentáculos, expresión confundida/con gota de sudor | Cuando no hay alternativas en ese gimnasio |
+
+```tsx
+import { PulpoAsistenteChat } from "@/components/mascota/pulpo-asistente-chat";
+
+<PulpoAsistenteChat estadoChat={estadoChat} size={80} />
+```
+
+> Los 5 SVG fuente (vectorizados desde el diseño oficial aprobado) deben vivir junto al componente, no como PNG sueltos con fondo blanco — re-exportar/limpiar el trazado si el vectorizado trae ruido de color de fondo.
+
 ---
 
 ## 3. Matriz de Aplicación en Pantallas
@@ -84,3 +109,4 @@ import { PullToRefresh } from "@/components/mascota/pull-to-refresh";
 | **Pull-to-Refresh (`/mi` y `/panel`)** | `<PullToRefresh />` + `<MascotaLoading />` | `size={32}`, despliegue dinámico en espacio superior sin solapes |
 | **Splash de Arranque (`SplashScreen`)** | `<PulpoCard />` | `size={110}`, centrado sobre modal `bg-zinc-950` con fade |
 | **Hero Landing Page (`/`)** | `<PulpoCard />` | `size={84}`, interactivo con feedback sonoro/háptico |
+| **Asistente de Chat (buscador de reemplazo de máquina)** | `<PulpoAsistenteChat />` | `size={80}`, pose según `estadoChat` (ver sección 2.E) |
