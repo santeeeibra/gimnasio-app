@@ -79,7 +79,7 @@ export function SelectorRirVisual({ rirSeleccionado, onSelectRir, className = ""
               <span className="text-[12px] font-bold tracking-tight font-mono tabular-nums leading-tight">
                 {opc.label}
               </span>
-              <span className="text-[10px] opacity-80 truncate leading-tight">
+              <span className="text-[10px] opacity-80 leading-tight">
                 {opc.sublabel}
               </span>
             </div>

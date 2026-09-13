@@ -92,11 +92,27 @@ export function TimerDescanso() {
   const [hidratado, setHidratado] = useState(false);
   const [justStarted, setJustStarted] = useState(false);
   const [alertFinalizado, setAlertFinalizado] = useState(false);
+  const [hayModalAbierto, setHayModalAbierto] = useState(false);
   const finEnRef = useRef<number | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const wakeLockRef = useRef<any>(null);
   const atpBarRef = useRef<HTMLDivElement>(null);
+
+  // Ocultar píldora flotante si hay un modal o diálogo activo en la pantalla
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+
+    const evaluarModal = () => {
+      const modal = document.querySelector('[role="dialog"]');
+      setHayModalAbierto(Boolean(modal));
+    };
+
+    evaluarModal();
+    const observer = new MutationObserver(evaluarModal);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
 
   // Screen WakeLock: Mantiene la pantalla encendida y previene el bloqueo automático
   // del celular durante el descanso. Se libera apenas el timer termina, pausa o resetea.
@@ -619,7 +635,7 @@ export function TimerDescanso() {
   return createPortal(
     <>
       {/* Modo Colapsado: Píldora táctil ergonómica arrastrable */}
-      {colapsado && (
+      {colapsado && !hayModalAbierto && (
         <div
           ref={containerRef}
           onPointerDown={onPointerDown}
@@ -630,7 +646,7 @@ export function TimerDescanso() {
             transform: `translate3d(${pos.x}px, ${pos.y}px, 0)`,
             touchAction: "none",
           }}
-          className={`fixed top-0 left-0 z-[9999] select-none ${
+          className={`fixed top-0 left-0 z-30 select-none ${
             snapping
               ? "transition-transform duration-300 [transition-timing-function:cubic-bezier(0.2,0.9,0.3,1.2)]"
               : isDragging
