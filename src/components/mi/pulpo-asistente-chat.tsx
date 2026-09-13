@@ -114,8 +114,8 @@ export function PulpoAsistenteChat({ ejercicioId, trigger }: { ejercicioId?: str
           {/* Chat Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {mensajes.map((m) => (
-              <div key={m.id} className={lex flex-col }>
-                <div className={px-4 py-2.5 rounded-[18px] max-w-[85%] text-sm }>
+              <div key={m.id} className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}>
+                <div className={`px-4 py-2.5 rounded-[18px] max-w-[85%] text-sm ${m.role === "user" ? "bg-emerald-500 text-black" : "bg-zinc-900 text-zinc-100 border border-zinc-800"}`}>
                   {m.contenido}
                 </div>
 
