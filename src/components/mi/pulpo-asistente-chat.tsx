@@ -196,8 +196,9 @@ export function PulpoAsistenteChat({
               className={`fixed inset-x-0 bottom-0 z-50 transform transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
                 abierto ? "translate-y-0" : "translate-y-full pointer-events-none"
               }`}
-              role="dialog"
-              aria-modal="true"
+              role={abierto ? "dialog" : undefined}
+              aria-modal={abierto ? "true" : undefined}
+              aria-hidden={abierto ? undefined : "true"}
             >
         <div className="mx-auto max-w-md bg-paper border-t border-rule rounded-t-[24px] shadow-2xl flex flex-col max-h-[85vh] overflow-hidden">
           {/* Grab Handle */}
