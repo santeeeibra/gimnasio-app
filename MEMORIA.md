@@ -59,3 +59,5 @@
 
 - 2026-09-12: Fondo personalizado en pantalla de check-in (kiosko): migracion 0066 (bucket checkin-fondos), tema.checkinFondo (activo/imagenUrl/origen/oscurecido) en src/lib/tema.ts, card en /panel/ajustes (checkin-fondo-uploader.tsx) con galeria de presets (src/lib/checkin/fondos-preset.ts, vacia, agregar WebP en public/checkin-fondos/) + subida propia del dueno, renderizado en checkin/layout.tsx con overlay de oscurecido + watermark "Gestionado con SysGym". Migracion 0066 aplicada en Supabase (bucket checkin-fondos). Falta sumar imagenes precargadas.
 - 2026-09-12: Fix CartelLogro de récord personal (src/components/logros/cartel-logro.tsx): portal a document.body con createPortal para evitar que quede atrapado y recortado dentro de elementos con CSS transform/overflow-hidden (como stagger-in en la lista de ejercicios); incluye bloqueo de scroll de fondo, soporte tecla Escape y z-[120].
+
+- Fix de sintaxis en filtro de asistente-actions.ts y estrechado de tipos en pulpo-asistente-chat.tsx para desbloquear build de Vercel.
