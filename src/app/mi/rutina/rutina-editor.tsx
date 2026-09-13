@@ -41,6 +41,8 @@ import {
   ModalRampaCalentamiento,
   PillRampaCalentamiento,
 } from "@/components/rutinas/modal-rampa-calentamiento";
+import { useWakeLock } from "@/lib/ui/use-wake-lock";
+import { Focus } from "lucide-react";
 import {
   ModalSustitutoExpress,
   BotonMaquinaOcupada,
@@ -315,6 +317,16 @@ export function RutinaEditor({
   const [logroAbierto, setLogroAbierto] = useState(false);
   const logroMostradoRef = useRef<Record<number, boolean>>({});
 
+  // Modo Zen / Foco: pantalla siempre encendida durante el entrenamiento,
+  // targets táctiles agrandados y navegación secundaria oculta.
+  const [zenMode, setZenMode] = useState(false);
+  useWakeLock(zenMode);
+
+  function toggleZenMode() {
+    hapticoSeleccion();
+    setZenMode((v) => !v);
+  }
+
   // Series guardadas en caliente: el tiempo estimado se recalcula sin recargar.
   const [seriesGuardadas, setSeriesGuardadas] = useState<Record<string, number>>(
     {},
@@ -438,8 +450,31 @@ export function RutinaEditor({
         />
       )}
 
-      {multi ? (
-        <DiaTabs dias={dias} activo={activo} onSelect={setActivo} />
+      <div className="flex items-center justify-between gap-2">
+        {multi && !zenMode ? (
+          <DiaTabs dias={dias} activo={activo} onSelect={setActivo} />
+        ) : (
+          <span />
+        )}
+        <button
+          type="button"
+          onClick={toggleZenMode}
+          aria-pressed={zenMode}
+          aria-label={zenMode ? "Salir del modo Zen" : "Activar modo Zen / Foco"}
+          className={`inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full border px-3 text-[11px] font-bold transition-[transform,color,background-color,border-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${
+            zenMode
+              ? "border-accent bg-accent text-accent-ink shadow-sm"
+              : "border-rule bg-paper text-ink-soft"
+          }`}
+        >
+          <Focus className="size-4" />
+          {zenMode ? "Zen activo" : "Modo Zen"}
+        </button>
+      </div>
+      {zenMode ? (
+        <p className="-mt-4 text-[11px] text-ink-soft">
+          Pantalla siempre encendida · targets grandes · sin distracciones.
+        </p>
       ) : null}
       <div key={activo} className="stagger space-y-8">
         {visibles.map((dia) => {
@@ -633,6 +668,7 @@ export function RutinaEditor({
                       logoUrl={logoUrl}
                       colores={colores}
                       mostrarGuiaSerie={!guiaVista && seriesHechasActivo === 0 && i === 0}
+                      zenMode={zenMode}
                     />
                   ))}
                 </ul>
@@ -838,6 +874,7 @@ function ItemFila({
   logoUrl,
   colores,
   mostrarGuiaSerie = false,
+  zenMode = false,
 }: {
   item: ItemEditable;
   indice: number;
@@ -855,6 +892,8 @@ function ItemFila({
   logoUrl?: string | null;
   colores?: ColoresImagen;
   mostrarGuiaSerie?: boolean;
+  /** Modo Zen / Foco: oculta nav secundaria y agranda targets táctiles. */
+  zenMode?: boolean;
 }) {
   const [series, setSeries] = useState(String(item.series));
   const [reps, setReps] = useState(item.repeticiones);
@@ -1161,23 +1200,26 @@ function ItemFila({
               </div>
             </div>
             <div className="flex items-center gap-1 -mr-1 -mt-1">
-              {!esIndividual ? (
+              {!esIndividual && !zenMode ? (
                 <BotonPedirAyuda
                   ejercicioId={ej?.id}
                   ejercicioNombre={ej?.nombre ?? "Ejercicio"}
                   equipo={ej?.equipo}
                 />
               ) : null}
-              <PulpoAsistenteChat
-                ejercicioId={ej?.id}
-                ejercicioNombre={ej?.nombre}
-                onSeleccionarAlternativa={cambiar}
-              />
-              {ej ? (
+              {!zenMode ? (
+                <PulpoAsistenteChat
+                  ejercicioId={ej?.id}
+                  ejercicioNombre={ej?.nombre}
+                  onSeleccionarAlternativa={cambiar}
+                />
+              ) : null}
+              {ej && !zenMode ? (
                 <BotonMaquinaOcupada
                   onOpen={() => setMostrarSustitutoExpress(true)}
                 />
               ) : null}
+              {!zenMode ? (
               <button
                 type="button"
                 onClick={() => setAbrirCambio((v) => !v)}
@@ -1212,6 +1254,7 @@ function ItemFila({
                   )}
                 </svg>
               </button>
+              ) : null}
             </div>
           </div>
 
@@ -1395,7 +1438,9 @@ function ItemFila({
                         aria-label={`Serie ${sIdx + 1} de ${numSeries} (${repsEstaSerie} reps) ${
                           esDropSetSerie ? "Drop Set " : ""
                         }${hecho ? "completada" : "pendiente"}`}
-                        className={`grid size-11 min-w-[44px] place-items-center rounded-[10px] border font-bold transition-all duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${
+                        className={`grid place-items-center rounded-[10px] border font-bold font-mono tabular-nums transition-all duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${
+                          zenMode ? "size-14 min-w-[56px]" : "size-11 min-w-[44px]"
+                        } ${
                           hecho
                             ? "border-accent bg-accent text-accent-ink shadow-sm"
                             : esDropSetSerie
@@ -1404,42 +1449,42 @@ function ItemFila({
                             ? "border-accent bg-paper-2 text-ink ring-2 ring-accent ring-offset-2 ring-offset-paper animate-pulse"
                             : "border-rule bg-paper-2 text-ink-soft hover:border-ink/40"
                         }`}
-                        style={{ fontFamily: "var(--font-hero)" }}
+                        style={{ fontFamily: zenMode ? undefined : "var(--font-hero)" }}
                       >
                         {hecho ? (
                           esDropSetSerie ? (
                             <div className="flex flex-col items-center leading-none">
-                              <span className="text-[11px]">✓</span>
+                              <span className={zenMode ? "text-base" : "text-[11px]"}>✓</span>
                               <span className="text-[8px] font-black text-accent-ink tracking-tight">
                                 ⚡DROP
                               </span>
                             </div>
                           ) : tieneRepsPersonalizadas ? (
                             <div className="flex flex-col items-center leading-none">
-                              <span className="text-[12px]">✓</span>
+                              <span className={zenMode ? "text-lg" : "text-[12px]"}>✓</span>
                               <span className="text-[8.5px] font-extrabold opacity-95">
                                 {repsEstaSerie}
                               </span>
                             </div>
                           ) : (
-                            <span className="text-sm">✓</span>
+                            <span className={zenMode ? "text-xl" : "text-sm"}>✓</span>
                           )
                         ) : esDropSetSerie ? (
                           <div className="flex flex-col items-center leading-none">
-                            <span className="text-[11px]">{sIdx + 1}</span>
+                            <span className={zenMode ? "text-base" : "text-[11px]"}>{sIdx + 1}</span>
                             <span className="text-[9px] font-black text-accent leading-none">
                               ⚡
                             </span>
                           </div>
                         ) : tieneRepsPersonalizadas ? (
                           <div className="flex flex-col items-center leading-none">
-                            <span className="text-xs">{sIdx + 1}</span>
+                            <span className={zenMode ? "text-lg" : "text-xs"}>{sIdx + 1}</span>
                             <span className="text-[8.5px] font-bold text-accent">
                               {repsEstaSerie}
                             </span>
                           </div>
                         ) : (
-                          <span className="text-sm">{sIdx + 1}</span>
+                          <span className={zenMode ? "text-xl" : "text-sm"}>{sIdx + 1}</span>
                         )}
                       </button>
                     </div>

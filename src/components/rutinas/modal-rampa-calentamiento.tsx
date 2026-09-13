@@ -127,7 +127,7 @@ export function ModalRampaCalentamiento({
                     <p className="text-sm font-bold text-ink leading-tight">
                       {paso.etiqueta}
                     </p>
-                    <p className="text-[10.5px] text-ink-soft truncate">
+                    <p className="text-[10.5px] text-ink-soft leading-snug break-words">
                       {paso.detalle}
                     </p>
                   </div>
