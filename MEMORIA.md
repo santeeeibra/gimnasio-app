@@ -71,6 +71,10 @@
   1. *Calculadora Visual de Discos* (`calculadora-discos.tsx`): Desglose gráfico de discos por lado para barra olímpica/liviana/W/Smith.
   2. *ATP Recovery Engine* (`timer-descanso.tsx`): Timer de descanso dinámico adaptado por RIR (0/fallo=180s, RIR 1-2=120s, RIR 3+=60s) con barra 60fps de recuperación de potencia.
   3. *Sustituto Express 1-Tap* (`modal-sustituto-express.tsx`): Reemplazo instantáneo de máquina ocupada por alternativas biomecánicas equivalentes.
+- **Features de Sobrecarga y RIR (2026-09-13)**:
+  - *PillUltimaSesion* (`pill-ultima-sesion.tsx`): Badge inteligente "La última vez hice..." con autocompletado +2.5kg / +1 rep en 1-tap.
+  - *SelectorRirVisual* (`selector-rir-visual.tsx`): Selección táctil de RIR por sensaciones físicas (Fallo, Al límite, Punto dulce, Moderado) con squircles `rounded-[12px]`, 44px+ y hápticos.
+
 
 
 ## Backlog de Features Innovadoras (Socio ↔ Gimnasio)
