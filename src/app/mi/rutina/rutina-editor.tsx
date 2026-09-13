@@ -900,6 +900,7 @@ function ItemFila({
   const [tecnica, setTecnica] = useState<Tecnica>(item.tecnica ?? "ninguna");
   const [ej, setEj] = useState(item.ejercicio);
   const [abrirCambio, setAbrirCambio] = useState(false);
+  const panelCambioRef = useRef<HTMLDivElement>(null);
   const [molestias, setMolestias] = useState<Molestia[]>([]);
   const [msg, setMsg] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -1222,7 +1223,20 @@ function ItemFila({
               {!zenMode ? (
               <button
                 type="button"
-                onClick={() => setAbrirCambio((v) => !v)}
+                onClick={() =>
+                  setAbrirCambio((v) => {
+                    const next = !v;
+                    if (next) {
+                      requestAnimationFrame(() => {
+                        panelCambioRef.current?.scrollIntoView({
+                          behavior: "smooth",
+                          block: "start",
+                        });
+                      });
+                    }
+                    return next;
+                  })
+                }
                 aria-expanded={abrirCambio}
                 aria-label={
                   abrirCambio
@@ -1716,7 +1730,10 @@ function ItemFila({
           ) : null}
 
           {abrirCambio ? (
-            <div className="mt-3 rounded-[12px] border border-rule bg-paper p-3 animate-fade-in">
+            <div
+              ref={panelCambioRef}
+              className="mt-3 rounded-[12px] border border-rule bg-paper p-3 animate-fade-in"
+            >
               {/* Filtro de molestias articulares con explicación clara */}
               <div className="mb-3 rounded-[10px] border border-rule/60 bg-paper-2/60 p-2.5">
                 <div className="flex items-baseline justify-between gap-1.5 mb-1">

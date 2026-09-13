@@ -175,7 +175,7 @@ export function PillRampaCalentamiento({ onOpen }: { onOpen: () => void }) {
         hapticoImpactoSuave();
         onOpen();
       }}
-      className="inline-flex h-11 items-center gap-1 rounded-full border border-rule bg-paper px-2.5 text-[11px] text-ink-soft transition-[transform,color,background-color,border-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20"
+      className="inline-flex items-center gap-1 rounded-full border border-rule bg-paper px-2.5 py-1 text-[11px] text-ink-soft transition-[transform,color,background-color,border-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20"
       aria-label="Series de calentamiento"
     >
       <Flame className="size-3.5" />
