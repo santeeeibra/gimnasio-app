@@ -13,6 +13,16 @@ const PRESETS = [
 
 type Estado = "detenido" | "corriendo" | "pausado";
 
+// ATP Recovery Engine Adaptativo: sugiere el descanso según la proximidad al
+// fallo (RIR) reportada por la serie recién completada. A menor RIR (más
+// cerca del fallo), más tiempo necesita el sistema fosfágeno para recuperar
+// potencia.
+function sugerirDescansoPorRir(rir: number): number {
+  if (rir <= 0) return 180; // Fallo muscular / RIR 0
+  if (rir <= 2) return 120; // Intenso: RIR 1-2
+  return 60; // Liviano: RIR 3+
+}
+
 const LS_KEY = "gym.timer-descanso.v1";
 
 type Persistido = {
@@ -86,6 +96,7 @@ export function TimerDescanso() {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const wakeLockRef = useRef<any>(null);
+  const atpBarRef = useRef<HTMLDivElement>(null);
 
   // Screen WakeLock: Mantiene la pantalla encendida y previene el bloqueo automático
   // del celular durante el descanso. Se libera apenas el timer termina, pausa o resetea.
@@ -192,10 +203,14 @@ export function TimerDescanso() {
     };
   }, []);
 
-  // Escuchar evento global "timer:iniciar" para sincronizar el cronómetro automáticamente
+  // Escuchar evento global "timer:iniciar" para sincronizar el cronómetro automáticamente.
+  // Si viene `rir` (proximidad al fallo de la serie recién completada), el
+  // ATP Recovery Engine sugiere el descanso en lugar de usar `segundos` fijo.
   useEffect(() => {
-    const handleTimerIniciar = (e: CustomEvent<{ segundos?: number }>) => {
-      const segs = e.detail?.segundos || 60;
+    const handleTimerIniciar = (e: CustomEvent<{ segundos?: number; rir?: number }>) => {
+      const rir = e.detail?.rir;
+      const segs =
+        typeof rir === "number" ? sugerirDescansoPorRir(rir) : e.detail?.segundos || 60;
       if (segs > 0) {
         setPresetSeg(segs);
         finEnRef.current = Date.now() + segs * 1000;
@@ -429,6 +444,35 @@ export function TimerDescanso() {
   const pausado = estado === "pausado";
   const detenido = estado === "detenido";
   const pctRestante = Math.max(0, Math.min(100, Math.round((segundosRestantes / presetSeg) * 100)));
+
+  // Barra "ATP Recovery": snapea sin transición cuando el timer no corre
+  // (detenido/pausado/reset) para reflejar el % ya recuperado en ese instante.
+  useEffect(() => {
+    const el = atpBarRef.current;
+    if (!el || estado === "corriendo") return;
+    const pctRecuperado = 100 - pctRestante;
+    el.style.transition = "none";
+    el.style.transform = `scaleX(${Math.max(0, Math.min(100, pctRecuperado)) / 100})`;
+  }, [estado, pctRestante]);
+
+  // Barra "ATP Recovery": al iniciar/reanudar dispara UNA transición CSS
+  // lineal de duración exacta hasta scaleX(1) — compositor-only (transform),
+  // 60fps sin re-renders por frame ni animación JS.
+  useEffect(() => {
+    const el = atpBarRef.current;
+    if (!el || estado !== "corriendo" || !finEnRef.current) return;
+    const remainingMs = Math.max(0, finEnRef.current - Date.now());
+    const pctYaRecuperado =
+      presetSeg > 0
+        ? Math.max(0, Math.min(100, 100 - (remainingMs / 1000 / presetSeg) * 100))
+        : 0;
+    el.style.transition = "none";
+    el.style.transform = `scaleX(${pctYaRecuperado / 100})`;
+    // Forzar reflow para que el siguiente cambio sí dispare la transición.
+    void el.offsetHeight;
+    el.style.transition = `transform ${remainingMs}ms linear`;
+    el.style.transform = "scaleX(1)";
+  }, [estado]);
 
   // Posición flotante con persistencia en sesión (en memoria de componente / session)
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
@@ -766,19 +810,24 @@ export function TimerDescanso() {
                   </div>
                 )}
 
-                {/* Barra de progreso de descanso */}
+                {/* Barra "ATP Recovery": recuperación estimada de potencia (0%→100%),
+                    animada con transform:scaleX (compositor-only, 60fps). */}
                 <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full border border-rule bg-paper-2">
                   <div
-                    className={`h-full transition-[width] duration-1000 linear ${
+                    ref={atpBarRef}
+                    className={`h-full w-full origin-left will-change-transform ${
                       alertFinalizado
-                        ? "bg-accent w-full"
+                        ? "bg-accent"
                         : corriendo
                         ? "bg-accent"
                         : "bg-ink-soft/40"
                     }`}
-                    style={{ width: `${alertFinalizado ? 100 : pctRestante}%` }}
+                    style={{ transform: `scaleX(${alertFinalizado ? 1 : (100 - pctRestante) / 100})` }}
                   />
                 </div>
+                <span className="mt-1 text-[9px] font-semibold uppercase tracking-wider text-ink-soft">
+                  Recuperación ATP · {alertFinalizado ? 100 : 100 - pctRestante}%
+                </span>
               </div>
 
               {/* Presets rápidos (44px de alto para cumplir WCAG §3) */}
