@@ -68,15 +68,23 @@ export async function obtenerRachaCliente(): Promise<ResultadoRacha> {
   if (!res) return { dias: 0, enHito: false, conPerdon: false };
   const { supabase, clienteId } = res;
 
-  const { data } = await supabase
-    .from("registros_entrada")
-    .select("creado_en")
-    .eq("cliente_id", clienteId)
-    .order("creado_en", { ascending: false })
-    .limit(400);
+  const [{ data: registros }, { data: rutina }] = await Promise.all([
+    supabase
+      .from("registros_entrada")
+      .select("creado_en")
+      .eq("cliente_id", clienteId)
+      .order("creado_en", { ascending: false })
+      .limit(400),
+    supabase
+      .from("rutinas")
+      .select("dias_por_semana")
+      .eq("cliente_id", clienteId)
+      .maybeSingle(),
+  ]);
 
-  const fechas = (data ?? []).map((r) => String(r.creado_en).slice(0, 10));
-  const resultado = calcularRacha(fechas);
+  const fechas = (registros ?? []).map((r) => String(r.creado_en).slice(0, 10));
+  const diasPorSemana = rutina?.dias_por_semana ?? undefined;
+  const resultado = calcularRacha(fechas, { diasPorSemana });
 
   // Idempotente (unique cliente_id+tipo_logro+clave_logro) — se puede llamar
   // en cada carga de /mi sin duplicar el logro en el feed.

@@ -47,47 +47,61 @@ function restarDias(iso: string, n: number): string {
 }
 
 /**
- * Racha = días consecutivos con al menos un check-in, terminando hoy o ayer.
- *
- * Perdón de un día (Streak Freeze): un día faltante NO reinicia la racha; no
- * suma al conteo pero la mantiene viva. Sólo se corta cuando faltan 2 días
- * seguidos.
- *
- * @param fechasISO fechas (o timestamps ISO) de los check-ins. Se deduplica por
- *                  día, no importa el orden.
- * @param hoyISO    fecha de referencia (default: hoy, UTC).
+ * Racha adaptativa por frecuencia programada (ej: 3 días/semana L-M-V).
+ * Los días de descanso entre sesiones programadas NO rompen la racha.
+ * Se corta únicamente si el socio supera la tolerancia de descanso de su plan.
  */
 export function calcularRacha(
   fechasISO: string[],
-  hoyISO?: string,
+  hoyISOOrOpts?: string | { diasPorSemana?: number; hoyISO?: string },
 ): ResultadoRacha {
+  const hoyISO =
+    typeof hoyISOOrOpts === "string"
+      ? hoyISOOrOpts
+      : hoyISOOrOpts?.hoyISO;
+  const diasPorSemana =
+    typeof hoyISOOrOpts === "object" ? hoyISOOrOpts?.diasPorSemana : undefined;
+
   const dias = new Set(fechasISO.map((f) => f.slice(0, 10)));
   const hoy = (hoyISO ?? new Date().toISOString()).slice(0, 10);
-  const ayer = restarDias(hoy, 1);
 
-  let cursor: string;
-  if (dias.has(hoy)) cursor = hoy;
-  else if (dias.has(ayer)) cursor = ayer;
-  else return { dias: 0, enHito: false, conPerdon: false };
+  // Tolerancia de descanso entre sesiones según frecuencia (ej: 3d/sem -> max 3 días de descanso)
+  const maxDiasDescansoPermitidos =
+    diasPorSemana && diasPorSemana > 0
+      ? Math.max(2, Math.ceil(7 / diasPorSemana))
+      : 1;
+
+  // Buscar el check-in más reciente dentro de la ventana de tolerancia
+  let cursor: string | null = null;
+  for (let gap = 0; gap <= maxDiasDescansoPermitidos; gap++) {
+    const d = restarDias(hoy, gap);
+    if (dias.has(d)) {
+      cursor = d;
+      break;
+    }
+  }
+
+  if (!cursor) {
+    return { dias: 0, enHito: false, conPerdon: false };
+  }
 
   let total = 0;
   let conPerdon = false;
-  let huecoPrevio = false;
-  let huecoPendiente = false;
+  let diasConsecutivosSinEntrenar = 0;
 
   for (let i = 0; i < 500; i++) {
     const d = restarDias(cursor, i);
     if (dias.has(d)) {
       total++;
-      if (huecoPendiente) {
+      if (diasConsecutivosSinEntrenar > 1) {
         conPerdon = true;
-        huecoPendiente = false;
       }
-      huecoPrevio = false;
+      diasConsecutivosSinEntrenar = 0;
     } else {
-      if (huecoPrevio) break; // 2 días seguidos sin entrenar -> corta
-      huecoPrevio = true;
-      huecoPendiente = true; // se confirma como "perdón" sólo si sigue la racha
+      diasConsecutivosSinEntrenar++;
+      if (diasConsecutivosSinEntrenar > maxDiasDescansoPermitidos) {
+        break; // Superó el límite de su plan -> se corta
+      }
     }
   }
 

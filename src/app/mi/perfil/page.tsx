@@ -6,6 +6,7 @@ import { guardarPesoCliente, obtenerPesosCliente } from "@/lib/peso/actions";
 import { pillClasses } from "@/components/ui";
 import { User, Dumbbell, ShieldCheck, Calendar, Phone, Mail, IdCard, ChevronLeft } from "lucide-react";
 import { ArchivosSeccion } from "@/components/archivos/archivos-seccion";
+import { CredencialQRModal } from "@/components/mi/credencial-qr-modal";
 
 export const dynamic = "force-dynamic";
 
@@ -81,6 +82,13 @@ export default async function MiPerfilPage() {
           )}
         </div>
       </div>
+
+      <CredencialQRModal
+        nombre={profile.nombre}
+        dni={profile.dni}
+        gymNombre={gym?.nombre}
+        estadoCuota={c?.estado_cuota}
+      />
 
       {/* ── SECCIÓN 1: Peso corporal (Dial horizontal de regla + historial) ── */}
       {c?.id && (

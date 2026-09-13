@@ -6,6 +6,10 @@ import { Button } from "@/components/ui";
 import { SalirModoCheckin } from "./salir-form";
 import { encolar } from "@/lib/offline/cola";
 
+import { QrCode, Hash } from "lucide-react";
+import { QRScannerTab } from "@/components/checkin/qr-scanner-tab";
+import { hapticoImpactoSuave } from "@/lib/ui/hapticos";
+
 type Tono = "ok" | "prueba_vencida" | "cuota_vencida" | "no_encontrado" | "encolado";
 
 const TONO: Record<Tono, { rail: string; kicker: string; texto: string }> = {
@@ -39,6 +43,7 @@ const TONO: Record<Tono, { rail: string; kicker: string; texto: string }> = {
 const TIMEOUT_MS = 8_000;
 
 export function CheckinForm() {
+  const [modo, setModo] = useState<"qr" | "dni">("qr");
   const [pending, startTransition] = useTransition();
   const [state, setState] = useState<CheckinState & { encolado?: boolean }>({});
   const formRef = useRef<HTMLFormElement>(null);
@@ -49,17 +54,15 @@ export function CheckinForm() {
     inputRef.current?.focus();
   };
 
-  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const dni = (inputRef.current?.value ?? "").replace(/\D/g, "").trim();
-    if (!dni) {
-      setState({ error: "Escribí un DNI." });
+  const procesarDniIngreso = (dniLimpio: string) => {
+    if (!dniLimpio) {
+      setState({ error: "Escribí o escaneá un DNI." });
       return;
     }
 
     startTransition(async () => {
       const fd = new FormData();
-      fd.set("dni", dni);
+      fd.set("dni", dniLimpio);
       try {
         const res = await Promise.race([
           marcarIngreso({}, fd),
@@ -68,21 +71,25 @@ export function CheckinForm() {
           ),
         ]);
         if (res.error) {
-          // Error de servidor real: encolamos para no perder el ingreso.
-          encolar("checkin", { dni });
+          encolar("checkin", { dni: dniLimpio });
           setState({ encolado: true });
         } else {
           setState(res);
         }
       } catch {
-        // Sin respuesta (Supabase caído / sin red): a la cola.
-        encolar("checkin", { dni });
+        encolar("checkin", { dni: dniLimpio });
         setState({ encolado: true });
       } finally {
         limpiar();
         setTimeout(() => window.location.reload(), 6000);
       }
     });
+  };
+
+  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const dni = (inputRef.current?.value ?? "").replace(/\D/g, "").trim();
+    procesarDniIngreso(dni);
   };
 
   const tonoKey: Tono | null = state.encolado
@@ -92,33 +99,79 @@ export function CheckinForm() {
 
   return (
     <div className="w-full max-w-md rounded-[20px] border border-rule/60 bg-paper-2/90 p-6 shadow-lg backdrop-blur-xl sm:p-8">
-      <h1 className="font-display text-3xl leading-tight">Marcá tu ingreso</h1>
-      <p className="mt-1 text-[15px] text-ink-soft">
-        Escribí tu DNI y tocá el botón.
-      </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-display text-3xl leading-tight">Ingreso al Gym</h1>
+          <p className="mt-1 text-[14px] text-ink-soft">
+            {modo === "qr" ? "Escaneá tu pase digital QR" : "Escribí tu DNI y tocá ingresar"}
+          </p>
+        </div>
+      </div>
 
-      <form ref={formRef} onSubmit={onSubmit} className="mt-6">
-        <label className="block">
-          <span className="sr-only">DNI</span>
-          <input
-            ref={inputRef}
-            name="dni"
-            inputMode="numeric"
-            autoComplete="off"
-            autoFocus
-            placeholder="DNI"
-            className="w-full h-16 px-4 rounded-[8px] border border-rule bg-paper text-center font-display text-3xl tracking-[0.12em] outline-none transition-[border-color,box-shadow] duration-200 [transition-timing-function:var(--ease-out)] focus:border-ink focus:shadow-[0_0_0_3px_rgb(22_24_29_/_0.08)]"
-          />
-        </label>
-
-        <Button
-          type="submit"
-          loading={pending}
-          className="mt-4 h-14 w-full text-base"
+      {/* Tabs Escáner QR / Teclado DNI */}
+      <div className="mt-5 grid grid-cols-2 gap-1 rounded-[12px] bg-paper-3 p-1 border border-rule">
+        <button
+          type="button"
+          onClick={() => {
+            hapticoImpactoSuave();
+            setModo("qr");
+          }}
+          className={`flex items-center justify-center gap-2 rounded-[9px] py-2 text-xs font-semibold transition-all ${
+            modo === "qr"
+              ? "bg-paper text-ink shadow-sm"
+              : "text-ink-soft hover:text-ink"
+          }`}
         >
-          {pending ? "Marcando…" : "Marcar ingreso"}
-        </Button>
-      </form>
+          <QrCode className="size-4 text-volt" />
+          <span>Escanear QR</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            hapticoImpactoSuave();
+            setModo("dni");
+            setTimeout(() => inputRef.current?.focus(), 100);
+          }}
+          className={`flex items-center justify-center gap-2 rounded-[9px] py-2 text-xs font-semibold transition-all ${
+            modo === "dni"
+              ? "bg-paper text-ink shadow-sm"
+              : "text-ink-soft hover:text-ink"
+          }`}
+        >
+          <Hash className="size-4" />
+          <span>Por DNI</span>
+        </button>
+      </div>
+
+      {modo === "qr" ? (
+        <div className="mt-6">
+          <QRScannerTab onScan={procesarDniIngreso} isProcessing={pending} />
+        </div>
+      ) : (
+        <form ref={formRef} onSubmit={onSubmit} className="mt-6">
+          <label className="block">
+            <span className="sr-only">DNI</span>
+            <input
+              ref={inputRef}
+              name="dni"
+              inputMode="numeric"
+              autoComplete="off"
+              autoFocus
+              placeholder="DNI"
+              className="w-full h-16 px-4 rounded-[8px] border border-rule bg-paper text-center font-display text-3xl tracking-[0.12em] outline-none transition-[border-color,box-shadow] duration-200 [transition-timing-function:var(--ease-out)] focus:border-ink focus:shadow-[0_0_0_3px_rgb(22_24_29_/_0.08)]"
+            />
+          </label>
+
+          <Button
+            type="submit"
+            loading={pending}
+            className="mt-4 h-14 w-full text-base"
+          >
+            {pending ? "Marcando…" : "Marcar ingreso"}
+          </Button>
+        </form>
+      )}
 
       {state.error ? (
         <p role="alert" className="mt-4 text-sm text-danger">

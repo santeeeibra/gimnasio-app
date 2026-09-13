@@ -21,6 +21,7 @@ import { BotonActualizar } from "@/components/ui/boton-actualizar";
 import { PulpoRetencionCard } from "@/components/mi/pulpo-retencion-card";
 import { BarraAforoAnimada } from "@/components/mi/barra-aforo-animada";
 import { obtenerAforo } from "@/lib/aforo/actions";
+import { CredencialQRModal } from "@/components/mi/credencial-qr-modal";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -129,6 +130,12 @@ export default async function MiPage() {
           Hola, {profile.nombre.split(" ")[0]}
         </h1>
         <div className="flex shrink-0 items-center gap-2">
+          <CredencialQRModal
+            nombre={profile.nombre}
+            dni={profile.dni}
+            gymNombre={gym?.nombre}
+            estadoCuota={estado === "vencido" ? "vencida" : "al_dia"}
+          />
           <BotonActualizar variante="icono" />
           <VerTutorialDeNuevo className={pillClasses.neutra} label="Tutorial" />
           <form action={logout}>
