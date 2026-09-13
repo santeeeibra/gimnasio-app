@@ -931,7 +931,17 @@ function ItemFila({
   const tipoEquipoItem = useMemo(() => {
     const eq = (ej?.equipo || item.ejercicio?.equipo || "").toLowerCase();
     const nom = (ej?.nombre || item.ejercicio?.nombre || "").toLowerCase();
-    if (eq === "barra" || nom.includes("barra")) return "barra" as const;
+    if (
+      eq === "barra" ||
+      nom.includes("barra") ||
+      nom.includes("prensa") ||
+      nom.includes("leg press") ||
+      nom.includes("hack") ||
+      nom.includes("multipower") ||
+      nom.includes("smith")
+    ) {
+      return "barra" as const;
+    }
     return "otro" as const;
   }, [ej, item.ejercicio]);
 

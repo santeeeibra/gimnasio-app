@@ -39,13 +39,14 @@ const DISCO_ALTO: Record<(typeof DISCOS_KG)[number], number> = {
   1.25: 32,
 };
 
-type TipoBarra = "olimpica" | "liviana" | "wz" | "multipower";
+type TipoBarra = "olimpica" | "liviana" | "wz" | "multipower" | "prensa";
 
 const BARRAS: { id: TipoBarra; label: string; kg: number }[] = [
   { id: "olimpica", label: "Olímpica", kg: 20 },
   { id: "liviana", label: "Liviana", kg: 15 },
   { id: "wz", label: "Barra W/Z", kg: 10 },
   { id: "multipower", label: "Multipower", kg: 25 },
+  { id: "prensa", label: "Prensa 45°", kg: 30 },
 ];
 
 interface DesgloseDisco {
@@ -85,14 +86,42 @@ export function CalculadoraDiscosModal({
   ejercicioNombre,
 }: CalculadoraDiscosModalProps) {
   const [mounted, setMounted] = useState(false);
-  const [barra, setBarra] = useState<TipoBarra>("olimpica");
+  const [barra, setBarra] = useState<TipoBarra>(() => {
+    if (ejercicioNombre) {
+      const nom = ejercicioNombre.toLowerCase();
+      if (nom.includes("prensa") || nom.includes("leg press") || nom.includes("hack")) {
+        return "prensa";
+      }
+      if (nom.includes("w") || nom.includes("ez") || nom.includes("curl w") || nom.includes("biceps")) {
+        return "wz";
+      }
+      if (nom.includes("multipower") || nom.includes("smith")) {
+        return "multipower";
+      }
+    }
+    return "olimpica";
+  });
   const [pesoTotal, setPesoTotal] = useState(pesoInicial);
 
   useEffect(() => setMounted(true), []);
 
   useEffect(() => {
-    if (open) setPesoTotal(pesoInicial > 0 ? pesoInicial : 20);
-  }, [open, pesoInicial]);
+    if (open) {
+      const defaultBar = ejercicioNombre
+        ? (() => {
+            const nom = ejercicioNombre.toLowerCase();
+            if (nom.includes("prensa") || nom.includes("leg press") || nom.includes("hack")) return "prensa";
+            if (nom.includes("w") || nom.includes("ez") || nom.includes("curl w") || nom.includes("biceps")) return "wz";
+            if (nom.includes("multipower") || nom.includes("smith")) return "multipower";
+            return "olimpica";
+          })()
+        : "olimpica";
+
+      const barKg = BARRAS.find((b) => b.id === defaultBar)?.kg ?? 20;
+      setBarra(defaultBar);
+      setPesoTotal(pesoInicial > 0 ? Math.max(pesoInicial, barKg) : barKg);
+    }
+  }, [open, pesoInicial, ejercicioNombre]);
 
   useEffect(() => {
     if (!open) return;
@@ -121,6 +150,10 @@ export function CalculadoraDiscosModal({
   function elegirBarra(id: TipoBarra) {
     hapticoSeleccion();
     setBarra(id);
+    const targetKg = BARRAS.find((b) => b.id === id)?.kg ?? 20;
+    if (pesoTotal < targetKg) {
+      setPesoTotal(targetKg);
+    }
   }
 
   if (!mounted || !open) return null;
@@ -170,6 +203,8 @@ export function CalculadoraDiscosModal({
               type="button"
               onClick={() => elegirBarra(b.id)}
               className={`h-11 rounded-[12px] border px-3 text-xs font-semibold transition-[transform,color,background-color,border-color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${
+                b.id === "prensa" ? "col-span-2" : ""
+              } ${
                 barra === b.id
                   ? "border-accent bg-accent/10 text-accent"
                   : "border-rule bg-paper-2 text-ink-soft"
@@ -210,8 +245,8 @@ export function CalculadoraDiscosModal({
         </div>
 
         {/* Visualización gráfica de la barra */}
-        <div className="flex flex-col items-center gap-2 py-2">
-          <BarraVisual discos={discos} />
+        <div className="flex flex-col items-center gap-2 py-1">
+          <BarraVisual barra={barra} discos={discos} />
           <div className="flex items-baseline gap-1.5 font-mono text-sm tabular-nums text-ink-soft">
             <span className="font-bold text-ink">{pesoPorLado.toFixed(2)}</span>
             <span>kg por lado</span>
@@ -221,10 +256,14 @@ export function CalculadoraDiscosModal({
         {/* Desglose numérico */}
         <div className="space-y-1.5">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-ink-soft">
-            Discos por lado
+            Discos por lado {barra === "prensa" ? "(prensa)" : ""}
           </p>
           {discos.length === 0 ? (
-            <p className="text-xs text-ink-soft">Solo la barra, sin discos.</p>
+            <p className="text-xs text-ink-soft">
+              {barra === "prensa"
+                ? "Solo el carro base de la prensa, sin discos."
+                : "Solo la barra, sin discos."}
+            </p>
           ) : (
             <div className="flex flex-wrap gap-1.5">
               {discos.map((d) => (
@@ -258,48 +297,132 @@ export function CalculadoraDiscosModal({
   );
 }
 
-function BarraVisual({ discos }: { discos: DesgloseDisco[] }) {
-  // Expandir cada disco par su cantidad, más grande primero (cerca del centro).
+function BarraVisual({
+  barra,
+  discos,
+}: {
+  barra: TipoBarra;
+  discos: DesgloseDisco[];
+}) {
   const pila = discos.flatMap((d) => Array.from({ length: d.cantidad }, () => d.peso));
 
+  const renderDiscosLeft = () => (
+    <div className="flex items-center z-10">
+      {[...pila].reverse().map((peso, i) => (
+        <div
+          key={`l-${i}`}
+          className="rounded-[2px] border border-black/20 shrink-0 shadow-sm"
+          style={{
+            width: DISCO_ANCHO[peso],
+            height: DISCO_ALTO[peso],
+            backgroundColor: DISCO_COLOR[peso],
+            marginRight: -1,
+          }}
+        />
+      ))}
+    </div>
+  );
+
+  const renderDiscosRight = () => (
+    <div className="flex items-center z-10">
+      {pila.map((peso, i) => (
+        <div
+          key={`r-${i}`}
+          className="rounded-[2px] border border-black/20 shrink-0 shadow-sm"
+          style={{
+            width: DISCO_ANCHO[peso],
+            height: DISCO_ALTO[peso],
+            backgroundColor: DISCO_COLOR[peso],
+            marginLeft: -1,
+          }}
+        />
+      ))}
+    </div>
+  );
+
   return (
-    <div className="flex items-center" aria-hidden>
-      {/* Lado izquierdo: del más chico (afuera) al más grande (cerca del centro) */}
-      <div className="flex items-center">
-        {[...pila].reverse().map((peso, i) => (
-          <div
-            key={`l-${i}`}
-            className="rounded-[2px] border border-black/15 shrink-0"
-            style={{
-              width: DISCO_ANCHO[peso],
-              height: DISCO_ALTO[peso],
-              backgroundColor: DISCO_COLOR[peso],
-              marginRight: -1,
-            }}
-          />
-        ))}
-      </div>
-      {/* Extremo izquierdo de la barra */}
-      <div className="h-2.5 w-4 rounded-l-[2px] bg-ink-soft/60 shrink-0" />
-      {/* Eje central de la barra */}
-      <div className="h-1.5 w-24 bg-ink-soft/40 shrink-0" />
-      {/* Extremo derecho de la barra */}
-      <div className="h-2.5 w-4 rounded-r-[2px] bg-ink-soft/60 shrink-0" />
-      {/* Lado derecho: del más grande (cerca del centro) al más chico (afuera) */}
-      <div className="flex items-center">
-        {pila.map((peso, i) => (
-          <div
-            key={`r-${i}`}
-            className="rounded-[2px] border border-black/15 shrink-0"
-            style={{
-              width: DISCO_ANCHO[peso],
-              height: DISCO_ALTO[peso],
-              backgroundColor: DISCO_COLOR[peso],
-              marginLeft: -1,
-            }}
-          />
-        ))}
-      </div>
+    <div className="relative flex items-center justify-center min-h-[110px] w-full px-2 py-3 bg-paper-2/40 rounded-[16px] border border-rule/60 overflow-hidden select-none">
+      {barra === "wz" && (
+        <div className="flex items-center justify-center">
+          {renderDiscosLeft()}
+          <div className="h-4 w-1.5 bg-ink-soft/80 rounded-l-[1px] shrink-0" />
+          <div className="w-20 sm:w-24 h-8 shrink-0 flex items-center justify-center text-ink-soft">
+            <svg
+              viewBox="0 0 100 30"
+              className="w-full h-full text-ink-soft/90 overflow-visible"
+              fill="none"
+            >
+              <path
+                d="M 0,15 L 15,15 L 28,7 L 44,23 L 56,7 L 72,23 L 85,15 L 100,15"
+                stroke="currentColor"
+                strokeWidth="4.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          <div className="h-4 w-1.5 bg-ink-soft/80 rounded-r-[1px] shrink-0" />
+          {renderDiscosRight()}
+        </div>
+      )}
+
+      {barra === "multipower" && (
+        <div className="relative flex items-center justify-center w-full">
+          <div className="absolute inset-y-0 left-2 w-1 border-r-2 border-dashed border-accent/40 flex flex-col justify-between py-1" />
+          <div className="absolute inset-y-0 right-2 w-1 border-l-2 border-dashed border-accent/40 flex flex-col justify-between py-1" />
+
+          <div className="flex items-center">
+            {renderDiscosLeft()}
+            <div className="h-4 w-2 rounded-l-[2px] bg-ink-soft/80 shrink-0" />
+            <div className="relative h-2 w-20 sm:w-24 bg-gradient-to-r from-ink-soft/60 via-ink-soft to-ink-soft/60 shrink-0 flex items-center justify-around">
+              <div className="w-1.5 h-3.5 -mt-2.5 bg-ink/80 rounded-t-[1px]" />
+              <div className="w-1.5 h-3.5 -mt-2.5 bg-ink/80 rounded-t-[1px]" />
+            </div>
+            <div className="h-4 w-2 rounded-r-[2px] bg-ink-soft/80 shrink-0" />
+            {renderDiscosRight()}
+          </div>
+        </div>
+      )}
+
+      {barra === "prensa" && (
+        <div className="flex flex-col items-center justify-center w-full">
+          <div className="flex items-center justify-center">
+            {renderDiscosLeft()}
+            <div className="h-3 w-3 bg-amber-500/80 rounded-l-[2px] shrink-0 border-y border-l border-amber-600/50" />
+            <div className="mx-1 px-3 py-1.5 rounded-[12px] bg-gradient-to-b from-paper-2 via-paper to-paper-2 border border-rule shadow-sm flex flex-col items-center justify-center shrink-0 min-w-[100px]">
+              <div className="flex items-center gap-1.5 text-[10px] font-bold text-accent uppercase tracking-wider">
+                <span className="inline-block size-1.5 rounded-full bg-accent animate-pulse" />
+                Prensa 45°
+              </div>
+              <span className="text-[9.5px] font-mono font-medium text-ink-soft">
+                Carro 30kg
+              </span>
+            </div>
+            <div className="h-3 w-3 bg-amber-500/80 rounded-r-[2px] shrink-0 border-y border-r border-amber-600/50" />
+            {renderDiscosRight()}
+          </div>
+        </div>
+      )}
+
+      {barra === "olimpica" && (
+        <div className="flex items-center justify-center">
+          {renderDiscosLeft()}
+          <div className="h-4 w-2 rounded-l-[2px] bg-ink-soft/80 shrink-0" />
+          <div className="h-2 w-24 sm:w-28 bg-gradient-to-r from-ink-soft/50 via-ink-soft/80 to-ink-soft/50 shrink-0 rounded-sm" />
+          <div className="h-4 w-2 rounded-r-[2px] bg-ink-soft/80 shrink-0" />
+          {renderDiscosRight()}
+        </div>
+      )}
+
+      {barra === "liviana" && (
+        <div className="flex items-center justify-center">
+          {renderDiscosLeft()}
+          <div className="h-3 w-1.5 rounded-l-[1px] bg-ink-soft/70 shrink-0" />
+          <div className="h-1.5 w-20 sm:w-24 bg-ink-soft/60 shrink-0" />
+          <div className="h-3 w-1.5 rounded-r-[1px] bg-ink-soft/70 shrink-0" />
+          {renderDiscosRight()}
+        </div>
+      )}
     </div>
   );
 }

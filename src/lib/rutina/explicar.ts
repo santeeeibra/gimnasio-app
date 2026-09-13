@@ -39,9 +39,17 @@ export function explicarGeneral(entrada: EntradaMotor): string {
     );
   } else {
     partes.push(
-      `La estructura se arma según los días y el nivel, buscando tocar cada músculo unas 2 veces por semana. ${TEORIA.frecuencia.resumen}`,
+      `Estructurada bajo Frecuencia 2x Óptima (${TEORIA.frecuencia.fuente}) para maximizar la síntesis proteica por grupo muscular sin acumular fatiga innecesaria.`,
     );
   }
+
+  partes.push(
+    `${TEORIA.volumen.resumen} (${TEORIA.volumen.fuente}), ajustado al techo de 6–8 series por sesión para evitar junk volume (${TEORIA.schoenfeld_techo.fuente}).`,
+  );
+
+  partes.push(
+    `Proximidad al fallo graduada a RIR 1–2 (${TEORIA.rir.fuente}), priorizando tensión mecánica en repeticiones efectivas (${TEORIA.beardsley_rep_efectivas.fuente}) y estabilidad articular (${TEORIA.pradells_estabilidad.fuente}; ${TEORIA.glass_angulacion.fuente}).`,
+  );
 
   if (av && av.rango !== "estandar") {
     partes.push(
@@ -51,25 +59,22 @@ export function explicarGeneral(entrada: EntradaMotor): string {
   }
   if (av && av.volumen !== "estandar") {
     partes.push(
-      `Volumen: ${VOLUMEN_LABEL[av.volumen].toLowerCase()}. ${TEORIA.volumen.resumen}`,
+      `Ajuste de volumen: ${VOLUMEN_LABEL[av.volumen].toLowerCase()}.`,
     );
-  }
-  if (av && av.rir !== "2-3") {
-    partes.push(`${TEORIA.rir.resumen} (${TEORIA.rir.fuente})`);
   }
   if (av && av.tecnicaAislamientos !== "ninguna") {
     partes.push(
-      `Se aplica una técnica de intensidad en la última serie de los aislamientos. ${TEORIA.tecnicas.resumen}`,
+      `Técnica de intensidad en la serie final de aislamientos (${TEORIA.tecnicas.fuente}).`,
     );
   }
   if (av && av.orden === "prefatiga_zona") {
-    partes.push(`${TEORIA.orden.resumen} (${TEORIA.orden.fuente})`);
+    partes.push(`${TEORIA.orden.resumen} (${TEORIA.orden.fuente}).`);
   }
   if (av && av.evitar.length > 0) {
-    partes.push(`${TEORIA.molestia.resumen}`);
+    partes.push(`${TEORIA.molestia.resumen} (${TEORIA.molestia.fuente}).`);
   }
   if (entrada.sexo === "mujer") {
-    partes.push(TEORIA.sexo_mujer.resumen);
+    partes.push(`${TEORIA.sexo_mujer.resumen} (${TEORIA.sexo_mujer.fuente}).`);
   }
   return partes.join(" ");
 }
@@ -85,7 +90,14 @@ export function explicarPlan(
   );
   const prefatiga = entrada.avanzado?.orden === "prefatiga_zona";
 
-  return plan.dias.map((dia) => {
+  const frasesAccesorios = [
+    "El bloque secundario combina multiarticulares y máquinas guiadas para acumular volumen hipertrófico efectivo sin colapsar la zona lumbar.",
+    "Los ejercicios complementarios se trabajan en ángulos de máxima elongación muscular para estimular la hipertrofia mediada por estiramiento (Pedrosa et al. 2022; Jeff Nippard).",
+    "El cierre de sesión integra monoarticulares en poleas a RIR 1–0, agotando fibras de alto umbral con total estabilidad biomecánica (Joan Pradells / Charles Glass).",
+    "El resto del trabajo incluye variantes unilaterales y aislamientos guiados para corregir asimetrías y proteger la articulación lumbopélvica (Don Saladino).",
+  ];
+
+  return plan.dias.map((dia, di) => {
     const ejs = dia.items
       .map((it) => porSlug.get(it.ejercicio_slug))
       .filter((e): e is Ejercicio => !!e);
@@ -99,8 +111,6 @@ export function explicarPlan(
     const primero = ejs[0]?.nombre;
     const primeroSeries = dia.items[0]?.series;
     const primeroReps = dia.items[0]?.repeticiones;
-    // El primer ejercicio real del día manda el texto: con prefatiga de zona
-    // (o cuando lo que abre es un aislamiento) NO es el movimiento más pesado.
     const primeroEsAislamiento = ejs[0]?.patron === "aislamiento";
 
     const frases: string[] = [];
@@ -111,8 +121,8 @@ export function explicarPlan(
       const rx = `${primeroSeries} series de ${primeroReps.replace("–", " a ")}`;
       frases.push(
         primeroEsAislamiento
-          ? `Arrancás aislando ${primero.toLowerCase()} (${rx}) para pre-fatigar la zona antes del básico.`
-          : `Arrancás con ${primero.toLowerCase()} (${rx}): es el movimiento más pesado y conviene hacerlo con energía fresca.`,
+          ? `Arrancás aislando ${primero.toLowerCase()} (${rx}) para pre-fatigar el músculo objetivo antes del trabajo pesado.`
+          : `Arrancás con ${primero.toLowerCase()} (${rx}): demanda mayor energía neural y tensión mecánica en estado fresco (${TEORIA.orden.fuente}).`,
       );
     }
     const grupoEnfasisEnDia = ejs.some((e) =>
@@ -124,17 +134,13 @@ export function explicarPlan(
       );
       frases.push(
         prefatiga
-          ? `Como pediste enfocar ${zonas}, esos músculos se aíslan primero y con trabajo extra.`
-          : `Como pediste enfocar ${zonas}, esos ejercicios van primero y con trabajo extra.`,
+          ? `Priorizás ${zonas}: esos músculos se aíslan primero con dosis extra de volumen MAV.`
+          : `Priorizás ${zonas}: esos ejercicios abren la sesión y reciben mayor volumen efectivo.`,
       );
     }
-    // Solo hablamos de accesorios si el día realmente tiene aislamientos; en
-    // días muy compuestos (p. ej. fuerza) puede no haber.
-    const hayAccesorios = ejs.some((e) => e.patron === "aislamiento");
+    const hayAccesorios = ejs.some((e) => e.patron === "aislamiento" || e.patron === "secundario");
     if (hayAccesorios) {
-      frases.push(
-        "El resto son accesorios: más repeticiones y menos peso para sumar volumen sin tanta fatiga.",
-      );
+      frases.push(frasesAccesorios[di % frasesAccesorios.length]);
     }
     return frases.join(" ");
   });
