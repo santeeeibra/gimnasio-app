@@ -8,7 +8,7 @@
 - **Botón Compartir App**: Creado e integrado el componente `BotonCompartirApp` (`src/components/ui/boton-compartir-app.tsx`) con Web Share API nativa iOS/Android y fallback a portapapeles en `/mi`.
 - **Splash Screen 9:16 oficial de Volt**: Reemplazada la pantalla de arranque simple por la portada 9:16 oficial de Volt (con animación 60fps de barra neón, pulso brillante y transición con micro-zoom GPU `scale(1.03)`).
 - **Mascota Racha Activa**: Reemplazado el icono de racha activa por la nueva ilustración de Pulpo Volt muscular en `public/mascota/racha-activa.png`, integrado en `RachaCard`, `FeedLogros` y `CartelLogro`.
-- **Rediseño DiaTabs (iOS Segmented Control)**: Píldoras flotantes con `whitespace-nowrap` (soluciona salto de línea en "Día 1, 2, 3"), indicador cyan pulsante, micro-interacciones 60fps y haptics.
+- **Sección Perfil en Nav Inferior y Aclaración Mis Archivos (2026-09-13)**: Agregada pestaña Perfil (`/mi/perfil`) a la barra de navegación inferior del cliente (`MiBottomNav`) y sumada explicación explícita (aptos médicos, certificados, dietas/nutrición) en la sección "Mis archivos y documentos".
 
 - **Kit Comercial & Arsenal Partner**: Añadidas guías completas en `/panel/partner`: comparativa de planes (Inicial, Pro, Elite con AFIP), pitch 'Por qué SysGym', paso a paso de alta de dueño, matriz mata-objeciones, calculadora interactiva de ganancias, demo en vivo de alumno y ficha comercial descargable.
 - 2780386 fix(partner): sacar referencias a sysgym.app sin DNS configurado

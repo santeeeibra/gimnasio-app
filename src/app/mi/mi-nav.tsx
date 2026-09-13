@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Dumbbell, House, Inbox, MessageSquare } from "lucide-react";
+import { Dumbbell, House, Inbox, MessageSquare, User } from "lucide-react";
 
 // Íconos: SIEMPRE de lucide-react (REGLAS_UI_EMIL.md §14). Nunca SVG a mano.
 const NAV = [
@@ -10,6 +10,7 @@ const NAV = [
   { href: "/mi/rutina", label: "Rutina", Icono: Dumbbell },
   { href: "/mi/mensajes", label: "Mensajes", Icono: MessageSquare },
   { href: "/mi/buzon", label: "Buzón", Icono: Inbox },
+  { href: "/mi/perfil", label: "Perfil", Icono: User },
 ];
 
 function isActive(pathname: string, href: string) {

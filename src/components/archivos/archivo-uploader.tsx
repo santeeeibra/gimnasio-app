@@ -109,7 +109,7 @@ export function ArchivoUploader({
         <label className="animate-in fade-in zoom-in-95 duration-300 flex flex-col items-center justify-center p-6 border-2 border-dashed border-zinc-800 rounded-[12px] cursor-pointer hover:border-zinc-700 transition-colors bg-zinc-950">
           <Upload className="w-6 h-6 text-zinc-500 mb-2 transition-transform duration-300 group-hover:-translate-y-1" />
           <span className="text-sm text-zinc-400 font-medium">Tocar para seleccionar PDF o Foto</span>
-          <span className="text-xs text-zinc-500 mt-1">Máx. 4 MB</span>
+          <span className="text-xs text-zinc-500 mt-1">Apto médico, Dieta/Plan nutricional, Certificado o Estudios (PDF/Foto máx. 4 MB)</span>
           <input
             type="file"
             className="hidden"

@@ -147,9 +147,14 @@ export default async function MiPerfilPage() {
       {/* ── SECCIÓN 2.5: Mis archivos (apto médico, dieta, etc.) ── */}
       {c?.id && (
         <div className="card-cut border border-rule bg-paper-2 p-5 space-y-3">
-          <h2 className="text-xs font-bold uppercase tracking-[0.1em] text-ink-soft">
-            Mis archivos
-          </h2>
+          <div>
+            <h2 className="text-xs font-bold uppercase tracking-[0.1em] text-ink-soft">
+              Mis archivos y documentos
+            </h2>
+            <p className="text-xs text-ink-soft/80 mt-1">
+              Guardá acá tu apto médico, certificados de salud, dietas o rutinas impresas para tenerlos siempre a mano y compartirlos con tu gimnasio.
+            </p>
+          </div>
           <ArchivosSeccion clienteId={c.id} />
         </div>
       )}
