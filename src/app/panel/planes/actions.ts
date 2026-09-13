@@ -1,5 +1,6 @@
 "use server";
 
+import { aplicarMutacion } from "@/lib/db/mutaciones";
 import { revalidatePath } from "next/cache";
 import { requireDueno } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -140,11 +141,21 @@ export async function asegurarPlanDefecto(): Promise<{ error?: string }> {
 }
 
 export async function alternarPlan(formData: FormData) {
-  await requireDueno();
+  const dueno = await requireDueno();
   const id = String(formData.get("id"));
   const activo = String(formData.get("activo")) === "true";
   const supabase = await createClient();
-  await supabase.from("planes").update({ activo: !activo }).eq("id", id);
+  // Sin verificar filas, un id de otro gimnasio (filtrado por RLS) devolvía
+  // éxito y la UI revalidaba mostrando el plan igual que antes.
+  await aplicarMutacion(
+    supabase
+      .from("planes")
+      .update({ activo: !activo })
+      .eq("id", id)
+      .eq("gimnasio_id", dueno.gimnasio_id)
+      .select("id"),
+    "cambiar el estado del plan",
+  );
   revalidatePath("/panel/planes");
 }
 
@@ -153,11 +164,15 @@ export async function eliminarPlan(formData: FormData) {
   const id = String(formData.get("id") ?? "").trim();
   if (!id) return;
   const supabase = await createClient();
-  await supabase
-    .from("planes")
-    .delete()
-    .eq("id", id)
-    .eq("gimnasio_id", dueno.gimnasio_id);
+  await aplicarMutacion(
+    supabase
+      .from("planes")
+      .delete()
+      .eq("id", id)
+      .eq("gimnasio_id", dueno.gimnasio_id)
+      .select("id"),
+    "eliminar el plan",
+  );
   revalidatePath("/panel/planes");
   revalidatePath("/panel");
 }

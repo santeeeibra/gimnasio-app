@@ -1,6 +1,9 @@
+"use client";
+
 import { entrarComoAction, salirImpersonacionAction } from "./impersonar-actions";
 import { ArrowRight, UserCheck, ShieldCheck, LogOut, Sparkles, ExternalLink } from "lucide-react";
 import type { ImpFlag } from "@/lib/impersonation";
+import { hapticoImpactoMedio } from "@/lib/ui/hapticos";
 
 interface VistaSwitcherProps {
   duenoProfileId: string | null;
@@ -56,13 +59,14 @@ export function VistaSwitcher({
             <div className="flex flex-wrap items-center gap-2">
               <a
                 href={impersonacion.rol === "dueno" ? "/panel" : "/mi"}
+                onClick={() => hapticoImpactoMedio()}
                 className="inline-flex h-11 items-center gap-2 rounded-[12px] border border-amber-500/40 bg-paper px-4 text-xs font-bold text-ink transition-colors hover:bg-paper-2"
               >
                 <span>Ir a la pantalla emulada</span>
                 <ExternalLink className="size-3.5" />
               </a>
 
-              <form action={salirImpersonacionAction}>
+              <form action={salirImpersonacionAction} onSubmit={() => hapticoImpactoMedio()}>
                 <button
                   type="submit"
                   className="inline-flex h-11 items-center gap-2 rounded-[12px] bg-amber-500 px-5 text-xs font-black text-black shadow-md transition-transform hover:brightness-105 active:scale-[0.97]"
@@ -88,7 +92,7 @@ export function VistaSwitcher({
                 <ShieldCheck className="size-3.5" />
                 Vista Dueño · /panel
               </span>
-              <span className="rounded-md bg-paper/80 px-2 py-0.5 font-mono text-[11px] font-bold text-ink-soft border border-rule">
+              <span className="rounded-[10px] bg-paper/80 px-2 py-0.5 font-mono text-[11px] font-bold text-ink-soft border border-rule">
                 {gimnasioSlug}
               </span>
             </div>
@@ -103,13 +107,13 @@ export function VistaSwitcher({
             <div className="mt-3 flex items-center gap-2 text-xs text-ink-soft font-mono bg-paper/70 rounded-[10px] p-2 border border-rule/60">
               <span className="font-bold text-ink">{duenoNombre ?? "Dueño Test"}</span>
               <span>·</span>
-              <span>DNI {duenoDni ?? "12345678"}</span>
+              <span className="tabular-nums font-mono">DNI {duenoDni ?? "12345678"}</span>
             </div>
           </div>
 
           <div className="mt-5 pt-3 border-t border-rule/60">
             {duenoProfileId ? (
-              <form action={entrarComoAction}>
+              <form action={entrarComoAction} onSubmit={() => hapticoImpactoMedio()}>
                 <input type="hidden" name="profile_id" value={duenoProfileId} />
                 <button
                   type="submit"
@@ -135,7 +139,7 @@ export function VistaSwitcher({
                 <UserCheck className="size-3.5" />
                 Vista Cliente · /mi
               </span>
-              <span className="rounded-md bg-paper/80 px-2 py-0.5 font-mono text-[11px] font-bold text-ink-soft border border-rule">
+              <span className="rounded-[10px] bg-paper/80 px-2 py-0.5 font-mono text-[11px] font-bold text-ink-soft border border-rule">
                 {gimnasioSlug}
               </span>
             </div>
@@ -150,13 +154,13 @@ export function VistaSwitcher({
             <div className="mt-3 flex items-center gap-2 text-xs text-ink-soft font-mono bg-paper/70 rounded-[10px] p-2 border border-rule/60">
               <span className="font-bold text-ink">{socioNombre ?? "Socio Test"}</span>
               <span>·</span>
-              <span>DNI {socioDni ?? "20000000"}</span>
+              <span className="tabular-nums font-mono">DNI {socioDni ?? "20000000"}</span>
             </div>
           </div>
 
           <div className="mt-5 pt-3 border-t border-rule/60">
             {socioProfileId ? (
-              <form action={entrarComoAction}>
+              <form action={entrarComoAction} onSubmit={() => hapticoImpactoMedio()}>
                 <input type="hidden" name="profile_id" value={socioProfileId} />
                 <button
                   type="submit"

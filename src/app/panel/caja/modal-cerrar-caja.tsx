@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { cerrarSesionCaja, type ResultadoCierreCaja } from "./actions";
 import { Spinner } from "@/components/ui";
-import { hapticoExito, hapticoError, hapticoImpactoFuerte, hapticoSeleccion } from "@/lib/ui/hapticos";
+import { hapticoExito, hapticoError, hapticoImpactoFuerte, hapticoSeleccion, hapticoImpactoMedio } from "@/lib/ui/hapticos";
 import { Lock, Sparkles, CheckCircle2, AlertTriangle, X, ArrowRight } from "lucide-react";
 
 interface ModalCerrarCajaProps {
@@ -34,6 +34,7 @@ export function ModalCerrarCaja({ turnoNombre }: ModalCerrarCajaProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    hapticoImpactoMedio();
     setErrorMsg(null);
 
     const formData = new FormData();
@@ -120,7 +121,7 @@ export function ModalCerrarCaja({ turnoNombre }: ModalCerrarCajaProps) {
                         placeholder="0"
                         value={montoDeclarado}
                         onChange={(e) => setMontoDeclarado(e.target.value)}
-                        className="w-full h-14 pl-9 pr-4 rounded-[12px] border border-rule bg-paper-2 text-2xl font-black text-ink placeholder:text-ink-soft/40 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20"
+                        className="w-full h-14 pl-9 pr-4 rounded-[12px] border border-rule bg-paper-2 text-2xl font-black tabular-nums font-mono text-ink placeholder:text-ink-soft/40 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20"
                         required
                         autoFocus
                       />
@@ -205,26 +206,26 @@ export function ModalCerrarCaja({ turnoNombre }: ModalCerrarCajaProps) {
                 <div className="rounded-[16px] border border-rule bg-paper p-4 space-y-3 text-left text-xs">
                   <div className="flex items-center justify-between py-1 border-b border-rule">
                     <span className="text-ink-soft">Efectivo Contado Declarado:</span>
-                    <span className="font-bold text-ink">
+                    <span className="font-bold tabular-nums font-mono text-ink">
                       ${resultado.montoDeclarado?.toLocaleString("es-AR")}
                     </span>
                   </div>
                   <div className="flex items-center justify-between py-1 border-b border-rule">
                     <span className="text-ink-soft">Efectivo Esperado por Sistema:</span>
-                    <span className="font-bold text-ink">
+                    <span className="font-bold tabular-nums font-mono text-ink">
                       ${resultado.montoEsperado?.toLocaleString("es-AR")}
                     </span>
                   </div>
                   <div className="flex items-center justify-between pt-1 text-sm font-black">
                     <span className="text-ink">Diferencia:</span>
                     <span
-                      className={
+                      className={`tabular-nums font-mono ${
                         resultado.diferencia === 0
                           ? "text-[#10e7a0]"
                           : (resultado.diferencia ?? 0) > 0
                           ? "text-blue-400"
                           : "text-rose-400"
-                      }
+                      }`}
                     >
                       {resultado.diferencia === 0
                         ? "$0 (Exacto)"

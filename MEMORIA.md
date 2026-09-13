@@ -61,3 +61,10 @@
 - 2026-09-12: Fix CartelLogro de récord personal (src/components/logros/cartel-logro.tsx): portal a document.body con createPortal para evitar que quede atrapado y recortado dentro de elementos con CSS transform/overflow-hidden (como stagger-in en la lista de ejercicios); incluye bloqueo de scroll de fondo, soporte tecla Escape y z-[120].
 
 - Fix de sintaxis en filtro de asistente-actions.ts y estrechado de tipos en pulpo-asistente-chat.tsx para desbloquear build de Vercel.
+- **Misión E2E completada (2026-09-12)**: 5/5 tests verdes en Playwright (~29s) cubriendo login (cliente/dueño/inválido), cobro-socio (pago manual post-fix IDOR/N+1) y generar-rutina (motor científico desde panel de dueño).
+- **Refactor UI/UX SysGym Standards (2026-09-13)**: Corrección de squircles (`rounded-[10px]/[12px]`), hápticos (`hapticoImpactoMedio`), touch targets (44px `h-11`) y números tabulares (`tabular-nums font-mono`) en `registro-partner`, `vista-switcher`, `onboarding-dueno`, `cliente-row` y modales de caja.
+
+
+
+- **Aforo en Tiempo Real (2026-09-13)**: Medidor de aforo animado Liquid Glass en `/mi` y `/mi/rutina` (ventana 90min sobre `registros_entrada`) + control de `capacidad_maxima` con stepper táctil en `/panel/ajustes`.
+

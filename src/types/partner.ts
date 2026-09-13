@@ -95,15 +95,6 @@ export function calcularRangoPartner(gymsPagos: number): RangoPartnerInfo {
   return RANGOS_PARTNER.starter;
 }
 
-export type PartnerMilestoneAward = {
-  id: string;
-  partner_id: string;
-  milestone: MilestoneNumero;
-  bono_ars: number;
-  gyms_pagos_al_momento: number;
-  creado_at: string;
-};
-
 export type EstadoPayout = "pendiente" | "pagado" | "rechazado" | "cancelado";
 
 export type PartnerPayout = {
@@ -164,16 +155,3 @@ export const LIMITE_ALUMNOS_GRATIS = 40;
 
 export const LIMIT_EXCEEDED_UPGRADE_REQUIRED = "LIMIT_EXCEEDED_UPGRADE_REQUIRED" as const;
 
-export type CupoGratuitoInfo = {
-  /** true si el gimnasio tiene un plan de plataforma asignado (Básico/Pro/Elite/...):
-   * en ese caso este cap no aplica, rige cupoSocios() por el max_socios del plan. */
-  tienePlanAsignado: boolean;
-  usados: number;
-  max: typeof LIMITE_ALUMNOS_GRATIS;
-  restantes: number;
-  canAddMember: boolean;
-};
-
-export type ResultadoOperacionConLimite<T = undefined> =
-  | { ok: true; data: T }
-  | { ok: false; code: typeof LIMIT_EXCEEDED_UPGRADE_REQUIRED; message: string };

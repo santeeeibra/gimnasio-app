@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { abrirSesionCaja } from "./actions";
 import { Spinner } from "@/components/ui";
-import { hapticoExito, hapticoError, hapticoSeleccion } from "@/lib/ui/hapticos";
+import { hapticoExito, hapticoError, hapticoSeleccion, hapticoImpactoMedio } from "@/lib/ui/hapticos";
 import { Coins, Plus, X, Sun, Sunset, Moon, Clock } from "lucide-react";
 
 const TURNOS_RAPIDOS = [
@@ -34,6 +34,7 @@ export function ModalAbrirCaja() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    hapticoImpactoMedio();
     setErrorMsg(null);
 
     const formData = new FormData();
@@ -149,7 +150,7 @@ export function ModalAbrirCaja() {
                     placeholder="0"
                     value={montoInicial}
                     onChange={(e) => setMontoInicial(e.target.value)}
-                    className="w-full h-12 pl-8 pr-4 rounded-[12px] border border-rule bg-paper text-lg font-bold text-ink placeholder:text-ink-soft/40 focus:outline-none focus:border-[#10e7a0] focus:ring-1 focus:ring-[#10e7a0]"
+                    className="w-full h-12 pl-8 pr-4 rounded-[12px] border border-rule bg-paper text-lg font-bold tabular-nums font-mono text-ink placeholder:text-ink-soft/40 focus:outline-none focus:border-[#10e7a0] focus:ring-1 focus:ring-[#10e7a0]"
                     required
                   />
                 </div>

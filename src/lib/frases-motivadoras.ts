@@ -21,18 +21,3 @@ export const FRASES_MOTIVADORAS = [
   "Tu progreso puede ser lento, pero es progreso.",
   "El gimnasio es tu terapia. Las pesas son tu medicina.",
 ] as const;
-
-/**
- * Devuelve la frase del día basada en la fecha actual.
- * Usa el día del año módulo la cantidad de frases para ser determinístico
- * (la misma frase se repite durante todo el día).
- */
-export function obtenerFraseDelDia(fecha: Date = new Date()): string {
-  const inicioDeLAño = new Date(fecha.getFullYear(), 0, 0);
-  const diff = fecha.getTime() - inicioDeLAño.getTime();
-  const unDia = 1000 * 60 * 60 * 24;
-  const diaDelAño = Math.floor(diff / unDia);
-  
-  const indice = diaDelAño % FRASES_MOTIVADORAS.length;
-  return FRASES_MOTIVADORAS[indice];
-}

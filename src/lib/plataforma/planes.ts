@@ -1,15 +1,6 @@
 // Planes de plataforma (cupo de socios + precio por gimnasio). Ver
 // PLAN_PLANES_PLATAFORMA.md. La consola de soporte los lee con service_role.
 
-export type PlanPlataforma = {
-  id: string;
-  nombre: string;
-  max_socios: number | null;
-  precio_mensual: number;
-  activo: boolean;
-  orden: number;
-};
-
 /** "12 / 30 socios" o "12 socios · sin límite" si el plan es ilimitado. */
 export function cupoTexto(usados: number, max: number | null): string {
   return max == null

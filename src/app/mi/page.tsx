@@ -18,6 +18,8 @@ import { CacheAlVuelo } from "@/components/offline/cache-al-vuelo";
 import { BotonInstalarApp } from "@/components/pwa/boton-instalar-app";
 import { BotonActualizar } from "@/components/ui/boton-actualizar";
 import { PulpoRetencionCard } from "@/components/mi/pulpo-retencion-card";
+import { BarraAforoAnimada } from "@/components/mi/barra-aforo-animada";
+import { obtenerAforo } from "@/lib/aforo/actions";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -92,6 +94,7 @@ export default async function MiPage() {
   };
 
   const esIndividual = gym?.tipo_cuenta === "individual" || profile.rol === "dueno";
+  const aforo = !esIndividual && profile.gimnasio_id ? await obtenerAforo(profile.gimnasio_id) : null;
   const dias = esIndividual ? null : diasRestantes(c?.fecha_vencimiento ?? null);
   const estado = esIndividual ? "al_dia" : estadoDesdeDias(dias);
   const duracionTotal = c?.plan?.duracion_dias ?? 30; // fallback a 30 si no hay plan
@@ -204,6 +207,8 @@ export default async function MiPage() {
           </div>
         </div>
       )}
+
+      {aforo ? <BarraAforoAnimada aforo={aforo} /> : null}
 
       <PulpoRetencionCard />
 

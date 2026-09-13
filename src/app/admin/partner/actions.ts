@@ -334,14 +334,13 @@ export async function borrarDatosSimulacionAction(): Promise<{
 
   // 5. Borrar notificaciones asociadas a esos gimnasios
   // Buscamos notificaciones con metadata->>'gimnasio_id' en gymIds
-  let notifsBorradasTotal = 0;
-  for (const gid of gymIds) {
-    const { count } = await db
-      .from("partner_notifications")
-      .delete({ count: "exact" })
-      .contains("metadata", { gimnasio_id: gid });
-    notifsBorradasTotal += count ?? 0;
-  }
+  // Un solo DELETE con filtro `metadata->>gimnasio_id in (...)` en vez de uno
+  // por gimnasio. Los ids son UUID de la propia base: no hay que escaparlos.
+  const { count: notifsBorradas } = await db
+    .from("partner_notifications")
+    .delete({ count: "exact" })
+    .filter("metadata->>gimnasio_id", "in", `(${gymIds.join(",")})`);
+  const notifsBorradasTotal = notifsBorradas ?? 0;
 
   // 6. Finalmente borrar los gimnasios
   const { count: gymsBorrados, error: delGymErr } = await db

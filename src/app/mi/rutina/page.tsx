@@ -34,6 +34,8 @@ import { ExplicacionModal } from "@/components/rutina/explicacion-modal";
 import { PublicarPlantilla } from "@/components/rutina/publicar-plantilla";
 import { CodigoEntrenador } from "@/components/rutina/codigo-entrenador";
 import { ModalAvanzadoAfinarPlan } from "./modal-avanzado";
+import { BarraAforoAnimada } from "@/components/mi/barra-aforo-animada";
+import { obtenerAforo } from "@/lib/aforo/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -56,6 +58,8 @@ export default async function MiRutinaPage() {
     .maybeSingle();
 
   const clienteSexo = (cliente?.sexo as Sexo | null) ?? null;
+
+  const aforo = cliente?.gimnasio_id ? await obtenerAforo(cliente.gimnasio_id) : null;
 
   const { data: gymData } = cliente
     ? await supabase
@@ -242,6 +246,11 @@ export default async function MiRutinaPage() {
           </Link>
           <BotonActualizar variante="pill" label="Actualizar" />
         </div>
+        {aforo && !esIndividual ? (
+          <div className="mt-3">
+            <BarraAforoAnimada aforo={aforo} />
+          </div>
+        ) : null}
         {/* §6: acción secundaria de la sección va en la fila del encabezado
             (justify-between), nunca como hijo suelto del stack con ml-auto. */}
         <div className="mt-2 flex flex-wrap items-start justify-between gap-3">

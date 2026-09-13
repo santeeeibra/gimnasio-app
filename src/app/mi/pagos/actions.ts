@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { requireProfile } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { intentarMutacion } from "@/lib/db/mutaciones";
 import { registrarError } from "@/lib/admin/errores";
 import {
   calcularCubreHasta,
@@ -102,10 +103,20 @@ export async function iniciarPagoMercadoPago(): Promise<PagarState> {
     });
 
     if (link.proveedorRef) {
-      await db
-        .from("pagos")
-        .update({ comprobante_ref: `MP pref ${link.proveedorRef}` })
-        .eq("id", pago.id);
+      // El link ya es válido: si no pudimos anotar la referencia no le
+      // cerramos el checkout al socio, pero queda registrado para soporte.
+      const ref = await intentarMutacion(
+        db
+          .from("pagos")
+          .update({ comprobante_ref: `MP pref ${link.proveedorRef}` })
+          .eq("id", pago.id)
+          .select("id"),
+        "guardar la referencia de Mercado Pago en el pago",
+      );
+      if (!ref.ok) {
+        console.error("[mi/pagos]", ref.msg);
+        await registrarError(profile.gimnasio_id, "pago", new Error(ref.msg));
+      }
     }
 
     return { url: link.url };
@@ -113,10 +124,20 @@ export async function iniciarPagoMercadoPago(): Promise<PagarState> {
     // Token revocado / vencido: se cae al flujo manual (transferencia).
     console.error("[mi/pagos] crear link MP:", err);
     await registrarError(profile.gimnasio_id, "pago", err);
-    await db
-      .from("pagos")
-      .update({ estado: "rechazado" })
-      .eq("id", pago.id);
+    // Si esto no toca ninguna fila el pago queda "pendiente" para siempre y
+    // el socio no puede volver a intentar: hay que enterarse.
+    const rech = await intentarMutacion(
+      db
+        .from("pagos")
+        .update({ estado: "rechazado" })
+        .eq("id", pago.id)
+        .select("id"),
+      "marcar el pago como rechazado",
+    );
+    if (!rech.ok) {
+      console.error("[mi/pagos]", rech.msg);
+      await registrarError(profile.gimnasio_id, "pago", new Error(rech.msg));
+    }
     return {
       error:
         "No pudimos abrir el checkout de Mercado Pago. Podés pagar por transferencia con los datos de abajo.",
@@ -190,7 +211,11 @@ export async function crearSuscripcionMP(
 
   // Si mandó email y no lo tenía en la DB, guardarlo
   if (email && (!cli.email || cli.email !== email)) {
-    await db.from("clientes").update({ email }).eq("id", cli.id);
+    const mail = await intentarMutacion(
+      db.from("clientes").update({ email }).eq("id", cli.id).select("id"),
+      "guardar tu email",
+    );
+    if (!mail.ok) return { error: mail.msg };
   }
 
   const h = await headers();
@@ -207,11 +232,25 @@ export async function crearSuscripcionMP(
       applicationFeePct: estado.applicationFeePct,
     });
 
-    // Guardar clientes.mp_preapproval_id
-    await db
-      .from("clientes")
-      .update({ mp_preapproval_id: res.id })
-      .eq("id", cli.id);
+    // Guardar clientes.mp_preapproval_id. Si esto se pierde, la suscripción
+    // queda viva en Mercado Pago sin que la app la conozca: el socio puede
+    // terminar con dos débitos automáticos. No se sigue adelante en silencio.
+    const pre = await intentarMutacion(
+      db
+        .from("clientes")
+        .update({ mp_preapproval_id: res.id })
+        .eq("id", cli.id)
+        .select("id"),
+      "vincular la suscripción de Mercado Pago a tu ficha",
+    );
+    if (!pre.ok) {
+      console.error("[mi/pagos]", pre.msg);
+      await registrarError(profile.gimnasio_id, "pago", new Error(pre.msg));
+      return {
+        error:
+          "Creamos la suscripción pero no pudimos vincularla a tu ficha. Avisale a tu gimnasio antes de reintentar.",
+      };
+    }
 
     return { url: res.initPoint };
   } catch (err: any) {

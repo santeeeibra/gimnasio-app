@@ -1,5 +1,7 @@
 import "server-only";
 
+import { aplicarMutacion } from "@/lib/db/mutaciones";
+
 import { createHmac, timingSafeEqual } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -184,34 +186,46 @@ export async function guardarTokens(
     ? new Date(Date.now() + t.expiresIn * 1000).toISOString()
     : new Date(Date.now() + 180 * 86400 * 1000).toISOString();
 
-  await db
-    .from("gimnasios")
-    .update({
-      mp_access_token: t.accessToken,
-      mp_refresh_token: t.refreshToken,
-      mp_collector_id: t.userId ?? t.collectorId,
-      mp_user_id: t.userId ?? t.collectorId,
-      mp_token_expira_en: expiraEn,
-      mp_vinculado_at: new Date().toISOString(),
-    })
-    .eq("id", gimnasioId);
+  // Si el UPDATE no toca ninguna fila, el gimnasio queda sin token: el
+  // callback de OAuth reportaría "vinculado" y todos los cobros fallarían.
+  await aplicarMutacion(
+    db
+      .from("gimnasios")
+      .update({
+        mp_access_token: t.accessToken,
+        mp_refresh_token: t.refreshToken,
+        mp_collector_id: t.userId ?? t.collectorId,
+        mp_user_id: t.userId ?? t.collectorId,
+        mp_token_expira_en: expiraEn,
+        mp_vinculado_at: new Date().toISOString(),
+      })
+      .eq("id", gimnasioId)
+      .select("id"),
+    "guardar los tokens de Mercado Pago del gimnasio",
+  );
 }
 
 export async function desvincular(
   db: SupabaseClient,
   gimnasioId: string,
 ): Promise<void> {
-  await db
-    .from("gimnasios")
-    .update({
-      mp_access_token: null,
-      mp_refresh_token: null,
-      mp_collector_id: null,
-      mp_user_id: null,
-      mp_token_expira_en: null,
-      mp_vinculado_at: null,
-    })
-    .eq("id", gimnasioId);
+  // Desvincular en falso dejaría tokens vivos en la base después de que el
+  // dueño pidió desconectar su cuenta.
+  await aplicarMutacion(
+    db
+      .from("gimnasios")
+      .update({
+        mp_access_token: null,
+        mp_refresh_token: null,
+        mp_collector_id: null,
+        mp_user_id: null,
+        mp_token_expira_en: null,
+        mp_vinculado_at: null,
+      })
+      .eq("id", gimnasioId)
+      .select("id"),
+    "desvincular la cuenta de Mercado Pago del gimnasio",
+  );
 }
 
 /** Asegura que el gimnasio tenga un access_token válido, refrescándolo si expiró o vence pronto. */

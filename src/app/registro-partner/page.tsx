@@ -74,13 +74,13 @@ export default function RegistroPartnerPage() {
         {/* Beneficios clave */}
         <div className="rounded-[16px] bg-zinc-900/80 border border-zinc-800 p-3.5 space-y-2 text-xs">
           <div className="flex items-center gap-2.5 text-zinc-300">
-            <div className="p-1 rounded-md bg-emerald-500/20 text-[#10e7a0]">
+            <div className="p-1 rounded-[10px] bg-emerald-500/20 text-[#10e7a0]">
               <Percent className="size-3.5" />
             </div>
             <span><strong>20% en tus primeros 5 gimnasios</strong> (15% estándar luego) en su primer pago.</span>
           </div>
           <div className="flex items-center gap-2.5 text-zinc-300">
-            <div className="p-1 rounded-md bg-purple-500/20 text-purple-400">
+            <div className="p-1 rounded-[10px] bg-purple-500/20 text-purple-400">
               <Award className="size-3.5" />
             </div>
             <span><strong>$180.000 ARS en Bonos</strong>: $20.000 (5 gyms), $60.000 (10 gyms) y $100.000 (15 gyms).</span>
@@ -96,7 +96,7 @@ export default function RegistroPartnerPage() {
           className="flex items-center justify-between p-3 rounded-[14px] bg-emerald-950/30 border border-emerald-500/30 hover:border-emerald-500/60 transition-all text-xs group"
         >
           <div className="flex items-center gap-2.5">
-            <div className="size-7 rounded-lg bg-emerald-500/20 text-[#10e7a0] flex items-center justify-center font-bold">
+            <div className="size-7 rounded-[10px] bg-emerald-500/20 text-[#10e7a0] flex items-center justify-center font-bold">
               💬
             </div>
             <div>

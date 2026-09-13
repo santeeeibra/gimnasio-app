@@ -89,6 +89,39 @@ export async function actualizarDiasAvisoMorosidad(
   return { ok: "Aviso de vencimiento actualizado" };
 }
 
+/** Capacidad máxima de socios en sala, usada por el Medidor de Aforo (/mi). */
+export async function actualizarCapacidadMaxima(
+  _prev: AjustesState,
+  formData: FormData,
+): Promise<AjustesState> {
+  const dueno = await requireDueno();
+  const gimnasioId = String(formData.get("gimnasio_id") ?? "");
+
+  if (gimnasioId !== dueno.gimnasio_id) {
+    return { error: "No podés modificar este gimnasio" };
+  }
+
+  const capacidad = Number(formData.get("capacidad_maxima"));
+  if (!Number.isInteger(capacidad) || capacidad < 1 || capacidad > 2000) {
+    return { error: "Elegí una capacidad entre 1 y 2000 personas." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("gimnasios")
+    .update({ capacidad_maxima: capacidad })
+    .eq("id", gimnasioId);
+
+  if (error) {
+    console.error("[actualizarCapacidadMaxima]", error);
+    return { error: "No se pudo guardar el cambio" };
+  }
+
+  revalidatePath("/panel/ajustes");
+  revalidatePath("/mi", "layout");
+  return { ok: "Capacidad máxima actualizada" };
+}
+
 /** Email real del dueño, solo para recuperar la contraseña (no es el login). */
 export async function actualizarEmailRecuperacion(
   _prev: AjustesState,

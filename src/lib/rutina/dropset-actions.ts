@@ -5,7 +5,7 @@ import { requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { evaluarRecordCliente } from "@/lib/logros/actions";
 import type { ResultadoRecord } from "@/lib/logros/tipos";
-import type { DropPaso, RegistroDropSet } from "@/lib/progreso/tipos";
+import type { DropPaso } from "@/lib/progreso/tipos";
 
 async function resolverClienteId(): Promise<
   | {
@@ -109,37 +109,3 @@ export async function guardarDropSetCliente(
   return { ok: "✓", record };
 }
 
-/**
- * Recupera el último drop set registrado para un ejercicio, para sugerir
- * pesos/reps de arranque en la próxima sesión.
- */
-export async function obtenerUltimoDropSetCliente(
-  ejercicioId: string,
-): Promise<RegistroDropSet | null> {
-  const res = await resolverClienteId();
-  if ("error" in res) return null;
-  const { supabase, clienteId } = res;
-
-  const { data } = await supabase
-    .from("registro_progreso")
-    .select("id, fecha, serie_index, detalles_tecnica")
-    .eq("cliente_id", clienteId)
-    .eq("ejercicio_id", ejercicioId)
-    .not("detalles_tecnica", "is", null)
-    .order("fecha", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (!data || !data.detalles_tecnica) return null;
-
-  const detalles = data.detalles_tecnica as { tipo?: string; pasos?: DropPaso[] };
-  if (detalles.tipo !== "dropset" || !Array.isArray(detalles.pasos)) return null;
-
-  return {
-    id: data.id as string,
-    ejercicioId,
-    serieIndex: (data.serie_index as number | null) ?? 0,
-    pasos: detalles.pasos,
-    fecha: data.fecha as string,
-  };
-}

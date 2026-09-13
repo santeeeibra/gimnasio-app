@@ -102,7 +102,7 @@ export function ClienteRow({
               {cliente.profile?.nombre ?? "—"}
             </p>
             <p className="mt-1 truncate text-xs text-ink-soft">
-              DNI {cliente.profile?.dni ?? "—"} ·{" "}
+              DNI <span className="tabular-nums font-mono">{cliente.profile?.dni ?? "—"}</span> ·{" "}
               {cliente.plan?.nombre ?? "sin plan"}
             </p>
           </div>
@@ -124,7 +124,7 @@ export function ClienteRow({
               {kicker}
             </span>
             <span
-              className={`font-display text-xl leading-none tracking-tight ${TONE[estado]}`}
+              className={`font-display text-xl leading-none tracking-tight tabular-nums font-mono ${TONE[estado]}`}
             >
               {valor}
             </span>

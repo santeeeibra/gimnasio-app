@@ -17,8 +17,6 @@ export const RACHA_MINIMA_VISIBLE = 2;
  * Falta 1 día -> no se reinicia, se descuenta del conteo. Faltan 2 seguidos
  * -> se corta. Regla fija en calcularRacha().
  */
-export const PERDON_DIAS = 1;
-
 export type ResultadoRecord = {
   esRecord: boolean;
   pesoKg: number;

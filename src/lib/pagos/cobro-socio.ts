@@ -1,5 +1,7 @@
 import "server-only";
 
+import { intentarMutacion } from "@/lib/db/mutaciones";
+
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 // Lógica compartida entre el pago manual (el dueño lo carga en
@@ -183,13 +185,21 @@ export async function rechazarPagoSocio(
   db: SupabaseClient,
   pagoId: string,
   proveedorRef: string | null,
-): Promise<void> {
-  await db
-    .from("pagos")
-    .update({
-      estado: "rechazado",
-      ...(proveedorRef ? { proveedor_ref: proveedorRef } : {}),
-    })
-    .eq("id", pagoId)
-    .eq("estado", "pendiente");
+): Promise<{ ok: boolean; msg?: string }> {
+  // El filtro por estado "pendiente" hace que 0 filas sea un caso legítimo
+  // (el webhook de MP reintenta y el pago ya se había cerrado), pero el
+  // llamador tiene que poder distinguirlo de un rechazo efectivo.
+  const r = await intentarMutacion(
+    db
+      .from("pagos")
+      .update({
+        estado: "rechazado",
+        ...(proveedorRef ? { proveedor_ref: proveedorRef } : {}),
+      })
+      .eq("id", pagoId)
+      .eq("estado", "pendiente")
+      .select("id"),
+    "marcar el pago del socio como rechazado",
+  );
+  return r.ok ? { ok: true } : { ok: false, msg: r.msg };
 }

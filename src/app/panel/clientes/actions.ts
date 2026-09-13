@@ -173,7 +173,19 @@ async function altaClienteInterno(
   clienteId = (cliData as { id: string } | null)?.id ?? null;
 
   if (cliErr) {
-    await admin.from("profiles").delete().eq("id", created.user.id);
+    // Rollback del alta a medias. Si el borrado del profile no toca ninguna
+    // fila queda un perfil sin ficha de socio: no se puede perder en silencio.
+    const { data: revertido, error: errRollback } = await admin
+      .from("profiles")
+      .delete()
+      .eq("id", created.user.id)
+      .select("id");
+    if (errRollback || (revertido?.length ?? 0) === 0) {
+      console.error(
+        `[clientes] rollback del profile ${created.user.id} fallido:`,
+        errRollback?.message ?? "0 filas afectadas",
+      );
+    }
     await admin.auth.admin.deleteUser(created.user.id);
     await registrarError(dueno.gimnasio_id, "alta_cliente", cliErr);
     if (cliErr.message?.includes(LIMIT_EXCEEDED_UPGRADE_REQUIRED)) {
@@ -629,10 +641,25 @@ export async function eliminarClienteDefinitivo(
       return { error: `Error al borrar el historial de pagos: ${errPagos.message}` };
     }
 
-    // f. Tablas secundarias si existieran
-    await admin.from("progreso_ejercicios").delete().eq("cliente_id", clienteId);
-    await admin.from("asistencia_pedidos").delete().eq("cliente_id", clienteId);
-    await admin.from("buzon_sugerencias").delete().eq("cliente_id", clienteId);
+    // f. Tablas secundarias si existieran. Tolerante a propósito (puede que la
+    // tabla no exista en este entorno), pero el fallo queda en el log en vez
+    // de desaparecer: si no se borran, son datos del socio que sobreviven.
+    for (const tabla of [
+      "progreso_ejercicios",
+      "asistencia_pedidos",
+      "buzon_sugerencias",
+    ]) {
+      const { error: errTabla } = await admin
+        .from(tabla)
+        .delete()
+        .eq("cliente_id", clienteId);
+      if (errTabla) {
+        console.error(
+          `[clientes] borrar ${tabla} del socio ${clienteId}:`,
+          errTabla.message,
+        );
+      }
+    }
 
     // g. fila en clientes
     const { error: errCliente } = await admin

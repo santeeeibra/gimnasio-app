@@ -537,11 +537,6 @@ export const ESTILOS_VISUALES_KEYS = Object.keys(
   ESTILOS_VISUALES,
 ) as EstiloVisual[];
 
-/** Paleta base por estilo (compat: derivado de `ESTILOS_VISUALES`). */
-export const COLORES_POR_ESTILO = Object.fromEntries(
-  ESTILOS_VISUALES_KEYS.map((k) => [k, ESTILOS_VISUALES[k].colores]),
-) as Record<EstiloVisual, ColoresTema>;
-
 const HEX = /^#[0-9A-Fa-f]{6}$/;
 
 export function isHex(v: unknown): v is string {

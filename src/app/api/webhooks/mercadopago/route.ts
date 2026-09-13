@@ -124,19 +124,32 @@ export async function POST(req: NextRequest) {
     let paymentData: any = null;
     let gymEncontradoId: string | null = null;
 
-    for (const g of gimnasios ?? []) {
-      try {
-        const token = await asegurarTokenValido(db, g.id);
-        const res = await fetch(`https://api.mercadopago.com/v1/payments/${strId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (res.ok) {
-          paymentData = await res.json();
-          gymEncontradoId = g.id;
-          break;
-        }
-      } catch {
-        // Continuar buscando
+    // La API de Mercado Pago no permite preguntar por el pago sin saber de qué
+    // cuenta es, así que hay que probar cuenta por cuenta. Antes era una
+    // búsqueda estrictamente secuencial (N round-trips encadenados); ahora va
+    // en tandas paralelas y corta apenas encuentra el pago.
+    const TANDA_MP = 5;
+    const cuentas = gimnasios ?? [];
+    for (let i = 0; i < cuentas.length && !paymentData; i += TANDA_MP) {
+      const tanda = await Promise.all(
+        cuentas.slice(i, i + TANDA_MP).map(async (g) => {
+          try {
+            const token = await asegurarTokenValido(db, g.id);
+            const res = await fetch(
+              `https://api.mercadopago.com/v1/payments/${strId}`,
+              { headers: { Authorization: `Bearer ${token}` } },
+            );
+            if (!res.ok) return null;
+            return { gymId: g.id as string, data: await res.json() };
+          } catch {
+            return null; // Continuar buscando
+          }
+        }),
+      );
+      const hit = tanda.find((r) => r !== null);
+      if (hit) {
+        paymentData = hit.data;
+        gymEncontradoId = hit.gymId;
       }
     }
 

@@ -90,29 +90,106 @@ async function ejecutarAsistenteIa(req: NextRequest) {
     hace45d.setDate(hace45d.getDate() - 45);
     const hace45dISO = hace45d.toISOString().slice(0, 10);
 
+    const gymIds = gyms.map((g) => g.id);
+    const hace30d = new Date();
+    hace30d.setDate(hace30d.getDate() - 30);
+    const hace30dISO = hace30d.toISOString().slice(0, 10);
+
+    // Pre-carga global. Antes estas consultas vivían DENTRO del loop por
+    // gimnasio, y las de actividad no filtraban por gimnasio: se escaneaban
+    // 45 días de toda la plataforma una vez por gym (y el resumen mensual
+    // contaba los check-ins de todos los gimnasios como propios). Ahora son
+    // tres consultas y el loop no toca la base.
+    const [
+      { data: clientesTodos },
+      { data: entradasTodas },
+      { data: progresosTodos },
+    ] = await Promise.all([
+      admin
+        .from("clientes")
+        .select(
+          "id, gimnasio_id, fecha_nacimiento, fecha_vencimiento, profile:profiles(nombre)",
+        )
+        .in("gimnasio_id", gymIds),
+      admin
+        .from("registros_entrada")
+        .select("cliente_id, creado_en")
+        .gte("creado_en", `${hace45dISO}T00:00:00.000Z`),
+      admin
+        .from("registro_progreso")
+        .select("cliente_id, fecha")
+        .gte("fecha", hace45dISO),
+    ]);
+
+    type ClienteRow = {
+      id: string;
+      gimnasio_id: string;
+      fecha_nacimiento: string | null;
+      fecha_vencimiento: string | null;
+      profile: { nombre?: string } | { nombre?: string }[] | null;
+    };
+
+    const primerNombre = (c: ClienteRow, fallback: string) => {
+      const prof = Array.isArray(c.profile) ? c.profile[0] : c.profile;
+      return prof?.nombre?.split(" ")[0] ?? fallback;
+    };
+
+    const clientesPorGym = new Map<string, ClienteRow[]>();
+    const gymDeCliente = new Map<string, string>();
+    for (const c of (clientesTodos ?? []) as ClienteRow[]) {
+      gymDeCliente.set(c.id, c.gimnasio_id);
+      const arr = clientesPorGym.get(c.gimnasio_id);
+      if (arr) arr.push(c);
+      else clientesPorGym.set(c.gimnasio_id, [c]);
+    }
+
+    // Última actividad por socio (entradas + progreso) y check-ins de los
+    // últimos 30 días por gimnasio, resueltos de una sola pasada.
+    const ultimaActividad = new Map<string, string>();
+    const checkinsPorGym = new Map<string, number>();
+    const guardarActividad = (cid: string, f: string) => {
+      const prev = ultimaActividad.get(cid);
+      if (!prev || f > prev) ultimaActividad.set(cid, f);
+    };
+    for (const e of (entradasTodas ?? []) as {
+      cliente_id: string;
+      creado_en: string;
+    }[]) {
+      const fecha = e.creado_en.slice(0, 10);
+      guardarActividad(e.cliente_id, fecha);
+      const gid = gymDeCliente.get(e.cliente_id);
+      if (gid && fecha >= hace30dISO) {
+        checkinsPorGym.set(gid, (checkinsPorGym.get(gid) ?? 0) + 1);
+      }
+    }
+    for (const pr of (progresosTodos ?? []) as {
+      cliente_id: string;
+      fecha: string;
+    }[]) {
+      guardarActividad(pr.cliente_id, pr.fecha);
+    }
+
     for (const gym of gyms) {
       const gate = await verificarGateAsistenteIa(admin, gym.id);
       if (!gate.ok) continue;
 
+      const clientesGym = clientesPorGym.get(gym.id) ?? [];
+
       // 1. Cumpleaños del día
       try {
-        const { data: cumpleaneros } = await admin
-          .from("clientes")
-          .select("id, fecha_nacimiento, profile:profiles(nombre)")
-          .eq("gimnasio_id", gym.id)
-          .not("fecha_nacimiento", "is", null);
+        for (const c of clientesGym) {
+          if (c.fecha_nacimiento?.slice(5, 10) !== hoyMMDD) continue;
 
-        for (const c of cumpleaneros ?? []) {
-          const fn = c.fecha_nacimiento as string | null;
-          if (!fn || fn.slice(5, 10) !== hoyMMDD) continue;
-
-          const profile = Array.isArray(c.profile) ? c.profile[0] : c.profile;
-          const nombre = (profile as { nombre?: string } | null)?.nombre?.split(" ")[0] ?? "Campeón";
-
-          const res = await procesarEnvioAvisoIa(admin, gym.id, c.id, "cumpleanos", {
-            nombre,
-            nombre_gimnasio: gym.nombre,
-          });
+          const res = await procesarEnvioAvisoIa(
+            admin,
+            gym.id,
+            c.id,
+            "cumpleanos",
+            {
+              nombre: primerNombre(c, "Campeón"),
+              nombre_gimnasio: gym.nombre,
+            },
+          );
           if (res.ok) {
             resultados.cumpleanosEnviados++;
           }
@@ -125,37 +202,8 @@ async function ejecutarAsistenteIa(req: NextRequest) {
 
       // 2. Riesgo de abandono (cuota al día, sin actividad entre 7 y 14 días)
       try {
-        const [{ data: clientesGym }, { data: entradasGym }, { data: progresosGym }] =
-          await Promise.all([
-            admin
-              .from("clientes")
-              .select("id, fecha_vencimiento, profile:profiles(nombre)")
-              .eq("gimnasio_id", gym.id)
-              .not("fecha_vencimiento", "is", null),
-            admin
-              .from("registros_entrada")
-              .select("cliente_id, creado_en")
-              .gte("creado_en", `${hace45dISO}T00:00:00.000Z`),
-            admin
-              .from("registro_progreso")
-              .select("cliente_id, fecha")
-              .gte("fecha", hace45dISO),
-          ]);
-
-        const ultimaActividad = new Map<string, string>();
-        const guardarActividad = (cid: string, f: string) => {
-          const prev = ultimaActividad.get(cid);
-          if (!prev || f > prev) ultimaActividad.set(cid, f);
-        };
-
-        for (const e of (entradasGym ?? []) as { cliente_id: string; creado_en: string }[]) {
-          guardarActividad(e.cliente_id, e.creado_en.slice(0, 10));
-        }
-        for (const p of (progresosGym ?? []) as { cliente_id: string; fecha: string }[]) {
-          guardarActividad(p.cliente_id, p.fecha);
-        }
-
-        for (const c of clientesGym ?? []) {
+        for (const c of clientesGym) {
+          if (!c.fecha_vencimiento) continue;
           const dias = diasRestantes(c.fecha_vencimiento);
           if (dias === null || dias < 0) continue;
 
@@ -172,14 +220,17 @@ async function ejecutarAsistenteIa(req: NextRequest) {
             ),
           );
 
-          const profile = Array.isArray(c.profile) ? c.profile[0] : c.profile;
-          const nombre = (profile as { nombre?: string } | null)?.nombre?.split(" ")[0] ?? "socio";
-
-          const res = await procesarEnvioAvisoIa(admin, gym.id, c.id, "riesgo_abandono", {
-            nombre,
-            dias_sin_asistir: diasInactivo,
-            nombre_gimnasio: gym.nombre,
-          });
+          const res = await procesarEnvioAvisoIa(
+            admin,
+            gym.id,
+            c.id,
+            "riesgo_abandono",
+            {
+              nombre: primerNombre(c, "socio"),
+              dias_sin_asistir: diasInactivo,
+              nombre_gimnasio: gym.nombre,
+            },
+          );
           if (res.ok) {
             resultados.abandonoEnviados++;
           }
@@ -193,27 +244,21 @@ async function ejecutarAsistenteIa(req: NextRequest) {
       // 3. Resumen mensual (día 1 de cada mes)
       if (diaDelMes === 1) {
         try {
-          const hace30d = new Date();
-          hace30d.setDate(hace30d.getDate() - 30);
-          const hace30dISO = hace30d.toISOString().slice(0, 10);
+          const sociosActivos = clientesGym.filter(
+            (c) => c.fecha_vencimiento && c.fecha_vencimiento >= hoyISO,
+          ).length;
 
-          const [{ count: totalSocios }, { count: totalCheckins }] = await Promise.all([
-            admin
-              .from("clientes")
-              .select("id", { count: "exact", head: true })
-              .eq("gimnasio_id", gym.id)
-              .gte("fecha_vencimiento", hoyISO),
-            admin
-              .from("registros_entrada")
-              .select("id", { count: "exact", head: true })
-              .gte("creado_en", `${hace30dISO}T00:00:00.000Z`),
-          ]);
-
-          const res = await procesarEnvioAvisoIa(admin, gym.id, null, "resumen_mensual", {
-            nombre_gimnasio: gym.nombre,
-            socios_activos: totalSocios ?? 0,
-            checkins_mes: totalCheckins ?? 0,
-          });
+          const res = await procesarEnvioAvisoIa(
+            admin,
+            gym.id,
+            null,
+            "resumen_mensual",
+            {
+              nombre_gimnasio: gym.nombre,
+              socios_activos: sociosActivos,
+              checkins_mes: checkinsPorGym.get(gym.id) ?? 0,
+            },
+          );
           if (res.ok) {
             resultados.resumenesEnviados++;
           }

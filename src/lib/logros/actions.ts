@@ -270,26 +270,3 @@ export async function obtenerFeedLogrosGimnasio(
   });
 }
 
-/** Cuenta de reacciones de un logro + si el cliente logueado ya reaccionó. */
-export async function contarReaccionesLogro(
-  autorId: string,
-  tipoLogro: TipoLogro,
-  claveLogro: string,
-): Promise<{ total: number; miReaccion: boolean }> {
-  const res = await resolverCliente();
-  if (!res) return { total: 0, miReaccion: false };
-  const { supabase, clienteId } = res;
-
-  const total = await contar(supabase, autorId, tipoLogro, claveLogro);
-
-  const { data: mine } = await supabase
-    .from("reacciones_logro")
-    .select("id")
-    .eq("autor_id", autorId)
-    .eq("tipo_logro", tipoLogro)
-    .eq("clave_logro", claveLogro)
-    .eq("reactor_id", clienteId)
-    .maybeSingle();
-
-  return { total, miReaccion: !!mine };
-}

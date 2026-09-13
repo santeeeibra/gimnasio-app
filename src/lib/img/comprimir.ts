@@ -7,12 +7,6 @@
  * Reduce la calidad progresivamente hasta cumplir con el tamaño máximo en bytes.
  */
 
-export type OpcionesCompresion = {
-  maxLado: number;
-  maxBytes: number;
-  calidadInicial?: number;
-};
-
 export type ResultadoCompresion = {
   blob: Blob;
   ancho: number;

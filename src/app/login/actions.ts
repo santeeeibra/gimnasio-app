@@ -253,34 +253,6 @@ export async function loginIndividual(
   redirect(profile?.rol === "dueno" || profile?.rol === "staff" ? "/panel" : "/mi");
 }
 
-export async function loginDevAction(): Promise<void> {
-  const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({
-    email: "12345678@sante.gym.local",
-    password: "admin123",
-  });
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  try {
-    const cookieStore = await cookies();
-    cookieStore.set(
-      "gym_ultimo",
-      JSON.stringify({ slug: "sante", nombre: "Gimnasio Sante" }),
-      {
-        maxAge: 60 * 60 * 24 * 365,
-        path: "/",
-        sameSite: "lax",
-        httpOnly: false,
-      },
-    );
-  } catch {
-    // Si no se puede escribir, no bloquea
-  }
-
-  redirect("/admin");
-}
 
 export async function asegurarPerfilGoogleAction(): Promise<{
   error?: string;

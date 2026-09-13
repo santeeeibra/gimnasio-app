@@ -96,7 +96,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: r.msg }, { status: 500 });
     }
   } else if (mp.estado === "rechazado") {
-    await rechazarPagoSocio(db, pago.id, notif.dataId);
+    const r = await rechazarPagoSocio(db, pago.id, notif.dataId);
+    // 0 filas: el pago ya no estaba pendiente (reintento del webhook). Se
+    // registra, pero no se le devuelve 500 a Mercado Pago para que no
+    // reintente en loop.
+    if (!r.ok) console.error("[pagos-socio/webhook] rechazar:", r.msg);
   }
 
   return NextResponse.json({ ok: true });

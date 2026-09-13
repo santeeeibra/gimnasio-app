@@ -65,10 +65,20 @@ export default function ResetClavePage() {
       data: { user },
     } = await supabase.auth.getUser();
     if (user) {
-      await supabase
+      // Sin verificar filas, un RLS que filtre el UPDATE dejaba el perfil
+      // marcado y al usuario en loop de "cambiá tu contraseña".
+      const { data: filas, error: perfErr } = await supabase
         .from("profiles")
         .update({ debe_cambiar_clave: false })
-        .eq("id", user.id);
+        .eq("id", user.id)
+        .select("id");
+      if (perfErr || (filas?.length ?? 0) === 0) {
+        setEstado("listo");
+        setError(
+          "Tu contraseña se cambió, pero no pudimos actualizar tu perfil (0 filas afectadas). Iniciá sesión con la nueva clave; si te la vuelve a pedir, avisale a tu gimnasio.",
+        );
+        return;
+      }
     }
     setEstado("ok");
   }

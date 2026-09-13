@@ -6,6 +6,21 @@ import { requireSuperadmin, claveInicial, dniAEmail } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { enviarPush } from "@/lib/push/enviar";
 import { registrarAccionAdmin } from "@/lib/admin/audit";
+
+// Las APIs de Auth de Supabase (updateUserById / deleteUser) no tienen versión
+// batch: hay que llamarlas una vez por usuario. Al menos no las hacemos en
+// serie — tandas cortas para no pasarnos del rate limit de Auth.
+const TANDA = 10;
+async function enTandas<T, R>(
+  items: T[],
+  fn: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const salida: R[] = [];
+  for (let i = 0; i < items.length; i += TANDA) {
+    salida.push(...(await Promise.all(items.slice(i, i + TANDA).map(fn))));
+  }
+  return salida;
+}
 import { aprobarPagoPlataforma } from "@/lib/plataforma/aprobar-pago";
 import { rechazarPagoPlataforma as ejecutarRechazoPagoPlataforma } from "@/lib/plataforma/rechazar-pago";
 
@@ -314,7 +329,11 @@ export async function forzarEstadoSocio(
       .eq("id", clienteId);
     if (error) return { ok: false, msg: error.message };
 
-    await db.from("registros_entrada").delete().eq("cliente_id", clienteId);
+    const { error: errBorrar } = await db
+      .from("registros_entrada")
+      .delete()
+      .eq("cliente_id", clienteId);
+    if (errBorrar) return { ok: false, msg: errBorrar.message };
     if (preset === "trial_expirado") {
       await db
         .from("registros_entrada")
@@ -593,9 +612,28 @@ export async function crearGimnasio(
   });
 
   if (authErr || !createdUser.user) {
-    // Revertir creación de gimnasio si falla auth
-    await db.from("gimnasios").delete().eq("id", gym.id);
-    return { ok: false, msg: `Error creando usuario en Auth: ${authErr?.message ?? "desconocido"}` };
+    // Revertir creación de gimnasio si falla auth. Si el rollback también
+    // falla queda un gimnasio huérfano y sin dueño: hay que decirlo.
+    const { data: revertido, error: errRollback } = await db
+      .from("gimnasios")
+      .delete()
+      .eq("id", gym.id)
+      .select("id");
+    const rollbackOk = !errRollback && (revertido?.length ?? 0) > 0;
+    if (!rollbackOk) {
+      console.error(
+        `[admin] crearGimnasio: rollback fallido del gimnasio ${gym.id}`,
+        errRollback?.message ?? "0 filas afectadas",
+      );
+    }
+    return {
+      ok: false,
+      msg:
+        `Error creando usuario en Auth: ${authErr?.message ?? "desconocido"}` +
+        (rollbackOk
+          ? ""
+          : ` (además quedó el gimnasio ${gym.slug} sin dueño: borralo a mano)`),
+    };
   }
 
   // 5. Crear perfil del dueño
@@ -796,21 +834,33 @@ export async function resetearClavesGimnasioAction(params: {
       return { ok: false, msg: "No hay socios registrados en este gimnasio." };
     }
 
-    let actualizados = 0;
-    for (const socio of socios) {
+    // Antes: por cada socio, 1 llamada a Auth + 1 UPDATE secuencial. Ahora las
+    // de Auth van en tandas y el UPDATE de profiles sale en una sola consulta.
+    const resetados = await enTandas(socios, async (socio) => {
       const clave = params.nuevaClave?.trim() || claveInicial(socio.dni);
       const email = dniAEmail(socio.dni, gym.slug);
       const { error: authErr } = await db.auth.admin.updateUserById(socio.id, {
         password: clave,
         email,
       });
-      if (!authErr) {
-        await db
-          .from("profiles")
-          .update({ debe_cambiar_clave: true })
-          .eq("id", socio.id);
-        actualizados++;
+      return authErr ? null : socio.id;
+    });
+
+    const idsReseteados = resetados.filter((id): id is string => id !== null);
+    let actualizados = 0;
+    if (idsReseteados.length > 0) {
+      const { data: marcados, error: errMarcar } = await db
+        .from("profiles")
+        .update({ debe_cambiar_clave: true })
+        .in("id", idsReseteados)
+        .select("id");
+      if (errMarcar) {
+        return {
+          ok: false,
+          msg: `Se cambiaron las claves pero no se pudo marcar el cambio obligatorio: ${errMarcar.message}`,
+        };
       }
+      actualizados = marcados?.length ?? 0;
     }
 
     await registrarAccionAdmin(admin.id, "resetear_clave", gym.id, {
@@ -955,11 +1005,11 @@ export async function eliminarGimnasioDefinitivamente(
   // Borra cada cuenta de auth para que no quede un usuario huérfano ocupando
   // el email sintético (dni@slug.gym.local) ni el cupo de Auth de Supabase.
   // Cascada: auth.users -> profiles -> clientes -> pagos/registro_progreso/...
-  const erroresAuth: string[] = [];
-  for (const profileId of profileIds) {
+  const fallosAuth = await enTandas(profileIds, async (profileId) => {
     const { error } = await db.auth.admin.deleteUser(profileId);
-    if (error) erroresAuth.push(`${profileId}: ${error.message}`);
-  }
+    return error ? `${profileId}: ${error.message}` : null;
+  });
+  const erroresAuth = fallosAuth.filter((e): e is string => e !== null);
 
   // La fila de gimnasios: cascada lo que no dependía de un profile_id
   // (planes, pagos_plataforma, registros_entrada, partner_commissions del

@@ -60,41 +60,92 @@ async function correrCron() {
     diasAvisoPorGym.set(g.id, g.dias_aviso_morosidad ?? 5);
   }
 
-  let avisosMorosidad = 0;
-  for (const c of (clientes ?? []) as Row[]) {
-    const dias = diasRestantes(c.fecha_vencimiento);
-    const umbral = diasAvisoPorGym.get(c.gimnasio_id) ?? 5;
-    if (dias !== umbral) continue;
-    if (c.ultimo_aviso_morosidad_enviado_en === hoyISO) continue;
+  // Los push idénticos (mismo texto y mismo tag) se agrupan en un solo
+  // enviarPush con todos los profile_id: una consulta de suscripciones por
+  // grupo en vez de una por socio. Los UPDATE se acumulan y salen en batch.
+  const agrupar = <T,>(filas: T[], clave: (f: T) => string) => {
+    const m = new Map<string, T[]>();
+    for (const f of filas) {
+      const k = clave(f);
+      const arr = m.get(k);
+      if (arr) arr.push(f);
+      else m.set(k, [f]);
+    }
+    return m;
+  };
 
-    await enviarPush([c.profile_id], {
-      title: "Cuota por vencer",
-      body: `Tu cuota vence en ${dias} días. Recordá renovarla para seguir entrenando.`,
-      url: "/mi",
-      tag: `morosidad-${c.fecha_vencimiento}`,
-    });
-    await admin
+  let avisosMorosidad = 0;
+  const morosos = ((clientes ?? []) as Row[]).filter((c) => {
+    const umbral = diasAvisoPorGym.get(c.gimnasio_id) ?? 5;
+    return (
+      diasRestantes(c.fecha_vencimiento) === umbral &&
+      c.ultimo_aviso_morosidad_enviado_en !== hoyISO
+    );
+  });
+
+  if (morosos.length > 0) {
+    const porGrupo = agrupar(
+      morosos,
+      (c) => `${diasAvisoPorGym.get(c.gimnasio_id) ?? 5}|${c.fecha_vencimiento}`,
+    );
+    await Promise.all(
+      [...porGrupo.values()].map((grupo) => {
+        const dias = diasRestantes(grupo[0].fecha_vencimiento);
+        return enviarPush(
+          grupo.map((c) => c.profile_id),
+          {
+            title: "Cuota por vencer",
+            body: `Tu cuota vence en ${dias} días. Recordá renovarla para seguir entrenando.`,
+            url: "/mi",
+            tag: `morosidad-${grupo[0].fecha_vencimiento}`,
+          },
+        );
+      }),
+    );
+
+    const idsMorosos = morosos.map((c) => c.id);
+    const { data: marcados, error: errMoros } = await admin
       .from("clientes")
       .update({ ultimo_aviso_morosidad_enviado_en: hoyISO })
-      .eq("id", c.id);
-    avisosMorosidad++;
+      .in("id", idsMorosos)
+      .select("id");
+    if (errMoros) {
+      throw new Error(
+        `no se pudo marcar el aviso de morosidad: ${errMoros.message}`,
+      );
+    }
+    avisosMorosidad = marcados?.length ?? 0;
+    if (avisosMorosidad !== idsMorosos.length) {
+      console.warn(
+        `[cron cuotas] morosidad: se avisó a ${idsMorosos.length} socios pero se marcaron ${avisosMorosidad}`,
+      );
+    }
   }
 
   // ─── Aviso preventivo fijo: 3 días antes (solo socio, texto propio) ───
-  let avisos3d = 0;
-  for (const c of (clientes ?? []) as Row[]) {
-    if (diasRestantes(c.fecha_vencimiento) !== 3) continue;
-    // Si el gimnasio ya tiene el aviso de morosidad configurado en 3 días,
-    // ese bloque ya cubrió al socio: no duplicar.
-    if ((diasAvisoPorGym.get(c.gimnasio_id) ?? 5) === 3) continue;
-
-    await enviarPush([c.profile_id], {
-      title: "Cuota por vencer",
-      body: "Tu cuota vence en 3 días. Podés renovar desde tu panel o en recepción para no cortar tu racha 💳",
-      url: "/mi",
-      tag: `cuota-3d-${c.fecha_vencimiento}`,
-    });
-    avisos3d++;
+  // Si el gimnasio ya tiene el aviso de morosidad configurado en 3 días, ese
+  // bloque ya cubrió al socio: no duplicar.
+  const preventivos = ((clientes ?? []) as Row[]).filter(
+    (c) =>
+      diasRestantes(c.fecha_vencimiento) === 3 &&
+      (diasAvisoPorGym.get(c.gimnasio_id) ?? 5) !== 3,
+  );
+  const avisos3d = preventivos.length;
+  if (avisos3d > 0) {
+    const porVencimiento = agrupar(preventivos, (c) => c.fecha_vencimiento);
+    await Promise.all(
+      [...porVencimiento.entries()].map(([vence, grupo]) =>
+        enviarPush(
+          grupo.map((c) => c.profile_id),
+          {
+            title: "Cuota por vencer",
+            body: "Tu cuota vence en 3 días. Podés renovar desde tu panel o en recepción para no cortar tu racha 💳",
+            url: "/mi",
+            tag: `cuota-3d-${vence}`,
+          },
+        ),
+      ),
+    );
   }
 
   // ─── Alerta de abandono: socio con cuota al día que dejó de entrenar ───
@@ -183,11 +234,14 @@ async function correrCron() {
         duenosAbPorGym.set(d.gimnasio_id, arr);
       }
 
-      for (const [gid, ids] of inactivosPorGym) {
-        const dueniosGym = duenosAbPorGym.get(gid) ?? [];
-        if (dueniosGym.length) {
+      // Un push por gimnasio (el texto depende del conteo), todos en paralelo,
+      // y un único UPDATE con los ids de todos los gimnasios.
+      await Promise.all(
+        [...inactivosPorGym.entries()].map(([gid, ids]) => {
+          const dueniosGym = duenosAbPorGym.get(gid) ?? [];
+          if (!dueniosGym.length) return Promise.resolve();
           const n = ids.length;
-          await enviarPush(dueniosGym, {
+          return enviarPush(dueniosGym, {
             title: "Socios en riesgo de abandono",
             body:
               n === 1
@@ -196,13 +250,21 @@ async function correrCron() {
             url: "/panel/clientes",
             tag: `abandono-${gid}-${hoyISO}`,
           });
-        }
-        await admin
-          .from("clientes")
-          .update({ ultimo_aviso_abandono_enviado_en: hoyISO })
-          .in("id", ids);
-        avisosAbandono += ids.length;
+        }),
+      );
+
+      const idsInactivos = [...inactivosPorGym.values()].flat();
+      const { data: marcadosAb, error: errAb } = await admin
+        .from("clientes")
+        .update({ ultimo_aviso_abandono_enviado_en: hoyISO })
+        .in("id", idsInactivos)
+        .select("id");
+      if (errAb) {
+        throw new Error(
+          `no se pudo marcar el aviso de abandono: ${errAb.message}`,
+        );
       }
+      avisosAbandono = marcadosAb?.length ?? 0;
     }
   } catch (err) {
     // Pre-migración 0042 (columna ausente) o cualquier fallo: no romper el cron.
@@ -252,22 +314,40 @@ async function correrCron() {
     duenosPorGym.set(d.gimnasio_id, arr);
   }
 
-  let avisos = 0;
-  for (const c of afectados as Row[]) {
-    const dias = diasRestantes(c.fecha_vencimiento) ?? 0;
-    const texto =
-      dias === 1 ? "Tu cuota vence mañana." : `Tu cuota vence en ${dias} días.`;
+  const avisos = afectados.length;
 
-    await enviarPush([c.profile_id], {
-      title: "Cuota por vencer",
-      body: texto,
-      url: "/mi",
-      tag: `cuota-${c.fecha_vencimiento}`,
-    });
+  // Push al socio: agrupado por (días restantes, vencimiento) — texto y tag
+  // idénticos dentro de cada grupo.
+  const porAviso = agrupar(
+    afectados as Row[],
+    (c) => `${diasRestantes(c.fecha_vencimiento) ?? 0}|${c.fecha_vencimiento}`,
+  );
+  await Promise.all(
+    [...porAviso.values()].map((grupo) => {
+      const dias = diasRestantes(grupo[0].fecha_vencimiento) ?? 0;
+      return enviarPush(
+        grupo.map((c) => c.profile_id),
+        {
+          title: "Cuota por vencer",
+          body:
+            dias === 1
+              ? "Tu cuota vence mañana."
+              : `Tu cuota vence en ${dias} días.`,
+          url: "/mi",
+          tag: `cuota-${grupo[0].fecha_vencimiento}`,
+        },
+      );
+    }),
+  );
 
-    const dueniosGym = duenosPorGym.get(c.gimnasio_id) ?? [];
-    if (dueniosGym.length) {
-      await enviarPush(dueniosGym, {
+  // Push al dueño: el tag lleva el profile_id del socio, así que sigue siendo
+  // una notificación por cliente (decisión de producto), pero en paralelo.
+  await Promise.all(
+    (afectados as Row[]).map((c) => {
+      const dueniosGym = duenosPorGym.get(c.gimnasio_id) ?? [];
+      if (!dueniosGym.length) return Promise.resolve();
+      const dias = diasRestantes(c.fecha_vencimiento) ?? 0;
+      return enviarPush(dueniosGym, {
         title: "Cuota de cliente por vencer",
         body:
           dias === 1
@@ -276,9 +356,8 @@ async function correrCron() {
         url: "/panel/clientes",
         tag: `cuota-cli-${c.profile_id}-${c.fecha_vencimiento}`,
       });
-    }
-    avisos++;
-  }
+    }),
+  );
 
   // ─── Purga de buzón: borrar comentarios resueltos con más de 60 días ────────
   // Caso A: resueltos con respuesta → filtrar por respondido_at

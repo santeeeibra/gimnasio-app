@@ -1,5 +1,6 @@
 "use server";
 
+import { intentarMutacion } from "@/lib/db/mutaciones";
 import { revalidatePath } from "next/cache";
 import { requireDueno, dniAEmail } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -94,10 +95,16 @@ export async function configurarPin(
 
   // Best-effort: si venía desactivado a propósito, reactivarlo. Columna de
   // 0039; si la migración no está aplicada, el PIN igual quedó guardado.
-  await supabase
-    .from("gimnasios")
-    .update({ pin_ingresos_desactivado: false })
-    .eq("id", dueno.gimnasio_id);
+  // No cortamos el flujo (el PIN ya se guardó), pero lo dejamos en el log.
+  const reactivar = await intentarMutacion(
+    supabase
+      .from("gimnasios")
+      .update({ pin_ingresos_desactivado: false })
+      .eq("id", dueno.gimnasio_id)
+      .select("id"),
+    "reactivar el PIN de ingresos",
+  );
+  if (!reactivar.ok) console.error("[ingresos] configurarPin —", reactivar.msg);
 
   revalidatePath("/panel/ingresos");
   return { ok: "PIN configurado correctamente." };
@@ -151,10 +158,17 @@ export async function resetearPinConContrasena(contrasena: string): Promise<bool
 
     // Best-effort (columna de 0039): asegurar que no quede marcado como
     // desactivado a propósito, así la sección vuelve a pedir un PIN nuevo.
-    await supabase
-      .from("gimnasios")
-      .update({ pin_ingresos_desactivado: false })
-      .eq("id", dueno.gimnasio_id);
+    const limpiarFlag = await intentarMutacion(
+      supabase
+        .from("gimnasios")
+        .update({ pin_ingresos_desactivado: false })
+        .eq("id", dueno.gimnasio_id)
+        .select("id"),
+      "limpiar el flag de PIN desactivado",
+    );
+    if (!limpiarFlag.ok) {
+      console.error("[ingresos] olvidePin —", limpiarFlag.msg);
+    }
 
     revalidatePath("/panel/ingresos");
     return true;

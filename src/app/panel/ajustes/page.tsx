@@ -28,6 +28,7 @@ import { AjustesSeccionModal } from "./ajustes-seccion-modal";
 import { StaffForm, type StaffItem } from "./staff-form";
 import { Palette, Landmark, Bell, Smartphone, QrCode, KeyRound, HelpCircle, Receipt, Users, Sparkles } from "lucide-react";
 import { AsistenteIaForm } from "./asistente-ia-form";
+import { CapacidadAforoForm } from "./capacidad-aforo-form";
 import { TECHO_LLAMADAS_IA_MES } from "@/lib/n8n/asistente-ia";
 
 const ESTADO_LABEL: Record<string, string> = {
@@ -58,7 +59,7 @@ export default async function AjustesPage({
     supabase
       .from("gimnasios")
       .select(
-        "id, slug, nombre, tema, logo_url, dias_aviso_morosidad, estado, plan_plataforma_vence_el, pago_alias, pago_cbu, pago_titular, tipo_cuenta, afip_habilitado, afip_cuit, afip_razon_social, afip_condicion_iva, afip_punto_venta, asistente_ia_activo, asistente_ia_llamadas_mes",
+        "id, slug, nombre, tema, logo_url, dias_aviso_morosidad, estado, plan_plataforma_vence_el, pago_alias, pago_cbu, pago_titular, tipo_cuenta, afip_habilitado, afip_cuit, afip_razon_social, afip_condicion_iva, afip_punto_venta, asistente_ia_activo, asistente_ia_llamadas_mes, capacidad_maxima",
       )
       .eq("id", profile.gimnasio_id)
       .maybeSingle(),
@@ -352,6 +353,25 @@ export default async function AjustesPage({
                 techoMensual={TECHO_LLAMADAS_IA_MES}
               />
             </BloqueoEliteGate>
+          </AjustesSeccionModal>
+        ) : null}
+
+        {/* CAPACIDAD MÁXIMA DE AFORO */}
+        {gym ? (
+          <AjustesSeccionModal
+            titulo="Aforo del gimnasio"
+            subtitulo="Capacidad máxima de socios en sala, usada por el medidor de aforo en vivo de /mi."
+            icon={<Users className="size-4" />}
+            resumen={
+              <p className="text-[11px] text-ink-soft font-mono">
+                {gym.capacidad_maxima ?? 50} personas
+              </p>
+            }
+          >
+            <CapacidadAforoForm
+              gimnasioId={gym.id}
+              capacidadMaxima={gym.capacidad_maxima ?? 50}
+            />
           </AjustesSeccionModal>
         ) : null}
 

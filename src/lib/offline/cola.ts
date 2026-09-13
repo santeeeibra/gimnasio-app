@@ -74,11 +74,6 @@ function emitir(items: ItemCola[]): void {
   }
 }
 
-/** Lee la cola completa (pendientes + conflictos), más nueva primero por orden natural de inserción. */
-export function leerCola(): ItemCola[] {
-  return leerRaw();
-}
-
 export function pendientes(): ItemCola[] {
   return leerRaw().filter((i) => i.estado === "pendiente");
 }
