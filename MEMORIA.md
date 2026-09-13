@@ -3,6 +3,7 @@
 > **Regla de Cierre:** Al finalizar cada feature o sesión, el agente debe actualizar este archivo con 1 o 2 viñetas telegráficas sobre lo que acaba de hacer (en UTF-8). NO leas el contexto completo para actualizar esto.
 
 ## Últimos Cambios
+- **Reordenamiento Rutina Cliente**: Se priorizó el visor de rutina (`<RutinaEditor>`) al inicio de la pantalla y se colapsaron todas las tarjetas de configuración (Regenerar, Armado Manual, Código Entrenador) en una sección desplegable inferior `Opciones y personalización de rutina` (`src/app/mi/rutina/page.tsx`).
 - **Modo Foco Gym**: Renombrado "Modo Zen" a "Modo Foco Gym", agregando estado claro `☀️ Pantalla Encendida`, banner explicativo de Wake Lock + botones XL y haptic de éxito al activar (`src/app/mi/rutina/rutina-editor.tsx`).
 - **Botón Compartir App**: Creado e integrado el componente `BotonCompartirApp` (`src/components/ui/boton-compartir-app.tsx`) con Web Share API nativa iOS/Android y fallback a portapapeles en `/mi`.
 - **Splash Screen 9:16 oficial de Volt**: Reemplazada la pantalla de arranque simple por la portada 9:16 oficial de Volt (con animación 60fps de barra neón, pulso brillante y transición con micro-zoom GPU `scale(1.03)`).

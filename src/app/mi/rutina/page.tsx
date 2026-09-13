@@ -344,28 +344,6 @@ export default async function MiRutinaPage() {
         </>
       ) : (
         <>
-          {opcionesPersonalizacion}
-
-          {esIndividual && rutina ? (
-            <PublicarPlantilla rutinaId={rutina.id} />
-          ) : (
-            <CodigoEntrenador />
-          )}
-
-          {(() => {
-            const p = rutina.preferencias as
-              | { explicacion?: string[]; explicacionGeneral?: string }
-              | null;
-            const pasos = p?.explicacion ?? [];
-            if (rutina.origen === "manual" || pasos.length === 0) return null;
-            return (
-              <ExplicacionModal
-                explicacionGeneral={p?.explicacionGeneral}
-                pasos={pasos}
-              />
-            );
-          })()}
-
           <RutinaEditor
             dias={agruparPorDia(
               (itemsData ?? []) as any[],
@@ -380,6 +358,39 @@ export default async function MiRutinaPage() {
             logoUrl={gymData?.logo_url ?? null}
             colores={coloresLogro}
           />
+
+          <details className="group rounded-[14px] border border-rule bg-paper-2 p-3.5 shadow-sm">
+            <summary className="flex cursor-pointer select-none list-none items-center justify-between text-xs font-semibold text-ink-soft hover:text-ink transition-colors [&::-webkit-details-marker]:hidden">
+              <div className="flex items-center gap-2">
+                <SlidersHorizontal className="size-4 text-ink-soft" />
+                <span>Opciones y personalización de rutina</span>
+              </div>
+              <ChevronRight className="size-4 text-ink-soft transition-transform duration-150 group-open:rotate-90" />
+            </summary>
+            <div className="mt-3.5 space-y-3 pt-3 border-t border-rule animate-fade-in">
+              {opcionesPersonalizacion}
+
+              {esIndividual && rutina ? (
+                <PublicarPlantilla rutinaId={rutina.id} />
+              ) : (
+                <CodigoEntrenador />
+              )}
+
+              {(() => {
+                const p = rutina.preferencias as
+                  | { explicacion?: string[]; explicacionGeneral?: string }
+                  | null;
+                const pasos = p?.explicacion ?? [];
+                if (rutina.origen === "manual" || pasos.length === 0) return null;
+                return (
+                  <ExplicacionModal
+                    explicacionGeneral={p?.explicacionGeneral}
+                    pasos={pasos}
+                  />
+                );
+              })()}
+            </div>
+          </details>
         </>
       )}
     </main>
