@@ -71,7 +71,8 @@
   1. *Calculadora Visual de Discos* (`calculadora-discos.tsx`): Desglose gráfico de discos por lado para barra olímpica/liviana/W/Smith.
   2. *ATP Recovery Engine* (`timer-descanso.tsx`): Timer de descanso dinámico adaptado por RIR (0/fallo=180s, RIR 1-2=120s, RIR 3+=60s) con barra 60fps de recuperación de potencia.
   3. *Sustituto Express 1-Tap* (`modal-sustituto-express.tsx`): Reemplazo instantáneo de máquina ocupada por alternativas biomecánicas equivalentes.
-- **Calculadora de Discos & Prensa de Piernas (2026-09-13)**: Integrado selector de Prensa 45° (carro 30kg) y auto-detección según el ejercicio; dibujado gráfico SVG/CSS dinámico para cada tipo de equipo (W/Z zig-zag, Smith/Multipower con guías, Prensa 45° con carro central y barra Olímpica/Liviana).
+- **Calculadora de Discos & Prensa de Piernas (2026-09-13)**: Rediseño cromado y realista de la visualización de la barra (eje de acero cromado con manguitos y topes siempre visibles, curvas orgánicas para barra EZ, guías Smith metálicas y carro de prensa integrado de alta definición).
+
 
 
 
