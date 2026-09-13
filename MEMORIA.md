@@ -3,6 +3,7 @@
 > **Regla de Cierre:** Al finalizar cada feature o sesión, el agente debe actualizar este archivo con 1 o 2 viñetas telegráficas sobre lo que acaba de hacer (en UTF-8). NO leas el contexto completo para actualizar esto.
 
 ## Últimos Cambios
+- **Botón Compartir App**: Creado e integrado el componente `BotonCompartirApp` (`src/components/ui/boton-compartir-app.tsx`) con Web Share API nativa iOS/Android y fallback a portapapeles en `/mi`.
 - **Splash Screen 9:16 oficial de Volt**: Reemplazada la pantalla de arranque simple por la portada 9:16 oficial de Volt (con animación 60fps de barra neón, pulso brillante y transición con micro-zoom GPU `scale(1.03)`).
 - **Mascota Racha Activa**: Reemplazado el icono de racha activa por la nueva ilustración de Pulpo Volt muscular en `public/mascota/racha-activa.png`, integrado en `RachaCard`, `FeedLogros` y `CartelLogro`.
 - **Rediseño DiaTabs (iOS Segmented Control)**: Píldoras flotantes con `whitespace-nowrap` (soluciona salto de línea en "Día 1, 2, 3"), indicador cyan pulsante, micro-interacciones 60fps y haptics.

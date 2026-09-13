@@ -16,6 +16,7 @@ import { parseTema } from "@/lib/tema";
 import { DatosTransferencia } from "@/components/mi/datos-transferencia";
 import { CacheAlVuelo } from "@/components/offline/cache-al-vuelo";
 import { BotonInstalarApp } from "@/components/pwa/boton-instalar-app";
+import { BotonCompartirApp } from "@/components/ui/boton-compartir-app";
 import { BotonActualizar } from "@/components/ui/boton-actualizar";
 import { PulpoRetencionCard } from "@/components/mi/pulpo-retencion-card";
 import { BarraAforoAnimada } from "@/components/mi/barra-aforo-animada";
@@ -341,7 +342,8 @@ export default async function MiPage() {
         </li>
       </ul>
  
-      <div className="mt-4">
+      <div className="mt-4 space-y-3">
+        <BotonCompartirApp variant="card" />
         <BotonInstalarApp variant="card" />
       </div>
 
