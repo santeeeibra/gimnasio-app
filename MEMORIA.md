@@ -87,6 +87,8 @@
 
 - **Fundamentación Científica y Entrenadores Profesionales en Rutinas (2026-09-13)**: Actualizado `src/lib/rutina/explicar.ts` integrando citas científicas explícitas (Schoenfeld, Israetel/RP, Beardsley, Grgic/PowerExplosive, Pradells, Glass, Nippard, Saladino) y dinamizado el desglose por día para eliminar frases genéricas repetitivas.
 
+- **Zero-Bloat Social Loop (2026-09-13)**: Creada sección `ComunidadSeccion` (`src/components/logros/comunidad-seccion.tsx`) en `/mi` con 3 pestañas: Feed en vivo de récords con aplausos 👏 (`FeedLogros`), Ranking de Asistencia mensual (Top 5 + puesto personal con medallas 🥇 🥈 🥉) y Reto Mensual con avance de clases (0 tablas extras de Supabase, 0 MB de bloat, consultas agrupadas directo sobre `registros_entrada` y `logros_gimnasio`).
+
 ## Backlog de Features Innovadoras (Socio ↔ Gimnasio)
 1. **Mapa de Ocupación por Zona & Espera en Máquinas (Equipment Live Radar)**: Disponibilidad estimada por áreas del gym basada en series registradas en tiempo real.
 2. **Leaderboard & Desafíos Semanales del Gimnasio (Gym Challenges)**: Puntos automáticos por series/asistencia con ranking en vivo y medallas vectoriales del Pulpo Volt.

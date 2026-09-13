@@ -10,8 +10,8 @@ import { pillClasses } from "@/components/ui";
 import { ChevronRight, CreditCard, Dumbbell, Inbox, MessageSquare, Palette, User } from "lucide-react";
 import { RachaConstancia } from "@/components/mi/racha-constancia";
 import { RachaSeccion } from "@/components/logros/racha-seccion";
-import { FeedLogros } from "@/components/logros/feed-logros";
-import { obtenerRachaCliente, obtenerFeedLogrosGimnasio } from "@/lib/logros/actions";
+import { ComunidadSeccion } from "@/components/logros/comunidad-seccion";
+import { obtenerRachaCliente, obtenerFeedLogrosGimnasio, obtenerRankingAsistencia, obtenerDesafioMensual } from "@/lib/logros/actions";
 import { parseTema } from "@/lib/tema";
 import { DatosTransferencia } from "@/components/mi/datos-transferencia";
 import { CacheAlVuelo } from "@/components/offline/cache-al-vuelo";
@@ -84,9 +84,14 @@ export default async function MiPage() {
     }
   }
   // Racha de constancia (feature "Compartir logros"): días consecutivos
-  // entrenando, con card compartible en los hitos. Distinta de <RachaConstancia>.
-  const rachaLogro = c?.id ? await obtenerRachaCliente() : null;
-  const feedLogros = c?.id ? await obtenerFeedLogrosGimnasio() : [];
+  const [rachaLogro, feedLogros, rankingRes, desafioRes] = c?.id
+    ? await Promise.all([
+        obtenerRachaCliente(),
+        obtenerFeedLogrosGimnasio(),
+        obtenerRankingAsistencia(),
+        obtenerDesafioMensual(),
+      ])
+    : [null, [], { ranking: [], miPosicion: null }, null];
   const temaGym = parseTema(gym?.tema);
   const coloresLogro = {
     paper: temaGym.paper,
@@ -233,7 +238,12 @@ export default async function MiPage() {
         />
       ) : null}
 
-      <FeedLogros items={feedLogros} />
+      <ComunidadSeccion
+        feedItems={feedLogros}
+        ranking={rankingRes.ranking}
+        miPosicion={rankingRes.miPosicion}
+        desafio={desafioRes}
+      />
 
       {!esIndividual && estado !== "al_dia" ? (
         <div className="space-y-3">

@@ -278,3 +278,123 @@ export async function obtenerFeedLogrosGimnasio(
   });
 }
 
+// ── Zero-Bloat Social Loop: Ranking & Desafíos ──────────────────────────────
+
+export type ItemRankingAsistencia = {
+  clienteId: string;
+  nombre: string;
+  asistencias: number;
+  posicion: number;
+  esUsuarioActual: boolean;
+};
+
+export type DesafioMensual = {
+  titulo: string;
+  metaAsistencias: number;
+  misAsistencias: number;
+  completado: boolean;
+  totalSociosCumplidos: number;
+};
+
+export async function obtenerRankingAsistencia(): Promise<{
+  ranking: ItemRankingAsistencia[];
+  miPosicion: ItemRankingAsistencia | null;
+}> {
+  const res = await resolverCliente();
+  if (!res) return { ranking: [], miPosicion: null };
+  const { supabase, clienteId, gimnasioId } = res;
+
+  const inicioMes = new Date();
+  inicioMes.setDate(1);
+  inicioMes.setHours(0, 0, 0, 0);
+
+  const { data } = await supabase
+    .from("registros_entrada")
+    .select("cliente_id, clientes(nombre)")
+    .eq("gimnasio_id", gimnasioId)
+    .gte("creado_en", inicioMes.toISOString());
+
+  if (!data || data.length === 0) return { ranking: [], miPosicion: null };
+
+  const conteoMap: Record<string, { nombre: string; count: number }> = {};
+
+  for (const reg of data as any[]) {
+    const cid = reg.cliente_id;
+    if (!cid) continue;
+    const nombreRaw = Array.isArray(reg.clientes) ? reg.clientes[0] : reg.clientes;
+    const nombre = nombreRaw?.nombre ?? "Socio";
+    if (!conteoMap[cid]) {
+      conteoMap[cid] = { nombre, count: 0 };
+    }
+    conteoMap[cid].count += 1;
+  }
+
+  const ordenados = Object.entries(conteoMap)
+    .map(([cid, info]) => ({
+      clienteId: cid,
+      nombre: info.nombre,
+      asistencias: info.count,
+    }))
+    .sort((a, b) => b.asistencias - a.asistencias);
+
+  const ranking = ordenados.slice(0, 5).map((item, index) => ({
+    ...item,
+    posicion: index + 1,
+    esUsuarioActual: item.clienteId === clienteId,
+  }));
+
+  let miPosicion: ItemRankingAsistencia | null = null;
+  const idxMiUsuario = ordenados.findIndex((item) => item.clienteId === clienteId);
+  if (idxMiUsuario >= 0) {
+    miPosicion = {
+      ...ordenados[idxMiUsuario],
+      posicion: idxMiUsuario + 1,
+      esUsuarioActual: true,
+    };
+  }
+
+  return { ranking, miPosicion };
+}
+
+export async function obtenerDesafioMensual(): Promise<DesafioMensual | null> {
+  const res = await resolverCliente();
+  if (!res) return null;
+  const { supabase, clienteId, gimnasioId } = res;
+
+  const hoy = new Date();
+  const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString();
+  const nombreMeses = [
+    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+  ];
+  const nombreMes = nombreMeses[hoy.getMonth()];
+
+  const { data } = await supabase
+    .from("registros_entrada")
+    .select("cliente_id")
+    .eq("gimnasio_id", gimnasioId)
+    .gte("creado_en", inicioMes);
+
+  const metaAsistencias = 12; // Meta del mes (3 por semana)
+  const conteos: Record<string, number> = {};
+
+  if (data) {
+    for (const r of data as { cliente_id: string }[]) {
+      if (!r.cliente_id) continue;
+      conteos[r.cliente_id] = (conteos[r.cliente_id] ?? 0) + 1;
+    }
+  }
+
+  const misAsistencias = conteos[clienteId] ?? 0;
+  const totalSociosCumplidos = Object.values(conteos).filter((c) => c >= metaAsistencias).length;
+
+  return {
+    titulo: `Desafío ${nombreMes}: ${metaAsistencias} Clases`,
+    metaAsistencias,
+    misAsistencias,
+    completado: misAsistencias >= metaAsistencias,
+    totalSociosCumplidos,
+  };
+}
+
+
