@@ -9,6 +9,7 @@ type Mensaje = { id: string; role: "pulpo" | "user"; tipo: "texto" | "alternativ
 
 export function PulpoAsistenteChat({ ejercicioId, trigger }: { ejercicioId?: string; trigger: React.ReactNode }) {
   const [abierto, setAbierto] = useState(false);
+  const [posePulpo, setPosePulpo] = useState<'saludo' | 'buscando' | 'tecnica' | 'exito' | 'error'>('saludo');
   const [cargando, setCargando] = useState(false);
   const [mensajes, setMensajes] = useState<Mensaje[]>([
     { id: "1", role: "pulpo", tipo: "texto", contenido: "¡Hola! Soy Volt 🐙. ¿Con qué te ayudo en este ejercicio?" }
@@ -30,22 +31,22 @@ export function PulpoAsistenteChat({ ejercicioId, trigger }: { ejercicioId?: str
     if (!ejercicioId) return;
     hapticoImpactoSuave();
     setMensajes((prev) => [...prev, { id: Date.now().toString(), role: "user", tipo: "texto", contenido: "La máquina está ocupada" }]);
-    setCargando(true);
+    setCargando(true); setPosePulpo('buscando');
     
     const res = await buscarReemplazoMaquinaOcupada(ejercicioId);
     setCargando(false);
     
-    if (res.error) {
+    if (res.error) { setPosePulpo('error');
       setMensajes((prev) => [...prev, { id: Date.now().toString(), role: "pulpo", tipo: "texto", contenido: "Mmm, hubo un error buscando. ¡Avisale al staff!" }]);
       return;
     }
     
-    if (res.alternativas.length === 0) {
+    if (res.alternativas.length === 0) { setPosePulpo('error');
       setMensajes((prev) => [...prev, { id: Date.now().toString(), role: "pulpo", tipo: "texto", contenido: "Parece que no hay alternativas registradas para este músculo en tu gym actual." }]);
       return;
     }
 
-    hapticoExito();
+    hapticoExito(); setPosePulpo('exito');
     setMensajes((prev) => [
       ...prev,
       { 
@@ -62,17 +63,17 @@ export function PulpoAsistenteChat({ ejercicioId, trigger }: { ejercicioId?: str
     if (!ejercicioId) return;
     hapticoImpactoSuave();
     setMensajes((prev) => [...prev, { id: Date.now().toString(), role: "user", tipo: "texto", contenido: "No sé hacer esto" }]);
-    setCargando(true);
+    setCargando(true); setPosePulpo('buscando');
     
     const res = await obtenerTipsTecnica(ejercicioId);
     setCargando(false);
 
-    if (res.error) {
+    if (res.error) { setPosePulpo('error');
       setMensajes((prev) => [...prev, { id: Date.now().toString(), role: "pulpo", tipo: "texto", contenido: "No tengo los tips de este ejercicio en la base." }]);
       return;
     }
 
-    hapticoExito();
+    hapticoExito(); setPosePulpo("tecnica");
     setMensajes((prev) => [
       ...prev,
       { id: Date.now().toString(), role: "pulpo", tipo: "texto", contenido: res.ejercicio.descripcion || "¡Mantené la espalda recta y controlá la bajada!" }
@@ -100,7 +101,7 @@ export function PulpoAsistenteChat({ ejercicioId, trigger }: { ejercicioId?: str
         <div className="mx-auto max-w-md bg-zinc-950 rounded-t-[24px] shadow-2xl border-t border-zinc-800 flex flex-col h-[75vh] overflow-hidden">
           {/* Header */}
           <div className="flex items-center gap-3 p-4 border-b border-zinc-800">
-            <PulpoCard size={44} pose="neutral" cardClassName="!rounded-[12px] w-12 h-12" />
+            <div className="flex-shrink-0 w-12 h-12 rounded-[12px] bg-zinc-950 border border-emerald-500/30 overflow-hidden shadow-[0_0_15px_rgba(16,231,160,0.15)] grid place-items-center"><img src={`/mascota/chat/${posePulpo}.${posePulpo === "error" ? "png" : "svg"}`} alt="Volt" className="w-10 h-10 object-contain drop-shadow-md transition-all duration-300" /></div>
             <div>
               <h3 className="text-white font-bold tracking-wide text-sm">Volt IA</h3>
               <p className="text-emerald-400 text-xs font-medium">Asistente en línea</p>
@@ -178,3 +179,4 @@ export function PulpoAsistenteChat({ ejercicioId, trigger }: { ejercicioId?: str
     </>
   );
 }
+
