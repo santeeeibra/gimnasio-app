@@ -22,11 +22,16 @@ const FLAG = "imp-activa";
 
 export type ImpFlag = { nombre: string; rol: "dueno" | "cliente"; gym: string };
 
+// Sin maxAge quedaban como cookies de sesión del navegador: al cerrar la PWA
+// del todo se borraban, pero la sesión real de Supabase (persistente) seguía
+// como el perfil impersonado. El superadmin volvía a abrir la app "atrapado"
+// en modo dueño/cliente, sin el banner ni el botón de volver a soporte.
 const cookieBase = {
   httpOnly: true,
   sameSite: "lax" as const,
   secure: process.env.NODE_ENV === "production",
   path: "/",
+  maxAge: 60 * 60 * 24 * 7, // 7 días, igual de larga que una sesión normal
 };
 
 // Puede impersonar si la sesión actual es la del superadmin, o si ya hay una
