@@ -10,6 +10,7 @@ import {
   TIPO_PAGO_LABEL,
   aplicarDescuento,
   enVentanaEarlyBird,
+  enVentanaPromoSetupGratis,
   EARLY_BIRD_PCT,
   montoBaseCargoUnico,
   tipoAdmiteEarlyBird,
@@ -150,7 +151,11 @@ export async function generarPagoPlan(
     tipoAdmiteEarlyBird(tipo) &&
     enVentanaEarlyBird(gym.creado_at) &&
     montoBase > 0;
-  const descuentoPct = earlyBird ? EARLY_BIRD_PCT : 0;
+
+  // Promo "setup gratis": 100% off por tiempo limitado (ver precios.ts).
+  const promoSetupGratis = tipo === "setup" && enVentanaPromoSetupGratis();
+
+  const descuentoPct = promoSetupGratis ? 100 : earlyBird ? EARLY_BIRD_PCT : 0;
   const montoARS = aplicarDescuento(montoBase, descuentoPct);
 
   const { data: pago, error } = await db

@@ -22,6 +22,18 @@ export const TIPO_PAGO_DESC: Record<TipoPago, string> = {
 export const CARGO_SETUP_ARS = 35000;
 export const CARGO_PREMIUM_ARS = 15000;
 
+/**
+ * Promo "setup gratis": el cargo de setup sale 100% off si el pago se hace
+ * antes de esta fecha. Vigencia de un mes desde el lanzamiento de la promo;
+ * actualizar esta fecha manualmente si se extiende.
+ */
+export const PROMO_SETUP_GRATIS_FIN = new Date("2026-10-14T00:00:00-03:00");
+
+/** true si hoy todavía está vigente la promo de setup gratis. */
+export function enVentanaPromoSetupGratis(ahora: Date = new Date()): boolean {
+  return ahora.getTime() < PROMO_SETUP_GRATIS_FIN.getTime();
+}
+
 /** Días de prueba gratis con los que arranca todo gimnasio nuevo. */
 export const TRIAL_DIAS = 14;
 
