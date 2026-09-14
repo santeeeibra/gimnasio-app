@@ -174,10 +174,10 @@ function ExThumb({
   if (!url || err) {
     return (
       <div
-        className="grid size-[68px] shrink-0 place-items-center rounded-[10px] border border-rule bg-paper-2 text-ink-soft"
+        className="grid size-[84px] shrink-0 place-items-center rounded-[10px] border border-rule bg-paper-2 text-ink-soft"
         aria-hidden
       >
-        <Glifo className="size-6" />
+        <Glifo className="size-7" />
       </div>
     );
   }
@@ -187,7 +187,7 @@ function ExThumb({
       type="button"
       onClick={onOpen}
       aria-label={`Ver ${ej?.nombre ?? "ejercicio"} en grande`}
-      className="group relative size-[68px] shrink-0 overflow-hidden rounded-[10px] border border-rule bg-white shadow-xs transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20"
+      className="group relative size-[84px] shrink-0 overflow-hidden rounded-[10px] border border-rule bg-white shadow-xs transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20"
     >
       <ImagenAnimada
         url={url}
@@ -433,7 +433,9 @@ export function RutinaEditor({
     ? Math.round((seriesHechasActivo / totalSeriesActivo) * 100)
     : 0;
 
-  const volumenKilosActivo = totalSeriesActivo * 140;
+  // Estimado: sólo cuenta series ya marcadas como hechas, no el total planificado
+  // (antes multiplicaba totalSeriesActivo, mostrando kg/tiempo "de más" con 0% avance).
+  const volumenKilosActivo = seriesHechasActivo * 140;
   const tiempoMinActivo = Math.round(totalSeriesActivo * 2.2);
 
   // Disparar celebración cuando se llega al 100%
@@ -1232,7 +1234,7 @@ function ItemFila({
   return (
     <li className="p-4 transition-colors duration-150">
       <div className="flex items-start gap-3">
-        <div className="flex flex-col items-center gap-2 shrink-0 w-[68px]">
+        <div className="flex flex-col items-center gap-2 shrink-0 w-[84px]">
           <ExThumb ej={ej} onOpen={() => ej && onVer(ej)} />
           {clienteId && item.ejercicio && (() => {
             const eq = (ej?.equipo || item.ejercicio.equipo || "").toLowerCase();

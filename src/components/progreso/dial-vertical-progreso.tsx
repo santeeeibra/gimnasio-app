@@ -174,8 +174,8 @@ export const DialVerticalProgreso = forwardRef<
     if (!ctx) return;
 
     const dpr = window.devicePixelRatio || 1;
-    const w = 68;
-    const h = 88;
+    const w = 84;
+    const h = 108;
 
     if (canvas.width !== w * dpr || canvas.height !== h * dpr) {
       canvas.width = w * dpr;
@@ -413,7 +413,7 @@ export const DialVerticalProgreso = forwardRef<
     <form
       ref={formRef}
       action={formAction}
-      className="flex flex-col items-center w-[68px] rounded-[10px] border border-rule/70 bg-paper-2/90 p-1 select-none"
+      className="flex flex-col items-center w-[84px] rounded-[10px] border border-rule/70 bg-paper-2/90 p-1 select-none"
     >
       <input type="hidden" name="ejercicio_id" value={ejercicioId} />
       <input type="hidden" name="peso" value={peso} />
@@ -461,7 +461,7 @@ export const DialVerticalProgreso = forwardRef<
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
         onWheel={onWheel}
-        className="relative w-full h-[88px] cursor-grab active:cursor-grabbing touch-none my-0.5"
+        className="relative w-full h-[108px] cursor-grab active:cursor-grabbing touch-none my-0.5"
         style={{
           maskImage:
             "linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%)",
@@ -530,36 +530,9 @@ export const DialVerticalProgreso = forwardRef<
         )}
       </button>
 
-      {/* Selector rápido de repeticiones (ubicado abajo de Guardar) */}
-      <div className="flex items-center justify-between w-full h-[22px] px-1 my-0.5 rounded-[5px] border border-rule/70 bg-paper/90">
-        <button
-          type="button"
-          aria-label="Menos repeticiones"
-          onClick={(e) => {
-            e.preventDefault();
-            hapticoDial();
-            setReps((prev) => Math.max(1, prev - 1));
-          }}
-          className="text-ink-soft hover:text-ink text-[12px] font-bold px-0.5 leading-none transition-transform active:scale-90 touch-none"
-        >
-          −
-        </button>
-        <span className="text-[9.5px] font-bold text-ink tabular-nums leading-none">
-          {reps} <span className="text-[7.5px] font-medium text-ink-soft">reps</span>
-        </span>
-        <button
-          type="button"
-          aria-label="Más repeticiones"
-          onClick={(e) => {
-            e.preventDefault();
-            hapticoDial();
-            setReps((prev) => prev + 1);
-          }}
-          className="text-ink-soft hover:text-ink text-[12px] font-bold px-0.5 leading-none transition-transform active:scale-90 touch-none"
-        >
-          +
-        </button>
-      </div>
+      {/* Reps: ya no se editan acá (se duplicaba con "REPS REALIZADAS" por
+         serie a la derecha); este dial sólo maneja peso. El valor de reps
+         que viaja en el submit queda fijo en el último cargado/inicial. */}
       <input type="hidden" name="reps" value={reps} />
 
     </form>
