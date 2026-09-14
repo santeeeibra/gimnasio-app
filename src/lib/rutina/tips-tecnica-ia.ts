@@ -1,4 +1,5 @@
 import "server-only";
+import { llamarIaConFallback } from "@/lib/ia/llm-fallback";
 
 // Genera tips de técnica de ejecución con Claude Haiku, una sola vez por
 // ejercicio (ver obtenerTipsTecnica en asistente-actions.ts, que cachea el
@@ -24,9 +25,6 @@ export type DatosEjercicioParaTips = {
 export async function generarTipsTecnicaIa(
   datos: DatosEjercicioParaTips,
 ): Promise<string> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error("Falta ANTHROPIC_API_KEY");
-
   const userMessage = `Ejercicio: ${datos.nombre}
 Grupo muscular: ${datos.grupoMuscular ?? "sin especificar"}
 Patrón de movimiento: ${datos.patron ?? "sin especificar"}
@@ -37,29 +35,9 @@ Redactá exactamente 3 bullets cortos (uno por línea, empezando con "•") con
 los puntos clave de ejecución correcta de este ejercicio. Español rioplatense,
 directo, sin relleno.`;
 
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 220,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: userMessage }],
-    }),
+  return llamarIaConFallback({
+    system: SYSTEM_PROMPT,
+    userMessage,
+    maxTokens: 220,
   });
-
-  if (!res.ok) {
-    throw new Error(`Anthropic API ${res.status}: ${await res.text()}`);
-  }
-
-  const data = (await res.json()) as {
-    content?: { type: string; text?: string }[];
-  };
-  const texto = data.content?.find((b) => b.type === "text")?.text?.trim();
-  if (!texto) throw new Error("Respuesta vacía de Anthropic");
-  return texto;
 }
