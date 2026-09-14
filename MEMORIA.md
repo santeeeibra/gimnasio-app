@@ -106,3 +106,4 @@
 
 - [2026-09-14] Se extendió el backup de seguridad (scripts/lib/backup.mjs) a seed-gym-demo.mjs y seed-genesis-gym.mjs (respaldan pagos/registros_entrada/rutinas/rutina_items/registro_peso antes de sus .delete()). test-e2e-partner-gating.mjs quedó afuera a propósito: solo borra sus propios fixtures E2E_TEST_.
 - Rediseño UI de /admin/payouts con modales y PulpoCard
+- Fix de z-index y clipping en modal de QR en perfil usando createPortal
