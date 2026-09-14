@@ -91,8 +91,8 @@ export const metadata: Metadata = {
     title: "Mi gimnasio",
   },
   icons: {
-    icon: "/icon-192.png",
-    apple: "/icon-192.png",
+    icon: "/icon-512.png",
+    apple: "/apple-icon.png",
   },
 };
 
