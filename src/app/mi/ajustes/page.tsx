@@ -3,6 +3,7 @@ import { requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { parseTema, type TemaPersonalizado } from "@/lib/tema";
 import { AjustesSocioForm } from "./ajustes-socio-form";
+import { VozGuiadaToggle } from "@/components/rutinas/voz-guiada-toggle";
 import { pillClasses } from "@/components/ui";
 import { ChevronLeft } from "lucide-react";
 
@@ -53,6 +54,13 @@ export default async function MiAjustesPage() {
         temaGym={temaGym}
         temaPersonalizado={temaPersonalizado}
       />
+
+      <div>
+        <h2 className="text-sm font-bold uppercase tracking-wider text-ink-soft mb-2">
+          Entrenamiento
+        </h2>
+        <VozGuiadaToggle />
+      </div>
     </main>
   );
 }

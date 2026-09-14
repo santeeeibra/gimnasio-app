@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { hapticoTimerFin, hapticoImpactoMedio } from "@/lib/ui/hapticos";
+import { hablar } from "@/lib/ui/voz";
 
 const PRESETS = [
   { label: "30s", segundos: 30 },
@@ -236,6 +237,7 @@ export function TimerDescanso() {
         setJustStarted(true);
         programarPushDescanso(segs);
         hapticoImpactoMedio();
+        hablar(`Descanso de ${segs} segundos`);
         setTimeout(() => setJustStarted(false), 500);
       }
     };
@@ -264,6 +266,10 @@ export function TimerDescanso() {
         reproducirBeepCountdown(rem);
       }
 
+      if (rem === 10) {
+        hablar("Diez segundos");
+      }
+
       if (rem <= 0) {
         ultimoBeepRef.current = null;
         setEstado("detenido");
@@ -273,6 +279,7 @@ export function TimerDescanso() {
         reproducirAlarmaFinal();
         vibrarFinalizado();
         dispararNotificacionLocal();
+        hablar("Descanso terminado. Dale con todo");
         setAlertFinalizado(true);
         setSegundosRestantes(presetSeg);
         setTimeout(() => setAlertFinalizado(false), 2800);

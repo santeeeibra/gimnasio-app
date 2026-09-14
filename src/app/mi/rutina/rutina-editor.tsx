@@ -639,7 +639,7 @@ export function RutinaEditor({
               </div>
 
               {/* Lista de ejercicios con nuevo card style Obsidian */}
-              <div className="mt-5 pb-32 md:pb-4">
+              <div className="mt-5 md:pb-4">
                 <div className="mb-2 flex items-center justify-between">
                   <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-ink-soft">
                     Ejercicios del día

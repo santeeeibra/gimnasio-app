@@ -56,11 +56,19 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
         </div>
       )}
 
+      {/* Sin `esIdle` no seteamos `transform` inline: cualquier valor (incluso
+         translateY(0px)) convierte a este div en containing block de sus
+         descendientes `fixed` (modales, overlays), rompiendo su posicionamiento
+         contra el viewport y pegándolos a la altura del contenido scrolleable. */}
       <div
-        style={{
-          transform: `translateY(${refrescando ? 52 : distancia}px)`,
-          transition: arrastrando ? "none" : "transform 220ms var(--ease-out)",
-        }}
+        style={
+          esIdle
+            ? undefined
+            : {
+                transform: `translateY(${refrescando ? 52 : distancia}px)`,
+                transition: arrastrando ? "none" : "transform 220ms var(--ease-out)",
+              }
+        }
       >
         {children}
       </div>
