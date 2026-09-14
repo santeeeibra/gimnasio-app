@@ -37,21 +37,12 @@ export type PartnerCommission = {
   revertida_at: string | null;
 };
 
-// Valores por defecto usados solo como fallback si por algún motivo no se
-// pudo leer partner_tiers (ver lib/plataforma/partner-tiers.ts). La fuente
-// de verdad real vive en la tabla partner_tiers (editable sin deploy).
-export const COMISION_ARRANQUE_PCT = 20; // Primeros 5 gimnasios (fast-start)
-export const COMISION_ESTANDAR_PCT = 15; // A partir del 6to gimnasio
-
 export type MilestoneNumero = 5 | 10 | 15;
 
-export const BONOS_HITO: Record<MilestoneNumero, number> = {
-  5: 20000,
-  10: 60000,
-  15: 100000,
-};
-
-/** Fila de la tabla partner_tiers (rangos configurables de comisión + bono). */
+/** Fila de la tabla partner_tiers (rangos configurables de comisión + bono).
+ * Es la ÚNICA fuente de verdad para porcentajes y montos — no hay
+ * constantes de respaldo en el código a propósito: si esta tabla no se
+ * puede leer, el dashboard debe mostrar un error, nunca un número inventado. */
 export type PartnerTier = {
   id: number;
   name: string;
@@ -67,67 +58,48 @@ export type RangoPartnerInfo = {
   nombre: string;
   badge: string;
   color: string;
+  /** Texto armado en base al tier real de la DB (ver calcularRangoPartner). */
   beneficio: string;
 };
 
-export const RANGOS_PARTNER: Record<RangoPartnerId, RangoPartnerInfo> = {
-  starter: {
-    id: "starter",
-    nombre: "Partner Starter",
-    badge: "🥉 Nivel 1",
-    color: "#a1a1aa",
-    beneficio: "Bono de Arranque del 20% en tus primeros 5 gyms",
-  },
-  pro: {
-    id: "pro",
-    nombre: "Partner Pro",
-    badge: "🥈 Nivel 2",
-    color: "#38bdf8",
-    beneficio: "Bono de $20k cobrado + Acceso a Kit de Difusión",
-  },
-  elite: {
-    id: "elite",
-    nombre: "Partner Elite",
-    badge: "🥇 Nivel 3",
-    color: "#fbbf24",
-    beneficio: "Bono de $60k cobrado + Merch Oficial SysGym",
-  },
-  black: {
-    id: "black",
-    nombre: "Embajador Black",
-    badge: "💎 Nivel Máximo",
-    color: "#10e7a0",
-    beneficio: "Bono de $100k cobrado + Llamada VIP con Fundador",
-  },
+// Identidad visual del rango (nombre/badge/color) — no lleva montos. Los
+// montos y porcentajes siempre salen del tier de partner_tiers que matchea.
+const IDENTIDAD_RANGO: Record<RangoPartnerId, Omit<RangoPartnerInfo, "beneficio">> = {
+  starter: { id: "starter", nombre: "Partner Starter", badge: "🥉 Nivel 1", color: "#a1a1aa" },
+  pro: { id: "pro", nombre: "Partner Pro", badge: "🥈 Nivel 2", color: "#38bdf8" },
+  elite: { id: "elite", nombre: "Partner Elite", badge: "🥇 Nivel 3", color: "#fbbf24" },
+  black: { id: "black", nombre: "Embajador Black", badge: "💎 Nivel Máximo", color: "#10e7a0" },
+};
+
+const NOMBRE_TIER_A_RANGO: Record<string, RangoPartnerId> = {
+  Starter: "starter",
+  Pro: "pro",
+  Elite: "elite",
+  Black: "black",
 };
 
 /**
- * Rango visual (badge/color) según la cantidad de gimnasios pago-activos.
- * Si se pasan `tiers` (partner_tiers desde DB), el corte de cada rango sale
- * de ahí en vez de los números fijos 5/10/15 — así un cambio en la tabla se
- * refleja acá sin tocar código. Sin `tiers`, cae al fallback hardcodeado.
+ * Rango visual (badge/color/beneficio) según la cantidad de gimnasios
+ * pago-activos, calculado 100% a partir de `tiers` (partner_tiers desde la
+ * DB) — sin números de respaldo en el código. Si `tiers` viene vacío, el
+ * caller (dashboard) ya debió haber cortado antes con un estado de error.
  */
 export function calcularRangoPartner(
   gymsPagos: number,
-  tiers?: PartnerTier[],
+  tiers: PartnerTier[],
 ): RangoPartnerInfo {
-  if (!tiers || tiers.length === 0) {
-    if (gymsPagos >= 15) return RANGOS_PARTNER.black;
-    if (gymsPagos >= 10) return RANGOS_PARTNER.elite;
-    if (gymsPagos >= 5) return RANGOS_PARTNER.pro;
-    return RANGOS_PARTNER.starter;
-  }
-
   const ordenados = [...tiers].sort((a, b) => b.min_active_gyms - a.min_active_gyms);
-  const alcanzado = ordenados.find((t) => gymsPagos >= t.min_active_gyms);
-  const nombreANivel: Record<string, RangoPartnerId> = {
-    Starter: "starter",
-    Pro: "pro",
-    Elite: "elite",
-    Black: "black",
-  };
-  const id = alcanzado ? nombreANivel[alcanzado.name] ?? "starter" : "starter";
-  return RANGOS_PARTNER[id];
+  const alcanzado = ordenados.find((t) => gymsPagos >= t.min_active_gyms) ?? ordenados[ordenados.length - 1];
+  const id = alcanzado ? NOMBRE_TIER_A_RANGO[alcanzado.name] ?? "starter" : "starter";
+  const identidad = IDENTIDAD_RANGO[id];
+
+  const beneficio = !alcanzado
+    ? ""
+    : Number(alcanzado.milestone_bonus_amount) > 0
+    ? `Bono de $${(Number(alcanzado.milestone_bonus_amount) / 1000).toLocaleString("es-AR")}k cobrado al llegar a ${alcanzado.min_active_gyms} gyms`
+    : `Comisión del ${alcanzado.commission_pct}% en tus primeros gimnasios`;
+
+  return { ...identidad, beneficio };
 }
 
 export type EstadoPayout = "pendiente" | "pagado" | "rechazado" | "cancelado";

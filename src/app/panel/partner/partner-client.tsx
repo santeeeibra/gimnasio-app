@@ -48,12 +48,8 @@ import {
   type PartnerCommission,
   type PartnerPayout,
   type PartnerNotification,
-  type PartnerTier,
   RETIRO_MINIMO_ARS,
-  BONOS_HITO,
   calcularRangoPartner,
-  COMISION_ARRANQUE_PCT,
-  COMISION_ESTANDAR_PCT,
 } from "@/types/partner";
 import {
   actualizarDatosCobroAction,
@@ -83,6 +79,18 @@ export function PartnerDashboardClient({
   const [retiroPending, startRetiroTransition] = useTransition();
   const [retiroResult, setRetiroResult] = useState<{ ok?: boolean; error?: string; msg?: string } | null>(null);
 
+  // Estados para las herramientas del Kit de Ventas y notificaciones. Se
+  // declaran acá arriba (todos los hooks juntos, antes de cualquier return
+  // condicional) para no romper las Rules of Hooks con el guard de tiers
+  // vacío más abajo.
+  const [simGyms, setSimGyms] = useState<number>(5);
+  const [objecionAbierta, setObjecionAbierta] = useState<number | null>(0);
+  const [copiadoDemo, setCopiadoDemo] = useState(false);
+  const [copiadoScriptId, setCopiadoScriptId] = useState<string | null>(null);
+  const [notificaciones, setNotificaciones] = useState<PartnerNotification[]>(
+    resumen.notificaciones ?? []
+  );
+
   const {
     partner,
     balanceDisponible,
@@ -94,31 +102,37 @@ export function PartnerDashboardClient({
     tiers = [],
   } = resumen;
 
-  // Rango actual y % de comisión: salen de partner_tiers (DB) cuando hay
-  // datos; si la tabla está vacía por algún motivo, caen a las constantes
-  // hardcodeadas de types/partner.ts como red de seguridad.
+  // El server action ya debería haber cortado antes si partner_tiers vino
+  // vacío, pero si por algún motivo llegó hasta acá, mostramos un error
+  // explícito en vez de calcular comisiones/bonos con datos inventados.
+  if (tiers.length === 0) {
+    return (
+      <div className="p-8 text-center max-w-lg mx-auto space-y-3">
+        <h2 className="text-xl font-bold text-ink">SysGym Partner</h2>
+        <p className="text-sm text-danger">
+          No se pudieron cargar los rangos de comisión (partner_tiers). No mostramos montos estimados para evitar datos incorrectos — recargá la página o avisale a soporte.
+        </p>
+      </div>
+    );
+  }
+
+  // partner_tiers es la única fuente de verdad para comisión y bonos — el
+  // server action (obtenerODescargarPartnerAction) ya corta con un error
+  // explícito si esta tabla no se pudo leer, así que acá asumimos `tiers`
+  // no vacío. Sin números de respaldo hardcodeados a propósito: si algo
+  // sale mal, preferimos un componente roto y visible antes que uno
+  // "zombie" mostrando plata inventada.
   const tierOrdenados = [...tiers].sort((a, b) => b.min_active_gyms - a.min_active_gyms);
-  const tierActual = tierOrdenados.find((t) => gimnasiosPagoActivos >= t.min_active_gyms);
-  const comisionPct =
-    partner.override_commission_pct ??
-    tierActual?.commission_pct ??
-    (gimnasiosPagoActivos < 5 ? COMISION_ARRANQUE_PCT : COMISION_ESTANDAR_PCT);
-  const bonosTotales = tiers.length > 0
-    ? tiers.reduce((acc, t) => acc + Number(t.milestone_bonus_amount), 0)
-    : BONOS_HITO[5] + BONOS_HITO[10] + BONOS_HITO[15];
+  const tierActual = tierOrdenados.find((t) => gimnasiosPagoActivos >= t.min_active_gyms) ?? tierOrdenados[tierOrdenados.length - 1];
+  const comisionPct = partner.override_commission_pct ?? tierActual.commission_pct;
+  const bonosTotales = tiers.reduce((acc, t) => acc + Number(t.milestone_bonus_amount), 0);
 
   // Tiers que representan un hito de bono (min_active_gyms > 0), ascendente,
   // con el acumulado hasta ese punto — para las tarjetas de hitos y el
-  // simulador. Fallback a los 3 hitos fijos si la tabla vino vacía.
-  const milestoneTiersBase = tiers.length > 0
-    ? [...tiers]
-        .filter((t) => t.min_active_gyms > 0 && Number(t.milestone_bonus_amount) > 0)
-        .sort((a, b) => a.min_active_gyms - b.min_active_gyms)
-    : ([
-        { id: -5, name: "Pro", min_active_gyms: 5, commission_pct: COMISION_ESTANDAR_PCT, milestone_bonus_amount: BONOS_HITO[5] },
-        { id: -10, name: "Elite", min_active_gyms: 10, commission_pct: COMISION_ESTANDAR_PCT, milestone_bonus_amount: BONOS_HITO[10] },
-        { id: -15, name: "Black", min_active_gyms: 15, commission_pct: COMISION_ESTANDAR_PCT, milestone_bonus_amount: BONOS_HITO[15] },
-      ] as PartnerTier[]);
+  // simulador.
+  const milestoneTiersBase = [...tiers]
+    .filter((t) => t.min_active_gyms > 0 && Number(t.milestone_bonus_amount) > 0)
+    .sort((a, b) => a.min_active_gyms - b.min_active_gyms);
   let acumuladoHitos = 0;
   const milestoneTiers = milestoneTiersBase.map((t) => {
     acumuladoHitos += Number(t.milestone_bonus_amount);
@@ -126,11 +140,11 @@ export function PartnerDashboardClient({
   });
 
   // % de arranque (tier con min_active_gyms=0) y % estándar (siguiente tier),
-  // para el copy del hero. Fallback a las constantes fijas si no hay tiers.
+  // para el copy del hero.
   const tierOrdenadosAsc = [...tiers].sort((a, b) => a.min_active_gyms - b.min_active_gyms);
-  const pctArranqueHero = tierOrdenadosAsc[0]?.commission_pct ?? COMISION_ARRANQUE_PCT;
-  const pctEstandarHero = tierOrdenadosAsc[1]?.commission_pct ?? COMISION_ESTANDAR_PCT;
-  const umbralEstandarHero = tierOrdenadosAsc[1]?.min_active_gyms ?? 5;
+  const pctArranqueHero = tierOrdenadosAsc[0].commission_pct;
+  const pctEstandarHero = tierOrdenadosAsc[1]?.commission_pct ?? pctArranqueHero;
+  const umbralEstandarHero = tierOrdenadosAsc[1]?.min_active_gyms ?? tierOrdenadosAsc[0].min_active_gyms;
   const bonosListaHero = milestoneTiers.map((t) => `$${Number(t.milestone_bonus_amount).toLocaleString("es-AR")}`);
   const sedesListaHero = milestoneTiers.map((t) => t.min_active_gyms).join(", ");
 
@@ -201,14 +215,6 @@ export function PartnerDashboardClient({
   const esArranqueActivo = quedaArranque > 0;
   const faltan = proximoHito ? proximoHito.faltan : 0;
 
-  // Estados para las herramientas del Kit de Ventas
-  const [simGyms, setSimGyms] = useState<number>(5);
-  const [objecionAbierta, setObjecionAbierta] = useState<number | null>(0);
-  const [copiadoDemo, setCopiadoDemo] = useState(false);
-
-  // Estado para copiar scripts del Arsenal
-  const [copiadoScriptId, setCopiadoScriptId] = useState<string | null>(null);
-
   const copiarScript = async (id: string, texto: string) => {
     try {
       await navigator.clipboard.writeText(texto);
@@ -220,10 +226,6 @@ export function PartnerDashboardClient({
     }
   };
 
-  // Notificaciones internas
-  const [notificaciones, setNotificaciones] = useState<PartnerNotification[]>(
-    resumen.notificaciones ?? []
-  );
   const notificacionesNoLeidas = notificaciones.filter((n) => !n.leido).length;
 
   const marcarComoLeida = async (id: string) => {

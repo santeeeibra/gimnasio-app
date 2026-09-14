@@ -15,7 +15,6 @@ import {
   type PartnerPayout,
   type MilestoneNumero,
   type PartnerTier,
-  BONOS_HITO,
   RETIRO_MINIMO_ARS,
 } from "@/types/partner";
 
@@ -149,11 +148,16 @@ export async function obtenerODescargarPartnerAction(): Promise<{
     const gimnasiosPagoActivos = gimnasiosDetalle.filter((g) => g.esPagoActivo).length;
 
     // Rangos configurables (comisión + bono por hito), editable sin deploy.
-    const { data: tiersData } = await admin
+    // Sin fallback hardcodeado: si esto falla o viene vacío, el dashboard
+    // no debe mostrar números inventados — mejor un error explícito.
+    const { data: tiersData, error: tiersErr } = await admin
       .from("partner_tiers")
       .select("id, name, min_active_gyms, commission_pct, milestone_bonus_amount")
       .order("min_active_gyms", { ascending: true });
-    const tiers = (tiersData ?? []) as PartnerTier[];
+    if (tiersErr || !tiersData || tiersData.length === 0) {
+      return { ok: false, error: "No se pudieron cargar los rangos de comisión. Probá recargar la página." };
+    }
+    const tiers = tiersData as PartnerTier[];
 
     // Balance oficial mediante la función SQL partner_balance()
     const { data: balanceData } = await admin.rpc("partner_balance", {
