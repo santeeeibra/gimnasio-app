@@ -18,12 +18,16 @@ import {
   type Ejercicio,
   type Molestia,
   type Nivel,
+  type Objetivo,
   type Tecnica,
 } from "@/lib/rutina/tipos";
+import { resolverWarmupSesion } from "@/lib/rutinas/warmup-engine";
+import { WarmupGeneralCard } from "@/components/rutinas/warmup-general-card";
 
 const campoCls =
   "h-11 rounded-[10px] border border-rule bg-paper text-[16px] outline-none transition-[border-color] duration-150 [transition-timing-function:var(--ease-out)] focus:border-ink";
 import { editarItem, editarTecnica, sustituirEjercicio } from "./actions";
+import { obtenerTipsTecnica } from "./asistente-actions";
 import { StickyProgresoDia } from "@/components/rutinas/sticky-progreso-dia";
 import { LogroDiaCompletado } from "@/components/rutinas/logro-dia-completado";
 import { BotonPedirAyuda } from "@/components/rutinas/boton-pedir-ayuda";
@@ -55,7 +59,7 @@ import {
   hapticoImpactoSuave,
   hapticoSeleccion,
 } from "@/lib/ui/hapticos";
-import { hablar } from "@/lib/ui/voz";
+import { hablar, precargar } from "@/lib/ui/voz";
 import {
   guardarProgresoCliente,
   guardarProgresoSocio,
@@ -300,6 +304,7 @@ export function RutinaEditor({
   logoUrl,
   colores,
   esIndividual = false,
+  objetivo,
 }: {
   dias: DiaEditable[];
   ejercicios: Ejercicio[];
@@ -312,6 +317,8 @@ export function RutinaEditor({
   gimnasioNombre?: string;
   logoUrl?: string | null;
   colores?: ColoresImagen;
+  /** Objetivo de la rutina: decide si el warm-up general admite cardio. */
+  objetivo?: Objetivo;
 }) {
   const [visor, setVisor] = useState<Ejercicio | null>(null);
   const [activo, setActivo] = useState(dias[0]?.numero ?? 1);
@@ -394,6 +401,7 @@ export function RutinaEditor({
       const nuevos = existe
         ? actuales.filter((s) => s !== setIndex)
         : [...actuales, setIndex];
+      if (!existe) hablar(`Serie ${setIndex + 1} completada`);
       const next = { ...prev, [itemId]: nuevos };
       try {
         localStorage.setItem(`${LS_SETS_PREFIX}.${activo}`, JSON.stringify(next));
@@ -412,8 +420,28 @@ export function RutinaEditor({
   // de Modo Foco Gym, para que el cliente no tenga que mirar el celular.
   useEffect(() => {
     if (!zenMode) return;
-    const nombre = diaActivo?.items[pasoZen]?.ejercicio?.nombre;
-    if (nombre) hablar(nombre);
+    const ejercicio = diaActivo?.items[pasoZen]?.ejercicio;
+    if (!ejercicio) return;
+    // Después del nombre, pide (o genera y cachea en BD) los tips de técnica
+    // y los lee: guía la ejecución sin que el cliente tenga que mirar el celu.
+    // Se encadena (no en paralelo) para no cortar el nombre a mitad.
+    let cancelado = false;
+    (async () => {
+      await hablar(ejercicio.nombre);
+      const res = await obtenerTipsTecnica(ejercicio.id);
+      if (cancelado) return;
+      if (res.ok && res.ejercicio.tips_ia) {
+        await hablar(res.ejercicio.tips_ia.replace(/•/g, ""));
+      }
+    })();
+    // Precarga el nombre del siguiente ejercicio mientras se muestra el
+    // actual, para que la próxima locución sea instantánea.
+    const siguiente = diaActivo?.items[pasoZen + 1]?.ejercicio?.nombre;
+    if (siguiente) precargar(siguiente);
+
+    return () => {
+      cancelado = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [zenMode, pasoZen, activo]);
 
@@ -535,6 +563,19 @@ export function RutinaEditor({
           ]
             .filter(Boolean)
             .join(" · ");
+
+          // Warm-up general de la sesión: motor de reglas puro (ver
+          // src/lib/rutinas/warmup-engine.ts). Se calcula sobre el grupo
+          // muscular dominante del día, respetando objetivo (cardio sí/no).
+          // TODO: `evitarDolor` hoy vive por-ejercicio dentro de ItemFila
+          // (sustituciones puntuales); falta un campo de molestia a nivel
+          // de rutina/cliente para alimentar el warm-up general también.
+          const warmupSesion = resolverWarmupSesion({
+            gruposDia: dia.items
+              .map((i) => i.ejercicio?.grupo_muscular)
+              .filter((g): g is string => Boolean(g)),
+            objetivo,
+          });
 
           // Circunferencia del anillo SVG (radio 23 -> 2 * PI * 23 = ~144.5)
           const strokeCirc = 144.5;
@@ -661,6 +702,11 @@ export function RutinaEditor({
                     />
                   </div>
                 </div>
+              </div>
+
+              {/* Warm-up general de la sesión (movilidad y activación previa) */}
+              <div className="mt-3.5">
+                <WarmupGeneralCard warmup={warmupSesion} />
               </div>
 
               {/* Lista de ejercicios con nuevo card style Obsidian.
@@ -1431,9 +1477,11 @@ function ItemFila({
                 onOpen={() => setMostrarCalculadoraDiscos(true)}
               />
             ) : null}
-            <PillRampaCalentamiento
-              onOpen={() => setMostrarRampaCalentamiento(true)}
-            />
+            {indice === 1 ? (
+              <PillRampaCalentamiento
+                onOpen={() => setMostrarRampaCalentamiento(true)}
+              />
+            ) : null}
           </div>
 
           {mostrarRampaCalentamiento ? (

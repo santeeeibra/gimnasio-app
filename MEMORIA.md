@@ -110,3 +110,5 @@
 - [2026-09-14] Se extendió el backup de seguridad (scripts/lib/backup.mjs) a seed-gym-demo.mjs y seed-genesis-gym.mjs (respaldan pagos/registros_entrada/rutinas/rutina_items/registro_peso antes de sus .delete()). test-e2e-partner-gating.mjs quedó afuera a propósito: solo borra sus propios fixtures E2E_TEST_.
 - Rediseño UI de /admin/payouts con modales y PulpoCard
 - Fix de z-index y clipping en modal de QR en perfil usando createPortal
+- Warmup de sesión: creada WarmupGeneralCard colapsable por default con feedback háptico acústico y animaciones 60fps antes de los ejercicios del día.
+- [2026-09-14] Voz guiada migrada de Web Speech API a Edge TTS: nuevo /api/voz (msedge-tts, es-AR-TomasNeural) + caché predictiva en el navegador (Cache API, nada sube a Supabase). Timer de descanso ahora cuenta 10→1 hablado; Modo Zen lee nombre + técnica del ejercicio (tips_ia) encadenados; se anuncia "Serie N completada" al tildar cada serie.

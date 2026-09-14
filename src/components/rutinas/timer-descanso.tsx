@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { hapticoTimerFin, hapticoImpactoMedio } from "@/lib/ui/hapticos";
-import { hablar } from "@/lib/ui/voz";
+import { hablar, precargar } from "@/lib/ui/voz";
 
 const PRESETS = [
   { label: "30s", segundos: 30 },
@@ -220,6 +220,16 @@ export function TimerDescanso() {
     };
   }, []);
 
+  // Precargar en caché las frases fijas y las de cada preset de descanso
+  // posible (incluidas las que sugiere el ATP Recovery Engine por RIR), así
+  // "hablar()" no espera la red justo cuando el aviso tiene que sonar.
+  useEffect(() => {
+    precargar("Descanso terminado. Dale con todo");
+    for (let n = 1; n <= 10; n++) precargar(String(n));
+    const segsPosibles = new Set([...PRESETS.map((p) => p.segundos), 60, 120, 180]);
+    segsPosibles.forEach((s) => precargar(`Descanso de ${s} segundos`));
+  }, []);
+
   // Escuchar evento global "timer:iniciar" para sincronizar el cronómetro automáticamente.
   // Si viene `rir` (proximidad al fallo de la serie recién completada), el
   // ATP Recovery Engine sugiere el descanso en lugar de usar `segundos` fijo.
@@ -266,8 +276,9 @@ export function TimerDescanso() {
         reproducirBeepCountdown(rem);
       }
 
-      if (rem === 10) {
-        hablar("Diez segundos");
+      // Cuenta regresiva hablada de los últimos 10 segundos (10, 9, 8... 1).
+      if (rem <= 10 && rem >= 1) {
+        hablar(String(rem));
       }
 
       if (rem <= 0) {
