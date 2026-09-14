@@ -30,7 +30,10 @@ import { BotonPedirAyuda } from "@/components/rutinas/boton-pedir-ayuda";
 import { PulpoAsistenteChat } from "@/components/mi/pulpo-asistente-chat";
 import { Pulpo } from "@/components/mascota/pulpo";
 import { Sparkles } from "lucide-react";
-import { DialVerticalProgreso } from "@/components/progreso/dial-vertical-progreso";
+import {
+  DialVerticalProgreso,
+  type DialVerticalProgresoHandle,
+} from "@/components/progreso/dial-vertical-progreso";
 import { HistorialEjercicio } from "@/components/progreso/historial-ejercicio";
 import { EquipamientoSugerido } from "@/components/monetizacion/equipamiento-sugerido";
 import { PanelDropSet } from "@/components/progreso/panel-dropset";
@@ -1039,6 +1042,7 @@ function ItemFila({
   const [mostrarDropSet, setMostrarDropSet] = useState(false);
   const [dropsetGuardado, setDropsetGuardado] = useState<Record<number, DropPaso[]>>({});
   const [pesoActualEjercicio, setPesoActualEjercicio] = useState<number>(20);
+  const dialRef = useRef<DialVerticalProgresoHandle>(null);
   const [mostrarCalculadoraDiscos, setMostrarCalculadoraDiscos] = useState(false);
   const [mostrarRampaCalentamiento, setMostrarRampaCalentamiento] = useState(false);
 
@@ -1262,6 +1266,7 @@ function ItemFila({
 
             return (
               <DialVerticalProgreso
+                ref={dialRef}
                 ejercicioId={item.ejercicio.id}
                 tipoEquipo={tipoEquipo}
                 ejercicioNombre={ej?.nombre ?? item.ejercicio.nombre}
@@ -1435,6 +1440,14 @@ function ItemFila({
               onClose={() => setMostrarCalculadoraDiscos(false)}
               pesoInicial={pesoActualEjercicio}
               ejercicioNombre={ej?.nombre ?? item.ejercicio?.nombre}
+              onGuardar={(pesoTotalKg, barraKg) => {
+                // El dial de "barra" trabaja "sin la barra": lo que se ve acá
+                // es el total armado (barra + discos de los dos lados).
+                dialRef.current?.aplicarPeso(
+                  Math.max(0, pesoTotalKg - barraKg),
+                  true,
+                );
+              }}
             />
           ) : null}
 

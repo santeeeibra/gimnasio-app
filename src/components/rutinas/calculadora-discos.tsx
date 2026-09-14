@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { X, Calculator } from "lucide-react";
-import { hapticoSeleccion, hapticoImpactoSuave } from "@/lib/ui/hapticos";
+import { X, Calculator, Check } from "lucide-react";
+import { hapticoSeleccion, hapticoImpactoSuave, hapticoExito } from "@/lib/ui/hapticos";
 
 // Discos estándar disponibles en un gimnasio, de mayor a menor.
 const DISCOS_KG = [25, 20, 15, 10, 5, 2.5, 1.25] as const;
@@ -77,6 +77,11 @@ interface CalculadoraDiscosModalProps {
   onClose: () => void;
   pesoInicial?: number;
   ejercicioNombre?: string;
+  /** Si se pasa, muestra un botón para volcar el peso total armado acá
+     directo al dial del ejercicio (y guardarlo como el peso de hoy).
+     `barraKg` es el peso de la barra elegida, para que quien reciba el
+     callback pueda restarlo si el dial trabaja "sin la barra". */
+  onGuardar?: (pesoTotalKg: number, barraKg: number) => void;
 }
 
 export function CalculadoraDiscosModal({
@@ -84,6 +89,7 @@ export function CalculadoraDiscosModal({
   onClose,
   pesoInicial = 20,
   ejercicioNombre,
+  onGuardar,
 }: CalculadoraDiscosModalProps) {
   const [mounted, setMounted] = useState(false);
   const [barra, setBarra] = useState<TipoBarra>(() => {
@@ -291,6 +297,21 @@ export function CalculadoraDiscosModal({
             </p>
           ) : null}
         </div>
+
+        {onGuardar ? (
+          <button
+            type="button"
+            onClick={() => {
+              hapticoExito();
+              onGuardar(pesoTotal, barraKg);
+              onClose();
+            }}
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-[14px] bg-accent font-bold text-sm text-accent-ink shadow-md shadow-accent/20 transition-transform active:scale-[0.98] hover:opacity-95"
+          >
+            <Check className="size-4" />
+            Usar {pesoTotal}kg como peso de hoy
+          </button>
+        ) : null}
       </div>
     </div>,
     document.getElementById("portal-root") ?? document.body,

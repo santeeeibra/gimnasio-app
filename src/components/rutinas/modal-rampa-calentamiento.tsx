@@ -107,8 +107,9 @@ export function ModalRampaCalentamiento({
           </div>
 
           <p className="text-[11px] text-ink-soft -mt-1">
-            3 series de aproximación antes de tu serie de trabajo con{" "}
-            <b className="font-mono tabular-nums text-ink">{w}kg</b>.
+            Calculada sobre el peso que tenés puesto en el dial ahora:{" "}
+            <b className="font-mono tabular-nums text-ink">{w}kg</b>. 3 series
+            de aproximación antes de esa serie de trabajo.
           </p>
 
           {/* Pasos de la rampa */}

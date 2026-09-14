@@ -164,17 +164,6 @@ export const DialVerticalProgreso = forwardRef<
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [peso]);
 
-  useImperativeHandle(
-    ref,
-    () => ({
-      aplicarPeso: (kg, guardar = false) => {
-        if (guardar) guardarPendienteRef.current = true;
-        updateWeight(kg);
-      },
-    }),
-    [updateWeight],
-  );
-
   // Dibujar regla vertical en canvas
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -269,6 +258,26 @@ export const DialVerticalProgreso = forwardRef<
       }
     },
     [draw]
+  );
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      aplicarPeso: (kg, guardar = false) => {
+        const rounded = Math.round(kg * 2) / 2;
+        if (guardar) {
+          if (rounded === lastEmittedRef.current) {
+            // updateWeight no dispara el effect de [peso] si el valor no
+            // cambia (ya es el mismo que se ve): submiteá directo.
+            requestAnimationFrame(() => formRef.current?.requestSubmit());
+          } else {
+            guardarPendienteRef.current = true;
+          }
+        }
+        updateWeight(kg);
+      },
+    }),
+    [updateWeight],
   );
 
   // Sin inercia: al soltar, snap inmediato al 0,5 más cercano del valor real
@@ -402,6 +411,7 @@ export const DialVerticalProgreso = forwardRef<
       />
     )}
     <form
+      ref={formRef}
       action={formAction}
       className="flex flex-col items-center w-[68px] rounded-[10px] border border-rule/70 bg-paper-2/90 p-1 select-none"
     >
