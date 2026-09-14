@@ -5,7 +5,8 @@ import "server-only";
 // uno no tira abajo la función — sólo se degrada a la próxima opción gratis.
 //
 // Orden: Claude (mejor calidad, de pago) → Groq (gratis sin tarjeta,
-// console.groq.com) → Gemini (gratis sin tarjeta, aistudio.google.com).
+// console.groq.com) → Gemini (gratis sin tarjeta, aistudio.google.com) →
+// GitHub Models (gratis con cuenta de GitHub, github.com/marketplace/models).
 // Cada uno se activa solo si su *_API_KEY está en .env.local; sin ninguna
 // key configurada, se comporta como si ese proveedor no existiera.
 
@@ -110,6 +111,37 @@ async function llamarGemini(args: LlamadaIa): Promise<string> {
   return texto;
 }
 
+async function llamarGithubModels(args: LlamadaIa): Promise<string> {
+  const apiKey = process.env.GITHUB_MODELS_TOKEN!;
+
+  const res = await fetch("https://models.github.ai/inference/chat/completions", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: "openai/gpt-4o-mini",
+      max_tokens: args.maxTokens,
+      messages: [
+        { role: "system", content: args.system },
+        { role: "user", content: args.userMessage },
+      ],
+    }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`GitHub Models API ${res.status}: ${await res.text()}`);
+  }
+
+  const data = (await res.json()) as {
+    choices?: { message?: { content?: string } }[];
+  };
+  const texto = data.choices?.[0]?.message?.content?.trim();
+  if (!texto) throw new Error("Respuesta vacía de GitHub Models");
+  return texto;
+}
+
 const PROVEEDORES: Proveedor[] = [
   {
     nombre: "Claude",
@@ -125,6 +157,11 @@ const PROVEEDORES: Proveedor[] = [
     nombre: "Gemini",
     disponible: () => Boolean(process.env.GEMINI_API_KEY),
     llamar: llamarGemini,
+  },
+  {
+    nombre: "GitHub Models",
+    disponible: () => Boolean(process.env.GITHUB_MODELS_TOKEN),
+    llamar: llamarGithubModels,
   },
 ];
 
@@ -148,7 +185,7 @@ export async function llamarIaConFallback(args: LlamadaIa): Promise<string> {
 
   if (errores.length === 0) {
     throw new Error(
-      "Ningún proveedor de IA está configurado (falta ANTHROPIC_API_KEY, GROQ_API_KEY o GEMINI_API_KEY en .env.local)",
+      "Ningún proveedor de IA está configurado (falta ANTHROPIC_API_KEY, GROQ_API_KEY, GEMINI_API_KEY o GITHUB_MODELS_TOKEN en .env.local)",
     );
   }
   throw new Error(`Fallaron todos los proveedores de IA: ${errores.join(" | ")}`);
