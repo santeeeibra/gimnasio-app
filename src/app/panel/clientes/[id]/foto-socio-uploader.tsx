@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { comprimirImagen } from "@/lib/img/comprimir";
 import { guardarFotoSocio } from "../actions";
 import { Spinner, linkClasses } from "@/components/ui";
 import { ImageCropModal } from "@/components/ui/image-crop-modal";
+import { AvatarPickerModal } from "@/components/ui/avatar-picker-modal";
 import { Camera } from "lucide-react";
 import { hapticoExito, hapticoImpactoMedio } from "@/lib/ui/hapticos";
 
@@ -32,6 +33,10 @@ export function FotoSocioUploader({
   // Estado para el modal de recorte
   const [fileToCrop, setFileToCrop] = useState<File | null>(null);
   const [cropModalOpen, setCropModalOpen] = useState(false);
+
+  // Estado para el selector de avatares
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const path = `${gimnasioId}/${clienteId}.webp`;
   const src = fotoUrl ? `${fotoUrl}${version ? `?v=${version}` : ""}` : null;
@@ -102,6 +107,25 @@ export function FotoSocioUploader({
     }
   }
 
+  async function elegirPreset(url: string) {
+    setPickerOpen(false);
+    setError(null);
+    setPending(true);
+    try {
+      const res = await guardarFotoSocio(clienteId, url);
+      if (res.error) throw new Error(res.error);
+      setVersion(Date.now());
+      setFotoUrl(url);
+      hapticoExito();
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "No se pudo guardar la foto.",
+      );
+    } finally {
+      setPending(false);
+    }
+  }
+
   async function quitarFoto() {
     setError(null);
     setPending(true);
@@ -130,13 +154,17 @@ export function FotoSocioUploader({
     <>
       <div className="flex items-center gap-4">
         {/* AVATAR TÁCTIL CON BADGE DE CÁMARA */}
-        <label
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => setPickerOpen(true)}
           className={`relative size-18 sm:size-20 shrink-0 cursor-pointer rounded-full group select-none transition-transform active:scale-95 ${
             pending ? "pointer-events-none opacity-60" : ""
           }`}
           title="Tocar para cambiar foto"
         >
           <input
+            ref={fileInputRef}
             type="file"
             accept="image/*"
             disabled={pending}
@@ -167,26 +195,22 @@ export function FotoSocioUploader({
               <Spinner className="text-ink" />
             </div>
           ) : null}
-        </label>
+        </button>
 
         {/* ACCIONES Y TEXTO ASISTENCIAL */}
         <div className="flex flex-col gap-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <label
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() => setPickerOpen(true)}
               className={`relative inline-flex h-8 items-center justify-center gap-1.5 overflow-hidden rounded-[8px] border border-rule bg-paper px-3 text-xs font-semibold text-ink transition-all active:scale-95 hover:bg-paper-2 ${
                 pending ? "cursor-not-allowed opacity-50 pointer-events-none" : "cursor-pointer shadow-xs"
               }`}
             >
-              <input
-                type="file"
-                accept="image/*"
-                disabled={pending}
-                className="sr-only"
-                onChange={onFileChange}
-              />
               <Camera className="size-3.5 text-ink-soft" />
-              <span>{src ? "Cambiar foto" : "Subir foto"}</span>
-            </label>
+              <span>{src ? "Cambiar foto" : "Elegir foto"}</span>
+            </button>
 
             {src ? (
               <button
@@ -211,6 +235,22 @@ export function FotoSocioUploader({
           ) : null}
         </div>
       </div>
+
+      {/* SELECTOR DE AVATARES */}
+      <AvatarPickerModal
+        isOpen={pickerOpen}
+        fotoActual={fotoUrl}
+        onSelectPreset={elegirPreset}
+        onSubirPropia={() => {
+          setPickerOpen(false);
+          fileInputRef.current?.click();
+        }}
+        onQuitar={() => {
+          setPickerOpen(false);
+          quitarFoto();
+        }}
+        onClose={() => setPickerOpen(false)}
+      />
 
       {/* MODAL DE RECORTE Y ENCUADRE */}
       <ImageCropModal

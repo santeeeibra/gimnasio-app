@@ -39,7 +39,7 @@ export default async function MiPage() {
       .single(),
     supabase
       .from("clientes")
-      .select("id, fecha_vencimiento, plan:planes(nombre, duracion_dias)")
+      .select("id, foto_url, fecha_vencimiento, plan:planes(nombre, duracion_dias)")
       .eq("profile_id", profile.id)
       .maybeSingle(),
     supabase
@@ -136,9 +136,22 @@ export default async function MiPage() {
         {/* Cabecera: Avatar Mascota Pulpo Volt + Saludo + Acciones Secundarias (Ghost) */}
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="relative size-10 shrink-0 rounded-[12px] bg-[#0b1311] border border-volt/30 flex items-center justify-center shadow-sm overflow-hidden">
-              <Pulpo size={28} pose="festejo" />
-            </div>
+            <Link
+              href="/mi/perfil"
+              className="relative size-10 shrink-0 rounded-[12px] bg-[#0b1311] border border-volt/30 flex items-center justify-center shadow-sm overflow-hidden"
+              title="Ir a mi perfil"
+            >
+              {c?.foto_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={c.foto_url}
+                  alt={`Foto de ${profile.nombre}`}
+                  className="size-full object-cover"
+                />
+              ) : (
+                <Pulpo size={28} pose="festejo" />
+              )}
+            </Link>
             <div className="min-w-0">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-ink-soft/80 leading-none mb-0.5">
                 {gym?.nombre ?? "SysGym"}

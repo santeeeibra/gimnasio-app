@@ -20,8 +20,9 @@ import {
 } from "lucide-react";
 import { ArchivosSeccion } from "@/components/archivos/archivos-seccion";
 import { CredencialQRModal } from "@/components/mi/credencial-qr-modal";
-import { Pulpo } from "@/components/mascota/pulpo";
 import { VozGuiadaToggle } from "@/components/rutinas/voz-guiada-toggle";
+import { FotoPerfilPropia } from "@/components/mi/foto-perfil-propia";
+import { Pulpo } from "@/components/mascota/pulpo";
 
 export const dynamic = "force-dynamic";
 
@@ -66,20 +67,20 @@ export default async function MiPerfilPage() {
 
       {/* Cabecera del perfil */}
       <div className="card-cut border border-rule bg-paper-2 p-5 flex items-center gap-4">
-        <div className="relative size-14 shrink-0 rounded-full border-2 border-rule bg-paper-3 overflow-hidden grid place-items-center">
-          {c?.foto_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={c.foto_url}
-              alt={`Foto de ${profile.nombre}`}
-              className="size-full object-cover"
-            />
-          ) : (
+        {c?.id ? (
+          <FotoPerfilPropia
+            gimnasioId={profile.gimnasio_id}
+            clienteId={c.id}
+            fotoUrlInicial={c.foto_url ?? null}
+            nombre={profile.nombre}
+          />
+        ) : (
+          <div className="relative size-14 shrink-0 rounded-full border-2 border-rule bg-paper-3 overflow-hidden grid place-items-center">
             <div className="size-full bg-[#052e1f] grid place-items-center">
               <Pulpo size={46} pose="neutral" />
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         <div className="min-w-0 flex-1">
           <h1 className="text-base font-bold text-ink truncate leading-tight">
