@@ -60,7 +60,7 @@ export default async function MiPerfilPage() {
         Volver al inicio
       </Link>
 
-      <h2 className="text-xs font-bold uppercase tracking-[0.1em] text-ink-soft px-1 -mb-2">
+      <h2 className="text-xs font-bold uppercase tracking-[0.1em] text-ink-soft px-1">
         Mi perfil
       </h2>
 

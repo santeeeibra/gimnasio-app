@@ -336,6 +336,9 @@ export default async function MiRutinaPage() {
             colores={coloresLogro}
           />
 
+          {/* Frase motivacional: siempre visible, fuera del acordeón */}
+          <BannerMotivacional />
+
           {/* 7. Acordeón Colapsado por Default: Más Opciones */}
           <MasOpcionesAcordeon>
             {/* Agendar en Calendario + Descargar Rutina */}
@@ -360,9 +363,6 @@ export default async function MiRutinaPage() {
                 />
               </div>
             ) : null}
-
-            {/* Frase motivacional */}
-            <BannerMotivacional />
 
             {/* Opciones y personalización de rutina */}
             {opcionesPersonalizacion}
