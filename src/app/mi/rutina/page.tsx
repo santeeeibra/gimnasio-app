@@ -36,6 +36,7 @@ import { CodigoEntrenador } from "@/components/rutina/codigo-entrenador";
 import { ModalAvanzadoAfinarPlan } from "./modal-avanzado";
 import { BarraAforoAnimada } from "@/components/mi/barra-aforo-animada";
 import { obtenerAforo } from "@/lib/aforo/actions";
+import { MasOpcionesAcordeon } from "@/components/rutina/mas-opciones-acordeon";
 
 export const dynamic = "force-dynamic";
 
@@ -238,6 +239,7 @@ export default async function MiRutinaPage() {
   // pb-64 (256px) deja el último ejercicio visible incluso con el timer abierto.
   return (
     <main className="stagger max-w-md mx-auto px-5 pt-6 pb-64 space-y-6">
+      {/* 1. Header (Volver / Actualizar) + 2. Aforo en vivo + 3. Título "Tu rutina" */}
       <div>
         <div className="flex items-center justify-between gap-2">
           <Link href="/mi" className={pillClasses.neutra}>
@@ -251,51 +253,25 @@ export default async function MiRutinaPage() {
             <BarraAforoAnimada aforo={aforo} />
           </div>
         ) : null}
-        {/* §6: acción secundaria de la sección va en la fila del encabezado
-            (justify-between), nunca como hijo suelto del stack con ml-auto. */}
-        <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h1 className="text-2xl">Tu rutina</h1>
-            {rutina ? (
-              <p className="text-sm text-ink-soft">
-                {rutina.origen === "manual"
-                  ? "Armada a mano"
-                  : (OBJETIVO_LABEL[rutina.objetivo as Objetivo] ??
-                    rutina.objetivo)}
-                {rutina.nivel
-                  ? ` · ${NIVEL_LABEL[rutina.nivel as Nivel] ?? rutina.nivel}`
-                  : ""}
-                {rutina.dias_por_semana
-                  ? ` · ${rutina.dias_por_semana} días`
-                  : ""}
-              </p>
-            ) : null}
-          </div>
-          {rutina && cliente && !cuotaVencida ? (
-            <div className="shrink-0 flex flex-wrap items-center gap-2">
-              <BotonGoogleCalendar
-                tituloPlan={`${OBJETIVO_LABEL[rutina.objetivo as Objetivo] ?? rutina.objetivo}${rutina.nivel ? ` · ${NIVEL_LABEL[rutina.nivel as Nivel]}` : ""}`}
-                gimnasioNombre={gymData?.nombre ?? "SysGym"}
-                dias={agruparPorDia(
-                  (itemsData ?? []) as any[],
-                  (rutina.dias_titulos as string[] | null) ?? null,
-                )}
-              />
-              <DescargarRutinaPdf
-                clienteNombre={profile.nombre ?? ""}
-                gimnasioNombre={gymData?.nombre ?? ""}
-                rutinaNombre={`${OBJETIVO_LABEL[rutina.objetivo as Objetivo] ?? rutina.objetivo}${rutina.nivel ? ` · ${NIVEL_LABEL[rutina.nivel as Nivel]}` : ""}${rutina.dias_por_semana ? ` · ${rutina.dias_por_semana} días` : ""}`}
-                dias={agruparPorDia((itemsData ?? []) as any[], (rutina.dias_titulos as string[] | null) ?? null)}
-                logoUrl={gymData?.logo_url ?? null}
-                pesoCorporal={pesoCorporal}
-                pesosPorEjercicio={pesosPorEjercicio}
-              />
-            </div>
+
+        <div className="mt-3">
+          <h1 className="text-2xl font-bold font-display text-ink">Tu rutina</h1>
+          {rutina ? (
+            <p className="text-sm text-ink-soft mt-0.5">
+              {rutina.origen === "manual"
+                ? "Armada a mano"
+                : (OBJETIVO_LABEL[rutina.objetivo as Objetivo] ??
+                  rutina.objetivo)}
+              {rutina.nivel
+                ? ` · ${NIVEL_LABEL[rutina.nivel as Nivel] ?? rutina.nivel}`
+                : ""}
+              {rutina.dias_por_semana
+                ? ` · ${rutina.dias_por_semana} días`
+                : ""}
+            </p>
           ) : null}
         </div>
       </div>
-
-      <BannerMotivacional />
 
       {cuotaVencida ? (
         <div className="rounded-[20px] border border-danger/30 bg-paper-2 p-6 text-center shadow-xl space-y-4 animate-scale-in">
@@ -344,39 +320,7 @@ export default async function MiRutinaPage() {
         </>
       ) : (
         <>
-          <details className="group rounded-[14px] border border-rule bg-paper-2 p-3.5 shadow-sm">
-            <summary className="flex cursor-pointer select-none list-none items-center justify-between text-xs font-semibold text-ink-soft hover:text-ink transition-colors [&::-webkit-details-marker]:hidden">
-              <div className="flex items-center gap-2">
-                <SlidersHorizontal className="size-4 text-ink-soft" />
-                <span>Opciones y personalización de rutina</span>
-              </div>
-              <ChevronRight className="size-4 text-ink-soft transition-transform duration-150 group-open:rotate-90" />
-            </summary>
-            <div className="mt-3.5 space-y-3 pt-3 border-t border-rule animate-fade-in">
-              {opcionesPersonalizacion}
-
-              {esIndividual && rutina ? (
-                <PublicarPlantilla rutinaId={rutina.id} />
-              ) : (
-                <CodigoEntrenador />
-              )}
-
-              {(() => {
-                const p = rutina.preferencias as
-                  | { explicacion?: string[]; explicacionGeneral?: string }
-                  | null;
-                const pasos = p?.explicacion ?? [];
-                if (rutina.origen === "manual" || pasos.length === 0) return null;
-                return (
-                  <ExplicacionModal
-                    explicacionGeneral={p?.explicacionGeneral}
-                    pasos={pasos}
-                  />
-                );
-              })()}
-            </div>
-          </details>
-
+          {/* 4. Selector de Día + 5. Tarjeta de Sesión Activa Hero + 6. Ejercicios del Día */}
           <RutinaEditor
             dias={agruparPorDia(
               (itemsData ?? []) as any[],
@@ -391,6 +335,58 @@ export default async function MiRutinaPage() {
             logoUrl={gymData?.logo_url ?? null}
             colores={coloresLogro}
           />
+
+          {/* 7. Acordeón Colapsado por Default: Más Opciones */}
+          <MasOpcionesAcordeon>
+            {/* Agendar en Calendario + Descargar Rutina */}
+            {rutina && cliente ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <BotonGoogleCalendar
+                  tituloPlan={`${OBJETIVO_LABEL[rutina.objetivo as Objetivo] ?? rutina.objetivo}${rutina.nivel ? ` · ${NIVEL_LABEL[rutina.nivel as Nivel]}` : ""}`}
+                  gimnasioNombre={gymData?.nombre ?? "SysGym"}
+                  dias={agruparPorDia(
+                    (itemsData ?? []) as any[],
+                    (rutina.dias_titulos as string[] | null) ?? null,
+                  )}
+                />
+                <DescargarRutinaPdf
+                  clienteNombre={profile.nombre ?? ""}
+                  gimnasioNombre={gymData?.nombre ?? ""}
+                  rutinaNombre={`${OBJETIVO_LABEL[rutina.objetivo as Objetivo] ?? rutina.objetivo}${rutina.nivel ? ` · ${NIVEL_LABEL[rutina.nivel as Nivel]}` : ""}${rutina.dias_por_semana ? ` · ${rutina.dias_por_semana} días` : ""}`}
+                  dias={agruparPorDia((itemsData ?? []) as any[], (rutina.dias_titulos as string[] | null) ?? null)}
+                  logoUrl={gymData?.logo_url ?? null}
+                  pesoCorporal={pesoCorporal}
+                  pesosPorEjercicio={pesosPorEjercicio}
+                />
+              </div>
+            ) : null}
+
+            {/* Frase motivacional */}
+            <BannerMotivacional />
+
+            {/* Opciones y personalización de rutina */}
+            {opcionesPersonalizacion}
+
+            {esIndividual && rutina ? (
+              <PublicarPlantilla rutinaId={rutina.id} />
+            ) : (
+              <CodigoEntrenador />
+            )}
+
+            {(() => {
+              const p = rutina.preferencias as
+                | { explicacion?: string[]; explicacionGeneral?: string }
+                | null;
+              const pasos = p?.explicacion ?? [];
+              if (rutina.origen === "manual" || pasos.length === 0) return null;
+              return (
+                <ExplicacionModal
+                  explicacionGeneral={p?.explicacionGeneral}
+                  pasos={pasos}
+                />
+              );
+            })()}
+          </MasOpcionesAcordeon>
         </>
       )}
     </main>

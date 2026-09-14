@@ -28,6 +28,7 @@ import { StickyProgresoDia } from "@/components/rutinas/sticky-progreso-dia";
 import { LogroDiaCompletado } from "@/components/rutinas/logro-dia-completado";
 import { BotonPedirAyuda } from "@/components/rutinas/boton-pedir-ayuda";
 import { PulpoAsistenteChat } from "@/components/mi/pulpo-asistente-chat";
+import { Pulpo } from "@/components/mascota/pulpo";
 import { Sparkles } from "lucide-react";
 import { DialVerticalProgreso } from "@/components/progreso/dial-vertical-progreso";
 import { HistorialEjercicio } from "@/components/progreso/historial-ejercicio";
@@ -522,23 +523,28 @@ export function RutinaEditor({
                 className="relative overflow-hidden rounded-[16px] border border-rule bg-paper-2 p-4 shadow-sm"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="rounded-[5px] bg-[color:var(--accent-glow)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-accent">
-                        Sesión Activa
-                      </span>
-                      <span className="text-[11px] text-ink-soft">
-                        {dia.items.length} ejercicios
-                      </span>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="relative size-11 shrink-0 rounded-[12px] bg-[#0b1311] border border-volt/30 flex items-center justify-center shadow-sm overflow-hidden">
+                      <Pulpo size={30} pose="kettlebell" />
                     </div>
-                    <h2 className="mt-1 font-display text-lg font-bold tracking-tight text-ink">
-                      {dia.titulo}
-                    </h2>
-                    {musculos ? (
-                      <p className="mt-0.5 text-xs text-ink-soft">
-                        {musculos}
-                      </p>
-                    ) : null}
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="rounded-[5px] bg-[color:var(--accent-glow)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-accent">
+                          Sesión Activa
+                        </span>
+                        <span className="text-[11px] text-ink-soft">
+                          {dia.items.length} ejercicios
+                        </span>
+                      </div>
+                      <h2 className="mt-1 font-display text-lg font-bold tracking-tight text-ink">
+                        {dia.titulo}
+                      </h2>
+                      {musculos ? (
+                        <p className="mt-0.5 text-xs text-ink-soft">
+                          {musculos}
+                        </p>
+                      ) : null}
+                    </div>
                   </div>
 
                   {/* Anillo de progreso circular */}

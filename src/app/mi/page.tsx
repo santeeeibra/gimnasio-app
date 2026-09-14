@@ -21,6 +21,7 @@ import { BotonActualizar } from "@/components/ui/boton-actualizar";
 import { PulpoRetencionCard } from "@/components/mi/pulpo-retencion-card";
 import { BarraAforoAnimada } from "@/components/mi/barra-aforo-animada";
 import { obtenerAforo } from "@/lib/aforo/actions";
+import { Pulpo } from "@/components/mascota/pulpo";
 import { CredencialQRModal } from "@/components/mi/credencial-qr-modal";
 
 export const dynamic = "force-dynamic";
@@ -130,23 +131,39 @@ export default async function MiPage() {
         </div>
       )}
 
-      <div className="flex items-center justify-between gap-3">
-        <h1 className="min-w-0 truncate text-2xl">
-          Hola, {profile.nombre.split(" ")[0]}
-        </h1>
-        <div className="flex shrink-0 items-center gap-2">
-          <CredencialQRModal
-            nombre={profile.nombre}
-            dni={profile.dni}
-            gymNombre={gym?.nombre}
-            estadoCuota={estado === "vencido" ? "vencida" : "al_dia"}
-          />
-          <BotonActualizar variante="icono" />
-          <VerTutorialDeNuevo className={pillClasses.neutra} label="Tutorial" />
-          <form action={logout}>
-            <button className={pillClasses.destructiva}>Salir</button>
-          </form>
+      {/* ── TOPBAR MEJORADA CON JERARQUÍA NATIVA ── */}
+      <div className="space-y-3">
+        {/* Cabecera: Avatar Mascota Pulpo Volt + Saludo + Acciones Secundarias (Ghost) */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="relative size-10 shrink-0 rounded-[12px] bg-[#0b1311] border border-volt/30 flex items-center justify-center shadow-sm overflow-hidden">
+              <Pulpo size={28} pose="festejo" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-ink-soft/80 leading-none mb-0.5">
+                {gym?.nombre ?? "SysGym"}
+              </p>
+              <h1 className="min-w-0 truncate text-xl font-bold font-display text-ink leading-tight">
+                Hola, {profile.nombre.split(" ")[0]}
+              </h1>
+            </div>
+          </div>
+
+          {/* Menú secundario de botones de ícono ghost */}
+          <div className="flex items-center gap-1 shrink-0 rounded-[12px] border border-rule/80 bg-paper-2/90 p-1 shadow-sm">
+            <BotonActualizar variante="icono" className="!min-h-8 !min-w-8 !size-8 !rounded-[8px] !border-none !bg-transparent hover:!bg-paper hover:text-ink text-ink-soft" />
+            <VerTutorialDeNuevo variante="icono" className="!min-h-8 !min-w-8 !size-8 !rounded-[8px] hover:!bg-paper text-ink-soft hover:text-ink" />
+          </div>
         </div>
+
+        {/* Acción Primaria Dominante: Mi QR de Ingreso */}
+        <CredencialQRModal
+          nombre={profile.nombre}
+          dni={profile.dni}
+          gymNombre={gym?.nombre}
+          estadoCuota={estado === "vencido" ? "vencida" : "al_dia"}
+          fullAncho
+        />
       </div>
 
       {esIndividual ? (

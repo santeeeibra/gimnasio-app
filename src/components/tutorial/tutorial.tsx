@@ -54,19 +54,43 @@ export function Tutorial({ rol }: { rol: "dueno" | "cliente" }) {
   );
 }
 
+import { hapticoImpactoSuave } from "@/lib/ui/hapticos";
+
 /** Botón "Ver tutorial de nuevo" para relanzarlo desde el perfil / ajustes. */
 export function VerTutorialDeNuevo({
   className,
   label = "Ver tutorial de nuevo",
+  variante = "pill",
 }: {
   className?: string;
   /** Cabeceras angostas (p. ej. `/mi`) pasan "Tutorial" para no romper el h1. */
   label?: string;
+  variante?: "pill" | "icono";
 }) {
+  const handleClick = () => {
+    hapticoImpactoSuave();
+    window.dispatchEvent(new Event(EVENTO_ABRIR_TUTORIAL));
+  };
+
+  if (variante === "icono") {
+    return (
+      <button
+        type="button"
+        onClick={handleClick}
+        title="Ver tutorial"
+        aria-label="Ver tutorial"
+        className={`inline-flex min-h-9 min-w-9 size-9 items-center justify-center rounded-[8px] text-ink-soft hover:text-ink hover:bg-paper select-none touch-manipulation transition-colors focus-visible:outline-none ${className ?? ""}`}
+      >
+        <GraduationCap aria-hidden strokeWidth={2} className="size-4 shrink-0" />
+      </button>
+    );
+  }
+
   return (
     <button
       type="button"
-      onClick={() => window.dispatchEvent(new Event(EVENTO_ABRIR_TUTORIAL))}
+      onClick={handleClick}
+      aria-label={label}
       className={className ?? pillClasses.neutra}
     >
       <GraduationCap aria-hidden strokeWidth={2} className="size-4 shrink-0" />

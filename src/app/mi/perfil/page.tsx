@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { logout } from "@/app/actions";
 import { CardPeso } from "@/components/peso/card-peso";
 import { guardarPesoCliente, obtenerPesosCliente } from "@/lib/peso/actions";
 import { pillClasses } from "@/components/ui";
-import { User, Dumbbell, ShieldCheck, Calendar, Phone, Mail, IdCard, ChevronLeft } from "lucide-react";
+import { User, Dumbbell, ShieldCheck, Calendar, Phone, Mail, IdCard, ChevronLeft, LogOut } from "lucide-react";
 import { ArchivosSeccion } from "@/components/archivos/archivos-seccion";
 import { CredencialQRModal } from "@/components/mi/credencial-qr-modal";
 
@@ -183,6 +184,15 @@ export default async function MiPerfilPage() {
           <span>Cambiar contraseña</span>
           <span className="text-ink-soft">→</span>
         </Link>
+        <form action={logout}>
+          <button
+            type="submit"
+            className="w-full card-cut border border-danger/30 bg-danger/10 p-4 flex items-center justify-between text-xs font-semibold text-danger hover:bg-danger/20 transition-colors"
+          >
+            <span>Cerrar sesión</span>
+            <LogOut className="size-4 text-danger" />
+          </button>
+        </form>
       </div>
     </main>
   );
