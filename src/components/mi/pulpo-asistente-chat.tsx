@@ -84,6 +84,7 @@ export function PulpoAsistenteChat({
     nombre: string;
     descripcion: string | null;
     imagen_url: string | null;
+    tips_ia: string | null;
   } | null>(null);
   const [faltaContenidoTecnica, setFaltaContenidoTecnica] = useState(false);
   const [reporteEnviado, setReporteEnviado] = useState(false);
@@ -579,7 +580,8 @@ export function PulpoAsistenteChat({
                         Puntos Clave de Ejecución
                       </p>
                       <p className="text-xs text-ink leading-relaxed whitespace-pre-line">
-                        {tecnicaData.descripcion ||
+                        {tecnicaData.tips_ia ||
+                          tecnicaData.descripcion ||
                           "• Mantené la columna en posición neutra durante todo el movimiento.\n• Controlá la fase excéntrica (bajada) en 2 segundos.\n• Exhalá con el esfuerzo máximo y evitá tirones bruscos."}
                       </p>
                     </div>

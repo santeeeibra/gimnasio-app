@@ -5,6 +5,7 @@ import { requireProfile } from "@/lib/auth";
 import { registrarError } from "@/lib/admin/errores";
 import { detectarRecord } from "@/lib/logros/deteccion";
 import { obtenerRachaCliente } from "@/lib/logros/actions";
+import { generarTipsTecnicaIa } from "@/lib/rutina/tips-tecnica-ia";
 
 export async function buscarReemplazoMaquinaOcupada(ejercicioActualId: string) {
   const profile = await requireProfile();
@@ -74,7 +75,7 @@ export async function obtenerTipsTecnica(ejercicioId: string) {
 
   const { data } = await supabase
     .from("ejercicios")
-    .select("id, nombre, descripcion, imagen_url, patron, grupo_muscular")
+    .select("id, nombre, descripcion, imagen_url, patron, grupo_muscular, equipo, tips_ia")
     .eq("id", ejercicioId)
     .maybeSingle();
 
@@ -87,19 +88,44 @@ export async function obtenerTipsTecnica(ejercicioId: string) {
     return { ok: false as const, error: "Ejercicio no registrado en la base de datos." };
   }
 
-  // Si no tiene GIF o no tiene técnica/descripción cargada, avisar a panel dev
-  if (!data.imagen_url || !data.descripcion) {
+  // Si no tiene GIF, avisar a panel dev (esto no lo genera la IA, hace falta subirlo)
+  if (!data.imagen_url) {
     await registrarError(
       gimnasioId,
       "rutina",
-      `[Falta GIF/Técnica en BD] El ejercicio "${data.nombre}" (${data.grupo_muscular ?? "sin grupo"}) no tiene ${!data.imagen_url ? "GIF animado" : ""}${!data.imagen_url && !data.descripcion ? " ni " : ""}${!data.descripcion ? "descripción de técnica" : ""}. Cargar en panel dev.`
+      `[Falta GIF en BD] El ejercicio "${data.nombre}" (${data.grupo_muscular ?? "sin grupo"}) no tiene GIF animado. Cargar en panel dev.`
     );
+  }
+
+  // Tips de técnica: se generan con Claude UNA sola vez por ejercicio y se
+  // cachean en ejercicios.tips_ia. El catálogo es compartido entre todos los
+  // gimnasios, así que esto pega la API como máximo una vez por ejercicio en
+  // total (no por click, no por cliente, no por gimnasio).
+  let tipsIa = data.tips_ia as string | null;
+  if (!tipsIa) {
+    try {
+      tipsIa = await generarTipsTecnicaIa({
+        nombre: data.nombre,
+        grupoMuscular: data.grupo_muscular,
+        patron: data.patron,
+        equipo: data.equipo,
+        descripcionExistente: data.descripcion,
+      });
+      await supabase.from("ejercicios").update({ tips_ia: tipsIa }).eq("id", data.id);
+    } catch (err) {
+      await registrarError(
+        gimnasioId,
+        "rutina",
+        `[Falla IA tips técnica] No se pudo generar tips_ia para "${data.nombre}": ${err instanceof Error ? err.message : String(err)}`
+      );
+      tipsIa = null;
+    }
   }
 
   return {
     ok: true as const,
-    ejercicio: data,
-    faltaContenido: !data.imagen_url || !data.descripcion,
+    ejercicio: { ...data, tips_ia: tipsIa },
+    faltaContenido: !data.imagen_url,
   };
 }
 
