@@ -5,12 +5,13 @@ import "server-only";
 // uno no tira abajo la función — sólo se degrada a la próxima opción gratis.
 //
 // Orden por CALIDAD de redacción, no por facilidad de setup:
-// Claude (de pago) → GitHub Models/GPT-4o-mini (gratis con cuenta de
-// GitHub) → Gemini (gratis sin tarjeta, aistudio.google.com) → Groq/Llama
-// 3.3 (gratis sin tarjeta, console.groq.com — el más generoso en límites,
-// por eso queda de último respaldo). Cada uno se activa solo si su
-// *_API_KEY está en .env.local; sin ninguna key, se comporta como si ese
-// proveedor no existiera.
+// Claude (de pago) → Gemini (gratis sin tarjeta, aistudio.google.com) →
+// Groq/GPT OSS 120B (gratis sin tarjeta, console.groq.com — el más
+// generoso en límites, por eso queda de último respaldo "principal") →
+// OpenRouter (colchón final). Cada uno se activa solo si su *_API_KEY
+// está en .env.local; sin ninguna key, se comporta como si ese proveedor
+// no existiera. GitHub Models se sacó de la cadena: se retiró para
+// siempre el 30/07/2026, no vuelve.
 
 export type LlamadaIa = {
   system: string;
@@ -64,8 +65,13 @@ async function llamarGroq(args: LlamadaIa): Promise<string> {
       authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: "llama-3.3-70b-versatile",
+      // llama-3.3-70b-versatile fue dado de baja de Groq (404 model_not_found).
+      // gpt-oss-120b es el reemplazo de mejor calidad disponible hoy, pero
+      // razona antes de responder -- reasoning_effort:"low" evita que el
+      // razonamiento se coma el max_tokens y trunque el texto real.
+      model: "openai/gpt-oss-120b",
       max_tokens: args.maxTokens,
+      reasoning_effort: "low",
       messages: [
         { role: "system", content: args.system },
         { role: "user", content: args.userMessage },
@@ -120,37 +126,6 @@ async function llamarGemini(args: LlamadaIa): Promise<string> {
   return texto;
 }
 
-async function llamarGithubModels(args: LlamadaIa): Promise<string> {
-  const apiKey = process.env.GITHUB_MODELS_TOKEN!;
-
-  const res = await fetch("https://models.github.ai/inference/chat/completions", {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: "openai/gpt-4o-mini",
-      max_tokens: args.maxTokens,
-      messages: [
-        { role: "system", content: args.system },
-        { role: "user", content: args.userMessage },
-      ],
-    }),
-  });
-
-  if (!res.ok) {
-    throw new Error(`GitHub Models API ${res.status}: ${await res.text()}`);
-  }
-
-  const data = (await res.json()) as {
-    choices?: { message?: { content?: string } }[];
-  };
-  const texto = data.choices?.[0]?.message?.content?.trim();
-  if (!texto) throw new Error("Respuesta vacía de GitHub Models");
-  return texto;
-}
-
 async function llamarOpenRouter(args: LlamadaIa): Promise<string> {
   const apiKey = process.env.OPENROUTER_API_KEY!;
 
@@ -186,26 +161,20 @@ async function llamarOpenRouter(args: LlamadaIa): Promise<string> {
 }
 
 // Orden por calidad de redacción (no por orden de implementación): Claude
-// Haiku 4.5 > GPT-4o-mini > Gemini 2.0 Flash > Llama 3.3 70B (Groq) >
-// OpenRouter. Los tres primeros son modelos propietarios con mejor
-// fluidez/naturalidad en español rioplatense para textos cortos; Groq es
-// sólido pero queda último de los "principales" porque tiende a sonar más
-// genérico en este tipo de copy — igual gana en límites gratis más
-// generosos. OpenRouter va al final de todos: junta ~20-28 modelos ":free"
-// detrás de un único endpoint (colchón extra), pero esos modelos se saturan
-// en horas pico del lado del proveedor (429 aunque tu cuota esté bien) y
-// cuál está disponible rota sin aviso — no es para depender de él, es la
-// última red antes de caer al texto genérico fijo.
+// Haiku 4.5 > Gemini 3.6 Flash > GPT OSS 120B (Groq) > OpenRouter.
+// GitHub Models se sacó de la cadena: se retiró por completo el
+// 30/07/2026 (github.blog/changelog/2026-07-30-github-models-is-now-retired),
+// no es un modelo caído sino el servicio entero. OpenRouter va al final
+// de todos: junta ~20-28 modelos ":free" detrás de un único endpoint
+// (colchón extra), pero esos modelos se saturan en horas pico del lado
+// del proveedor (429 aunque tu cuota esté bien) y cuál está disponible
+// rota sin aviso — no es para depender de él, es la última red antes de
+// caer al texto genérico fijo.
 const PROVEEDORES: Proveedor[] = [
   {
     nombre: "Claude",
     disponible: () => Boolean(process.env.ANTHROPIC_API_KEY),
     llamar: llamarClaude,
-  },
-  {
-    nombre: "GitHub Models (GPT-4o-mini)",
-    disponible: () => Boolean(process.env.GITHUB_MODELS_TOKEN),
-    llamar: llamarGithubModels,
   },
   {
     nombre: "Gemini",
@@ -244,7 +213,7 @@ export async function llamarIaConFallback(args: LlamadaIa): Promise<string> {
 
   if (errores.length === 0) {
     throw new Error(
-      "Ningún proveedor de IA está configurado (falta ANTHROPIC_API_KEY, GITHUB_MODELS_TOKEN, GEMINI_API_KEY, GROQ_API_KEY o OPENROUTER_API_KEY en .env.local)",
+      "Ningún proveedor de IA está configurado (falta ANTHROPIC_API_KEY, GEMINI_API_KEY, GROQ_API_KEY o OPENROUTER_API_KEY en .env.local)",
     );
   }
   throw new Error(`Fallaron todos los proveedores de IA: ${errores.join(" | ")}`);
