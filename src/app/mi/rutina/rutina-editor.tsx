@@ -2002,7 +2002,7 @@ function ItemFila({
                           </span>
                           {solapaCon ? (
                             <span className="shrink-0 text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded-[4px]">
-                              Solapa #{solapaCon.indice}
+                              Repite músculo del Ej. #{solapaCon.indice}
                             </span>
                           ) : (
                             <span className="shrink-0 text-[10px] font-semibold text-accent bg-accent/10 px-1.5 py-0.5 rounded-[4px]">
@@ -2010,10 +2010,10 @@ function ItemFila({
                             </span>
                           )}
                         </div>
-                        <span className="mt-1 text-[11px] text-ink-soft flex items-center gap-1">
-                          <span>{clasif.label}</span>
+                        <span className="mt-1 flex items-center gap-1.5">
+                          <span className="text-[11px] text-ink-soft">{clasif.label}</span>
                           {alt.equipo ? (
-                            <span className="text-ink-soft/70">· {alt.equipo}</span>
+                            <BadgeEquipo equipo={alt.equipo} nombre={alt.nombre} />
                           ) : null}
                         </span>
                       </div>
