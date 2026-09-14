@@ -66,6 +66,15 @@ const RIR_CORTO: Record<string, string> = {
   "0-1": "Al límite",
 };
 
+// Cada opción de Esfuerzo tiene su propia fundamentación en teoria.ts (antes
+// las tres apuntaban al mismo texto genérico de RIR 1-2, así que el "¿por
+// qué?" no cambiaba aunque el cliente eligiera otra opción).
+const RIR_A_CLAVE: Record<string, ClaveTeoria> = {
+  "2-3": "rir_2_3",
+  "1-2": "rir_1_2",
+  "0-1": "rir_0_1",
+};
+
 function Porque({ clave }: { clave: ClaveTeoria }) {
   const t = TEORIA[clave];
   return (
@@ -514,6 +523,7 @@ export function GenerarRutinaForm({
   const [split, setSplit] = useState<string>(
     avanzadoDefaults?.split ?? "auto",
   );
+  const [rir, setRir] = useState<string>(avanzadoDefaults?.rir ?? "2-3");
   const avanzadoActivo = mostrarAvanzado;
   const splitDiasOk =
     split === "auto" ||
@@ -861,7 +871,8 @@ export function GenerarRutinaForm({
                 <Select
                   label="Esfuerzo"
                   name="rir"
-                  defaultValue={avanzadoDefaults?.rir ?? "2-3"}
+                  value={rir}
+                  onChange={(e) => setRir(e.target.value)}
                 >
                   {RIR_OPCIONES.map((r) => (
                     <option key={r} value={r}>
@@ -869,7 +880,7 @@ export function GenerarRutinaForm({
                     </option>
                   ))}
                 </Select>
-                <Porque clave="rir" />
+                <Porque clave={RIR_A_CLAVE[rir] ?? "rir"} />
               </div>
 
               <div>

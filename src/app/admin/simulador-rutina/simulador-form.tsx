@@ -50,6 +50,12 @@ const RIR_CORTO: Record<string, string> = {
   "0-1": "Al límite",
 };
 
+const RIR_A_CLAVE: Record<string, ClaveTeoria> = {
+  "2-3": "rir_2_3",
+  "1-2": "rir_1_2",
+  "0-1": "rir_0_1",
+};
+
 function Porque({ clave }: { clave: ClaveTeoria }) {
   const t = TEORIA[clave];
   return (
@@ -77,6 +83,7 @@ export function SimuladorForm() {
   const [nivel, setNivel] = useState<Nivel>("avanzado");
   const [dias, setDias] = useState("3");
   const [split, setSplit] = useState("auto");
+  const [rir, setRir] = useState("2-3");
   const [enfasis, setEnfasis] = useState<Enfasis[]>([]);
   const [zonasDolor, setZonasDolor] = useState<Molestia[]>([]);
 
@@ -298,14 +305,19 @@ export function SimuladorForm() {
               </div>
 
               <div>
-                <Select label="Esfuerzo" name="rir" defaultValue="2-3">
+                <Select
+                  label="Esfuerzo"
+                  name="rir"
+                  value={rir}
+                  onChange={(e) => setRir(e.target.value)}
+                >
                   {RIR_OPCIONES.map((r) => (
                     <option key={r} value={r}>
                       {RIR_CORTO[r] ?? RIR_LABEL[r]}
                     </option>
                   ))}
                 </Select>
-                <Porque clave="rir" />
+                <Porque clave={RIR_A_CLAVE[rir] ?? "rir"} />
               </div>
 
               <div>

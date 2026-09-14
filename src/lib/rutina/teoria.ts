@@ -46,6 +46,29 @@ export const TEORIA = {
     fuente:
       "Grgic et al. 2022; David Marchante (PowerExplosive, entrenamiento basado en velocidad).",
   },
+  // Variantes específicas por opción elegida en el <select> de Esfuerzo. El
+  // resumen genérico "rir" de arriba describe RIR 1-2 y quedaba pegado como
+  // fundamentación aunque el cliente eligiera "Suave" o "Al límite" (bug
+  // reportado: cambiaba la opción y el "¿por qué?" no cambiaba con ella).
+  rir_2_3: {
+    titulo: "Esfuerzo suave: RIR 2–3",
+    resumen:
+      "Dejar 2 a 3 repeticiones en reserva reduce al mínimo la fatiga del sistema nervioso central. Ideal para principiantes, técnica en aprendizaje o volumen alto, a costa de un estímulo levemente menor por serie.",
+    fuente: "Grgic et al. 2022 (dosis-respuesta de proximidad al fallo).",
+  },
+  rir_1_2: {
+    titulo: "Esfuerzo exigente: RIR 1–2",
+    resumen:
+      "Entrenar a RIR 1–2 (1 a 2 repeticiones antes del fallo) maximiza el reclutamiento de fibras rápidas con mínima fatiga del sistema nervioso. Es el punto óptimo para hipertrofia en la mayoría de los casos.",
+    fuente:
+      "Grgic et al. 2022; David Marchante (PowerExplosive, entrenamiento basado en velocidad).",
+  },
+  rir_0_1: {
+    titulo: "Esfuerzo al límite: RIR 0–1",
+    resumen:
+      "Acercarse al fallo (0 a 1 repeticiones en reserva) exprime el estímulo por serie, pero multiplica la fatiga neuromuscular. Se reserva para atletas avanzados y solo en la última serie de aislamientos, nunca en básicos pesados.",
+    fuente: "Grgic et al. 2022; Helms et al. (Muscle & Strength Pyramid).",
+  },
   beardsley_rep_efectivas: {
     titulo: "Repeticiones Efectivas y Tensión Mecánica",
     resumen:
