@@ -225,6 +225,51 @@ ${JSON.stringify(contexto)}`;
   return texto;
 }
 
+/** Placeholder que la plantilla de cumpleaños usa para el nombre del socio. */
+const PLACEHOLDER_NOMBRE = "{{nombre}}";
+
+/**
+ * Cumpleaños es el único tipo de aviso donde el contenido no depende de datos
+ * variables del socio más allá del nombre: en vez de pedirle a Claude un
+ * texto nuevo por cada socio que cumple años (mismo costo de IA por gym, por
+ * socio, por año), se genera UNA plantilla por gimnasio, se cachea en
+ * `gimnasios.plantilla_cumpleanos` y de ahí en más solo se reemplaza el
+ * nombre — sin llamar a la API. El dueño puede editar esa plantilla a mano
+ * desde /panel/ajustes/asistente-ia si quiere un tono más personalizado.
+ */
+export async function obtenerPlantillaCumpleanos(
+  db: SupabaseClient,
+  gimnasioId: string,
+  nombreGimnasio: string,
+): Promise<string> {
+  const { data: gym } = await db
+    .from("gimnasios")
+    .select("plantilla_cumpleanos")
+    .eq("id", gimnasioId)
+    .maybeSingle();
+
+  const existente = gym?.plantilla_cumpleanos as string | null;
+  if (existente) return existente;
+
+  const texto = await redactarAvisoIa("cumpleanos", {
+    nombre: PLACEHOLDER_NOMBRE,
+    nombre_gimnasio: nombreGimnasio,
+    instruccion_extra: `Usá literalmente el texto "${PLACEHOLDER_NOMBRE}" donde iría el nombre del socio, sin traducirlo ni completarlo — se reemplaza después por código.`,
+  });
+
+  await db
+    .from("gimnasios")
+    .update({ plantilla_cumpleanos: texto })
+    .eq("id", gimnasioId);
+
+  return texto;
+}
+
+/** Reemplaza el placeholder de la plantilla por el nombre real del socio. */
+export function aplicarPlantillaCumpleanos(plantilla: string, nombre: string): string {
+  return plantilla.split(PLACEHOLDER_NOMBRE).join(nombre);
+}
+
 export function tituloPorTipo(tipo: TipoAvisoIa): string {
   switch (tipo) {
     case "riesgo_abandono":
@@ -270,7 +315,15 @@ export async function procesarEnvioAvisoIa(
     };
   }
 
-  const texto = await redactarAvisoIa(tipoAviso, promptContexto);
+  let texto: string;
+  if (tipoAviso === "cumpleanos") {
+    const nombreGimnasio = String(promptContexto.nombre_gimnasio ?? "");
+    const nombreSocio = String(promptContexto.nombre ?? "Campeón");
+    const plantilla = await obtenerPlantillaCumpleanos(admin, gimnasioId, nombreGimnasio);
+    texto = aplicarPlantillaCumpleanos(plantilla, nombreSocio);
+  } else {
+    texto = await redactarAvisoIa(tipoAviso, promptContexto);
+  }
 
   let destinatarioProfileId: string | null = null;
   if (clienteId) {

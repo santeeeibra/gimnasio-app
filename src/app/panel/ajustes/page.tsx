@@ -59,7 +59,7 @@ export default async function AjustesPage({
     supabase
       .from("gimnasios")
       .select(
-        "id, slug, nombre, tema, logo_url, dias_aviso_morosidad, estado, plan_plataforma_vence_el, pago_alias, pago_cbu, pago_titular, tipo_cuenta, afip_habilitado, afip_cuit, afip_razon_social, afip_condicion_iva, afip_punto_venta, asistente_ia_activo, asistente_ia_llamadas_mes, capacidad_maxima",
+        "id, slug, nombre, tema, logo_url, dias_aviso_morosidad, estado, plan_plataforma_vence_el, pago_alias, pago_cbu, pago_titular, tipo_cuenta, afip_habilitado, afip_cuit, afip_razon_social, afip_condicion_iva, afip_punto_venta, asistente_ia_activo, asistente_ia_llamadas_mes, plantilla_cumpleanos, capacidad_maxima",
       )
       .eq("id", profile.gimnasio_id)
       .maybeSingle(),
@@ -351,6 +351,7 @@ export default async function AjustesPage({
                 activo={gym.asistente_ia_activo ?? false}
                 llamadasUsadas={gym.asistente_ia_llamadas_mes ?? 0}
                 techoMensual={TECHO_LLAMADAS_IA_MES}
+                plantillaCumpleanos={gym.plantilla_cumpleanos ?? ""}
               />
             </BloqueoEliteGate>
           </AjustesSeccionModal>

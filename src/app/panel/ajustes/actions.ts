@@ -715,3 +715,44 @@ export async function actualizarAsistenteIa(
   return { ok: activo ? "Asistente IA activado correctamente" : "Asistente IA desactivado correctamente" };
 }
 
+/** Guarda una plantilla de cumpleaños editada a mano por el dueño (o la
+ * borra para que se regenere con IA en el próximo cumpleaños si mandan el
+ * campo vacío). Debe contener el placeholder {{nombre}} o el saludo sale sin
+ * nombre para todos los socios. */
+export async function actualizarPlantillaCumpleanos(
+  _prev: AjustesState,
+  formData: FormData,
+): Promise<AjustesState> {
+  const dueno = await requireDueno();
+  const gimnasioId = String(formData.get("gimnasio_id") ?? "");
+  if (gimnasioId !== dueno.gimnasio_id) {
+    return { error: "No podés modificar este gimnasio" };
+  }
+
+  const texto = String(formData.get("plantilla_cumpleanos") ?? "").trim();
+
+  if (texto && !texto.includes("{{nombre}}")) {
+    return {
+      error: 'La plantilla necesita el texto "{{nombre}}" en algún punto, para que se reemplace por el nombre de cada socio.',
+    };
+  }
+
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("gimnasios")
+    .update({ plantilla_cumpleanos: texto || null })
+    .eq("id", gimnasioId);
+
+  if (error) {
+    console.error("[actualizarPlantillaCumpleanos]", error);
+    return { error: "No se pudo guardar la plantilla" };
+  }
+
+  revalidatePath("/panel/ajustes");
+  return {
+    ok: texto
+      ? "Plantilla de cumpleaños guardada"
+      : "Plantilla borrada: se va a regenerar con IA en el próximo cumpleaños",
+  };
+}
+

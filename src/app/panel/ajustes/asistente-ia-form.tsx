@@ -1,7 +1,11 @@
 "use client";
 
 import { useActionState, useState, useEffect } from "react";
-import { actualizarAsistenteIa, type AjustesState } from "./actions";
+import {
+  actualizarAsistenteIa,
+  actualizarPlantillaCumpleanos,
+  type AjustesState,
+} from "./actions";
 import { Button, Toggle } from "@/components/ui";
 import { useHapticos } from "@/lib/ui/hapticos";
 import { Check, AlertCircle } from "lucide-react";
@@ -11,11 +15,13 @@ export function AsistenteIaForm({
   activo,
   llamadasUsadas,
   techoMensual,
+  plantillaCumpleanos,
 }: {
   gimnasioId: string;
   activo: boolean;
   llamadasUsadas: number;
   techoMensual: number;
+  plantillaCumpleanos: string;
 }) {
   const [state, formAction, pending] = useActionState<AjustesState, FormData>(
     actualizarAsistenteIa,
@@ -23,6 +29,17 @@ export function AsistenteIaForm({
   );
   const [checked, setChecked] = useState(activo);
   const hapticos = useHapticos();
+
+  const [statePlantilla, formActionPlantilla, pendingPlantilla] = useActionState<
+    AjustesState,
+    FormData
+  >(actualizarPlantillaCumpleanos, {});
+  const [plantilla, setPlantilla] = useState(plantillaCumpleanos);
+
+  useEffect(() => {
+    if (statePlantilla.ok) hapticos.exito();
+    else if (statePlantilla.error) hapticos.error();
+  }, [statePlantilla.ok, statePlantilla.error, hapticos]);
 
   useEffect(() => {
     if (state.ok) {
@@ -33,6 +50,7 @@ export function AsistenteIaForm({
   }, [state.ok, state.error, hapticos]);
 
   return (
+    <>
     <form action={formAction} className="space-y-4">
       <input type="hidden" name="gimnasio_id" value={gimnasioId} />
 
@@ -192,5 +210,70 @@ export function AsistenteIaForm({
         </div>
       </div>
     </form>
+
+    {/* PLANTILLA DE CUMPLEAÑOS: editable a mano, se cachea y se reusa para
+       todos los socios (solo cambia el nombre) — no se regenera con IA en
+       cada cumpleaños. */}
+    <form
+      action={formActionPlantilla}
+      className="mt-4 rounded-[12px] border border-rule/80 bg-paper-1/60 p-4 space-y-3"
+    >
+      <input type="hidden" name="gimnasio_id" value={gimnasioId} />
+
+      <div className="flex items-center gap-2">
+        <span className="text-base select-none">🎂</span>
+        <h4 className="text-xs font-bold uppercase tracking-[0.14em] text-ink">
+          Plantilla de saludo de cumpleaños
+        </h4>
+      </div>
+      <p className="text-[11px] text-ink-soft leading-relaxed">
+        Se genera una vez con IA y se reutiliza para todos los socios (solo
+        cambia el nombre) — no se redacta de nuevo en cada cumpleaños. Si
+        querés un tono distinto, editala acá. Usá{" "}
+        <code className="text-[10px] bg-paper-2 border border-rule/50 rounded px-1 py-0.5">
+          {"{{nombre}}"}
+        </code>{" "}
+        donde quieras que aparezca el nombre del socio.
+      </p>
+
+      {statePlantilla.ok ? (
+        <div className="rounded-[10px] border border-ok/40 bg-ok/10 p-2.5 flex items-center gap-2 animate-fade-in">
+          <Check className="size-3.5 text-ok stroke-[3] shrink-0" />
+          <p className="text-[11px] font-medium text-ok">{statePlantilla.ok}</p>
+        </div>
+      ) : null}
+      {statePlantilla.error ? (
+        <div
+          className="rounded-[10px] border border-danger/40 bg-danger/10 p-2.5 flex items-center gap-2 animate-fade-in"
+          role="alert"
+        >
+          <AlertCircle className="size-3.5 text-danger stroke-[2.5] shrink-0" />
+          <p className="text-[11px] font-medium text-danger">{statePlantilla.error}</p>
+        </div>
+      ) : null}
+
+      <textarea
+        name="plantilla_cumpleanos"
+        value={plantilla}
+        onChange={(e) => setPlantilla(e.target.value)}
+        rows={3}
+        placeholder="Vacío = se genera automáticamente con IA la primera vez que un socio cumple años."
+        className="w-full rounded-[10px] border border-rule bg-paper-2 p-2.5 text-xs text-ink placeholder:text-ink-soft/60 focus:outline-none focus:ring-2 focus:ring-primary/40"
+      />
+
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-[10px] text-ink-soft">
+          {plantilla ? "Plantilla guardada" : "Todavía no se generó ninguna"}
+        </span>
+        <Button
+          type="submit"
+          loading={pendingPlantilla}
+          className="h-8 px-3.5 text-[11px] font-semibold"
+        >
+          {pendingPlantilla ? "Guardando…" : "Guardar plantilla"}
+        </Button>
+      </div>
+    </form>
+    </>
   );
 }
