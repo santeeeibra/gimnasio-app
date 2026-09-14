@@ -4,11 +4,13 @@ import "server-only";
 // proveedores en orden hasta que uno responda. Así una caída/sin-crédito en
 // uno no tira abajo la función — sólo se degrada a la próxima opción gratis.
 //
-// Orden: Claude (mejor calidad, de pago) → Groq (gratis sin tarjeta,
-// console.groq.com) → Gemini (gratis sin tarjeta, aistudio.google.com) →
-// GitHub Models (gratis con cuenta de GitHub, github.com/marketplace/models).
-// Cada uno se activa solo si su *_API_KEY está en .env.local; sin ninguna
-// key configurada, se comporta como si ese proveedor no existiera.
+// Orden por CALIDAD de redacción, no por facilidad de setup:
+// Claude (de pago) → GitHub Models/GPT-4o-mini (gratis con cuenta de
+// GitHub) → Gemini (gratis sin tarjeta, aistudio.google.com) → Groq/Llama
+// 3.3 (gratis sin tarjeta, console.groq.com — el más generoso en límites,
+// por eso queda de último respaldo). Cada uno se activa solo si su
+// *_API_KEY está en .env.local; sin ninguna key, se comporta como si ese
+// proveedor no existiera.
 
 export type LlamadaIa = {
   system: string;
@@ -142,6 +144,13 @@ async function llamarGithubModels(args: LlamadaIa): Promise<string> {
   return texto;
 }
 
+// Orden por calidad de redacción (no por orden de implementación): Claude
+// Haiku 4.5 > GPT-4o-mini > Gemini 2.0 Flash > Llama 3.3 70B. Los tres
+// primeros son modelos propietarios con mejor fluidez/naturalidad en
+// español rioplatense para textos cortos; Llama es sólido pero queda último
+// porque tiende a sonar más genérico en este tipo de copy — igual gana en
+// límites gratis más generosos, por eso conviene como último respaldo, no
+// como segunda opción.
 const PROVEEDORES: Proveedor[] = [
   {
     nombre: "Claude",
@@ -149,9 +158,9 @@ const PROVEEDORES: Proveedor[] = [
     llamar: llamarClaude,
   },
   {
-    nombre: "Groq",
-    disponible: () => Boolean(process.env.GROQ_API_KEY),
-    llamar: llamarGroq,
+    nombre: "GitHub Models (GPT-4o-mini)",
+    disponible: () => Boolean(process.env.GITHUB_MODELS_TOKEN),
+    llamar: llamarGithubModels,
   },
   {
     nombre: "Gemini",
@@ -159,9 +168,9 @@ const PROVEEDORES: Proveedor[] = [
     llamar: llamarGemini,
   },
   {
-    nombre: "GitHub Models",
-    disponible: () => Boolean(process.env.GITHUB_MODELS_TOKEN),
-    llamar: llamarGithubModels,
+    nombre: "Groq (Llama 3.3)",
+    disponible: () => Boolean(process.env.GROQ_API_KEY),
+    llamar: llamarGroq,
   },
 ];
 
