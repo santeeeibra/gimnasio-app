@@ -3,6 +3,7 @@
 > **Regla de Cierre:** Al finalizar cada feature o sesión, el agente debe actualizar este archivo con 1 o 2 viñetas telegráficas sobre lo que acaba de hacer (en UTF-8). NO leas el contexto completo para actualizar esto.
 
 ## Últimos Cambios
+- **Opciones y Personalización de Rutina**: Se movió el acordeón desplegable `Opciones y personalización de rutina` arriba de todo en el cliente (`src/app/mi/rutina/page.tsx`), ubicándolo antes del visor `<RutinaEditor>` para fácil acceso sin entorpecer la vista.
 - **Aforo Dinámico Completo Pulpo Volt**: Integrada la trilogía de ilustraciones 3D de Pulpo Volt (`aforo-tranquilo.jpg`, `aforo-moderado.jpg`, `aforo-concurrido.jpg`) en `<BarraAforoAnimada />` cambiando dinámicamente según el % de aforo (`src/components/mi/barra-aforo-animada.tsx`).
 - **Reordenamiento Rutina Cliente**: Se priorizó el visor de rutina (`<RutinaEditor>`) al inicio de la pantalla y se colapsaron todas las tarjetas de configuración (Regenerar, Armado Manual, Código Entrenador) en una sección desplegable inferior `Opciones y personalización de rutina` (`src/app/mi/rutina/page.tsx`).
 - **Modo Foco Gym**: Renombrado "Modo Zen" a "Modo Foco Gym", agregando estado claro `☀️ Pantalla Encendida`, banner explicativo de Wake Lock + botones XL y haptic de éxito al activar (`src/app/mi/rutina/rutina-editor.tsx`).

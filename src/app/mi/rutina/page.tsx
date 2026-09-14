@@ -344,21 +344,6 @@ export default async function MiRutinaPage() {
         </>
       ) : (
         <>
-          <RutinaEditor
-            dias={agruparPorDia(
-              (itemsData ?? []) as any[],
-              (rutina.dias_titulos as string[] | null) ?? null,
-            )}
-            ejercicios={ejercicios}
-            mostrarTecnica={rutina.origen === "manual"}
-            clienteId={cliente?.id}
-            creadoPor="cliente"
-            esIndividual={esIndividual}
-            gimnasioNombre={gymData?.nombre ?? ""}
-            logoUrl={gymData?.logo_url ?? null}
-            colores={coloresLogro}
-          />
-
           <details className="group rounded-[14px] border border-rule bg-paper-2 p-3.5 shadow-sm">
             <summary className="flex cursor-pointer select-none list-none items-center justify-between text-xs font-semibold text-ink-soft hover:text-ink transition-colors [&::-webkit-details-marker]:hidden">
               <div className="flex items-center gap-2">
@@ -391,6 +376,21 @@ export default async function MiRutinaPage() {
               })()}
             </div>
           </details>
+
+          <RutinaEditor
+            dias={agruparPorDia(
+              (itemsData ?? []) as any[],
+              (rutina.dias_titulos as string[] | null) ?? null,
+            )}
+            ejercicios={ejercicios}
+            mostrarTecnica={rutina.origen === "manual"}
+            clienteId={cliente?.id}
+            creadoPor="cliente"
+            esIndividual={esIndividual}
+            gimnasioNombre={gymData?.nombre ?? ""}
+            logoUrl={gymData?.logo_url ?? null}
+            colores={coloresLogro}
+          />
         </>
       )}
     </main>
