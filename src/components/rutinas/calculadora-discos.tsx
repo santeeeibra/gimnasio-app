@@ -309,7 +309,7 @@ export function CalculadoraDiscosModal({
             className="flex h-12 w-full items-center justify-center gap-2 rounded-[14px] bg-accent font-bold text-sm text-accent-ink shadow-md shadow-accent/20 transition-transform active:scale-[0.98] hover:opacity-95"
           >
             <Check className="size-4" />
-            Usar {pesoTotal}kg como peso de hoy
+            Cargar {pesoTotal}kg en el dial
           </button>
         ) : null}
       </div>

@@ -1404,12 +1404,20 @@ function ItemFila({
               </b>
               reps
             </span>
-            {item.tecnica ? (
-              <span className="inline-flex items-center rounded-full border border-rule bg-paper px-2.5 py-0.5 text-[11px] font-medium text-ink-soft">
+            {item.tecnica && item.tecnica !== "ninguna" ? (
+              <span
+                className="inline-flex items-center rounded-full border border-rule bg-paper px-2.5 py-0.5 text-[11px] font-medium text-ink-soft"
+                title={TECNICA_DESC[item.tecnica]}
+              >
                 {TECNICA_LABEL[item.tecnica]}
               </span>
             ) : null}
           </div>
+          {item.tecnica && item.tecnica !== "ninguna" ? (
+            <p className="mt-1 text-[11px] leading-snug text-ink-soft">
+              {TECNICA_DESC[item.tecnica]}
+            </p>
+          ) : null}
 
           {/* Herramientas (calculadora de discos, rampa de calentamiento):
              aparte de la prescripción para no acumular pills en la misma fila
@@ -1443,9 +1451,11 @@ function ItemFila({
               onGuardar={(pesoTotalKg, barraKg) => {
                 // El dial de "barra" trabaja "sin la barra": lo que se ve acá
                 // es el total armado (barra + discos de los dos lados).
+                // Solo actualiza el valor mostrado; el guardado real lo
+                // dispara el socio con el botón "Guardar" del dial.
                 dialRef.current?.aplicarPeso(
                   Math.max(0, pesoTotalKg - barraKg),
-                  true,
+                  false,
                 );
               }}
             />
