@@ -14,6 +14,7 @@ import {
   hapticoDial,
   hapticoExito,
   hapticoError,
+  hapticoImpactoSuave,
 } from "@/lib/ui/hapticos";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -383,6 +384,7 @@ export function CardPeso({
   const [registros, setRegistros] = useState<RegistroPeso[]>([]);
   const [cargando, setCargando] = useState(true);
   const [pesoSeleccionado, setPesoSeleccionado] = useState<number>(70);
+  const [pesoInicial, setPesoInicial] = useState<number | null>(null);
   const pesoRef = useRef(70);
   const [state, formAction, pending] = useActionState(action, {});
 
@@ -390,11 +392,16 @@ export function CardPeso({
     fetchRegistros()
       .then((data) => {
         setRegistros(data);
-        if (data.length > 0) {
-          const ultimo = Number(data[0].peso);
-          setPesoSeleccionado(ultimo);
-          pesoRef.current = ultimo;
-        }
+        const hoyStr = new Date().toISOString().slice(0, 10);
+        const hoyReg = data.find((r) => r.fecha === hoyStr);
+        const base = hoyReg
+          ? Number(hoyReg.peso)
+          : data.length > 0
+          ? Number(data[0].peso)
+          : 70;
+        setPesoSeleccionado(base);
+        pesoRef.current = base;
+        setPesoInicial(base);
       })
       .finally(() => setCargando(false));
   }, [fetchRegistros]);
@@ -403,6 +410,7 @@ export function CardPeso({
   useEffect(() => {
     if (state.ok) {
       hapticoExito();
+      setPesoInicial(pesoRef.current);
       fetchRegistros().then((data) => {
         setRegistros(data);
       });
@@ -418,6 +426,8 @@ export function CardPeso({
 
   const hoy = new Date().toISOString().slice(0, 10);
   const registroHoy = registros.find((r) => r.fecha === hoy);
+  const haCambiado =
+    pesoInicial !== null && Math.abs(pesoSeleccionado - pesoInicial) >= 0.05;
 
   return (
     <div className="rounded-[18px] border border-rule bg-paper-2 overflow-hidden shadow-sm">
@@ -472,8 +482,17 @@ export function CardPeso({
           {/* Botón pill estilo 'Start Timer' */}
           <button
             type="submit"
-            disabled={pending || cargando}
-            className="h-11 px-5 rounded-full bg-[#ff9f0a]/15 border border-[#ff9f0a]/35 text-[#ff9f0a] text-xs font-bold tracking-wide transition-all duration-150 active:scale-95 hover:bg-[#ff9f0a]/25 disabled:opacity-50 flex items-center gap-2 shadow-[0_0_15px_rgba(255,159,10,0.1)]"
+            disabled={pending || cargando || !haCambiado}
+            onClick={() => {
+              if (haCambiado && !pending) {
+                hapticoImpactoSuave();
+              }
+            }}
+            className={`h-11 px-5 rounded-full text-xs font-bold tracking-wide transition-all duration-150 flex items-center gap-2 ${
+              haCambiado && !pending
+                ? "bg-[#ff9f0a]/15 border border-[#ff9f0a]/40 text-[#ff9f0a] shadow-[0_0_15px_rgba(255,159,10,0.15)] active:scale-95 hover:bg-[#ff9f0a]/25 cursor-pointer"
+                : "bg-paper-3/50 border border-rule text-ink-soft/40 cursor-not-allowed opacity-60 shadow-none"
+            }`}
           >
             {pending ? (
               <>
@@ -491,6 +510,7 @@ export function CardPeso({
                   strokeWidth="2.5"
                   strokeLinecap="round"
                   aria-hidden
+                  className={haCambiado ? "text-[#ff9f0a]" : "text-ink-soft/40"}
                 >
                   <path d="M20 6L9 17l-5-5" />
                 </svg>
@@ -533,24 +553,33 @@ export function CardPeso({
       {/* Historial colapsado con gráfico */}
       {!cargando && registros.length > 0 && (
         <details className="group border-t border-rule">
-          <summary className="flex cursor-pointer select-none list-none items-center justify-between px-5 py-3 text-[12px] font-medium text-ink-soft hover:text-ink transition-colors [&::-webkit-details-marker]:hidden">
-            <span>
-              Historial · {registros.length}{" "}
-              {registros.length === 1 ? "registro" : "registros"}
-            </span>
-            <svg
-              viewBox="0 0 24 24"
-              width="14"
-              height="14"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              aria-hidden
-              className="transition-transform duration-150 group-open:rotate-180"
-            >
-              <path d="m6 9 6 6 6-6" />
-            </svg>
+          <summary
+            onClick={() => hapticoImpactoSuave()}
+            className="flex cursor-pointer select-none list-none items-center justify-between px-5 py-3.5 text-xs font-medium text-ink-soft hover:text-ink active:bg-paper-3/40 transition-colors [&::-webkit-details-marker]:hidden"
+          >
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-ink">Historial</span>
+              <span className="px-2 py-0.5 rounded-full bg-paper-3 text-[11px] font-mono text-ink-soft border border-rule">
+                {registros.length} {registros.length === 1 ? "registro" : "registros"}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 text-[11px] text-ink-soft">
+              <span className="group-open:hidden">Ver gráfico y registros</span>
+              <span className="hidden group-open:inline">Ocultar gráfico</span>
+              <svg
+                viewBox="0 0 24 24"
+                width="14"
+                height="14"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                aria-hidden
+                className="transition-transform duration-200 group-open:rotate-180 text-ink-soft"
+              >
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </div>
           </summary>
 
           <div className="px-5 pb-5 space-y-3 animate-fade-in">

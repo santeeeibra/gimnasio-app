@@ -43,14 +43,14 @@ export function ArchivosLista({
 
   if (archivos.length === 0) {
     return (
-      <div className="p-4 text-center text-sm text-ink-soft bg-surface-dark/40 rounded-[10px] border border-rule/50">
+      <div className="p-3 text-center text-xs text-ink-soft bg-paper-3/30 rounded-[10px] border border-rule/50">
         Todavía no hay archivos subidos.
       </div>
     );
   }
 
   return (
-    <ul className="border border-rule rounded-[12px] divide-y divide-rule overflow-hidden bg-surface">
+    <ul className="border border-rule rounded-[12px] divide-y divide-rule overflow-hidden bg-paper-2">
       {archivos.map((a) => (
         <li key={a.id} className="px-4 py-3 flex items-center justify-between gap-3">
           <a

@@ -99,17 +99,17 @@ export function ArchivoUploader({
   const isLoading = isUploading || guardandoDB;
 
   return (
-    <div className={`p-4 bg-zinc-900 rounded-[12px] border border-zinc-800 transition-all duration-300 ease-out ${className}`}>
-      <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-        <Upload className="w-4 h-4 text-zinc-400" />
+    <div className={`p-4 bg-paper-3/40 rounded-[12px] border border-rule transition-all duration-200 ${className}`}>
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-ink-soft mb-3 flex items-center gap-2">
+        <Upload className="w-3.5 h-3.5 text-ink-soft" />
         Subir nuevo archivo
       </h3>
 
       {!file ? (
-        <label className="animate-in fade-in zoom-in-95 duration-300 flex flex-col items-center justify-center p-6 border-2 border-dashed border-zinc-800 rounded-[12px] cursor-pointer hover:border-zinc-700 transition-colors bg-zinc-950">
-          <Upload className="w-6 h-6 text-zinc-500 mb-2 transition-transform duration-300 group-hover:-translate-y-1" />
-          <span className="text-sm text-zinc-400 font-medium">Tocar para seleccionar PDF o Foto</span>
-          <span className="text-xs text-zinc-500 mt-1">Apto médico, Dieta/Plan nutricional, Certificado o Estudios (PDF/Foto máx. 4 MB)</span>
+        <label className="animate-in fade-in zoom-in-95 duration-200 flex flex-col items-center justify-center p-5 border-2 border-dashed border-rule rounded-[12px] cursor-pointer hover:border-ink-soft/40 hover:bg-paper-3/30 transition-colors bg-paper/60 text-center">
+          <Upload className="w-5 h-5 text-ink-soft mb-2 transition-transform duration-200 group-hover:-translate-y-0.5" />
+          <span className="text-xs text-ink font-medium">Tocar para seleccionar PDF o Foto</span>
+          <span className="text-[11px] text-ink-soft mt-1">Apto médico, Dieta, Certificado o Estudios (máx. 4 MB)</span>
           <input
             type="file"
             className="hidden"
@@ -118,18 +118,19 @@ export function ArchivoUploader({
           />
         </label>
       ) : (
-        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-          <div className="flex items-center justify-between bg-zinc-950 p-3 rounded-[10px] border border-zinc-800">
-            <div className="flex items-center gap-3 overflow-hidden">
-              <FileText className="w-5 h-5 text-indigo-400 flex-shrink-0" />
-              <span className="text-sm text-white truncate font-medium">
+        <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-200">
+          <div className="flex items-center justify-between bg-paper p-3 rounded-[10px] border border-rule">
+            <div className="flex items-center gap-2.5 overflow-hidden min-w-0">
+              <FileText className="w-4 h-4 text-accent flex-shrink-0" />
+              <span className="text-xs text-ink truncate font-medium">
                 {file.name}
               </span>
             </div>
             {!isLoading && (
               <button 
                 onClick={() => setFile(null)}
-                className="p-1 hover:bg-zinc-800 rounded-full text-zinc-400 hover:text-white transition-colors"
+                className="p-1 hover:bg-paper-3 rounded-full text-ink-soft hover:text-ink transition-colors"
+                aria-label="Quitar archivo"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -137,12 +138,12 @@ export function ArchivoUploader({
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs text-zinc-400 font-medium ml-1">Tipo de Documento</label>
+            <label className="text-[11px] text-ink-soft font-medium ml-0.5">Tipo de Documento</label>
             <select
               value={tipoSeleccionado}
               onChange={(e) => setTipoSeleccionado(e.target.value as TipoArchivo)}
               disabled={isLoading}
-              className="w-full bg-zinc-950 border border-zinc-800 rounded-[10px] p-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+              className="w-full bg-paper border border-rule rounded-[10px] p-2.5 text-xs text-ink focus:outline-none focus:ring-1 focus:ring-accent transition-all"
             >
               {OPCIONES_TIPO.map((opcion) => (
                 <option key={opcion.value} value={opcion.value}>
@@ -153,27 +154,27 @@ export function ArchivoUploader({
           </div>
 
           {errorLocal && (
-            <div className="animate-in fade-in slide-in-from-top-1 flex items-center gap-2 text-red-400 text-sm bg-red-400/10 p-3 rounded-[10px]">
+            <div className="animate-in fade-in slide-in-from-top-1 flex items-center gap-2 text-danger text-xs bg-danger/10 border border-danger/20 p-2.5 rounded-[10px]">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
               {errorLocal}
             </div>
           )}
 
           {exito ? (
-            <div className="animate-in zoom-in duration-300 flex items-center gap-2 text-emerald-400 text-sm bg-emerald-400/10 p-3 rounded-[10px] justify-center font-medium">
-              <CheckCircle2 className="w-5 h-5" />
+            <div className="animate-in zoom-in duration-200 flex items-center gap-2 text-ok text-xs bg-ok/10 border border-ok/20 p-2.5 rounded-[10px] justify-center font-medium">
+              <CheckCircle2 className="w-4 h-4" />
               ¡Archivo subido con éxito!
             </div>
           ) : (
             <Button
               onClick={handleUpload}
               disabled={isLoading}
-              className="w-full rounded-[10px] transition-transform duration-200 active:scale-[0.98]"
+              className="w-full rounded-[10px] text-xs h-9 transition-transform duration-200 active:scale-[0.98]"
               variant="primary"
             >
               {isLoading ? (
                 <>
-                  <Spinner className="w-4 h-4 mr-2" />
+                  <Spinner className="w-3.5 h-3.5 mr-2" />
                   {isUploading ? "Subiendo archivo..." : "Guardando enlace..."}
                 </>
               ) : (

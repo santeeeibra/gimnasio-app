@@ -5,9 +5,22 @@ import { logout } from "@/app/actions";
 import { CardPeso } from "@/components/peso/card-peso";
 import { guardarPesoCliente, obtenerPesosCliente } from "@/lib/peso/actions";
 import { pillClasses } from "@/components/ui";
-import { User, Dumbbell, ShieldCheck, Calendar, Phone, Mail, IdCard, ChevronLeft, LogOut } from "lucide-react";
+import {
+  User,
+  Dumbbell,
+  Calendar,
+  Phone,
+  Mail,
+  IdCard,
+  ChevronLeft,
+  ChevronRight,
+  LogOut,
+  Palette,
+  KeyRound,
+} from "lucide-react";
 import { ArchivosSeccion } from "@/components/archivos/archivos-seccion";
 import { CredencialQRModal } from "@/components/mi/credencial-qr-modal";
+import { Pulpo } from "@/components/mascota/pulpo";
 
 export const dynamic = "force-dynamic";
 
@@ -48,7 +61,7 @@ export default async function MiPerfilPage() {
 
       {/* Cabecera del perfil */}
       <div className="card-cut border border-rule bg-paper-2 p-5 flex items-center gap-4">
-        <div className="relative size-16 shrink-0 rounded-full border-2 border-rule bg-paper-3 overflow-hidden grid place-items-center text-xl font-bold text-ink-soft">
+        <div className="relative size-14 shrink-0 rounded-full border-2 border-rule bg-paper-3 overflow-hidden grid place-items-center">
           {c?.foto_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -57,20 +70,14 @@ export default async function MiPerfilPage() {
               className="size-full object-cover"
             />
           ) : (
-            <span>
-              {profile.nombre
-                .split(" ")
-                .filter(Boolean)
-                .slice(0, 2)
-                .map((p: string) => p[0])
-                .join("")
-                .toUpperCase() || "👤"}
-            </span>
+            <div className="size-full bg-[#052e1f] grid place-items-center">
+              <Pulpo size={46} pose="neutral" />
+            </div>
           )}
         </div>
 
         <div className="min-w-0 flex-1">
-          <h1 className="text-lg font-bold text-ink truncate leading-tight">
+          <h1 className="text-base font-bold text-ink truncate leading-tight">
             {profile.nombre}
           </h1>
           <p className="text-xs text-ink-soft mt-0.5">
@@ -82,16 +89,18 @@ export default async function MiPerfilPage() {
             </p>
           )}
         </div>
+
+        {/* Atajo QR compacto junto a los datos del socio */}
+        <CredencialQRModal
+          nombre={profile.nombre}
+          dni={profile.dni}
+          gymNombre={gym?.nombre}
+          estadoCuota={c?.estado_cuota}
+          compacto
+        />
       </div>
 
-      <CredencialQRModal
-        nombre={profile.nombre}
-        dni={profile.dni}
-        gymNombre={gym?.nombre}
-        estadoCuota={c?.estado_cuota}
-      />
-
-      {/* ── SECCIÓN 1: Peso corporal (Dial horizontal de regla + historial) ── */}
+      {/* ── SECCIÓN 1: Peso corporal (interacción frecuente, arriba de todo) ── */}
       {c?.id && (
         <CardPeso
           clienteId={c.id}
@@ -101,8 +110,78 @@ export default async function MiPerfilPage() {
         />
       )}
 
-      {/* ── SECCIÓN 2: Datos de Contacto y Cuenta ── */}
-      <div className="card-cut border border-rule bg-paper-2 p-5 space-y-3">
+      {/* ── SECCIÓN 2: Mis archivos (jerarquía secundaria, fondo suave) ── */}
+      {c?.id && (
+        <div className="card-cut border border-rule bg-paper-2 p-4 space-y-3">
+          <div>
+            <h2 className="text-xs font-bold uppercase tracking-[0.1em] text-ink-soft">
+              Mis archivos y documentos
+            </h2>
+            <p className="text-[11px] text-ink-soft mt-0.5">
+              Guardá acá tu apto médico, certificados, dietas o rutinas impresas.
+            </p>
+          </div>
+          <ArchivosSeccion clienteId={c.id} />
+        </div>
+      )}
+
+      {/* ── SECCIÓN 3: Ajustes y Seguridad (agrupados en tarjeta iOS) ── */}
+      <div className="space-y-2">
+        <h2 className="text-xs font-bold uppercase tracking-[0.1em] text-ink-soft px-1">
+          Ajustes
+        </h2>
+        <div className="rounded-[14px] border border-rule bg-paper-2 overflow-hidden divide-y divide-rule shadow-sm">
+          <Link
+            href="/mi/ajustes"
+            className="p-3.5 flex items-center justify-between text-xs font-medium text-ink hover:bg-paper active:bg-paper-3/50 transition-colors group"
+          >
+            <div className="flex items-center gap-3">
+              <div className="size-8 rounded-lg bg-paper-3 border border-rule flex items-center justify-center text-ink-soft group-hover:text-ink transition-colors">
+                <Palette className="size-4" />
+              </div>
+              <div>
+                <p className="font-semibold text-ink">Personalizar tema</p>
+                <p className="text-[11px] text-ink-soft">Color de acento y aspecto</p>
+              </div>
+            </div>
+            <ChevronRight className="size-4 text-ink-soft group-hover:translate-x-0.5 transition-transform" />
+          </Link>
+
+          <Link
+            href="/cambiar-clave"
+            className="p-3.5 flex items-center justify-between text-xs font-medium text-ink hover:bg-paper active:bg-paper-3/50 transition-colors group"
+          >
+            <div className="flex items-center gap-3">
+              <div className="size-8 rounded-lg bg-paper-3 border border-rule flex items-center justify-center text-ink-soft group-hover:text-ink transition-colors">
+                <KeyRound className="size-4" />
+              </div>
+              <div>
+                <p className="font-semibold text-ink">Cambiar contraseña</p>
+                <p className="text-[11px] text-ink-soft">Seguridad y clave de acceso</p>
+              </div>
+            </div>
+            <ChevronRight className="size-4 text-ink-soft group-hover:translate-x-0.5 transition-transform" />
+          </Link>
+
+          <form action={logout}>
+            <button
+              type="submit"
+              className="w-full p-3.5 flex items-center justify-between text-xs font-semibold text-danger hover:bg-danger/10 active:bg-danger/15 transition-colors cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
+                <div className="size-8 rounded-lg bg-danger/10 border border-danger/20 flex items-center justify-center text-danger">
+                  <LogOut className="size-4" />
+                </div>
+                <span>Cerrar sesión</span>
+              </div>
+              <ChevronRight className="size-4 text-danger/60" />
+            </button>
+          </form>
+        </div>
+      </div>
+
+      {/* ── SECCIÓN 4: Datos de Contacto y Cuenta (estático, casi no se toca) ── */}
+      <div className="card-cut border border-rule bg-paper-2 p-4 space-y-2.5">
         <h2 className="text-xs font-bold uppercase tracking-[0.1em] text-ink-soft">
           Datos de la cuenta
         </h2>
@@ -151,48 +230,6 @@ export default async function MiPerfilPage() {
             </span>
           </li>
         </ul>
-      </div>
-
-      {/* ── SECCIÓN 2.5: Mis archivos (apto médico, dieta, etc.) ── */}
-      {c?.id && (
-        <div className="card-cut border border-rule bg-paper-2 p-5 space-y-3">
-          <div>
-            <h2 className="text-xs font-bold uppercase tracking-[0.1em] text-ink-soft">
-              Mis archivos y documentos
-            </h2>
-            <p className="text-xs text-ink-soft/80 mt-1">
-              Guardá acá tu apto médico, certificados de salud, dietas o rutinas impresas para tenerlos siempre a mano y compartirlos con tu gimnasio.
-            </p>
-          </div>
-          <ArchivosSeccion clienteId={c.id} />
-        </div>
-      )}
-
-      {/* ── SECCIÓN 3: Preferencias y Seguridad ── */}
-      <div className="flex flex-col gap-2">
-        <Link
-          href="/mi/ajustes"
-          className="card-cut border border-rule bg-paper-2 p-4 flex items-center justify-between text-xs font-medium text-ink hover:bg-paper transition-colors"
-        >
-          <span>Personalizar tema visual de la app</span>
-          <span className="text-ink-soft">→</span>
-        </Link>
-        <Link
-          href="/cambiar-clave"
-          className="card-cut border border-rule bg-paper-2 p-4 flex items-center justify-between text-xs font-medium text-ink hover:bg-paper transition-colors"
-        >
-          <span>Cambiar contraseña</span>
-          <span className="text-ink-soft">→</span>
-        </Link>
-        <form action={logout}>
-          <button
-            type="submit"
-            className="w-full card-cut border border-danger/30 bg-danger/10 p-4 flex items-center justify-between text-xs font-semibold text-danger hover:bg-danger/20 transition-colors"
-          >
-            <span>Cerrar sesión</span>
-            <LogOut className="size-4 text-danger" />
-          </button>
-        </form>
       </div>
     </main>
   );

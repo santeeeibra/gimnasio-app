@@ -100,3 +100,4 @@
 4. **Asistente "Busco Spotter / Compañero de Carga" (Gym Buddy)**: Solicitud de ayuda en 1-tap para tirar Récord Personal en ejercicios pesados con aviso sutil al staff/socios en sala.
 
 
+- [2026-09-13 23:10] Optimización UI /mi/perfil: botón guardar peso condicional/disabled con háptico, Pulpo Volt como avatar default, QR compacto en header, reducción de contraste en subida de archivos y agrupación de Ajustes de cuenta.

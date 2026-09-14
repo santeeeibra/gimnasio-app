@@ -11,6 +11,7 @@ type CredencialQRModalProps = {
   gymNombre?: string;
   estadoCuota?: string;
   fullAncho?: boolean;
+  compacto?: boolean;
   className?: string;
 };
 
@@ -20,6 +21,7 @@ export function CredencialQRModal({
   gymNombre = "SysGym",
   estadoCuota = "al_dia",
   fullAncho = false,
+  compacto = false,
   className = "",
 }: CredencialQRModalProps) {
   const [abierto, setAbierto] = useState(false);
@@ -49,7 +51,9 @@ export function CredencialQRModal({
 
   const alDia = estadoCuota === "al_dia";
 
-  const defaultClasses = fullAncho
+  const defaultClasses = compacto
+    ? "group relative flex items-center justify-center size-10 rounded-full border border-volt/35 bg-volt/10 text-volt transition-all duration-150 active:scale-90 hover:bg-volt/20 hover:border-volt/50 shadow-sm shrink-0"
+    : fullAncho
     ? "group relative flex w-full items-center justify-center gap-2.5 rounded-[14px] border border-volt/40 bg-volt/15 py-3 px-4 text-xs font-bold text-ink transition-all duration-150 active:scale-[0.98] hover:bg-volt/25 hover:border-volt/60 shadow-sm shadow-volt/5"
     : "group relative flex items-center gap-2 rounded-[12px] border border-volt/30 bg-volt/10 px-3.5 py-2 text-xs font-semibold text-ink transition-all duration-200 active:scale-95 hover:bg-volt/20 hover:border-volt/50";
 
@@ -59,10 +63,11 @@ export function CredencialQRModal({
         type="button"
         onClick={toggleModal}
         aria-label="Abrir mi QR de Ingreso al gimnasio"
+        title="Mi QR de Ingreso"
         className={`${defaultClasses} ${className}`}
       >
-        <QrCode className="size-4 text-volt transition-transform group-hover:scale-110" />
-        <span>Mi QR de Ingreso</span>
+        <QrCode className={`${compacto ? "size-5" : "size-4"} text-volt transition-transform group-hover:scale-110`} />
+        {!compacto && <span>Mi QR de Ingreso</span>}
       </button>
 
       {abierto && (
