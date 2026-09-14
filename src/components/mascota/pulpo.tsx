@@ -18,7 +18,8 @@ export type PulpoPose =
   | "kettlebell"
   | "checkin"
   | "buzon"
-  | "vacio";
+  | "vacio"
+  | "mareado";
 
 export type PulpoProps = {
   /** Lado del SVG en px. */
@@ -35,6 +36,7 @@ export function Pulpo({ size = 96, pose = "festejo", className = "" }: PulpoProp
   const isCheckin = pose === "checkin";
   const isBuzon = pose === "buzon";
   const isVacio = pose === "vacio";
+  const isMareado = pose === "mareado";
 
   const brazosLevantados = isFestejo || isKettlebell || isCheckin;
 
@@ -195,7 +197,24 @@ export function Pulpo({ size = 96, pose = "festejo", className = "" }: PulpoProp
       )}
 
       {/* Ojos Glossy Flat */}
-      {isKettlebell ? (
+      {isMareado ? (
+        <>
+          {/* Ojos mareados en forma de X (X X) */}
+          <path d="M 44 49 L 52 57 M 52 49 L 44 57" stroke="#0f172a" strokeWidth="3" strokeLinecap="round" />
+          <path d="M 68 49 L 76 57 M 76 49 L 68 57" stroke="#0f172a" strokeWidth="3" strokeLinecap="round" />
+          {/* Espirales / estrellas de mareo flotando arriba */}
+          <g transform="translate(60, 22)">
+            <path
+              d="M -8 -8 Q -4 -14 0 -8 Q 4 -2 8 -8"
+              fill="none"
+              stroke="#38bdf8"
+              strokeWidth="2"
+              strokeLinecap="round"
+              className="animate-pulse"
+            />
+          </g>
+        </>
+      ) : isKettlebell ? (
         <>
           {/* Ojo izquierdo normal */}
           <circle cx="48" cy="54" r="7.5" fill="#0f172a" />
@@ -221,7 +240,15 @@ export function Pulpo({ size = 96, pose = "festejo", className = "" }: PulpoProp
       <ellipse cx="80" cy="62" rx="4.5" ry="2.5" fill="#047857" opacity="0.45" />
 
       {/* Boca */}
-      {brazosLevantados ? (
+      {isMareado ? (
+        <path
+          d="M 51 64 Q 56 60 60 64 Q 64 68 69 64"
+          fill="none"
+          stroke="#0f172a"
+          strokeWidth="3"
+          strokeLinecap="round"
+        />
+      ) : brazosLevantados ? (
         <path d="M 52 61 Q 60 73 68 61 Z" fill="#0f172a" />
       ) : (
         <path
