@@ -454,6 +454,7 @@ export async function marcarPayoutAction(
   );
 
   revalidatePath("/admin/partner");
+  revalidatePath("/admin/payouts");
   revalidatePath("/panel/partner");
 
   return {
