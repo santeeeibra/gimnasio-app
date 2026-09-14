@@ -21,6 +21,7 @@ import {
 import { ArchivosSeccion } from "@/components/archivos/archivos-seccion";
 import { CredencialQRModal } from "@/components/mi/credencial-qr-modal";
 import { Pulpo } from "@/components/mascota/pulpo";
+import { VozGuiadaToggle } from "@/components/rutinas/voz-guiada-toggle";
 
 export const dynamic = "force-dynamic";
 
@@ -58,6 +59,10 @@ export default async function MiPerfilPage() {
         <ChevronLeft aria-hidden strokeWidth={2} className="size-4 shrink-0" />
         Volver al inicio
       </Link>
+
+      <h2 className="text-xs font-bold uppercase tracking-[0.1em] text-ink-soft px-1 -mb-2">
+        Mi perfil
+      </h2>
 
       {/* Cabecera del perfil */}
       <div className="card-cut border border-rule bg-paper-2 p-5 flex items-center gap-4">
@@ -146,6 +151,8 @@ export default async function MiPerfilPage() {
             </div>
             <ChevronRight className="size-4 text-ink-soft group-hover:translate-x-0.5 transition-transform" />
           </Link>
+
+          <VozGuiadaToggle variant="row" />
 
           <Link
             href="/cambiar-clave"

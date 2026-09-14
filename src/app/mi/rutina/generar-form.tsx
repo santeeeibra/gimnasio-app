@@ -434,10 +434,10 @@ function SectorAyudaNivel({
         <div className="mt-3.5 pt-3 border-t border-rule/60 text-xs space-y-2 animate-fade-in">
           <p className="font-display text-xs font-bold text-ink flex items-center gap-1.5">
             <HelpCircle className="size-3.5 text-volt" />
-            ¿Cómo categoriza el sistema los ejercicios según tu nivel?
+            ¿Y los otros niveles?
           </p>
           <div className="grid gap-2">
-            {NIVELES.map((n) => {
+            {NIVELES.filter((n) => n !== nivelSeleccionado).map((n) => {
               const c = NIVEL_UI_CONFIG[n];
               const I = c.icon;
               const d = NIVEL_DETALLE[n];

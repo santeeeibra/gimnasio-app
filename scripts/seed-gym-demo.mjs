@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
+import { backupAntesDeBorrar } from "./lib/backup.mjs";
 
 for (const line of readFileSync(".env.local", "utf8").split("\n")) {
   const m = line.match(/^([A-Z_]+)=(.*)$/);
@@ -242,6 +243,10 @@ async function main() {
   console.log(`✓ ${clientesIds.length} socios simulados insertados/actualizados.`);
 
   // 6. Pagos mes anterior y mes actual
+  await backupAntesDeBorrar("seed-gym-demo", {
+    pagos: db.from("pagos").select("*").eq("gimnasio_id", gym.id),
+    registros_entrada: db.from("registros_entrada").select("*").eq("gimnasio_id", gym.id),
+  });
   console.log("Insertando cobros mes anterior y mes actual...");
   await db.from("pagos").delete().eq("gimnasio_id", gym.id);
 

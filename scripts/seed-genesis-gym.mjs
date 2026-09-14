@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
+import { backupAntesDeBorrar } from "./lib/backup.mjs";
 
 for (const line of readFileSync(".env.local", "utf8").split("\n")) {
   const m = line.match(/^([A-Z_]+)=(.*)$/);
@@ -246,6 +247,24 @@ async function main() {
   console.log(`✓ ${clientesInfo.length} socios simulados insertados/actualizados.`);
 
   const clientesActivos = clientesInfo.filter((c) => !c.enPrueba);
+
+  // Backup de seguridad: rutina_items no tiene gimnasio_id propio, se
+  // respalda vía los ids de rutinas de este gimnasio.
+  const { data: rutinasDelGym } = await db
+    .from("rutinas")
+    .select("id")
+    .eq("gimnasio_id", gym.id);
+  const rutinaIdsGym = (rutinasDelGym ?? []).map((r) => r.id);
+  await backupAntesDeBorrar("seed-genesis-gym", {
+    pagos: db.from("pagos").select("*").eq("gimnasio_id", gym.id),
+    registros_entrada: db.from("registros_entrada").select("*").eq("gimnasio_id", gym.id),
+    rutinas: db.from("rutinas").select("*").eq("gimnasio_id", gym.id),
+    rutina_items:
+      rutinaIdsGym.length > 0
+        ? db.from("rutina_items").select("*").in("rutina_id", rutinaIdsGym)
+        : Promise.resolve({ data: [] }),
+    registro_peso: db.from("registro_peso").select("*").eq("gimnasio_id", gym.id),
+  });
 
   // 6. Pagos mes anterior y mes actual
   console.log("Insertando cobros mes anterior y mes actual...");

@@ -9,3 +9,4 @@ supabase/.temp
 credenciales-locales.md
 build-output.txt
 .cache/
+backups/

@@ -5,6 +5,7 @@
 
 import { readFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
+import { backupAntesDeBorrar } from "./lib/backup.mjs";
 
 for (const line of readFileSync(".env.local", "utf8").split("\n")) {
   const m = line.match(/^([A-Z_]+)=(.*)$/);
@@ -24,6 +25,12 @@ if (!supabaseUrl || !serviceRoleKey) {
 const db = createClient(supabaseUrl, serviceRoleKey, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
+
+// SEGURIDAD (incidente 2026-09-14): este script corre contra la base real de
+// Supabase (no hay stack local en este repo) y borra TODOS los gimnasios que
+// no sean "sante", incluyendo rutinas, pesos y progreso de clientes de
+// prueba. Antes de borrar nada, backupAntesDeBorrar() (scripts/lib/backup.mjs)
+// vuelca todo a un JSON con timestamp para poder recuperarlo a mano.
 
 async function main() {
   console.log("══════════════════════════════════════════════════════════════");
@@ -76,7 +83,16 @@ async function main() {
   }
   console.log(`   ✅ Gimnasio '${santeGym.nombre}' (${santeGym.slug}) activo con Plan Elite hasta ${vencePlanStr}.\n`);
 
-  // 2. Limpieza de datos de otros gimnasios
+  // 2. Backup de seguridad + limpieza de datos de otros gimnasios
+  await backupAntesDeBorrar("reset-single-gym", {
+    gimnasios: db.from("gimnasios").select("*"),
+    clientes: db.from("clientes").select("*"),
+    rutinas: db.from("rutinas").select("*"),
+    rutina_items: db.from("rutina_items").select("*"),
+    registro_peso: db.from("registro_peso").select("*"),
+    registro_progreso: db.from("registro_progreso").select("*"),
+    pagos: db.from("pagos").select("*"),
+  });
   console.log("2️⃣ Buscando y eliminando otros gimnasios y sus datos...");
   const { data: allGyms } = await db.from("gimnasios").select("id, slug, nombre");
   const otherGyms = (allGyms || []).filter((g) => g.id !== santeGym.id);
