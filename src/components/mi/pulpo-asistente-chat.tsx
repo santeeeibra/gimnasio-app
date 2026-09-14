@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import {
   Sparkles,
@@ -56,6 +56,58 @@ const MOLESTIA_REGEX: { patron: RegExp; etiqueta: string; evitarGrupo: string[] 
 
 function detectarMolestia(texto: string) {
   return MOLESTIA_REGEX.find((m) => m.patron.test(texto)) ?? null;
+}
+
+// free-exercise-db trae 2 cuadros por ejercicio (…/0.jpg y …/1.jpg). Mismo
+// criterio que ExThumb en rutina-editor.tsx: crossfade entre ambos en vez
+// de mostrar una sola foto estática.
+function frameAlterno(url: string): string | null {
+  if (/\/0\.jpg$/i.test(url)) return url.replace(/\/0\.jpg$/i, "/1.jpg");
+  return null;
+}
+
+function ImagenAnimadaEjercicio({
+  url,
+  className,
+  alt: altText = "",
+}: {
+  url: string;
+  className: string;
+  alt?: string;
+}) {
+  const alt = frameAlterno(url);
+  const [mostrarAlt, setMostrarAlt] = useState(false);
+
+  useEffect(() => {
+    if (!alt) return;
+    if (typeof window !== "undefined") {
+      const img = new Image();
+      img.src = alt;
+    }
+    const id = setInterval(() => setMostrarAlt((v) => !v), 850);
+    return () => clearInterval(id);
+  }, [alt]);
+
+  return (
+    <div className="relative h-full w-full flex items-center justify-center overflow-hidden">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={url}
+        alt={altText}
+        decoding="async"
+        className={`${className} absolute inset-0 m-auto max-h-full max-w-full object-contain object-center transition-opacity duration-200 [transition-timing-function:var(--ease-out)] ${mostrarAlt ? "opacity-0" : "opacity-100"}`}
+      />
+      {alt && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={alt}
+          alt=""
+          decoding="async"
+          className={`${className} absolute inset-0 m-auto max-h-full max-w-full object-contain object-center transition-opacity duration-200 [transition-timing-function:var(--ease-out)] ${mostrarAlt ? "opacity-100" : "opacity-0"}`}
+        />
+      )}
+    </div>
+  );
 }
 
 interface Props {
@@ -570,11 +622,11 @@ export function PulpoAsistenteChat({
                 ) : tecnicaData ? (
                   <div className="space-y-3">
                     {tecnicaData.imagen_url ? (
-                      <div className="rounded-[14px] overflow-hidden border border-rule bg-canvas flex items-center justify-center max-h-52">
-                        <img
-                          src={tecnicaData.imagen_url}
+                      <div className="rounded-[14px] overflow-hidden border border-rule bg-canvas h-52">
+                        <ImagenAnimadaEjercicio
+                          url={tecnicaData.imagen_url}
                           alt={tecnicaData.nombre}
-                          className="w-full max-h-52 object-contain"
+                          className="w-full"
                         />
                       </div>
                     ) : (
