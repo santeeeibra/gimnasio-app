@@ -144,13 +144,51 @@ async function llamarGithubModels(args: LlamadaIa): Promise<string> {
   return texto;
 }
 
+async function llamarOpenRouter(args: LlamadaIa): Promise<string> {
+  const apiKey = process.env.OPENROUTER_API_KEY!;
+
+  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      // Los modelos ":free" de OpenRouter rotan sin aviso — si este deja de
+      // existir, revisar la lista vigente en openrouter.ai/models?max_price=0
+      // y actualizar acá.
+      model: "meta-llama/llama-3.3-70b-instruct:free",
+      max_tokens: args.maxTokens,
+      messages: [
+        { role: "system", content: args.system },
+        { role: "user", content: args.userMessage },
+      ],
+    }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`OpenRouter API ${res.status}: ${await res.text()}`);
+  }
+
+  const data = (await res.json()) as {
+    choices?: { message?: { content?: string } }[];
+  };
+  const texto = data.choices?.[0]?.message?.content?.trim();
+  if (!texto) throw new Error("Respuesta vacía de OpenRouter");
+  return texto;
+}
+
 // Orden por calidad de redacción (no por orden de implementación): Claude
-// Haiku 4.5 > GPT-4o-mini > Gemini 2.0 Flash > Llama 3.3 70B. Los tres
-// primeros son modelos propietarios con mejor fluidez/naturalidad en
-// español rioplatense para textos cortos; Llama es sólido pero queda último
-// porque tiende a sonar más genérico en este tipo de copy — igual gana en
-// límites gratis más generosos, por eso conviene como último respaldo, no
-// como segunda opción.
+// Haiku 4.5 > GPT-4o-mini > Gemini 2.0 Flash > Llama 3.3 70B (Groq) >
+// OpenRouter. Los tres primeros son modelos propietarios con mejor
+// fluidez/naturalidad en español rioplatense para textos cortos; Groq es
+// sólido pero queda último de los "principales" porque tiende a sonar más
+// genérico en este tipo de copy — igual gana en límites gratis más
+// generosos. OpenRouter va al final de todos: junta ~20-28 modelos ":free"
+// detrás de un único endpoint (colchón extra), pero esos modelos se saturan
+// en horas pico del lado del proveedor (429 aunque tu cuota esté bien) y
+// cuál está disponible rota sin aviso — no es para depender de él, es la
+// última red antes de caer al texto genérico fijo.
 const PROVEEDORES: Proveedor[] = [
   {
     nombre: "Claude",
@@ -171,6 +209,11 @@ const PROVEEDORES: Proveedor[] = [
     nombre: "Groq (Llama 3.3)",
     disponible: () => Boolean(process.env.GROQ_API_KEY),
     llamar: llamarGroq,
+  },
+  {
+    nombre: "OpenRouter",
+    disponible: () => Boolean(process.env.OPENROUTER_API_KEY),
+    llamar: llamarOpenRouter,
   },
 ];
 
@@ -194,7 +237,7 @@ export async function llamarIaConFallback(args: LlamadaIa): Promise<string> {
 
   if (errores.length === 0) {
     throw new Error(
-      "Ningún proveedor de IA está configurado (falta ANTHROPIC_API_KEY, GROQ_API_KEY, GEMINI_API_KEY o GITHUB_MODELS_TOKEN en .env.local)",
+      "Ningún proveedor de IA está configurado (falta ANTHROPIC_API_KEY, GITHUB_MODELS_TOKEN, GEMINI_API_KEY, GROQ_API_KEY o OPENROUTER_API_KEY en .env.local)",
     );
   }
   throw new Error(`Fallaron todos los proveedores de IA: ${errores.join(" | ")}`);
