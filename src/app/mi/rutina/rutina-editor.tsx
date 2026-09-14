@@ -1857,7 +1857,11 @@ function ItemFila({
           {abrirCambio ? (
             <div
               ref={panelCambioRef}
-              className="mt-3 rounded-[12px] border border-rule bg-paper p-3 animate-fade-in"
+              // -ml/w-[calc(...)]: este panel "sale" de la columna de contenido
+              // (flex-1, angosta por compartir fila con el thumb+dial de 84px)
+              // para usar el ancho completo de la tarjeta, ya que acá abajo el
+              // thumb/dial ya no ocupa esa franja visualmente.
+              className="mt-3 -ml-[96px] w-[calc(100%+96px)] rounded-[12px] border border-rule bg-paper p-3 animate-fade-in"
             >
               {/* Filtro de molestias articulares con explicación clara */}
               <div className="mb-3 rounded-[10px] border border-rule/60 bg-paper-2/60 p-2.5">
