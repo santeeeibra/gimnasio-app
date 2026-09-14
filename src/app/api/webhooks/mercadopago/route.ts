@@ -41,13 +41,11 @@ export async function POST(req: NextRequest) {
   const xSignature = req.headers.get("x-signature");
   const xRequestId = req.headers.get("x-request-id");
 
-  // Validación de firma si está presente la cabecera x-signature
-  if (xSignature) {
-    const valida = validarFirmaWebhookMP(xSignature, xRequestId, strId);
-    if (!valida && process.env.NODE_ENV === "production") {
-      console.warn("[webhook/mercadopago] Firma inválida rechazada:", strId);
-      return NextResponse.json({ error: "Firma inválida" }, { status: 401 });
-    }
+  // Firma obligatoria en cualquier ambiente: sin x-signature válida, no pasa.
+  const valida = validarFirmaWebhookMP(xSignature, xRequestId, strId);
+  if (!valida) {
+    console.warn("[webhook/mercadopago] Firma inválida o ausente, rechazado:", strId);
+    return NextResponse.json({ error: "Firma inválida" }, { status: 401 });
   }
 
   const db = createAdminClient();
