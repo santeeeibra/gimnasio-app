@@ -17,11 +17,8 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
-      {
-        source: '/partners',
-        destination: '/registro-partner',
-        permanent: true,
-      },
+      // "/partners" ahora es la landing pública del programa (ver
+      // src/app/partners/page.tsx) — ya no redirige directo al signup.
       {
         source: '/partner',
         destination: '/registro-partner',

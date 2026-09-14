@@ -7,6 +7,8 @@ const PUBLIC_PATHS = [
   "/login",
   "/registrarse",
   "/registro-partner",
+  // Landing pública de reclutamiento del programa de partners.
+  "/partners",
   // Landing público de rutina compartida por un entrenador (/r/<codigo>).
   "/r/",
   "/demo",
