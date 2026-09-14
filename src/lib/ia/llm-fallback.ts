@@ -1,14 +1,13 @@
 import "server-only";
 
-// Wrapper único de texto-por-IA para todo el proyecto: intenta Claude primero
-// (mejor calidad) y si falla — sin crédito, caída del servicio, lo que sea —
-// cae automáticamente a Groq, que tiene capa gratis sin tarjeta
-// (console.groq.com) y sirve perfecto para estos textos cortos.
+// Wrapper único de texto-por-IA para todo el proyecto: prueba varios
+// proveedores en orden hasta que uno responda. Así una caída/sin-crédito en
+// uno no tira abajo la función — sólo se degrada a la próxima opción gratis.
 //
-// Para activar el fallback: crear cuenta gratis en https://console.groq.com,
-// generar una API key y ponerla en .env.local como GROQ_API_KEY=gsk_...
-// Sin esa key, si Claude falla, la función tira el error de Claude tal cual
-// (mismo comportamiento que antes de este archivo existir).
+// Orden: Claude (mejor calidad, de pago) → Groq (gratis sin tarjeta,
+// console.groq.com) → Gemini (gratis sin tarjeta, aistudio.google.com).
+// Cada uno se activa solo si su *_API_KEY está en .env.local; sin ninguna
+// key configurada, se comporta como si ese proveedor no existiera.
 
 export type LlamadaIa = {
   system: string;
@@ -16,9 +15,14 @@ export type LlamadaIa = {
   maxTokens: number;
 };
 
+type Proveedor = {
+  nombre: string;
+  disponible: () => boolean;
+  llamar: (args: LlamadaIa) => Promise<string>;
+};
+
 async function llamarClaude(args: LlamadaIa): Promise<string> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error("Falta ANTHROPIC_API_KEY");
+  const apiKey = process.env.ANTHROPIC_API_KEY!;
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -48,8 +52,7 @@ async function llamarClaude(args: LlamadaIa): Promise<string> {
 }
 
 async function llamarGroq(args: LlamadaIa): Promise<string> {
-  const apiKey = process.env.GROQ_API_KEY;
-  if (!apiKey) throw new Error("Falta GROQ_API_KEY");
+  const apiKey = process.env.GROQ_API_KEY!;
 
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
@@ -79,22 +82,74 @@ async function llamarGroq(args: LlamadaIa): Promise<string> {
   return texto;
 }
 
+async function llamarGemini(args: LlamadaIa): Promise<string> {
+  const apiKey = process.env.GEMINI_API_KEY!;
+
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: args.system }] },
+        contents: [{ role: "user", parts: [{ text: args.userMessage }] }],
+        generationConfig: { maxOutputTokens: args.maxTokens },
+      }),
+    },
+  );
+
+  if (!res.ok) {
+    throw new Error(`Gemini API ${res.status}: ${await res.text()}`);
+  }
+
+  const data = (await res.json()) as {
+    candidates?: { content?: { parts?: { text?: string }[] } }[];
+  };
+  const texto = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+  if (!texto) throw new Error("Respuesta vacía de Gemini");
+  return texto;
+}
+
+const PROVEEDORES: Proveedor[] = [
+  {
+    nombre: "Claude",
+    disponible: () => Boolean(process.env.ANTHROPIC_API_KEY),
+    llamar: llamarClaude,
+  },
+  {
+    nombre: "Groq",
+    disponible: () => Boolean(process.env.GROQ_API_KEY),
+    llamar: llamarGroq,
+  },
+  {
+    nombre: "Gemini",
+    disponible: () => Boolean(process.env.GEMINI_API_KEY),
+    llamar: llamarGemini,
+  },
+];
+
 /**
- * Llama a Claude; si falla (sin crédito, rate limit, lo que sea) y hay
- * GROQ_API_KEY configurada, reintenta con Groq (gratis) antes de tirar el
- * error. Si no hay GROQ_API_KEY, se comporta como si Groq no existiera.
+ * Prueba cada proveedor configurado en orden (Claude → Groq → Gemini) hasta
+ * que uno responda. Si un proveedor no tiene su *_API_KEY en .env.local, se
+ * saltea directo, sin contar como falla. Si ninguno responde, tira un error
+ * con el detalle de cada intento.
  */
 export async function llamarIaConFallback(args: LlamadaIa): Promise<string> {
-  try {
-    return await llamarClaude(args);
-  } catch (errClaude) {
-    if (!process.env.GROQ_API_KEY) throw errClaude;
+  const errores: string[] = [];
+
+  for (const proveedor of PROVEEDORES) {
+    if (!proveedor.disponible()) continue;
     try {
-      return await llamarGroq(args);
-    } catch (errGroq) {
-      throw new Error(
-        `Falló Claude (${errClaude instanceof Error ? errClaude.message : errClaude}) y también el fallback Groq (${errGroq instanceof Error ? errGroq.message : errGroq})`,
-      );
+      return await proveedor.llamar(args);
+    } catch (err) {
+      errores.push(`${proveedor.nombre}: ${err instanceof Error ? err.message : err}`);
     }
   }
+
+  if (errores.length === 0) {
+    throw new Error(
+      "Ningún proveedor de IA está configurado (falta ANTHROPIC_API_KEY, GROQ_API_KEY o GEMINI_API_KEY en .env.local)",
+    );
+  }
+  throw new Error(`Fallaron todos los proveedores de IA: ${errores.join(" | ")}`);
 }
