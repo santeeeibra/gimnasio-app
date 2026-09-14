@@ -105,3 +105,4 @@
 - [2026-09-14] Fix seguridad: scripts/reset-single-gym.mjs borraba TODOS los gimnasios != sante (clientes/rutinas/pesos) sin backup, corriendo contra la Supabase real (no hay stack local). Se agregó backupAntesDeBorrar() que vuelca todo a backups/*.json antes de cada borrado.
 
 - [2026-09-14] Se extendió el backup de seguridad (scripts/lib/backup.mjs) a seed-gym-demo.mjs y seed-genesis-gym.mjs (respaldan pagos/registros_entrada/rutinas/rutina_items/registro_peso antes de sus .delete()). test-e2e-partner-gating.mjs quedó afuera a propósito: solo borra sus propios fixtures E2E_TEST_.
+- Rediseño UI de /admin/payouts con modales y PulpoCard
