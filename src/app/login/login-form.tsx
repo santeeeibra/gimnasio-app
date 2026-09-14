@@ -47,7 +47,9 @@ export function LoginForm({
     LoginState,
     FormData
   >(loginIndividual, {});
-  const [modo, setModo] = useState<"dni" | "email">("email");
+  const [modo, setModo] = useState<"dni" | "email">(
+    initialGymSlug ? "dni" : "email",
+  );
   const [identificadorInput, setIdentificadorInput] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [gimnasio, setGimnasio] = useState(initialGymSlug ?? "");
