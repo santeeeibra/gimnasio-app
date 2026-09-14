@@ -1279,13 +1279,11 @@ function ItemFila({
                     creadoPor === "dueno"
                       ? await obtenerProgresoSocio(clienteId, eid, 1)
                       : await obtenerProgresoCliente(eid, 1);
-                  if (registros[0]?.peso) {
-                    setPesoActualEjercicio(registros[0].peso);
-                  }
                   return registros[0]
                     ? { peso: registros[0].peso, reps: registros[0].reps }
                     : null;
                 }}
+                onPesoChange={setPesoActualEjercicio}
               />
             );
           })()}
@@ -1406,6 +1404,12 @@ function ItemFila({
                 {TECNICA_LABEL[item.tecnica]}
               </span>
             ) : null}
+          </div>
+
+          {/* Herramientas (calculadora de discos, rampa de calentamiento):
+             aparte de la prescripción para no acumular pills en la misma fila
+             que series/reps/técnica. */}
+          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
             {tipoEquipoItem === "barra" ? (
               <PillCalculadoraDiscos
                 onOpen={() => setMostrarCalculadoraDiscos(true)}
@@ -1435,9 +1439,9 @@ function ItemFila({
           ) : null}
 
           {item.nota ? (
-            <div className="mt-2 flex items-center gap-1.5 rounded-[8px] border border-accent/20 bg-accent/5 px-2.5 py-1 text-[11px] text-ink-soft">
+            <div className="mt-2 flex items-start gap-1.5 rounded-[8px] border border-accent/20 bg-accent/5 px-2.5 py-1.5 text-[11px] text-ink-soft">
               <span className="font-semibold text-accent shrink-0">💡 Guía:</span>
-              <span className="truncate">{item.nota}</span>
+              <span className="line-clamp-2">{item.nota}</span>
             </div>
           ) : null}
 

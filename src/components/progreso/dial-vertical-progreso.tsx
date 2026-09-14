@@ -6,6 +6,8 @@ import {
   useState,
   useCallback,
   useActionState,
+  forwardRef,
+  useImperativeHandle,
 } from "react";
 import { Spinner } from "@/components/ui";
 import type { ProgresoState } from "@/lib/progreso/actions";
@@ -32,32 +34,52 @@ const MAX_KG = 300;
 
 export type TipoEquipoDial = "corporal" | "barra" | "mancuerna" | "polea" | "maquina" | "otro";
 
-export function DialVerticalProgreso({
-  ejercicioId,
-  action,
-  fetchUltimoPeso,
-  tipoEquipo = "otro",
-  esCorporal: esCorporalLegacy,
-  ejercicioNombre,
-  gimnasioNombre,
-  logoUrl,
-  colores,
-  repsIniciales = 10,
-}: {
-  ejercicioId: string;
-  action: (prev: ProgresoState, fd: FormData) => Promise<ProgresoState>;
-  fetchUltimoPeso: (eid: string) => Promise<{ peso: number; reps: number | null } | null>;
-  tipoEquipo?: TipoEquipoDial;
-  esCorporal?: boolean;
-  /** Datos para el <CartelLogro> de récord. Si faltan, no se ofrece compartir. */
-  ejercicioNombre?: string;
-  gimnasioNombre?: string;
-  logoUrl?: string | null;
-  colores?: ColoresImagen;
-  repsIniciales?: number;
-}) {
+export type DialVerticalProgresoHandle = {
+  /** Fija el peso del dial desde afuera (p.ej. la calculadora de discos) y,
+     si `guardar` es true, dispara el mismo submit que el botón "Guardar". */
+  aplicarPeso: (kg: number, guardar?: boolean) => void;
+};
+
+export const DialVerticalProgreso = forwardRef<
+  DialVerticalProgresoHandle,
+  {
+    ejercicioId: string;
+    action: (prev: ProgresoState, fd: FormData) => Promise<ProgresoState>;
+    fetchUltimoPeso: (eid: string) => Promise<{ peso: number; reps: number | null } | null>;
+    tipoEquipo?: TipoEquipoDial;
+    esCorporal?: boolean;
+    /** Datos para el <CartelLogro> de récord. Si faltan, no se ofrece compartir. */
+    ejercicioNombre?: string;
+    gimnasioNombre?: string;
+    logoUrl?: string | null;
+    colores?: ColoresImagen;
+    repsIniciales?: number;
+    /** Se dispara con cada cambio de peso (arrastre, +/-, o carga inicial) para
+       que quien use el dial (p.ej. la calculadora de discos y la rampa de
+       calentamiento) trabaje siempre con el peso que se ve en pantalla, no
+       con el último guardado. */
+    onPesoChange?: (peso: number) => void;
+  }
+>(function DialVerticalProgreso(
+  {
+    ejercicioId,
+    action,
+    fetchUltimoPeso,
+    tipoEquipo = "otro",
+    esCorporal: esCorporalLegacy,
+    ejercicioNombre,
+    gimnasioNombre,
+    logoUrl,
+    colores,
+    repsIniciales = 10,
+    onPesoChange,
+  },
+  ref,
+) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+  const guardarPendienteRef = useRef(false);
 
   const esCorporal = tipoEquipo === "corporal" || Boolean(esCorporalLegacy);
   const esBarra = tipoEquipo === "barra";
@@ -126,6 +148,32 @@ export function DialVerticalProgreso({
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ejercicioId]);
+
+  // Avisar al padre el peso vigente en el dial (incluye el que trae
+  // fetchUltimoPeso al montar y cada ajuste posterior por arrastre o +/-),
+  // para que herramientas externas (rampa de calentamiento, calculadora de
+  // discos) calculen sobre lo que el socio está viendo, no un valor stale.
+  useEffect(() => {
+    onPesoChange?.(peso);
+    // El submit se dispara acá (no en aplicarPeso) para asegurar que el
+    // input hidden "peso" ya haya confirmado el valor nuevo en el DOM.
+    if (guardarPendienteRef.current) {
+      guardarPendienteRef.current = false;
+      formRef.current?.requestSubmit();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [peso]);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      aplicarPeso: (kg, guardar = false) => {
+        if (guardar) guardarPendienteRef.current = true;
+        updateWeight(kg);
+      },
+    }),
+    [updateWeight],
+  );
 
   // Dibujar regla vertical en canvas
   const draw = useCallback(() => {
@@ -507,4 +555,4 @@ export function DialVerticalProgreso({
     </form>
     </>
   );
-}
+});
