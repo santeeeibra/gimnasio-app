@@ -52,6 +52,7 @@ import {
   hapticoImpactoSuave,
   hapticoSeleccion,
 } from "@/lib/ui/hapticos";
+import { hablar } from "@/lib/ui/voz";
 import {
   guardarProgresoCliente,
   guardarProgresoSocio,
@@ -315,18 +316,28 @@ export function RutinaEditor({
   const logroMostradoRef = useRef<Record<number, boolean>>({});
 
   // Modo Zen / Foco: pantalla siempre encendida durante el entrenamiento,
-  // targets táctiles agrandados y navegación secundaria oculta.
+  // targets táctiles agrandados y navegación secundaria oculta. Dentro de
+  // Foco Gym, `pasoZen` acota la vista a un único ejercicio a la vez
+  // (wizard), para minimizar distracción y errores de tap.
   const [zenMode, setZenMode] = useState(false);
+  const [pasoZen, setPasoZen] = useState(0);
   useWakeLock(zenMode);
 
   function toggleZenMode() {
     if (!zenMode) {
       hapticoExito();
+      setPasoZen(0);
     } else {
       hapticoSeleccion();
     }
     setZenMode((v) => !v);
   }
+
+  // Si cambia el día activo, o el día tiene menos ejercicios que el paso
+  // actual, volver al primer ejercicio para no quedar fuera de rango.
+  useEffect(() => {
+    setPasoZen(0);
+  }, [activo]);
 
   // Series guardadas en caliente: el tiempo estimado se recalcula sin recargar.
   const [seriesGuardadas, setSeriesGuardadas] = useState<Record<string, number>>(
@@ -393,6 +404,15 @@ export function RutinaEditor({
   const multi = dias.length > 1;
   const visibles = multi ? dias.filter((d) => d.numero === activo) : dias;
   const diaActivo = visibles[0] ?? dias[0];
+
+  // Anunciar por voz (si está activada) el ejercicio al avanzar en el wizard
+  // de Modo Foco Gym, para que el cliente no tenga que mirar el celular.
+  useEffect(() => {
+    if (!zenMode) return;
+    const nombre = diaActivo?.items[pasoZen]?.ejercicio?.nombre;
+    if (nombre) hablar(nombre);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [zenMode, pasoZen, activo]);
 
   const totalSeriesActivo = diaActivo?.items.reduce(
     (acc, it) => acc + (seriesGuardadas[it.id] ?? it.series),
@@ -638,11 +658,15 @@ export function RutinaEditor({
                 </div>
               </div>
 
-              {/* Lista de ejercicios con nuevo card style Obsidian */}
+              {/* Lista de ejercicios con nuevo card style Obsidian.
+                  En Modo Foco Gym se acota a un único ejercicio a la vez
+                  (wizard): menos scroll, menos distracción, foco total. */}
               <div className="mt-5 md:pb-4">
                 <div className="mb-2 flex items-center justify-between">
                   <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-ink-soft">
-                    Ejercicios del día
+                    {zenMode
+                      ? `Ejercicio ${Math.min(pasoZen + 1, dia.items.length)} de ${dia.items.length}`
+                      : "Ejercicios del día"}
                   </span>
                   {!guiaVista && seriesHechasActivo === 0 ? (
                     <span className="inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-[11px] font-semibold text-accent animate-pulse">
@@ -655,32 +679,109 @@ export function RutinaEditor({
                     </span>
                   )}
                 </div>
-                <ul className="stagger-in divide-y divide-rule overflow-hidden rounded-[16px] border border-rule bg-paper-2 shadow-sm">
-                  {dia.items.map((item, i) => (
-                    <ItemFila
-                      key={item.id}
-                      indice={i + 1}
-                      item={item}
-                      itemsDelDia={dia.items}
-                      ejercicios={ejercicios}
-                      mostrarTecnica={mostrarTecnica}
-                      onVer={setVisor}
-                      setsCompletados={setsCompletados[item.id] ?? []}
-                      onToggleSet={(idx) => toggleSet(item.id, idx)}
-                      onSeriesGuardadas={(n) =>
-                        setSeriesGuardadas((p) => ({ ...p, [item.id]: n }))
-                      }
-                      clienteId={clienteId}
-                      creadoPor={creadoPor}
-                      esIndividual={esIndividual}
-                      gimnasioNombre={gimnasioNombre}
-                      logoUrl={logoUrl}
-                      colores={colores}
-                      mostrarGuiaSerie={!guiaVista && seriesHechasActivo === 0 && i === 0}
-                      zenMode={zenMode}
-                    />
-                  ))}
-                </ul>
+
+                {zenMode ? (
+                  <>
+                    <ul
+                      key={`${activo}-${pasoZen}`}
+                      className="stagger-in divide-y divide-rule overflow-hidden rounded-[16px] border border-rule bg-paper-2 shadow-sm"
+                    >
+                      {dia.items[pasoZen] ? (
+                        <ItemFila
+                          key={dia.items[pasoZen].id}
+                          indice={pasoZen + 1}
+                          item={dia.items[pasoZen]}
+                          itemsDelDia={dia.items}
+                          ejercicios={ejercicios}
+                          mostrarTecnica={mostrarTecnica}
+                          onVer={setVisor}
+                          setsCompletados={setsCompletados[dia.items[pasoZen].id] ?? []}
+                          onToggleSet={(idx) => toggleSet(dia.items[pasoZen].id, idx)}
+                          onSeriesGuardadas={(n) =>
+                            setSeriesGuardadas((p) => ({ ...p, [dia.items[pasoZen].id]: n }))
+                          }
+                          clienteId={clienteId}
+                          creadoPor={creadoPor}
+                          esIndividual={esIndividual}
+                          gimnasioNombre={gimnasioNombre}
+                          logoUrl={logoUrl}
+                          colores={colores}
+                          mostrarGuiaSerie={!guiaVista && seriesHechasActivo === 0 && pasoZen === 0}
+                          zenMode={zenMode}
+                        />
+                      ) : null}
+                    </ul>
+
+                    {/* Navegación Anterior / Siguiente + puntos de progreso */}
+                    <div className="mt-3 flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          hapticoSeleccion();
+                          setPasoZen((p) => Math.max(0, p - 1));
+                        }}
+                        disabled={pasoZen === 0}
+                        className="h-12 flex-1 rounded-[12px] border border-rule bg-paper font-bold text-sm text-ink transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20"
+                      >
+                        ← Anterior
+                      </button>
+                      <div className="flex shrink-0 items-center gap-1.5 px-1">
+                        {dia.items.map((it, i) => (
+                          <button
+                            key={it.id}
+                            type="button"
+                            aria-label={`Ir al ejercicio ${i + 1}`}
+                            onClick={() => {
+                              hapticoSeleccion();
+                              setPasoZen(i);
+                            }}
+                            className={`size-2.5 rounded-full transition-[transform,background-color] duration-150 ${
+                              i === pasoZen ? "scale-125 bg-accent" : "bg-rule"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          hapticoSeleccion();
+                          setPasoZen((p) => Math.min(dia.items.length - 1, p + 1));
+                        }}
+                        disabled={pasoZen >= dia.items.length - 1}
+                        className="h-12 flex-1 rounded-[12px] bg-accent font-bold text-sm text-accent-ink transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 shadow-sm"
+                      >
+                        Siguiente →
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <ul className="stagger-in divide-y divide-rule overflow-hidden rounded-[16px] border border-rule bg-paper-2 shadow-sm">
+                    {dia.items.map((item, i) => (
+                      <ItemFila
+                        key={item.id}
+                        indice={i + 1}
+                        item={item}
+                        itemsDelDia={dia.items}
+                        ejercicios={ejercicios}
+                        mostrarTecnica={mostrarTecnica}
+                        onVer={setVisor}
+                        setsCompletados={setsCompletados[item.id] ?? []}
+                        onToggleSet={(idx) => toggleSet(item.id, idx)}
+                        onSeriesGuardadas={(n) =>
+                          setSeriesGuardadas((p) => ({ ...p, [item.id]: n }))
+                        }
+                        clienteId={clienteId}
+                        creadoPor={creadoPor}
+                        esIndividual={esIndividual}
+                        gimnasioNombre={gimnasioNombre}
+                        logoUrl={logoUrl}
+                        colores={colores}
+                        mostrarGuiaSerie={!guiaVista && seriesHechasActivo === 0 && i === 0}
+                        zenMode={zenMode}
+                      />
+                    ))}
+                  </ul>
+                )}
               </div>
             </section>
           );
