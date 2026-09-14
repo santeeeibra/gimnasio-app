@@ -48,6 +48,7 @@ import {
   type PartnerCommission,
   type PartnerPayout,
   type PartnerNotification,
+  type PartnerTier,
   RETIRO_MINIMO_ARS,
   BONOS_HITO,
   calcularRangoPartner,
@@ -90,7 +91,48 @@ export function PartnerDashboardClient({
     hitosAlcanzados,
     proximoHito,
     gimnasiosDetalle = [],
+    tiers = [],
   } = resumen;
+
+  // Rango actual y % de comisión: salen de partner_tiers (DB) cuando hay
+  // datos; si la tabla está vacía por algún motivo, caen a las constantes
+  // hardcodeadas de types/partner.ts como red de seguridad.
+  const tierOrdenados = [...tiers].sort((a, b) => b.min_active_gyms - a.min_active_gyms);
+  const tierActual = tierOrdenados.find((t) => gimnasiosPagoActivos >= t.min_active_gyms);
+  const comisionPct =
+    partner.override_commission_pct ??
+    tierActual?.commission_pct ??
+    (gimnasiosPagoActivos < 5 ? COMISION_ARRANQUE_PCT : COMISION_ESTANDAR_PCT);
+  const bonosTotales = tiers.length > 0
+    ? tiers.reduce((acc, t) => acc + Number(t.milestone_bonus_amount), 0)
+    : BONOS_HITO[5] + BONOS_HITO[10] + BONOS_HITO[15];
+
+  // Tiers que representan un hito de bono (min_active_gyms > 0), ascendente,
+  // con el acumulado hasta ese punto — para las tarjetas de hitos y el
+  // simulador. Fallback a los 3 hitos fijos si la tabla vino vacía.
+  const milestoneTiersBase = tiers.length > 0
+    ? [...tiers]
+        .filter((t) => t.min_active_gyms > 0 && Number(t.milestone_bonus_amount) > 0)
+        .sort((a, b) => a.min_active_gyms - b.min_active_gyms)
+    : ([
+        { id: -5, name: "Pro", min_active_gyms: 5, commission_pct: COMISION_ESTANDAR_PCT, milestone_bonus_amount: BONOS_HITO[5] },
+        { id: -10, name: "Elite", min_active_gyms: 10, commission_pct: COMISION_ESTANDAR_PCT, milestone_bonus_amount: BONOS_HITO[10] },
+        { id: -15, name: "Black", min_active_gyms: 15, commission_pct: COMISION_ESTANDAR_PCT, milestone_bonus_amount: BONOS_HITO[15] },
+      ] as PartnerTier[]);
+  let acumuladoHitos = 0;
+  const milestoneTiers = milestoneTiersBase.map((t) => {
+    acumuladoHitos += Number(t.milestone_bonus_amount);
+    return { ...t, acumulado: acumuladoHitos };
+  });
+
+  // % de arranque (tier con min_active_gyms=0) y % estándar (siguiente tier),
+  // para el copy del hero. Fallback a las constantes fijas si no hay tiers.
+  const tierOrdenadosAsc = [...tiers].sort((a, b) => a.min_active_gyms - b.min_active_gyms);
+  const pctArranqueHero = tierOrdenadosAsc[0]?.commission_pct ?? COMISION_ARRANQUE_PCT;
+  const pctEstandarHero = tierOrdenadosAsc[1]?.commission_pct ?? COMISION_ESTANDAR_PCT;
+  const umbralEstandarHero = tierOrdenadosAsc[1]?.min_active_gyms ?? 5;
+  const bonosListaHero = milestoneTiers.map((t) => `$${Number(t.milestone_bonus_amount).toLocaleString("es-AR")}`);
+  const sedesListaHero = milestoneTiers.map((t) => t.min_active_gyms).join(", ");
 
   const urlReferido = typeof window !== "undefined"
     ? `${window.location.origin}/registro-gimnasio?ref=${partner.referral_code}`
@@ -154,8 +196,8 @@ export function PartnerDashboardClient({
   };
 
   // Rango oficial y estado de fast-start
-  const rangoActual = calcularRangoPartner(gimnasiosPagoActivos);
-  const quedaArranque = Math.max(0, 5 - gimnasiosPagoActivos);
+  const rangoActual = calcularRangoPartner(gimnasiosPagoActivos, tiers);
+  const quedaArranque = Math.max(0, umbralEstandarHero - gimnasiosPagoActivos);
   const esArranqueActivo = quedaArranque > 0;
   const faltan = proximoHito ? proximoHito.faltan : 0;
 
@@ -217,7 +259,7 @@ export function PartnerDashboardClient({
               {esArranqueActivo && (
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-extrabold animate-pulse">
                   <Rocket className="size-3.5 text-amber-400" />
-                  <span>20% Bono Arranque Activo ({quedaArranque} restante{quedaArranque === 1 ? "" : "s"})</span>
+                  <span>{comisionPct}% Bono Arranque Activo ({quedaArranque} restante{quedaArranque === 1 ? "" : "s"})</span>
                 </div>
               )}
             </div>
@@ -225,13 +267,13 @@ export function PartnerDashboardClient({
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-tight">
               Impulsá gimnasios con SysGym y ganá{" "}
               <span className="text-[#10e7a0]">
-                {esArranqueActivo ? "20% inicial" : "15% inicial"}
+                {comisionPct}% inicial
               </span>{" "}
-              + $180.000 ARS en Bonos
+              + ${bonosTotales.toLocaleString("es-AR")} ARS en Bonos
             </h1>
 
             <p className="text-sm text-zinc-400 leading-relaxed">
-              Recibís comisión directa sobre el primer pago de cada gimnasio adherido ({COMISION_ARRANQUE_PCT}% en tus primeros 5 gimnasios, {COMISION_ESTANDAR_PCT}% en los siguientes) más bonos acumulativos en efectivo de ${BONOS_HITO[5].toLocaleString("es-AR")}, ${BONOS_HITO[10].toLocaleString("es-AR")} y ${BONOS_HITO[15].toLocaleString("es-AR")} ARS al llegar a 5, 10 y 15 sedes activas.
+              Recibís comisión directa sobre el primer pago de cada gimnasio adherido ({pctArranqueHero}% en tus primeros {umbralEstandarHero} gimnasios, {pctEstandarHero}% en los siguientes) más bonos acumulativos en efectivo de {bonosListaHero.join(", ")} ARS al llegar a {sedesListaHero} sedes activas.
             </p>
           </div>
 
@@ -560,19 +602,19 @@ export function PartnerDashboardClient({
 
           <div>
             <div className="text-2xl sm:text-3xl font-mono font-extrabold text-ink">
-              {esArranqueActivo ? `${COMISION_ARRANQUE_PCT}%` : `${COMISION_ESTANDAR_PCT}%`}
+              {comisionPct}%
               <span className="text-xs font-normal text-ink-soft ml-1">en 1er pago</span>
             </div>
             <p className="text-[11px] text-ink-soft mt-1">
               {esArranqueActivo
-                ? `Tasa preferencial: quedan ${quedaArranque} de 5 gyms`
+                ? `Tasa preferencial: quedan ${quedaArranque} de ${umbralEstandarHero} gyms`
                 : "Tasa estándar aplicada a nuevos gyms"}
             </p>
           </div>
 
           <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
             <Sparkles className="size-3" />
-            <span>+ $180k en bonos por metas</span>
+            <span>+ ${bonosTotales.toLocaleString("es-AR")} en bonos por metas</span>
           </div>
         </div>
       </div>
@@ -704,139 +746,61 @@ export function PartnerDashboardClient({
           )}
         </div>
 
-        {/* Tarjetas de Hitos: 5, 10 y 15 Gimnasios */}
+        {/* Tarjetas de Hitos: una por cada tier con bono en partner_tiers */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Hito 1: 5 Gimnasios */}
-          <div
-            className={`rounded-[18px] border p-5 flex flex-col justify-between gap-4 transition-all ${
-              hitosAlcanzados.includes(5)
-                ? "bg-emerald-500/10 border-emerald-500/40 text-emerald-950 dark:text-emerald-100"
-                : "bg-paper-2/60 border-rule"
-            }`}
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <span className="text-[11px] uppercase tracking-wider font-bold text-ink-soft">
-                  Hito 1 · 5 Gimnasios
-                </span>
-                <h3 className="text-xl font-bold text-ink mt-0.5">
-                  +${BONOS_HITO[5].toLocaleString("es-AR")} ARS
-                </h3>
-              </div>
+          {milestoneTiers.map((t, i) => {
+            const umbral = t.min_active_gyms as 5 | 10 | 15;
+            const alcanzado = hitosAlcanzados.includes(umbral);
+            return (
               <div
-                className={`p-2 rounded-xl shrink-0 ${
-                  hitosAlcanzados.includes(5)
-                    ? "bg-emerald-500 text-black font-bold"
-                    : "bg-paper border border-rule text-ink-soft"
+                key={t.id}
+                className={`rounded-[18px] border p-5 flex flex-col justify-between gap-4 transition-all ${
+                  alcanzado
+                    ? "bg-emerald-500/10 border-emerald-500/40 text-emerald-950 dark:text-emerald-100"
+                    : "bg-paper-2/60 border-rule"
                 }`}
               >
-                {hitosAlcanzados.includes(5) ? (
-                  <Check className="size-4" />
-                ) : (
-                  <Award className="size-4" />
-                )}
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <span className="text-[11px] uppercase tracking-wider font-bold text-ink-soft">
+                      Hito {i + 1} · {t.min_active_gyms} Gimnasios
+                    </span>
+                    <h3 className="text-xl font-bold text-ink mt-0.5">
+                      +${Number(t.milestone_bonus_amount).toLocaleString("es-AR")} ARS
+                    </h3>
+                  </div>
+                  <div
+                    className={`p-2 rounded-xl shrink-0 ${
+                      alcanzado
+                        ? "bg-emerald-500 text-black font-bold"
+                        : "bg-paper border border-rule text-ink-soft"
+                    }`}
+                  >
+                    {alcanzado ? (
+                      <Check className="size-4" />
+                    ) : (
+                      <Award className="size-4" />
+                    )}
+                  </div>
+                </div>
+
+                <p className="text-xs text-ink-soft">
+                  {i === 0
+                    ? `Se acredita en tu saldo al alcanzar ${t.min_active_gyms} gimnasios referidos con Plan Pro o Elite activo.`
+                    : i === milestoneTiers.length - 1
+                    ? `Premio mayor en efectivo al consolidar ${t.min_active_gyms} sedes ($${t.acumulado.toLocaleString("es-AR")} ARS en bonos totales acumulados).`
+                    : `Bono en efectivo adicional que se suma a los anteriores ($${t.acumulado.toLocaleString("es-AR")} ARS acumulados).`}
+                </p>
+
+                <div className="flex items-center justify-between text-xs font-semibold pt-2 border-t border-rule/60">
+                  <span className="text-ink-soft">Progreso</span>
+                  <span className="font-mono text-ink">
+                    {Math.min(t.min_active_gyms, gimnasiosPagoActivos)} / {t.min_active_gyms} sedes
+                  </span>
+                </div>
               </div>
-            </div>
-
-            <p className="text-xs text-ink-soft">
-              Se acredita en tu saldo al alcanzar 5 gimnasios referidos con Plan Pro o Elite activo.
-            </p>
-
-            <div className="flex items-center justify-between text-xs font-semibold pt-2 border-t border-rule/60">
-              <span className="text-ink-soft">Progreso</span>
-              <span className="font-mono text-ink">
-                {Math.min(5, gimnasiosPagoActivos)} / 5 sedes
-              </span>
-            </div>
-          </div>
-
-          {/* Hito 2: 10 Gimnasios */}
-          <div
-            className={`rounded-[18px] border p-5 flex flex-col justify-between gap-4 transition-all ${
-              hitosAlcanzados.includes(10)
-                ? "bg-emerald-500/10 border-emerald-500/40 text-emerald-950 dark:text-emerald-100"
-                : "bg-paper-2/60 border-rule"
-            }`}
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <span className="text-[11px] uppercase tracking-wider font-bold text-ink-soft">
-                  Hito 2 · 10 Gimnasios
-                </span>
-                <h3 className="text-xl font-bold text-ink mt-0.5">
-                  +${BONOS_HITO[10].toLocaleString("es-AR")} ARS
-                </h3>
-              </div>
-              <div
-                className={`p-2 rounded-xl shrink-0 ${
-                  hitosAlcanzados.includes(10)
-                    ? "bg-emerald-500 text-black font-bold"
-                    : "bg-paper border border-rule text-ink-soft"
-                }`}
-              >
-                {hitosAlcanzados.includes(10) ? (
-                  <Check className="size-4" />
-                ) : (
-                  <Award className="size-4" />
-                )}
-              </div>
-            </div>
-
-            <p className="text-xs text-ink-soft">
-              Bono en efectivo adicional que se suma al Hito 1 ($80.000 ARS acumulados).
-            </p>
-
-            <div className="flex items-center justify-between text-xs font-semibold pt-2 border-t border-rule/60">
-              <span className="text-ink-soft">Progreso</span>
-              <span className="font-mono text-ink">
-                {Math.min(10, gimnasiosPagoActivos)} / 10 sedes
-              </span>
-            </div>
-          </div>
-
-          {/* Hito 3: 15 Gimnasios */}
-          <div
-            className={`rounded-[18px] border p-5 flex flex-col justify-between gap-4 transition-all ${
-              hitosAlcanzados.includes(15)
-                ? "bg-emerald-500/10 border-emerald-500/40 text-emerald-950 dark:text-emerald-100"
-                : "bg-paper-2/60 border-rule"
-            }`}
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <span className="text-[11px] uppercase tracking-wider font-bold text-ink-soft">
-                  Hito 3 · 15 Gimnasios
-                </span>
-                <h3 className="text-xl font-bold text-ink mt-0.5">
-                  +${BONOS_HITO[15].toLocaleString("es-AR")} ARS
-                </h3>
-              </div>
-              <div
-                className={`p-2 rounded-xl shrink-0 ${
-                  hitosAlcanzados.includes(15)
-                    ? "bg-emerald-500 text-black font-bold"
-                    : "bg-paper border border-rule text-ink-soft"
-                }`}
-              >
-                {hitosAlcanzados.includes(15) ? (
-                  <Check className="size-4" />
-                ) : (
-                  <Award className="size-4" />
-                )}
-              </div>
-            </div>
-
-            <p className="text-xs text-ink-soft">
-              Premio mayor en efectivo al consolidar 15 sedes ($180.000 ARS en bonos totales acumulados).
-            </p>
-
-            <div className="flex items-center justify-between text-xs font-semibold pt-2 border-t border-rule/60">
-              <span className="text-ink-soft">Progreso</span>
-              <span className="font-mono text-ink">
-                {Math.min(15, gimnasiosPagoActivos)} / 15 sedes
-              </span>
-            </div>
-          </div>
+            );
+          })}
         </div>
       </div>
 
@@ -1139,7 +1103,7 @@ export function PartnerDashboardClient({
 
               <div className="p-2.5 rounded-[12px] bg-paper border border-accent/30 text-[11px] text-ink-soft space-y-1.5">
                 <p>
-                  🔥 <strong>Tu ganancia:</strong> Al contratar Pro, cobrás tu comisión inmediata ({esArranqueActivo ? "20%" : "15%"}) y suma 1 gym para tus bonos de $180k.
+                  🔥 <strong>Tu ganancia:</strong> Al contratar Pro, cobrás tu comisión inmediata ({comisionPct}%) y suma 1 gym para tus bonos de ${bonosTotales.toLocaleString("es-AR")}.
                 </p>
                 <p>
                   🎁 <strong>Argumento de cierre:</strong> &ldquo;Empezá gratis hoy mismo. Cuando superes los 40 alumnos y pases a un plan de pago, por haber usado mi código tenés el costo de setup 100% bonificado.&rdquo;
@@ -1335,11 +1299,13 @@ export function PartnerDashboardClient({
                 }}
                 className="w-full accent-[#10e7a0] cursor-pointer"
               />
-              <div className="flex justify-between text-[10px] text-ink-soft font-mono">
+              <div className="flex justify-between text-[10px] text-ink-soft font-mono flex-wrap gap-x-2">
                 <span>1 gym</span>
-                <span>5 gyms (Bono $20k)</span>
-                <span>10 gyms (Bono $60k)</span>
-                <span>15+ gyms (Bono $100k)</span>
+                {milestoneTiers.map((t) => (
+                  <span key={t.id}>
+                    {t.min_active_gyms}+ gyms (Bono ${(Number(t.milestone_bonus_amount) / 1000).toLocaleString("es-AR")}k)
+                  </span>
+                ))}
               </div>
             </div>
 
@@ -1347,18 +1313,18 @@ export function PartnerDashboardClient({
             {(() => {
               // Estimamos ticket promedio plan Pro ~$45.000 ARS
               const ticketPromedio = 45000;
-              const gymsArranque = Math.min(5, simGyms);
-              const gymsEstandar = Math.max(0, simGyms - 5);
+              const gymsArranque = Math.min(umbralEstandarHero, simGyms);
+              const gymsEstandar = Math.max(0, simGyms - umbralEstandarHero);
               const comisionTotal =
-                gymsArranque * ticketPromedio * (COMISION_ARRANQUE_PCT / 100) +
-                gymsEstandar * ticketPromedio * (COMISION_ESTANDAR_PCT / 100);
+                gymsArranque * ticketPromedio * (Number(pctArranqueHero) / 100) +
+                gymsEstandar * ticketPromedio * (Number(pctEstandarHero) / 100);
 
-              let bonosTotal = 0;
-              if (simGyms >= 5) bonosTotal += BONOS_HITO[5];
-              if (simGyms >= 10) bonosTotal += BONOS_HITO[10];
-              if (simGyms >= 15) bonosTotal += BONOS_HITO[15];
+              const bonosTotal = milestoneTiers
+                .filter((t) => simGyms >= t.min_active_gyms)
+                .reduce((acc, t) => acc + Number(t.milestone_bonus_amount), 0);
 
               const totalEstimado = comisionTotal + bonosTotal;
+              const primerHito = milestoneTiers[0];
 
               return (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-2 border-t border-rule/80">
@@ -1370,7 +1336,7 @@ export function PartnerDashboardClient({
                       ${Math.round(comisionTotal).toLocaleString("es-AR")} ARS
                     </p>
                     <span className="text-[10px] text-ink-soft">
-                      {gymsArranque} gyms al 20% + {gymsEstandar} gyms al 15%
+                      {gymsArranque} gyms al {pctArranqueHero}% + {gymsEstandar} gyms al {pctEstandarHero}%
                     </span>
                   </div>
 
@@ -1382,8 +1348,8 @@ export function PartnerDashboardClient({
                       +${bonosTotal.toLocaleString("es-AR")} ARS
                     </p>
                     <span className="text-[10px] text-ink-soft">
-                      {simGyms < 5
-                        ? "Te faltan " + (5 - simGyms) + " gyms para el bono de $20k"
+                      {primerHito && simGyms < primerHito.min_active_gyms
+                        ? `Te faltan ${primerHito.min_active_gyms - simGyms} gyms para el bono de $${(Number(primerHito.milestone_bonus_amount) / 1000).toLocaleString("es-AR")}k`
                         : "¡Premios en efectivo acreditados!"}
                     </span>
                   </div>

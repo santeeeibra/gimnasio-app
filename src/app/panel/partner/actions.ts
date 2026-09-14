@@ -14,6 +14,7 @@ import {
   type PartnerCommission,
   type PartnerPayout,
   type MilestoneNumero,
+  type PartnerTier,
   BONOS_HITO,
   RETIRO_MINIMO_ARS,
 } from "@/types/partner";
@@ -147,6 +148,13 @@ export async function obtenerODescargarPartnerAction(): Promise<{
     );
     const gimnasiosPagoActivos = gimnasiosDetalle.filter((g) => g.esPagoActivo).length;
 
+    // Rangos configurables (comisión + bono por hito), editable sin deploy.
+    const { data: tiersData } = await admin
+      .from("partner_tiers")
+      .select("id, name, min_active_gyms, commission_pct, milestone_bonus_amount")
+      .order("min_active_gyms", { ascending: true });
+    const tiers = (tiersData ?? []) as PartnerTier[];
+
     // Balance oficial mediante la función SQL partner_balance()
     const { data: balanceData } = await admin.rpc("partner_balance", {
       p_partner_id: partnerId,
@@ -190,6 +198,7 @@ export async function obtenerODescargarPartnerAction(): Promise<{
       proximoHito,
       gimnasiosDetalle,
       notificaciones,
+      tiers,
     };
 
     return {

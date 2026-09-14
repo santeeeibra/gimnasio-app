@@ -14,6 +14,7 @@ export type Partner = {
   estado: EstadoPartner;
   creado_at: string;
   datos_cobro_actualizados_at: string | null;
+  override_commission_pct: number | null;
 };
 
 export type DatosCobroPartner = {
@@ -36,7 +37,10 @@ export type PartnerCommission = {
   revertida_at: string | null;
 };
 
-export const COMISION_ARRANQUE_PCT = 20; // Primeros 5 gimnasios (15% + 5% bonus impulso)
+// Valores por defecto usados solo como fallback si por algún motivo no se
+// pudo leer partner_tiers (ver lib/plataforma/partner-tiers.ts). La fuente
+// de verdad real vive en la tabla partner_tiers (editable sin deploy).
+export const COMISION_ARRANQUE_PCT = 20; // Primeros 5 gimnasios (fast-start)
 export const COMISION_ESTANDAR_PCT = 15; // A partir del 6to gimnasio
 
 export type MilestoneNumero = 5 | 10 | 15;
@@ -45,6 +49,15 @@ export const BONOS_HITO: Record<MilestoneNumero, number> = {
   5: 20000,
   10: 60000,
   15: 100000,
+};
+
+/** Fila de la tabla partner_tiers (rangos configurables de comisión + bono). */
+export type PartnerTier = {
+  id: number;
+  name: string;
+  min_active_gyms: number;
+  commission_pct: number;
+  milestone_bonus_amount: number;
 };
 
 export type RangoPartnerId = "starter" | "pro" | "elite" | "black";
@@ -88,11 +101,33 @@ export const RANGOS_PARTNER: Record<RangoPartnerId, RangoPartnerInfo> = {
   },
 };
 
-export function calcularRangoPartner(gymsPagos: number): RangoPartnerInfo {
-  if (gymsPagos >= 15) return RANGOS_PARTNER.black;
-  if (gymsPagos >= 10) return RANGOS_PARTNER.elite;
-  if (gymsPagos >= 5) return RANGOS_PARTNER.pro;
-  return RANGOS_PARTNER.starter;
+/**
+ * Rango visual (badge/color) según la cantidad de gimnasios pago-activos.
+ * Si se pasan `tiers` (partner_tiers desde DB), el corte de cada rango sale
+ * de ahí en vez de los números fijos 5/10/15 — así un cambio en la tabla se
+ * refleja acá sin tocar código. Sin `tiers`, cae al fallback hardcodeado.
+ */
+export function calcularRangoPartner(
+  gymsPagos: number,
+  tiers?: PartnerTier[],
+): RangoPartnerInfo {
+  if (!tiers || tiers.length === 0) {
+    if (gymsPagos >= 15) return RANGOS_PARTNER.black;
+    if (gymsPagos >= 10) return RANGOS_PARTNER.elite;
+    if (gymsPagos >= 5) return RANGOS_PARTNER.pro;
+    return RANGOS_PARTNER.starter;
+  }
+
+  const ordenados = [...tiers].sort((a, b) => b.min_active_gyms - a.min_active_gyms);
+  const alcanzado = ordenados.find((t) => gymsPagos >= t.min_active_gyms);
+  const nombreANivel: Record<string, RangoPartnerId> = {
+    Starter: "starter",
+    Pro: "pro",
+    Elite: "elite",
+    Black: "black",
+  };
+  const id = alcanzado ? nombreANivel[alcanzado.name] ?? "starter" : "starter";
+  return RANGOS_PARTNER[id];
 }
 
 export type EstadoPayout = "pendiente" | "pagado" | "rechazado" | "cancelado";
@@ -147,6 +182,8 @@ export type ResumenPartner = {
   proximoHito: { milestone: MilestoneNumero; faltan: number } | null;
   gimnasiosDetalle: GimnasioReferidoDetalle[];
   notificaciones?: PartnerNotification[];
+  /** Rangos configurables desde partner_tiers (comisión + bono por hito). */
+  tiers: PartnerTier[];
 };
 
 // ── Gating de plan gratuito (cap de 40 alumnos) ─────────────────────────
