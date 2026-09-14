@@ -46,7 +46,7 @@ import {
   PillRampaCalentamiento,
 } from "@/components/rutinas/modal-rampa-calentamiento";
 import { useWakeLock } from "@/lib/ui/use-wake-lock";
-import { Focus, Sun } from "lucide-react";
+import { Focus, Sun, ChevronDown } from "lucide-react";
 import type { DropPaso } from "@/lib/progreso/tipos";
 import type { ColoresImagen } from "@/lib/logros/imagen";
 import {
@@ -1022,6 +1022,7 @@ function ItemFila({
   const [abrirCambio, setAbrirCambio] = useState(false);
   const panelCambioRef = useRef<HTMLDivElement>(null);
   const [molestias, setMolestias] = useState<Molestia[]>([]);
+  const [mostrarMolestias, setMostrarMolestias] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const msgTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1863,40 +1864,57 @@ function ItemFila({
               // thumb/dial ya no ocupa esa franja visualmente.
               className="mt-3 -ml-[96px] w-[calc(100%+96px)] rounded-[12px] border border-rule bg-paper p-3 animate-fade-in"
             >
-              {/* Filtro de molestias articulares con explicación clara */}
-              <div className="mb-3 rounded-[10px] border border-rule/60 bg-paper-2/60 p-2.5">
-                <div className="flex items-baseline justify-between gap-1.5 mb-1">
-                  <span className="text-xs font-bold text-ink">
-                    ¿Sentís dolor o molestia en alguna articulación?
+              {/* Filtro de molestias articulares: colapsado por default (se
+                  usa poco) — un toggle chico en vez de la caja completa. Se
+                  auto-expande si ya hay molestias tildadas de antes. */}
+              <div className="mb-3 rounded-[10px] border border-rule/60 bg-paper-2/60">
+                <button
+                  type="button"
+                  onClick={() => setMostrarMolestias((v) => !v)}
+                  className="w-full flex items-center justify-between gap-1.5 px-2.5 py-2 text-left"
+                >
+                  <span className="text-[11px] font-semibold text-ink-soft">
+                    ¿Molestia articular?{" "}
+                    {molestias.length > 0 && (
+                      <span className="text-accent">
+                        {molestias.map((m) => MOLESTIA_LABEL[m]).join(", ")}
+                      </span>
+                    )}
                   </span>
-                  <span className="text-[10px] text-ink-soft shrink-0">(opcional)</span>
-                </div>
-                <p className="text-[11px] text-ink-soft mb-2 leading-relaxed">
-                  Tocá la zona para quitar variantes que fuercen esa articulación:
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {MOLESTIAS.map((m) => {
-                    const on = molestias.includes(m);
-                    return (
-                      <button
-                        key={m}
-                        type="button"
-                        onClick={() =>
-                          setMolestias((p) =>
-                            on ? p.filter((x) => x !== m) : [...p, m],
-                          )
-                        }
-                        className={`h-8 rounded-[8px] border px-2.5 text-[11px] font-semibold transition-all active:scale-95 ${
-                          on
-                            ? "border-accent bg-accent text-accent-ink shadow-xs"
-                            : "border-rule bg-paper text-ink-soft hover:border-ink/40 hover:text-ink"
-                        }`}
-                      >
-                        {MOLESTIA_LABEL[m]}
-                      </button>
-                    );
-                  })}
-                </div>
+                  <ChevronDown
+                    className={`size-3.5 text-ink-soft shrink-0 transition-transform ${mostrarMolestias ? "rotate-180" : ""}`}
+                  />
+                </button>
+                {mostrarMolestias && (
+                  <div className="px-2.5 pb-2.5 animate-fade-in">
+                    <p className="text-[11px] text-ink-soft mb-2 leading-relaxed">
+                      Tocá la zona para quitar variantes que fuercen esa articulación:
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {MOLESTIAS.map((m) => {
+                        const on = molestias.includes(m);
+                        return (
+                          <button
+                            key={m}
+                            type="button"
+                            onClick={() =>
+                              setMolestias((p) =>
+                                on ? p.filter((x) => x !== m) : [...p, m],
+                              )
+                            }
+                            className={`h-8 rounded-[8px] border px-2.5 text-[11px] font-semibold transition-all active:scale-95 ${
+                              on
+                                ? "border-accent bg-accent text-accent-ink shadow-xs"
+                                : "border-rule bg-paper text-ink-soft hover:border-ink/40 hover:text-ink"
+                            }`}
+                          >
+                            {MOLESTIA_LABEL[m]}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {confirmacionSolape ? (
