@@ -409,6 +409,72 @@ export function hapticoRecordPersonal() {
 }
 
 /**
+ * Sonido óptico/acústico y háptico al expandir/colapsar el calentamiento general:
+ * Sweep armónico ascendente (apertura) o descendente (cierre) con respuesta táctil.
+ */
+export function hapticoWarmupExpand(expandiendo = true) {
+  vibrar(expandiendo ? 10 : 6);
+  triggerIosSwitchHaptic();
+
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  if (ctx.state === "suspended") ctx.resume().catch(() => {});
+
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "sine";
+
+  if (expandiendo) {
+    osc.frequency.setValueAtTime(320, now);
+    osc.frequency.exponentialRampToValueAtTime(580, now + 0.08);
+    gain.gain.setValueAtTime(0.06, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+  } else {
+    osc.frequency.setValueAtTime(500, now);
+    osc.frequency.exponentialRampToValueAtTime(280, now + 0.06);
+    gain.gain.setValueAtTime(0.04, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+  }
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(now);
+  osc.stop(now + (expandiendo ? 0.095 : 0.075));
+}
+
+/**
+ * Sonido óptico/acústico y háptico al tildar un ejercicio de movilidad:
+ * Click elástico con doble tono ascendente (880Hz -> 1320Hz) y thump de chasis.
+ */
+export function hapticoWarmupTick() {
+  vibrar([8, 20, 12]);
+  triggerIosSwitchHaptic();
+  reproducirPulsoAcustico(0.6);
+
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  if (ctx.state === "suspended") ctx.resume().catch(() => {});
+
+  const now = ctx.currentTime;
+  const playTone = (freq: number, start: number, dur: number) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(freq, start);
+    gain.gain.setValueAtTime(0.07, start);
+    gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(start);
+    osc.stop(start + dur);
+  };
+
+  playTone(880, now + 0.01, 0.04);
+  playTone(1320, now + 0.05, 0.07);
+}
+
+/**
  * Hook utilitario para componentes de React
  */
 export function useHapticos() {
@@ -424,6 +490,8 @@ export function useHapticos() {
     exito: hapticoExito,
     record: hapticoRecordPersonal,
     error: hapticoError,
+    warmupExpand: hapticoWarmupExpand,
+    warmupTick: hapticoWarmupTick,
   };
 }
 

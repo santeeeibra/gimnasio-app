@@ -334,6 +334,7 @@ export default async function MiRutinaPage() {
             gimnasioNombre={gymData?.nombre ?? ""}
             logoUrl={gymData?.logo_url ?? null}
             colores={coloresLogro}
+            objetivo={rutina.objetivo as Objetivo}
           />
 
           {/* Frase motivacional: siempre visible, fuera del acordeón */}
