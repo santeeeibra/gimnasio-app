@@ -89,14 +89,21 @@ async function llamarGemini(args: LlamadaIa): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY!;
 
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`,
     {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         system_instruction: { parts: [{ text: args.system }] },
         contents: [{ role: "user", parts: [{ text: args.userMessage }] }],
-        generationConfig: { maxOutputTokens: args.maxTokens },
+        // thinkingBudget:0 apaga el razonamiento interno del modelo -- sin
+        // esto se come el maxOutputTokens pensando y corta la respuesta
+        // a la mitad (probado: con thinking activo y maxTokens 220 el
+        // texto queda truncado en 8 tokens de contenido real).
+        generationConfig: {
+          maxOutputTokens: args.maxTokens,
+          thinkingConfig: { thinkingBudget: 0 },
+        },
       }),
     },
   );
