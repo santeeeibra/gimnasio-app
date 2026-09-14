@@ -1137,8 +1137,13 @@ export function PartnerDashboardClient({
                 </ul>
               </div>
 
-              <div className="p-2.5 rounded-[12px] bg-paper border border-accent/30 text-[11px] text-ink-soft">
-                🔥 <strong>Tu ganancia:</strong> Al contratar Pro, cobrás tu comisión inmediata ({esArranqueActivo ? "20%" : "15%"}) y suma 1 gym para tus bonos de $180k.
+              <div className="p-2.5 rounded-[12px] bg-paper border border-accent/30 text-[11px] text-ink-soft space-y-1.5">
+                <p>
+                  🔥 <strong>Tu ganancia:</strong> Al contratar Pro, cobrás tu comisión inmediata ({esArranqueActivo ? "20%" : "15%"}) y suma 1 gym para tus bonos de $180k.
+                </p>
+                <p>
+                  🎁 <strong>Argumento de cierre:</strong> &ldquo;Empezá gratis hoy mismo. Cuando superes los 40 alumnos y pases a un plan de pago, por haber usado mi código tenés el costo de setup 100% bonificado.&rdquo;
+                </p>
               </div>
             </div>
 
