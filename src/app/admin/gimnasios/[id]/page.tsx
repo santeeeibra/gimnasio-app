@@ -14,6 +14,7 @@ import { PagosPlataforma, type PagoPlataformaRow } from "./pagos-plataforma";
 import { DisparadoresSocio } from "./disparadores-socio";
 import { TourDev } from "./tour-dev";
 import { BotonResetClave } from "../../boton-reset-clave";
+import { BotonLinkPrueba } from "../../boton-link-prueba";
 
 export const dynamic = "force-dynamic";
 
@@ -242,6 +243,11 @@ export default async function AdminGimnasioDetalle({
               nombre={duenoInfo.nombre}
               rol="dueno"
             />
+            <BotonLinkPrueba
+              profileId={duenoInfo.id}
+              nombre={duenoInfo.nombre}
+              rol="dueno"
+            />
           </div>
         ) : (
           <p className="text-xs text-ink-soft">Sin dueño cargado.</p>
@@ -285,13 +291,20 @@ export default async function AdminGimnasioDetalle({
               </span>
               <div className="flex items-center gap-3 shrink-0">
                 {s.profile?.id && (
-                  <BotonResetClave
-                    profileId={s.profile.id}
-                    nombre={s.profile.nombre}
-                    dni={s.profile.dni}
-                    rol="cliente"
-                    compacto
-                  />
+                  <>
+                    <BotonResetClave
+                      profileId={s.profile.id}
+                      nombre={s.profile.nombre}
+                      dni={s.profile.dni}
+                      rol="cliente"
+                      compacto
+                    />
+                    <BotonLinkPrueba
+                      profileId={s.profile.id}
+                      nombre={s.profile.nombre}
+                      rol="cliente"
+                    />
+                  </>
                 )}
                 <form action={entrarComoAction}>
                   <input

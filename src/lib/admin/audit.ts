@@ -24,6 +24,7 @@ type AccionAdmin =
   | "cambiar_estado_gym"
   | "entrar_como"
   | "salir_impersonacion"
+  | "generar_link_prueba"
   | "editar_planes_plataforma"
   | "asignar_plan_plataforma"
   | "renovar_plan_plataforma"

@@ -6,6 +6,7 @@ import { requireSuperadmin, claveInicial, dniAEmail } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { enviarPush } from "@/lib/push/enviar";
 import { registrarAccionAdmin } from "@/lib/admin/audit";
+import { generarMagicToken } from "@/lib/magic-link";
 
 // Las APIs de Auth de Supabase (updateUserById / deleteUser) no tienen versión
 // batch: hay que llamarlas una vez por usuario. Al menos no las hacemos en
@@ -1026,5 +1027,43 @@ export async function eliminarGimnasioDefinitivamente(
 
   revalidatePath("/admin/gimnasios");
   redirect("/admin/gimnasios");
+}
+
+// Link "probar mi gym" sin login/registro: /probar/[token]. No pisa nada de
+// la sesión del superadmin (a diferencia de "entrar como"); solo firma un
+// token que la persona misma abre desde su celu.
+export async function generarLinkPruebaAction(params: {
+  profileId: string;
+  horas?: number;
+}): Promise<{ ok: boolean; msg: string; url?: string }> {
+  const admin = await requireSuperadmin();
+  const db = createAdminClient();
+
+  const { data: profile, error: pErr } = await db
+    .from("profiles")
+    .select("id, nombre, rol, gimnasio_id, activo")
+    .eq("id", params.profileId)
+    .single();
+
+  if (pErr || !profile) {
+    return { ok: false, msg: "Usuario no encontrado." };
+  }
+  if (profile.activo === false) {
+    return { ok: false, msg: "Esa cuenta está desactivada." };
+  }
+
+  const horas = params.horas && params.horas > 0 ? params.horas : 72;
+  const token = generarMagicToken(profile.id, horas);
+  const base = process.env.NEXT_PUBLIC_BASE_URL || "";
+  const url = `${base}/probar/${token}`;
+
+  await registrarAccionAdmin(admin.id, "generar_link_prueba", profile.gimnasio_id, {
+    profileId: profile.id,
+    nombre: profile.nombre,
+    rol: profile.rol,
+    horas,
+  });
+
+  return { ok: true, msg: `Link válido por ${horas}h generado.`, url };
 }
 
