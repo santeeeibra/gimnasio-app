@@ -1,9 +1,31 @@
 "use client";
 
+import { useFormStatus } from "react-dom";
 import { entrarComoAction, salirImpersonacionAction } from "./impersonar-actions";
 import { ArrowRight, UserCheck, ShieldCheck, LogOut, Sparkles, ExternalLink } from "lucide-react";
 import type { ImpFlag } from "@/lib/impersonation";
 import { hapticoImpactoMedio } from "@/lib/ui/hapticos";
+
+// Sin esto el botón no daba ninguna señal mientras el server action corría
+// (magiclink + verifyOtp + redirect): en una demo con red lenta parece que
+// "no pasó nada" y se termina clickeando varias veces, disparando logins
+// duplicados. disabled+texto de carga cortan el spam-click de raíz.
+function BotonSubmit({
+  children,
+  className,
+  pendingLabel,
+}: {
+  children: React.ReactNode;
+  className: string;
+  pendingLabel: string;
+}) {
+  const { pending } = useFormStatus();
+  return (
+    <button type="submit" disabled={pending} className={`${className} disabled:opacity-60 disabled:cursor-wait`}>
+      {pending ? pendingLabel : children}
+    </button>
+  );
+}
 
 interface VistaSwitcherProps {
   duenoProfileId: string | null;
@@ -67,13 +89,13 @@ export function VistaSwitcher({
               </a>
 
               <form action={salirImpersonacionAction} onSubmit={() => hapticoImpactoMedio()}>
-                <button
-                  type="submit"
+                <BotonSubmit
+                  pendingLabel="Saliendo..."
                   className="inline-flex h-11 items-center gap-2 rounded-[12px] bg-amber-500 px-5 text-xs font-black text-black shadow-md transition-transform hover:brightness-105 active:scale-[0.97]"
                 >
                   <LogOut className="size-4 stroke-[2.5]" />
                   <span>Salir y volver al Dev Panel</span>
-                </button>
+                </BotonSubmit>
               </form>
             </div>
           </div>
@@ -115,13 +137,13 @@ export function VistaSwitcher({
             {duenoProfileId ? (
               <form action={entrarComoAction} onSubmit={() => hapticoImpactoMedio()}>
                 <input type="hidden" name="profile_id" value={duenoProfileId} />
-                <button
-                  type="submit"
+                <BotonSubmit
+                  pendingLabel="Entrando..."
                   className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-[12px] bg-volt px-5 font-bold text-volt-ink shadow-sm transition-all duration-150 hover:brightness-105 active:scale-[0.98] cursor-pointer"
                 >
                   <span className="text-sm font-black">Entrar como Dueño (Ir a /panel)</span>
                   <ArrowRight className="size-4 stroke-[3]" />
-                </button>
+                </BotonSubmit>
               </form>
             ) : (
               <p className="text-xs text-danger">No se encontró el perfil de dueño para {gimnasioSlug}.</p>
@@ -162,13 +184,13 @@ export function VistaSwitcher({
             {socioProfileId ? (
               <form action={entrarComoAction} onSubmit={() => hapticoImpactoMedio()}>
                 <input type="hidden" name="profile_id" value={socioProfileId} />
-                <button
-                  type="submit"
+                <BotonSubmit
+                  pendingLabel="Entrando..."
                   className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-[12px] bg-ink px-5 font-bold text-paper shadow-sm transition-all duration-150 hover:bg-ink/90 active:scale-[0.98] cursor-pointer"
                 >
                   <span className="text-sm font-black">Entrar como Socio (Ir a /mi)</span>
                   <ArrowRight className="size-4 stroke-[3]" />
-                </button>
+                </BotonSubmit>
               </form>
             ) : (
               <p className="text-xs text-danger">No se encontró el perfil de cliente para {gimnasioSlug}.</p>
