@@ -586,16 +586,14 @@ export default async function ResumenPage() {
       </div>
 
       {/* 4. Distribución Operativa en 2 Columnas (Desktop) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
-        {/* Columna Izquierda: Sala en Vivo & Pedidos */}
-        <div className="space-y-4">
-          <WidgetAsistenciaSala
-            iniciales={pedidosActivos}
-            gimnasioId={dueno.gimnasio_id}
-          />
-        </div>
+      {/* Alerta full-width: solo ocupa lugar cuando hay pedidos de sala activos */}
+      <WidgetAsistenciaSala
+        iniciales={pedidosActivos}
+        gimnasioId={dueno.gimnasio_id}
+      />
 
-        {/* Columna Derecha: Socios con atención pendiente (Vencidos o por vencer) */}
+      <div className="pt-2">
+        {/* Socios con atención pendiente (Vencidos o por vencer) */}
         <div className="space-y-3">
           <div className="flex items-baseline justify-between px-0.5">
             <span className="text-sm font-bold text-ink">
