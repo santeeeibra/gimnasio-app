@@ -6,11 +6,7 @@ import * as XLSX from "xlsx";
 import JSZip from "jszip";
 import { comprimirImagen } from "@/lib/img/comprimir";
 import { Button, Spinner, linkClasses, pillClasses } from "@/components/ui";
-import {
-  importarTandaSocios,
-  registrarFinImportacion,
-  type SocioImportarItem,
-} from "./actions";
+import type { SocioImportarItem, ResultadoImportarItem } from "./actions";
 
 type PlanGym = {
   id: string;
@@ -64,12 +60,30 @@ export function ImportadorSocios({
   gimnasioSlug,
   planes,
   dnisExistentes,
+  importarAction,
+  onFinImportacion,
+  volverHref,
+  volverLabel = "Ver gimnasio en soporte →",
 }: {
   gimnasioId: string;
   gimnasioNombre: string;
   gimnasioSlug: string;
   planes: PlanGym[];
   dnisExistentes: string[];
+  /** Server action que efectivamente crea los socios (admin o dueño). */
+  importarAction: (
+    gimnasioId: string,
+    batch: SocioImportarItem[],
+  ) => Promise<ResultadoImportarItem[]>;
+  /** Opcional: se llama al terminar toda la tanda (ej. auditoría de admin). */
+  onFinImportacion?: (resumen: {
+    total: number;
+    exitosos: number;
+    fallidos: number;
+    errores: { dni: string; motivo: string }[];
+  }) => Promise<void>;
+  volverHref: string;
+  volverLabel?: string;
 }) {
   const [archivoExcel, setArchivoExcel] = useState<File | null>(null);
   const [archivoZip, setArchivoZip] = useState<File | null>(null);
@@ -333,7 +347,7 @@ export function ImportadorSocios({
         }
 
         // Enviar tanda al server
-        const resultadosTanda = await importarTandaSocios(gimnasioId, batchPayload);
+        const resultadosTanda = await importarAction(gimnasioId, batchPayload);
 
         for (const res of resultadosTanda) {
           if (res.ok) {
@@ -353,13 +367,15 @@ export function ImportadorSocios({
         });
       }
 
-      // Registrar auditoría final
-      await registrarFinImportacion(gimnasioId, {
-        total: validos.length,
-        exitosos: exitososCount,
-        fallidos: erroresAcumulados.length,
-        errores: erroresAcumulados.map((e) => ({ dni: e.dni, motivo: e.motivo })),
-      });
+      // Registrar auditoría final (solo admin la usa)
+      if (onFinImportacion) {
+        await onFinImportacion({
+          total: validos.length,
+          exitosos: exitososCount,
+          fallidos: erroresAcumulados.length,
+          errores: erroresAcumulados.map((e) => ({ dni: e.dni, motivo: e.motivo })),
+        });
+      }
 
       setResultadoFinal({
         total: validos.length,
@@ -658,11 +674,8 @@ export function ImportadorSocios({
             >
               Nueva importación
             </Button>
-            <Link
-              href={`/admin/gimnasios/${gimnasioId}`}
-              className={pillClasses.neutra}
-            >
-              Ver gimnasio en soporte →
+            <Link href={volverHref} className={pillClasses.neutra}>
+              {volverLabel}
             </Link>
           </div>
         </div>

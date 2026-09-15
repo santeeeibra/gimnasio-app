@@ -35,6 +35,15 @@ export async function importarTandaSocios(
   socios: SocioImportarItem[],
 ): Promise<ResultadoImportarItem[]> {
   await requireSuperadmin();
+  return importarSociosCore(gimnasioId, socios);
+}
+
+/** Núcleo sin auth propia — cada caller (admin o dueño) valida antes de
+ * llamarlo y decide el gimnasioId permitido. */
+export async function importarSociosCore(
+  gimnasioId: string,
+  socios: SocioImportarItem[],
+): Promise<ResultadoImportarItem[]> {
   const admin = createAdminClient();
 
   const { data: gym, error: gymErr } = await admin

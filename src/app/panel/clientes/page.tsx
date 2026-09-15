@@ -8,6 +8,9 @@ import { ListadoClientes } from "./listado-clientes";
 import { CacheAlVuelo } from "@/components/offline/cache-al-vuelo";
 import { ConflictosOffline } from "@/components/offline/conflictos";
 import { GatingPlanInicialBanner } from "@/components/plataforma/gating-plan-inicial";
+import Link from "next/link";
+import { pillClasses } from "@/components/ui";
+import { Upload } from "lucide-react";
 
 export default async function ClientesPage({
   searchParams,
@@ -76,11 +79,20 @@ export default async function ClientesPage({
           <h1 className="text-2xl mb-1 font-bold">Clientes</h1>
           <p className="text-sm text-ink-soft">{clientes.length} en total</p>
         </div>
-        <NuevoClienteModal
-          planes={planes}
-          cupo={cupo}
-          gimnasioId={dueno.gimnasio_id}
-        />
+        <div className="flex items-center gap-2">
+          <Link
+            href="/panel/clientes/importar-socios"
+            className={pillClasses.neutra}
+          >
+            <Upload aria-hidden strokeWidth={2} className="size-3.5 shrink-0" />
+            Importar socios
+          </Link>
+          <NuevoClienteModal
+            planes={planes}
+            cupo={cupo}
+            gimnasioId={dueno.gimnasio_id}
+          />
+        </div>
       </div>
 
       <GatingPlanInicialBanner

@@ -4,6 +4,7 @@ import { requireSuperadmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { linkClasses } from "@/components/ui";
 import { ImportadorSocios } from "./importador-socios";
+import { importarTandaSocios, registrarFinImportacion } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -66,6 +67,10 @@ export default async function ImportarSociosPage({
         gimnasioSlug={gym.slug}
         planes={(planesData ?? []) as { id: string; nombre: string }[]}
         dnisExistentes={dnisExistentes}
+        importarAction={importarTandaSocios}
+        onFinImportacion={registrarFinImportacion.bind(null, gym.id)}
+        volverHref={`/admin/gimnasios/${gym.id}`}
+        volverLabel="Ver gimnasio en soporte →"
       />
     </div>
   );
