@@ -12,6 +12,7 @@
 
 import { sumarDias } from "./fecha";
 import { pendientes } from "./cola";
+import { guardarSociosLocal } from "./indexeddb";
 
 export type SocioPadron = {
   cliente_id: string;
@@ -97,6 +98,16 @@ export async function refrescarPadron(): Promise<boolean> {
       : data.socios;
 
     escribirPadron({ actualizadoEn: Date.now(), socios });
+    void guardarSociosLocal(
+      socios.map((s) => ({
+        id: s.cliente_id,
+        dni: s.dni,
+        nombre: s.nombre,
+        estado_cuota: s.estado_cuota,
+        vencimiento: s.fecha_vencimiento,
+        updated_at: new Date().toISOString(),
+      })),
+    );
     return true;
   } catch {
     return false;

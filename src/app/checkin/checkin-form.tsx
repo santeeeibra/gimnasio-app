@@ -4,8 +4,8 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { marcarIngreso, type CheckinState } from "./actions";
 import { Button } from "@/components/ui";
 import { SalirModoCheckin } from "./salir-form";
-import { encolar } from "@/lib/offline/cola";
-import { decidirCheckinLocal } from "@/lib/offline/padron";
+import { decidirCheckinLocal, buscarPorDni } from "@/lib/offline/padron";
+import { encolarCheckinOffline } from "@/lib/offline/indexeddb";
 import { useConexionSupabase } from "@/lib/offline/conexion";
 
 import { Camera, CameraOff, Pencil } from "lucide-react";
@@ -127,6 +127,18 @@ export function CheckinForm() {
     inputRef.current?.focus();
   };
 
+  const encolarOffline = (dni: string, decision: ReturnType<typeof decidirCheckinLocal>) => {
+    const socio = buscarPorDni(dni);
+    void encolarCheckinOffline({
+      socio_id: socio?.cliente_id ?? "",
+      dni,
+      nombre: decision.estado === "no_encontrado" ? "" : (decision.nombre ?? ""),
+      timestamp: new Date().toISOString(),
+      metodo: "manual",
+      estado_al_ingreso: decision.estado,
+    });
+  };
+
   const procesarDniIngreso = (dniLimpio: string) => {
     if (!dniLimpio) {
       setState({ error: "Escribí o escaneá un DNI." });
@@ -137,7 +149,7 @@ export function CheckinForm() {
     // cacheado, al instante, y encolamos el registro para cuando vuelva.
     if (estadoConexion === "desconectado") {
       const decision = decidirCheckinLocal(dniLimpio);
-      encolar("checkin", { dni: dniLimpio });
+      encolarOffline(dniLimpio, decision);
       setState(
         decision.estado === "no_encontrado"
           ? { estado: "no_encontrado" }
@@ -159,7 +171,7 @@ export function CheckinForm() {
           ),
         ]);
         if (res.error) {
-          encolar("checkin", { dni: dniLimpio });
+          encolarOffline(dniLimpio, decidirCheckinLocal(dniLimpio));
           setState({ encolado: true });
         } else {
           setState(res);
@@ -168,7 +180,7 @@ export function CheckinForm() {
         // El server no contestó a tiempo: no dejamos al mostrador esperando,
         // resolvemos con el padrón local y sincronizamos después.
         const decision = decidirCheckinLocal(dniLimpio);
-        encolar("checkin", { dni: dniLimpio });
+        encolarOffline(dniLimpio, decision);
         setState(
           decision.estado === "no_encontrado"
             ? { estado: "no_encontrado" }
@@ -194,12 +206,33 @@ export function CheckinForm() {
 
   return (
     <div className="w-full max-w-md rounded-[20px] border border-rule/60 bg-paper-2/90 p-6 shadow-lg backdrop-blur-xl sm:p-8">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="font-display text-3xl leading-tight">Ingreso al Gym</h1>
           <p className="mt-1 text-[14px] text-ink-soft">
             Escribí tu DNI o escaneá tu pase QR
           </p>
+        </div>
+        <div
+          title={
+            estadoConexion === "desconectado"
+              ? "Modo Contingencia Offline Activo"
+              : "App Sincronizada y Lista para uso Offline"
+          }
+          className={`flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold border transition-all duration-300 [transition-timing-function:var(--ease-out)] ${
+            estadoConexion === "desconectado"
+              ? "border-amber-500/30 bg-amber-500/10 text-amber-400"
+              : "border-[#10e7a0]/30 bg-[#10e7a0]/10 text-[#10e7a0]"
+          }`}
+        >
+          <span
+            className={`size-2 rounded-full transition-transform duration-300 ${
+              estadoConexion === "desconectado"
+                ? "bg-amber-400 animate-pulse"
+                : "bg-[#10e7a0] shadow-[0_0_8px_#10e7a0]"
+            }`}
+          />
+          {estadoConexion === "desconectado" ? "Offline" : "PWA Ready"}
         </div>
       </div>
 

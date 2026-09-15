@@ -112,6 +112,7 @@ export const viewport: Viewport = {
 };
 
 import { ActualizadorApp } from "@/components/actualizador-app";
+import { AutoRedirectSuperadmin } from "@/components/dev/auto-redirect-superadmin";
 
 export default function RootLayout({
   children,
@@ -127,6 +128,7 @@ export default function RootLayout({
       <body>
         {children}
         <ActualizadorApp />
+        <AutoRedirectSuperadmin />
       </body>
     </html>
   );

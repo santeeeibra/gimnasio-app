@@ -15,6 +15,14 @@ export type CheckinState = {
   error?: string;
 };
 
+export type CheckinLoteItem = {
+  /** Id local del ítem en el IndexedDB `checkins_queue` del kiosko. */
+  clientRef: string;
+  dni: string;
+};
+
+export type CheckinLoteResultado = CheckinState & { clientRef: string };
+
 /**
  * Marca el ingreso de un cliente a partir de su DNI.
  * Corre dentro de la sesión autenticada del dueño o staff (modo kiosko), usa el
@@ -26,11 +34,12 @@ export async function marcarIngreso(
 ): Promise<CheckinState> {
   const dueno = await requireStaffODueno();
   const dni = String(formData.get("dni") ?? "").replace(/\D/g, "").trim();
+  const clientRef = String(formData.get("client_ref") ?? "").trim() || null;
 
   if (!dni) return { error: "Escribí un DNI." };
 
   try {
-    return await marcarIngresoInterno(dueno, dni);
+    return await marcarIngresoInterno(dueno, dni, clientRef);
   } catch (err) {
     // Log para el semáforo de /admin; el flujo sigue igual (se propaga).
     await registrarError(dueno.gimnasio_id, "checkin", err);
@@ -38,9 +47,40 @@ export async function marcarIngreso(
   }
 }
 
+/**
+ * Sincroniza en lote los check-ins guardados offline en el IndexedDB
+ * `checkins_queue` del kiosko. Cada ítem trae su `clientRef` (el id que le
+ * puso el navegador al encolarlo): ese id es la clave de dedup real — a
+ * diferencia del check-in único (que no tiene forma de generar uno), acá la
+ * cola puede reintentar el mismo ítem varias veces (reconexión + doble
+ * sincronización) y el índice único en `registros_entrada(cliente_id,
+ * client_ref)` hace que reinsertarlo sea un no-op en vez de una fila
+ * repetida. Se procesan en paralelo porque cada ítem es independiente.
+ */
+export async function marcarIngresosLote(
+  items: CheckinLoteItem[],
+): Promise<CheckinLoteResultado[]> {
+  const dueno = await requireStaffODueno();
+
+  return Promise.all(
+    items.map(async ({ clientRef, dni }) => {
+      const dniLimpio = dni.replace(/\D/g, "").trim();
+      if (!dniLimpio) return { clientRef, error: "DNI vacío." };
+      try {
+        const resultado = await marcarIngresoInterno(dueno, dniLimpio, clientRef);
+        return { ...resultado, clientRef };
+      } catch (err) {
+        await registrarError(dueno.gimnasio_id, "checkin", err);
+        return { clientRef, error: "No se pudo sincronizar." };
+      }
+    }),
+  );
+}
+
 async function marcarIngresoInterno(
   dueno: Awaited<ReturnType<typeof requireStaffODueno>>,
   dni: string,
+  clientRef: string | null = null,
 ): Promise<CheckinState> {
   const supabase = await createClient();
 
@@ -72,27 +112,39 @@ async function marcarIngresoInterno(
     .select("id", { count: "exact", head: true })
     .eq("cliente_id", cliente.id);
 
-  // Reintentos de la cola offline (o un doble tap/escaneo repetido) pueden
-  // llamar esto varias veces para el mismo ingreso: si ya marcó hace menos
-  // de 2 minutos, no duplicamos la fila.
-  const { data: ultimoIngreso } = await supabase
-    .from("registros_entrada")
-    .select("creado_en")
-    .eq("cliente_id", cliente.id)
-    .order("creado_en", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  if (clientRef) {
+    // Viene de la cola offline: el `clientRef` es el id que el navegador le
+    // puso al encolarlo, así que reintentar el mismo ítem (reconexión, doble
+    // sincronización) es un no-op gracias al índice único
+    // registros_entrada(cliente_id, client_ref) — no una fila duplicada.
+    await supabase
+      .from("registros_entrada")
+      .upsert(
+        { gimnasio_id: dueno.gimnasio_id, cliente_id: cliente.id, client_ref: clientRef },
+        { onConflict: "cliente_id,client_ref", ignoreDuplicates: true },
+      );
+  } else {
+    // Check-in en vivo, sin clientRef: un doble tap/escaneo repetido en la
+    // misma sesión no tiene id de dedup propio, así que nos apoyamos en la
+    // ventana de tiempo como antes.
+    const { data: ultimoIngreso } = await supabase
+      .from("registros_entrada")
+      .select("creado_en")
+      .eq("cliente_id", cliente.id)
+      .order("creado_en", { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-  const yaMarcoRecien =
-    !!ultimoIngreso &&
-    Date.now() - new Date(ultimoIngreso.creado_en).getTime() < 2 * 60 * 1000;
+    const yaMarcoRecien =
+      !!ultimoIngreso &&
+      Date.now() - new Date(ultimoIngreso.creado_en).getTime() < 2 * 60 * 1000;
 
-  if (!yaMarcoRecien) {
-    // El registro se guarda siempre: queda constancia de que entró.
-    await supabase.from("registros_entrada").insert({
-      gimnasio_id: dueno.gimnasio_id,
-      cliente_id: cliente.id,
-    });
+    if (!yaMarcoRecien) {
+      await supabase.from("registros_entrada").insert({
+        gimnasio_id: dueno.gimnasio_id,
+        cliente_id: cliente.id,
+      });
+    }
   }
 
   revalidatePath("/panel/asistencia");

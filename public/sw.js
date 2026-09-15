@@ -1,8 +1,9 @@
 // Service worker — Web Push nativo + Cache de Shell/Estáticos para Modo Offline.
 // Servido desde la raíz del origin => scope "/".
 
-const CACHE_NAME = "sysgym-shell-v1";
+const CACHE_NAME = "sysgym-shell-v2";
 const STATIC_ASSETS = [
+  "/checkin",
   "/icon-192.png",
   "/icon-512.png",
   "/badge-72.png",

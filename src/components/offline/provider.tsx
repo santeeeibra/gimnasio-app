@@ -13,9 +13,11 @@ import {
 } from "@/lib/offline/cola";
 import { HANDLERS } from "@/lib/offline/handlers";
 import { refrescarPadron } from "@/lib/offline/padron";
+import { sincronizarCheckinsOffline } from "@/lib/offline/sync-checkins";
 import { BannerOffline } from "./banner";
 
 const PADRON_REFRESH_MS = 5 * 60_000;
+const CHECKINS_SYNC_MS = 30_000;
 
 /** Mantiene el padrón local (para check-in/pago instantáneo sin red) al día
  *  mientras haya conexión. Sin componente visible. */
@@ -79,12 +81,34 @@ function AutoFlush() {
   return null;
 }
 
+/**
+ * Igual que AutoFlush pero para el `checkins_queue` de IndexedDB (kiosko de
+ * check-in): mientras haya conexión y queden ítems, los manda en un solo
+ * lote (`marcarIngresosLote`) y reintenta a intervalo fijo si sobran.
+ */
+function CheckinsSync() {
+  const { estado } = useConexionSupabase();
+  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (estado !== "conectado") return;
+    void sincronizarCheckinsOffline();
+    timer.current = setInterval(() => void sincronizarCheckinsOffline(), CHECKINS_SYNC_MS);
+    return () => {
+      if (timer.current) clearInterval(timer.current);
+    };
+  }, [estado]);
+
+  return null;
+}
+
 export function OfflineProvider({ children }: { children?: React.ReactNode }) {
   return (
     <ConexionProvider>
       <BannerOffline />
       <AutoFlush />
       <PadronSync />
+      <CheckinsSync />
       {children}
     </ConexionProvider>
   );

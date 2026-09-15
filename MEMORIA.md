@@ -3,6 +3,7 @@
 > **Regla de Cierre:** Al finalizar cada feature o sesión, el agente debe actualizar este archivo con 1 o 2 viñetas telegráficas sobre lo que acaba de hacer (en UTF-8). NO leas el contexto completo para actualizar esto.
 
 ## Últimos Cambios
+- **Arquitectura Offline-First (100% Funcional sin Internet) (2026-09-15)**: Implementada la precarga automática de la pantalla `/checkin` en `sw.js` (`sysgym-shell-v2`), junto con el almacenamiento masivo de socios en `IndexedDB` (`src/lib/offline/indexeddb.ts`) y la sincronización background en `padron.ts` para permitir el check-in local instantáneo con resincronización automática de asistencias.
 - **Exportación Global PDF/Excel con Logo SysGym e Imagen de Gráfico (2026-09-15)**: Integrada la marca oficial SysGym (`/logo-sysgym.png`) en los PDFs de comprobantes, ingresos, socios y caja diaria. Incorporada la captura de gráfico SVG interactivo dentro del PDF de Ingresos y creados los módulos `DescargarClientesPdf`, `DescargarClientesExcel`, `DescargarCajaPdf` y `DescargarCajaExcel`.
 - **Reordenamiento Jerárquico /mi/rutina**: Reestructurado el layout visual exactamente en 7 pasos (Header -> Aforo -> Título -> Selector Día + Modo Foco -> Hero Card de Sesión Activa con badge Pulpo Volt `#10e7a0` -> Lista Ejercicios -> Acordeón suave `MasOpcionesAcordeon` colapsado con Agendar, Descargar PDF, Frase motivacional y Opciones de personalización con haptics).
 - **Rediseño Topbar /mi**: Reestructurada la cabecera del alumno con avatar badge de Pulpo Volt (`#10e7a0`), botón primario "Mi QR de Ingreso" full-width destacado, menú de iconos ghost a la derecha (Actualizar + Tutorial) con feedback háptico y traslado del botón "Salir" a la vista de perfil (`/mi/perfil`).
@@ -116,3 +117,7 @@
 
 - [2026-09-14] Corrido seed-genesis-gym.mjs para demo en gym real: genesisgym / dueno 38222444/gym2444, socio ejemplo 42210001/socio0001
 - [2026-09-15] Fix bug rol viejo al reabrir PWA (RevalidarAlVolver.tsx: pageshow bfcache + visibilitychange -> router.refresh() en layouts /panel y /mi).
+
+- 2026-09-15: Check-in y pago offline-first (padron local + cola con idempotency_key, techo de reintentos, procesamiento paralelo). Deployado en 608b93f y 87fdf08. Falta confirmar en el gym real que el check-in y el pago andan 100% sin internet (offline puro, no solo cortes) y probar alta de socio / caja offline (no cubierto todavia).
+
+- 2026-09-15: Backend del checkins_queue offline. Migración 0070 (registros_entrada.client_ref + índice único cliente_id/client_ref) aplicada en Supabase. Nueva marcarIngresosLote (src/app/checkin/actions.ts) sincroniza el lote de IndexedDB con dedup real por client_ref. checkin-form.tsx ahora encola en checkins_queue (indexeddb.ts) en vez de cola.ts; nuevo src/lib/offline/sync-checkins.ts + CheckinsSync en provider.tsx lo vacía cada 30s con conexión. Queda pendiente que padron.ts proteja también esta cola nueva contra el refresh optimista (hoy solo protege la de cola.ts).
