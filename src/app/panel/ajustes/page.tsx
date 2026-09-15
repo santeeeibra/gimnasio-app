@@ -17,6 +17,7 @@ import { CredencialesIndividualForm } from "./credenciales-individual-form";
 import { ContactarSoporteForm } from "./contactar-soporte-form";
 import { VerTutorialDeNuevo } from "@/components/tutorial/tutorial";
 import { LinkAccesoCard } from "./link-acceso-card";
+import { LinkPruebaSocioCard } from "./link-prueba-socio-card";
 import { MercadoPagoAjustesCard } from "./mp-card";
 import { impersonacionActiva } from "@/lib/impersonation";
 import { ToggleOcultarControlesImpersonacion } from "@/components/impersonation/toggle-ocultar";
@@ -28,7 +29,7 @@ import { BloqueoEliteGate, BadgeElite } from "@/components/ui/bloqueo-elite-gate
 
 import { AjustesSeccionModal } from "./ajustes-seccion-modal";
 import { StaffForm, type StaffItem } from "./staff-form";
-import { Palette, Landmark, Bell, Smartphone, QrCode, KeyRound, HelpCircle, Receipt, Users, Sparkles } from "lucide-react";
+import { Palette, Landmark, Bell, Smartphone, QrCode, KeyRound, HelpCircle, Receipt, Users, Sparkles, Link2 } from "lucide-react";
 import { AsistenteIaForm } from "./asistente-ia-form";
 import { CapacidadAforoForm } from "./capacidad-aforo-form";
 import { TECHO_LLAMADAS_IA_MES } from "@/lib/n8n/asistente-ia";
@@ -58,6 +59,7 @@ export default async function AjustesPage({
     sp,
     planInfo,
     { data: staffData },
+    { data: sociosData },
   ] = await Promise.all([
     supabase
       .from("gimnasios")
@@ -86,9 +88,16 @@ export default async function AjustesPage({
       .eq("gimnasio_id", profile.gimnasio_id)
       .eq("rol", "staff")
       .order("creado_at", { ascending: false }),
+    db
+      .from("profiles")
+      .select("id, nombre, dni")
+      .eq("gimnasio_id", profile.gimnasio_id)
+      .eq("rol", "cliente")
+      .order("nombre", { ascending: true }),
   ]);
 
   const empleados = (staffData ?? []) as StaffItem[];
+  const socios = (sociosData ?? []) as { id: string; nombre: string | null; dni: string | null }[];
   const staffActivosCount = empleados.filter((e) => e.activo).length;
 
   const estado = gym?.estado ?? "prueba";
@@ -410,6 +419,15 @@ export default async function AjustesPage({
             <CredencialesIndividualForm telefono={miPerfil?.telefono ?? null} />
           </AjustesSeccionModal>
         ) : null}
+
+        {/* LINK PARA PROBAR SIN LOGIN (SOCIO NUEVO) */}
+        <AjustesSeccionModal
+          titulo="Invitar a un socio a probar su cuenta"
+          subtitulo="Link directo sin DNI ni contraseña, para socios nuevos."
+          icon={<Link2 className="size-4" />}
+        >
+          <LinkPruebaSocioCard socios={socios} />
+        </AjustesSeccionModal>
 
         {/* CONTACTAR SOPORTE */}
         <AjustesSeccionModal

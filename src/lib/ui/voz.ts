@@ -24,6 +24,7 @@ export function vozHabilitada(): boolean {
 }
 
 let audioActual: HTMLAudioElement | null = null;
+let generacionVoz = 0;
 
 export function setVozHabilitada(activa: boolean) {
   try {
@@ -100,9 +101,10 @@ export async function hablar(texto: string): Promise<void> {
   if (typeof window === "undefined") return;
   if (!vozHabilitada()) return;
 
-  try {
-    audioActual?.pause();
+  const miGeneracion = ++generacionVoz;
+  audioActual?.pause(); // corta síncronamente cualquier locución en curso
 
+  try {
     const url = urlParaTexto(texto);
     const cache = await abrirCache();
     let respuesta = cache ? await cache.match(url) : undefined;
@@ -114,9 +116,14 @@ export async function hablar(texto: string): Promise<void> {
       }
     }
     if (!respuesta.ok) return;
+    if (miGeneracion !== generacionVoz) return; // otra hablar() más nueva ya está en curso
 
     const blob = await respuesta.blob();
     const blobUrl = URL.createObjectURL(blob);
+    if (miGeneracion !== generacionVoz) {
+      URL.revokeObjectURL(blobUrl);
+      return;
+    }
     const audio = new Audio(blobUrl);
     audioActual = audio;
 

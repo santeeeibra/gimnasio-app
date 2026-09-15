@@ -20,6 +20,7 @@ import {
 } from "@/lib/tema";
 import { chequearBloqueos, chequearContraste } from "@/lib/contraste";
 import { verificarPlanGimnasio } from "@/lib/plataforma/plan-gate";
+import { generarMagicToken } from "@/lib/magic-link";
 
 export type AjustesState = { error?: string; ok?: string };
 
@@ -753,6 +754,39 @@ export async function actualizarPlantillaCumpleanos(
     ok: texto
       ? "Plantilla de cumpleaños guardada"
       : "Plantilla borrada: se va a regenerar con IA en el próximo cumpleaños",
+  };
+}
+
+// Link "probar mi cuenta" sin DNI/clave, para que el propio dueño lo genere y
+// se lo mande a un socio nuevo por WhatsApp — sin depender de soporte. Mismo
+// mecanismo que /admin (magic-link firmado, 72h), pero acotado: solo puede
+// generarlo para un profile de SU PROPIO gimnasio.
+export async function generarLinkPruebaSocioAction(params: {
+  profileId: string;
+}): Promise<{ ok: boolean; msg: string; url?: string }> {
+  const dueno = await requireDueno();
+  const admin = createAdminClient();
+
+  const { data: perfil, error } = await admin
+    .from("profiles")
+    .select("id, nombre, gimnasio_id, activo")
+    .eq("id", params.profileId)
+    .single();
+
+  if (error || !perfil) return { ok: false, msg: "Socio no encontrado." };
+  if (perfil.gimnasio_id !== dueno.gimnasio_id) {
+    return { ok: false, msg: "Ese socio no pertenece a tu gimnasio." };
+  }
+  if (perfil.activo === false) {
+    return { ok: false, msg: "Esa cuenta está desactivada." };
+  }
+
+  const token = generarMagicToken(perfil.id, 72);
+  const base = process.env.NEXT_PUBLIC_BASE_URL || "";
+  return {
+    ok: true,
+    msg: `Link válido por 72h generado para ${perfil.nombre ?? "el socio"}.`,
+    url: `${base}/probar/${token}`,
   };
 }
 

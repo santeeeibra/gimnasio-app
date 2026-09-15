@@ -46,7 +46,7 @@ export function VozGuiadaToggle({
           <div className="min-w-0">
             <p className="font-semibold text-ink text-xs">Voz guiada</p>
             <p className="text-[11px] text-ink-soft">
-              Avisos hablados durante el descanso
+              Avisos hablados durante el descanso. Apagá para silenciar al instante.
             </p>
           </div>
         </div>
@@ -63,7 +63,7 @@ export function VozGuiadaToggle({
     <div className="card-cut border border-rule bg-paper-2 p-4">
       <Toggle
         label="Voz guiada durante el descanso"
-        hint="Avisos hablados de cuánto falta y cuándo volver a entrenar."
+        hint="Avisos hablados de cuánto falta y cuándo volver a entrenar. Apagá para silenciar al instante."
         checked={activa}
         onCheckedChange={cambiar}
       />
