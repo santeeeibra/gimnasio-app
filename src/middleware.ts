@@ -13,6 +13,9 @@ const PUBLIC_PATHS = [
   "/r/",
   "/demo",
   "/inicio",
+  // Magic-link de "probar mi gym" sin login: abre sesión real y solo ahí
+  // se sabe si el token es válido (verificarMagicToken adentro del route).
+  "/probar/",
   "/suspendido",
   "/reset-clave",
   "/_next",
