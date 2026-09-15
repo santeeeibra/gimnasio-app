@@ -1,33 +1,61 @@
 "use client";
 
-import { useActionState, useState, useId, useEffect } from "react";
+import { useState, useId, useEffect, useRef, useTransition } from "react";
 import { registrarPago } from "../actions";
 import { Button, Field } from "@/components/ui";
 import { hapticoPagoAprobado, hapticoError } from "@/lib/ui/hapticos";
+import { encolar } from "@/lib/offline/cola";
+import { aplicarPagoLocal, actualizarSocioLocal } from "@/lib/offline/padron";
+import { useConexionSupabase } from "@/lib/offline/conexion";
 
 export interface PlanConDescuentos {
   id: string;
   nombre: string;
   precio: number;
+  duracion_dias?: number;
   descuentos?: { id: string; nombre: string; porcentaje: number }[];
+}
+
+// Corto a propósito: sin red, el pago se resuelve local al instante (ver
+// aplicarPagoLocal) en vez de dejar al dueño esperando al server.
+const TIMEOUT_MS = 3_000;
+
+function nuevoId(): string {
+  return typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `tmp_${Date.now()}_${Math.random().toString(36).slice(2)}`;
 }
 
 export function PagoForm({
   clienteId,
   planes,
   planActual,
+  fechaVencimiento,
 }: {
   clienteId: string;
   planes: PlanConDescuentos[];
   planActual: string | null;
+  fechaVencimiento?: string | null;
 }) {
-  const [state, formAction, pending] = useActionState(registrarPago, {});
+  const { estado: estadoConexion } = useConexionSupabase();
+  const [pending, startTransition] = useTransition();
+  const [state, setState] = useState<{ error?: string; ok?: string }>({});
+  const formRef = useRef<HTMLFormElement>(null);
   const [fechaManual, setFechaManual] = useState(false);
   const [planSeleccionadoId, setPlanSeleccionadoId] = useState<string>(
     planActual ?? planes[0]?.id ?? "",
   );
   const [montoCustom, setMontoCustom] = useState<string>("");
   const [medioPago, setMedioPago] = useState<"efectivo" | "transferencia">("efectivo");
+
+  // Refresca el padrón local con el vencimiento server-rendered de esta
+  // pantalla, así aplicarPagoLocal() parte de un dato fresco aunque el
+  // padrón cacheado no se haya actualizado hace rato.
+  useEffect(() => {
+    if (fechaVencimiento !== undefined) {
+      actualizarSocioLocal(clienteId, { fecha_vencimiento: fechaVencimiento });
+    }
+  }, [clienteId, fechaVencimiento]);
 
   useEffect(() => {
     if (state.ok) {
@@ -52,8 +80,58 @@ export function PagoForm({
 
   const selectId = useId();
 
+  function resolverLocal(fd: FormData, idempotencyKey: string) {
+    const plan = planes.find((p) => p.id === String(fd.get("plan_id") ?? ""));
+    const fechaManualVal = String(fd.get("fecha_vencimiento_manual") ?? "").trim() || null;
+    const cubreHasta = aplicarPagoLocal(
+      clienteId,
+      plan?.duracion_dias ?? 30,
+      fechaManualVal,
+    );
+    encolar("pago_cuota", {
+      cliente_id: clienteId,
+      plan_id: String(fd.get("plan_id") ?? ""),
+      monto: Number(fd.get("monto") ?? 0) || null,
+      comprobante_ref: String(fd.get("comprobante_ref") ?? "").trim() || null,
+      medio_pago: String(fd.get("medio_pago") ?? "efectivo"),
+      fecha_vencimiento_manual: fechaManualVal,
+      idempotency_key: idempotencyKey,
+    });
+    setState({ ok: `Pago registrado (offline). Cuota al día hasta ${cubreHasta}. Se sincroniza al volver la conexión.` });
+  }
+
+  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!planSeleccionadoId) {
+      setState({ error: "Elegí el plan que pagó." });
+      return;
+    }
+    const fd = new FormData(e.currentTarget);
+    const idempotencyKey = nuevoId();
+    fd.set("idempotency_key", idempotencyKey);
+
+    if (estadoConexion === "desconectado") {
+      resolverLocal(fd, idempotencyKey);
+      return;
+    }
+
+    startTransition(async () => {
+      try {
+        const res = await Promise.race([
+          registrarPago({}, fd),
+          new Promise<never>((_, rej) =>
+            setTimeout(() => rej(new Error("timeout")), TIMEOUT_MS),
+          ),
+        ]);
+        setState(res);
+      } catch {
+        resolverLocal(fd, idempotencyKey);
+      }
+    });
+  };
+
   return (
-    <form action={formAction} className="space-y-3">
+    <form ref={formRef} onSubmit={onSubmit} className="space-y-3">
       <div className="grid sm:grid-cols-[1fr_1fr_auto] gap-4 items-end">
         <input type="hidden" name="cliente_id" value={clienteId} />
         <div>
@@ -94,7 +172,7 @@ export function PagoForm({
           />
         </div>
 
-        <Button type="submit" loading={pending}>
+        <Button type="submit" loading={pending} disabled={pending}>
           {pending ? "Guardando…" : "Registrar pago"}
         </Button>
       </div>

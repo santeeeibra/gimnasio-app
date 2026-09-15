@@ -12,7 +12,28 @@ import {
   suscribir,
 } from "@/lib/offline/cola";
 import { HANDLERS } from "@/lib/offline/handlers";
+import { refrescarPadron } from "@/lib/offline/padron";
 import { BannerOffline } from "./banner";
+
+const PADRON_REFRESH_MS = 5 * 60_000;
+
+/** Mantiene el padrón local (para check-in/pago instantáneo sin red) al día
+ *  mientras haya conexión. Sin componente visible. */
+function PadronSync() {
+  const { estado } = useConexionSupabase();
+  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (estado !== "conectado") return;
+    void refrescarPadron();
+    timer.current = setInterval(() => void refrescarPadron(), PADRON_REFRESH_MS);
+    return () => {
+      if (timer.current) clearInterval(timer.current);
+    };
+  }, [estado]);
+
+  return null;
+}
 
 /**
  * Cuando hay conexión y quedan pendientes, procesa la cola y reprograma con
@@ -63,6 +84,7 @@ export function OfflineProvider({ children }: { children?: React.ReactNode }) {
     <ConexionProvider>
       <BannerOffline />
       <AutoFlush />
+      <PadronSync />
       {children}
     </ConexionProvider>
   );

@@ -334,6 +334,7 @@ export default async function ClienteDetallePage({
                   clienteId={c.id}
                   planes={planes}
                   planActual={c.plan_id}
+                  fechaVencimiento={c.fecha_vencimiento}
                 />
               </Panel>
 

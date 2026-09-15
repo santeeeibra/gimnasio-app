@@ -260,12 +260,26 @@ async function registrarPagoInterno(
     String(formData.get("comprobante_ref") ?? "").trim() || null;
   const medioPagoRaw = String(formData.get("medio_pago") ?? "").trim();
   const medioPago = medioPagoRaw === "transferencia" ? "transferencia" : "efectivo";
+  // Generada en el cliente al armar el envío (ver pago-form.tsx): si el mismo
+  // pago se reintenta por un doble tap o por la cola offline, no se duplica.
+  const idempotencyKey = String(formData.get("idempotency_key") ?? "").trim() || null;
   if (!clienteId || !planId) return { error: "Elegí el plan que pagó." };
   if (fechaManual && !/^\d{4}-\d{2}-\d{2}$/.test(fechaManual)) {
     return { error: "La fecha de vencimiento no es válida." };
   }
 
   const admin = createAdminClient();
+
+  if (idempotencyKey) {
+    const { data: yaExiste } = await admin
+      .from("pagos")
+      .select("id, cubre_hasta")
+      .eq("idempotency_key", idempotencyKey)
+      .maybeSingle();
+    if (yaExiste) {
+      return { ok: `Pago registrado. Cuota al día hasta ${yaExiste.cubre_hasta}.` };
+    }
+  }
 
   // Lectura en paralelo: Plan y Cliente
   const [{ data: plan }, { data: cliData }] = await Promise.all([
@@ -295,10 +309,26 @@ async function registrarPagoInterno(
     registrado_por: dueno.id,
     comprobante_ref: comprobanteRef,
     medio_pago: medioPago,
+    idempotency_key: idempotencyKey,
   }).select("id").maybeSingle();
 
   if (pagoErr) {
     await registrarError(dueno.gimnasio_id, "pago", pagoErr);
+    // Carrera de dos envíos con la misma idempotency_key (doble tap offline
+    // que sincroniza dos veces casi a la vez): el otro ya ganó el insert, no
+    // es un error real — devolvemos su cuota en vez de duplicar ni de
+    // extender la cuota sobre un pago que no se guardó.
+    if (idempotencyKey && pagoErr.code === "23505") {
+      const { data: yaExiste } = await admin
+        .from("pagos")
+        .select("cubre_hasta")
+        .eq("idempotency_key", idempotencyKey)
+        .maybeSingle();
+      if (yaExiste) {
+        return { ok: `Pago registrado. Cuota al día hasta ${yaExiste.cubre_hasta}.` };
+      }
+    }
+    return { error: "No se pudo guardar el pago. Probá de nuevo." };
   }
 
   const profile = Array.isArray(cliData?.profile) ? cliData.profile[0] : cliData?.profile;

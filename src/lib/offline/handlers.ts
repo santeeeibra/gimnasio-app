@@ -8,7 +8,7 @@
  */
 
 import { marcarIngreso } from "@/app/checkin/actions";
-import { altaCliente } from "@/app/panel/clientes/actions";
+import { altaCliente, registrarPago } from "@/app/panel/clientes/actions";
 import {
   guardarProgresoCliente,
   guardarProgresoSocio,
@@ -82,6 +82,41 @@ const alta_cliente: Handler<PayloadAlta> = async (p) => {
   return { reintentar: true };
 };
 
+export type PayloadPago = {
+  cliente_id: string;
+  plan_id: string;
+  monto: number | null;
+  comprobante_ref: string | null;
+  medio_pago: string;
+  fecha_vencimiento_manual: string | null;
+  idempotency_key: string;
+};
+
+const pago_cuota: Handler<PayloadPago> = async (p) => {
+  const fd = new FormData();
+  fd.set("cliente_id", p.cliente_id);
+  fd.set("plan_id", p.plan_id);
+  if (p.monto) fd.set("monto", String(p.monto));
+  if (p.comprobante_ref) fd.set("comprobante_ref", p.comprobante_ref);
+  fd.set("medio_pago", p.medio_pago);
+  if (p.fecha_vencimiento_manual) fd.set("fecha_vencimiento_manual", p.fecha_vencimiento_manual);
+  fd.set("idempotency_key", p.idempotency_key);
+
+  // idempotency_key hace que un reintento (o dos intentos del mismo pago
+  // encolados por error) nunca dupliquen el cobro del lado del server.
+  const r = await conTimeout(() => registrarPago({}, fd));
+  if (!r.ok) return { reintentar: true };
+  const st = r.valor;
+  if (st.ok) return { ok: true };
+  if (st.error) {
+    return {
+      conflicto: true,
+      detalle: `No se pudo sincronizar el pago: ${st.error}`,
+    } satisfies ResultadoHandler;
+  }
+  return { reintentar: true };
+};
+
 export type PayloadProgreso = {
   ejercicio_id: string;
   peso: number;
@@ -110,5 +145,6 @@ const progreso_ejercicio: Handler<PayloadProgreso> = async (p) => {
 export const HANDLERS: Record<string, Handler> = {
   checkin: checkin as Handler,
   alta_cliente: alta_cliente as Handler,
+  pago_cuota: pago_cuota as Handler,
   progreso_ejercicio: progreso_ejercicio as Handler,
 };

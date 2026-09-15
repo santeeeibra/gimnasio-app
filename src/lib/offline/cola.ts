@@ -34,6 +34,11 @@ export type Handler<P = any> = (payload: P) => Promise<ResultadoHandler>;
 const CLAVE = "gym.cola.v1";
 const MAX_BACKOFF = 300_000;
 const BASE_BACKOFF = 30_000;
+// Techo de reintentos: sin esto, un ítem que falla siempre (ej. server
+// actions desincronizadas con un redeploy mientras el dispositivo tenía JS
+// viejo cacheado) reintenta en silencio para siempre y la cola crece sin
+// que nadie se entere hasta que ya son decenas de pendientes.
+const MAX_INTENTOS = 8;
 
 type Listener = (items: ItemCola[]) => void;
 const listeners = new Set<Listener>();
@@ -107,6 +112,15 @@ export function quitar(id: string): void {
 /** Alias semántico: el dueño descarta a mano un ítem en conflicto. */
 export const descartar = quitar;
 
+/** El dueño pide reintentar a mano un ítem en conflicto (ej. tras actualizar la app). */
+export function reintentarItem(id: string): void {
+  escribir(
+    leerRaw().map((i) =>
+      i.id === id ? { ...i, estado: "pendiente" as const, intentos: 0, detalle: undefined } : i,
+    ),
+  );
+}
+
 export function marcarConflicto(id: string, detalle: string): void {
   escribir(
     leerRaw().map((i) =>
@@ -146,41 +160,61 @@ export function backoffMs(intentos: number): number {
   return Math.min(BASE_BACKOFF * 2 ** intentos, MAX_BACKOFF);
 }
 
+// Cuántos ítems se procesan en paralelo. Cada handler ya tiene su propio
+// timeout (8s); en serie, una cola de 77 ítems tarda hasta ~10 minutos en
+// vaciarse aunque todo funcione — con esto son ~10 minutos / CONCURRENCIA.
+const CONCURRENCIA = 6;
+
+async function procesarUno(
+  item: ItemCola,
+  handlers: Record<string, Handler>,
+): Promise<void> {
+  const handler = handlers[item.tipo];
+  if (!handler) return; // tipo desconocido: lo dejamos, no lo perdemos
+  let res: ResultadoHandler;
+  try {
+    res = await handler(item.payload);
+  } catch {
+    res = { reintentar: true };
+  }
+  if ("ok" in res) {
+    quitar(item.id);
+    return;
+  }
+  if ("conflicto" in res) {
+    marcarConflicto(item.id, res.detalle);
+    return;
+  }
+  // reintentar
+  if (item.intentos + 1 >= MAX_INTENTOS) {
+    marcarConflicto(
+      item.id,
+      "No se pudo sincronizar después de varios intentos. Probá actualizar la app (puede haber una versión nueva) y volvé a intentar desde acá.",
+    );
+    return;
+  }
+  bumpIntentos(item.id);
+}
+
 /**
- * Recorre la cola en orden FIFO y procesa los pendientes con `handlers`.
+ * Recorre la cola en orden FIFO y procesa los pendientes con `handlers`, en
+ * tandas de `CONCURRENCIA` en paralelo (cada ítem es independiente: el
+ * dedup de check-in y la idempotency_key de pagos ya evitan que procesar
+ * fuera de orden duplique algo).
  * - `ok`        → sale de la cola.
  * - `conflicto` → queda visible para revisión manual, no se reintenta.
- * - `reintentar`→ suma un intento y sigue con el resto (un ítem trabado no
- *   tiene que bloquear a todos los que están detrás en la cola).
+ * - `reintentar`→ suma un intento (o pasa a conflicto si ya reintentó
+ *   demasiadas veces); un ítem trabado no bloquea a los demás.
  *
  * Devuelve si quedaron pendientes (para que el provider reprograme).
  */
 export async function procesarCola(
   handlers: Record<string, Handler>,
 ): Promise<{ quedanPendientes: boolean }> {
-  const cola = leerRaw();
-  let huboReintentar = false;
-  for (const item of cola) {
-    if (item.estado !== "pendiente") continue;
-    const handler = handlers[item.tipo];
-    if (!handler) continue; // tipo desconocido: lo dejamos, no lo perdemos
-    let res: ResultadoHandler;
-    try {
-      res = await handler(item.payload);
-    } catch {
-      res = { reintentar: true };
-    }
-    if ("ok" in res) {
-      quitar(item.id);
-      continue;
-    }
-    if ("conflicto" in res) {
-      marcarConflicto(item.id, res.detalle);
-      continue;
-    }
-    // reintentar
-    bumpIntentos(item.id);
-    huboReintentar = true;
+  const cola = leerRaw().filter((i) => i.estado === "pendiente");
+  for (let i = 0; i < cola.length; i += CONCURRENCIA) {
+    const tanda = cola.slice(i, i + CONCURRENCIA);
+    await Promise.all(tanda.map((item) => procesarUno(item, handlers)));
   }
-  return { quedanPendientes: huboReintentar || pendientes().length > 0 };
+  return { quedanPendientes: pendientes().length > 0 };
 }

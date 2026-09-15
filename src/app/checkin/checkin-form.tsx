@@ -5,6 +5,8 @@ import { marcarIngreso, type CheckinState } from "./actions";
 import { Button } from "@/components/ui";
 import { SalirModoCheckin } from "./salir-form";
 import { encolar } from "@/lib/offline/cola";
+import { decidirCheckinLocal } from "@/lib/offline/padron";
+import { useConexionSupabase } from "@/lib/offline/conexion";
 
 import { Camera, CameraOff, Pencil } from "lucide-react";
 import { QRScannerTab } from "@/components/checkin/qr-scanner-tab";
@@ -40,7 +42,11 @@ const TONO: Record<Tono, { rail: string; kicker: string; texto: string }> = {
   },
 };
 
-const TIMEOUT_MS = 8_000;
+// Bajito a propósito: si no hay red, no queremos que el mostrador espere
+// 8 segundos mirando la pantalla — con el padrón cacheado la decisión es
+// instantánea, así que el server tiene una ventana corta antes de que
+// arranque el camino local.
+const TIMEOUT_MS = 2_500;
 
 // Tecla que prende/apaga la cámara del QR. Function key por defecto: un
 // lector de DNI por USB (keyboard-wedge) tipea dígitos + Enter, nunca manda
@@ -49,6 +55,7 @@ const TECLA_CAMARA_DEFAULT = "F2";
 const TECLA_CAMARA_KEY = "checkin_tecla_camara";
 
 export function CheckinForm() {
+  const { estado: estadoConexion } = useConexionSupabase();
   const [pending, startTransition] = useTransition();
   const [state, setState] = useState<CheckinState & { encolado?: boolean }>({});
   const formRef = useRef<HTMLFormElement>(null);
@@ -126,6 +133,21 @@ export function CheckinForm() {
       return;
     }
 
+    // Sin conexión conocida: ni intentamos la red. Decidimos con el padrón
+    // cacheado, al instante, y encolamos el registro para cuando vuelva.
+    if (estadoConexion === "desconectado") {
+      const decision = decidirCheckinLocal(dniLimpio);
+      encolar("checkin", { dni: dniLimpio });
+      setState(
+        decision.estado === "no_encontrado"
+          ? { estado: "no_encontrado" }
+          : { estado: decision.estado, nombre: decision.nombre },
+      );
+      limpiar();
+      setTimeout(() => window.location.reload(), 6000);
+      return;
+    }
+
     startTransition(async () => {
       const fd = new FormData();
       fd.set("dni", dniLimpio);
@@ -143,8 +165,15 @@ export function CheckinForm() {
           setState(res);
         }
       } catch {
+        // El server no contestó a tiempo: no dejamos al mostrador esperando,
+        // resolvemos con el padrón local y sincronizamos después.
+        const decision = decidirCheckinLocal(dniLimpio);
         encolar("checkin", { dni: dniLimpio });
-        setState({ encolado: true });
+        setState(
+          decision.estado === "no_encontrado"
+            ? { estado: "no_encontrado" }
+            : { estado: decision.estado, nombre: decision.nombre },
+        );
       } finally {
         limpiar();
         setTimeout(() => window.location.reload(), 6000);
