@@ -150,7 +150,8 @@ export function backoffMs(intentos: number): number {
  * Recorre la cola en orden FIFO y procesa los pendientes con `handlers`.
  * - `ok`        → sale de la cola.
  * - `conflicto` → queda visible para revisión manual, no se reintenta.
- * - `reintentar`→ suma un intento y CORTA el barrido (no bombardea a Supabase).
+ * - `reintentar`→ suma un intento y sigue con el resto (un ítem trabado no
+ *   tiene que bloquear a todos los que están detrás en la cola).
  *
  * Devuelve si quedaron pendientes (para que el provider reprograme).
  */
@@ -158,6 +159,7 @@ export async function procesarCola(
   handlers: Record<string, Handler>,
 ): Promise<{ quedanPendientes: boolean }> {
   const cola = leerRaw();
+  let huboReintentar = false;
   for (const item of cola) {
     if (item.estado !== "pendiente") continue;
     const handler = handlers[item.tipo];
@@ -178,7 +180,7 @@ export async function procesarCola(
     }
     // reintentar
     bumpIntentos(item.id);
-    return { quedanPendientes: true };
+    huboReintentar = true;
   }
-  return { quedanPendientes: pendientes().length > 0 };
+  return { quedanPendientes: huboReintentar || pendientes().length > 0 };
 }
