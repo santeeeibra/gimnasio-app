@@ -2,6 +2,7 @@ import "server-only";
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { dniAEmail } from "@/lib/auth";
@@ -113,11 +114,15 @@ export async function entrarComo(profileId: string): Promise<void> {
   };
   jar.set(FLAG, JSON.stringify(flag), { ...cookieBase, httpOnly: false });
 
+  // El audit log + aviso push/email al superadmin no tienen que demorar la
+  // entrada: se disparan después de que la respuesta (el redirect) ya salió.
   const superId = process.env.SUPERADMIN_ID ?? perfil.id;
-  await registrarAccionAdmin(superId, "entrar_como", perfil.gimnasio_id, {
-    profile_id: profileId,
-    rol: perfil.rol,
-  });
+  after(() =>
+    registrarAccionAdmin(superId, "entrar_como", perfil.gimnasio_id, {
+      profile_id: profileId,
+      rol: perfil.rol,
+    }),
+  );
 
   redirect(perfil.rol === "dueno" ? "/panel" : "/mi");
 }
@@ -143,7 +148,7 @@ export async function salirImpersonacion(): Promise<void> {
 
   const superId = process.env.SUPERADMIN_ID;
   if (superId) {
-    await registrarAccionAdmin(superId, "salir_impersonacion", null, {});
+    after(() => registrarAccionAdmin(superId, "salir_impersonacion", null, {}));
   }
 
   redirect("/admin");
