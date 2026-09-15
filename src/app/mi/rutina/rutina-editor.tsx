@@ -59,7 +59,26 @@ import {
   hapticoImpactoSuave,
   hapticoSeleccion,
 } from "@/lib/ui/hapticos";
-import { hablar, precargar } from "@/lib/ui/voz";
+import { hablar, precargar, variar } from "@/lib/ui/voz";
+
+const FRASES_SERIE_COMPLETADA = [
+  "Serie completada, una más",
+  "Buena serie, seguí así",
+  "Anotado. Descansá lo justo",
+  "Ahí está, vamos por la siguiente",
+  "Bien ahí, no aflojes",
+  "Serie en la cuenta",
+  "Así se entrena, con huevo",
+  "Esa serie te la ganaste, seguimos",
+  "Grande, eso es constancia",
+] as const;
+const FRASES_DIA_COMPLETADO = [
+  "Terminaste el día de hoy, buen entreno",
+  "Rutina completa. Descansá y recuperate bien",
+  "Listo el entreno de hoy, gran trabajo",
+  "Otro día que le ganaste a la excusa, orgullo",
+  "Día cerrado. Así se construye el físico que querés",
+] as const;
 import {
   guardarProgresoCliente,
   guardarProgresoSocio,
@@ -384,6 +403,18 @@ export function RutinaEditor({
     }
   }, []);
 
+  // Evita repetir el aviso de "día completado" si el socio destilda y vuelve
+  // a marcar la última serie; se resetea al cambiar de día.
+  const diaCompletadoAvisadoRef = useRef(false);
+  useEffect(() => {
+    diaCompletadoAvisadoRef.current = false;
+  }, [activo]);
+
+  useEffect(() => {
+    FRASES_SERIE_COMPLETADA.forEach((f) => precargar(f));
+    FRASES_DIA_COMPLETADO.forEach((f) => precargar(f));
+  }, []);
+
   function descartarGuia() {
     setGuiaVista(true);
     try {
@@ -401,8 +432,22 @@ export function RutinaEditor({
       const nuevos = existe
         ? actuales.filter((s) => s !== setIndex)
         : [...actuales, setIndex];
-      if (!existe) hablar(`Serie ${setIndex + 1} completada`);
       const next = { ...prev, [itemId]: nuevos };
+      if (!existe) {
+        const diaTerminado =
+          !!diaActivo &&
+          diaActivo.items.every((it) => {
+            const total = seriesGuardadas[it.id] ?? it.series;
+            const hechas = it.id === itemId ? nuevos : (next[it.id] ?? []);
+            return hechas.filter((s) => s < total).length >= total;
+          });
+        if (diaTerminado && !diaCompletadoAvisadoRef.current) {
+          diaCompletadoAvisadoRef.current = true;
+          hablar(variar("dia-completado", FRASES_DIA_COMPLETADO));
+        } else {
+          hablar(variar("serie-completada", FRASES_SERIE_COMPLETADA));
+        }
+      }
       try {
         localStorage.setItem(`${LS_SETS_PREFIX}.${activo}`, JSON.stringify(next));
       } catch {

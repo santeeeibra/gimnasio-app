@@ -112,3 +112,5 @@
 - Fix de z-index y clipping en modal de QR en perfil usando createPortal
 - Warmup de sesión: creada WarmupGeneralCard colapsable por default con feedback háptico acústico y animaciones 60fps antes de los ejercicios del día.
 - [2026-09-14] Voz guiada migrada de Web Speech API a Edge TTS: nuevo /api/voz (msedge-tts, es-AR-TomasNeural) + caché predictiva en el navegador (Cache API, nada sube a Supabase). Timer de descanso ahora cuenta 10→1 hablado; Modo Zen lee nombre + técnica del ejercicio (tips_ia) encadenados; se anuncia "Serie N completada" al tildar cada serie.
+
+- [2026-09-14] Corrido seed-genesis-gym.mjs para demo en gym real: genesisgym / dueno 38222444/gym2444, socio ejemplo 42210001/socio0001

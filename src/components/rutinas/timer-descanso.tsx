@@ -3,7 +3,17 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { hapticoTimerFin, hapticoImpactoMedio } from "@/lib/ui/hapticos";
-import { hablar, precargar } from "@/lib/ui/voz";
+import { hablar, precargar, variar } from "@/lib/ui/voz";
+
+const FRASES_FIN_DESCANSO = [
+  "Descanso terminado. Dale con todo",
+  "Se acabó el descanso, vamos",
+  "Hora de la próxima serie",
+  "Recargaste, ahora a darle",
+  "Volvemos, con todo",
+  "Se terminó el mimo, a romperla",
+  "Pilas puestas, esta serie es tuya",
+] as const;
 
 const PRESETS = [
   { label: "30s", segundos: 30 },
@@ -224,7 +234,7 @@ export function TimerDescanso() {
   // posible (incluidas las que sugiere el ATP Recovery Engine por RIR), así
   // "hablar()" no espera la red justo cuando el aviso tiene que sonar.
   useEffect(() => {
-    precargar("Descanso terminado. Dale con todo");
+    FRASES_FIN_DESCANSO.forEach((f) => precargar(f));
     for (let n = 1; n <= 10; n++) precargar(String(n));
     const segsPosibles = new Set([...PRESETS.map((p) => p.segundos), 60, 120, 180]);
     segsPosibles.forEach((s) => precargar(`Descanso de ${s} segundos`));
@@ -290,7 +300,7 @@ export function TimerDescanso() {
         reproducirAlarmaFinal();
         vibrarFinalizado();
         dispararNotificacionLocal();
-        hablar("Descanso terminado. Dale con todo");
+        hablar(variar("descanso-fin", FRASES_FIN_DESCANSO));
         setAlertFinalizado(true);
         setSegundosRestantes(presetSeg);
         setTimeout(() => setAlertFinalizado(false), 2800);

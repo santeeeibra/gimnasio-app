@@ -40,6 +40,25 @@ function urlParaTexto(texto: string): string {
   return `/api/voz?texto=${encodeURIComponent(texto)}`;
 }
 
+// Evita que la misma frase se repita dos veces seguidas cuando hay varias
+// variantes posibles para un mismo momento (serie completada, fin de
+// descanso, etc). Índice por pool para no repetir ni siquiera en pools
+// distintos que comparten posición.
+const ultimoIndicePorPool = new Map<string, number>();
+
+/**
+ * Elige una frase al azar de `variantes` sin repetir la última usada para esa
+ * misma `pool` (una serie de descanso, un aviso de serie completada, etc).
+ */
+export function variar(pool: string, variantes: readonly string[]): string {
+  if (variantes.length === 1) return variantes[0];
+  const anterior = ultimoIndicePorPool.get(pool);
+  let indice = Math.floor(Math.random() * variantes.length);
+  if (indice === anterior) indice = (indice + 1) % variantes.length;
+  ultimoIndicePorPool.set(pool, indice);
+  return variantes[indice];
+}
+
 async function abrirCache(): Promise<Cache | null> {
   if (typeof window === "undefined" || !("caches" in window)) return null;
   try {

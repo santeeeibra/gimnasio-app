@@ -23,6 +23,15 @@ import { CartelLogro } from "@/components/logros/cartel-logro";
 import { tituloRecord } from "@/lib/logros/compartir";
 import type { ColoresImagen } from "@/lib/logros/imagen";
 import type { ResultadoRecord } from "@/lib/logros/tipos";
+import { hablar, variar } from "@/lib/ui/voz";
+
+const FRASES_RECORD = [
+  "Nuevo récord personal, la rompiste",
+  "Récord actualizado, así se hace",
+  "Marca superada, seguí empujando",
+  "Sos más fuerte que la semana pasada, no lo dudes",
+  "Ese peso ya no te asusta más, felicitaciones",
+] as const;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DialVerticalProgreso — Dial vertical de regla estilo iOS para cada ejercicio
@@ -369,6 +378,7 @@ export const DialVerticalProgreso = forwardRef<
       if (state.record?.esRecord) {
         iniciarAudioHaptico();
         hapticoRecordPersonal();
+        hablar(variar("record-personal", FRASES_RECORD));
         setLogro(state.record);
       } else {
         hapticoExito();
