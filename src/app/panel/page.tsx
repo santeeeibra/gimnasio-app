@@ -30,6 +30,19 @@ import { WidgetAsistenciaSala } from "@/components/panel/widget-asistencia-sala"
 import { obtenerPedidosActivos } from "./asistencia/actions";
 import { GatingPlanInicialBanner } from "@/components/plataforma/gating-plan-inicial";
 
+// Saludo según hora del día en vez de un chip de fecha genérico.
+function saludoPorHora(ahora: Date): string {
+  const h = ahora.getHours();
+  if (h < 6) return "Buenas noches";
+  if (h < 12) return "Buen día";
+  if (h < 20) return "Buenas tardes";
+  return "Buenas noches";
+}
+
+function primerNombre(nombreCompleto: string): string {
+  return nombreCompleto?.trim().split(/\s+/)[0] || nombreCompleto;
+}
+
 export default async function ResumenPage() {
   const dueno = await requireStaffODueno();
   const esStaff = dueno.rol === "staff";
@@ -391,15 +404,14 @@ export default async function ResumenPage() {
       {/* Encabezado */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl 2xl:text-4xl font-bold tracking-tight text-ink">Mostrador Operativo</h1>
+          <h1 className="text-2xl sm:text-3xl 2xl:text-4xl font-bold tracking-tight text-ink">
+            {saludoPorHora(ahora)}, {primerNombre(dueno.nombre)}
+          </h1>
           <p className="text-xs sm:text-sm 2xl:text-base text-ink-soft mt-0.5">
+            {ahora.toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "long" })}
+            {" · "}
             Turno de recepción, cobro de cuotas y atención diaria de socios.
           </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs 2xl:text-sm text-ink-soft font-mono bg-paper-2 border border-rule px-3 2xl:px-4 py-1.5 2xl:py-2 rounded-[8px] 2xl:rounded-[10px] capitalize">
-            {ahora.toLocaleDateString("es-AR", { weekday: "short", day: "numeric", month: "short" })}
-          </span>
         </div>
       </div>
 
