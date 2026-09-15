@@ -79,6 +79,7 @@ export async function iniciarPagoMercadoPago(): Promise<PagarState> {
       cubre_hasta: cubreHastaProvisorio,
       estado: "pendiente",
       proveedor: "mercadopago",
+      medio_pago: "mercadopago",
     })
     .select("id")
     .single();

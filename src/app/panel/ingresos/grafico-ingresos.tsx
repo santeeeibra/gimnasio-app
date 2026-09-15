@@ -81,10 +81,10 @@ export function GraficoIngresos({ data, totalGeneral }: GraficoIngresosProps) {
   // Dimensions
   const svgWidth = 700;
   const svgHeight = expandido ? 300 : 180;
-  const padLeft = 75;
+  const padLeft = 84;
   const padRight = 20;
   const padTop = 25;
-  const padBottom = 35;
+  const padBottom = 38;
   const drawWidth = svgWidth - padLeft - padRight;
   const drawHeight = svgHeight - padTop - padBottom;
 
@@ -428,7 +428,7 @@ export function GraficoIngresos({ data, totalGeneral }: GraficoIngresosProps) {
                 )}
               </span>
             </div>
-            <span className={`font-bold font-mono text-sm ${puntoActivo.isLoss ? "text-red-500" : "text-emerald-400"}`}>
+            <span className={`font-bold font-mono text-base ${puntoActivo.isLoss ? "text-red-500" : "text-emerald-400"}`}>
               {puntoActivo.total < 0 ? `-$${Math.abs(puntoActivo.total).toLocaleString("es-AR")}` : `$${puntoActivo.total.toLocaleString("es-AR")}`}
             </span>
           </>
@@ -495,7 +495,7 @@ export function GraficoIngresos({ data, totalGeneral }: GraficoIngresosProps) {
                   y={y + 4}
                   textAnchor="end"
                   fill="currentColor"
-                  className="text-[10px] font-mono fill-ink-soft opacity-75"
+                  className="text-[12px] font-mono fill-ink-soft opacity-90"
                 >
                   {lvl.label}
                 </text>
@@ -520,7 +520,7 @@ export function GraficoIngresos({ data, totalGeneral }: GraficoIngresosProps) {
                 y={svgHeight - 10}
                 textAnchor="middle"
                 fill="currentColor"
-                className="text-[10px] font-medium fill-ink-soft uppercase"
+                className="text-[11px] font-medium fill-ink-soft uppercase"
               >
                 {formatearFechaCorta(pt.date)}
               </text>
@@ -659,7 +659,7 @@ export function GraficoIngresos({ data, totalGeneral }: GraficoIngresosProps) {
             <TrendingUp className="size-3 text-emerald-500" />
             Promedio/día
           </p>
-          <p className="text-xs sm:text-sm font-bold font-mono text-ink mt-0.5">
+          <p className="text-sm sm:text-base font-bold font-mono text-ink mt-0.5">
             ${promedioDiario.toLocaleString("es-AR")}
           </p>
         </div>
@@ -669,7 +669,7 @@ export function GraficoIngresos({ data, totalGeneral }: GraficoIngresosProps) {
             <Award className="size-3 text-amber-500" />
             Día Pico Ingresos
           </p>
-          <p className="text-xs sm:text-sm font-bold font-mono text-emerald-400 mt-0.5">
+          <p className="text-sm sm:text-base font-bold font-mono text-emerald-400 mt-0.5">
             ${diaPico ? diaPico.total.toLocaleString("es-AR") : 0}
           </p>
         </div>
@@ -679,7 +679,7 @@ export function GraficoIngresos({ data, totalGeneral }: GraficoIngresosProps) {
             <ShieldAlert className="size-3 text-red-400" />
             Mayor Pérdida
           </p>
-          <p className="text-xs sm:text-sm font-bold font-mono text-red-400 mt-0.5">
+          <p className="text-sm sm:text-base font-bold font-mono text-red-400 mt-0.5">
             {diaMayorPerdida ? `-$${Math.abs(diaMayorPerdida.total).toLocaleString("es-AR")}` : "$0"}
           </p>
         </div>

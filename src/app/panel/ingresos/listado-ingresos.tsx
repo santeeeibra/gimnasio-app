@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { Spinner, pillClasses } from "@/components/ui";
-import { KeyRound, CalendarDays, X } from "lucide-react";
+import { KeyRound, CalendarDays, X, SlidersHorizontal, ChevronDown } from "lucide-react";
 import { DescargarIngresosPdf } from "@/components/pdf/descargar-ingresos-pdf";
 import { DescargarIngresosExcel } from "@/components/pdf/descargar-ingresos-excel";
 import { hapticoImpactoSuave, hapticoModalAbrir, hapticoModalCerrar } from "@/lib/ui/hapticos";
@@ -14,9 +14,16 @@ type Pago = {
   fecha_pago: string;
   monto: number;
   comprobante_ref: string | null;
+  medio_pago: string;
   cliente_nombre: string;
   plan_nombre: string;
 };
+
+const MEDIOS_PAGO: { value: string; label: string }[] = [
+  { value: "efectivo", label: "Efectivo" },
+  { value: "transferencia", label: "Transferencia" },
+  { value: "mercadopago", label: "Mercado Pago" },
+];
 
 type PagosPorMes = {
   [mesAno: string]: {
@@ -42,10 +49,15 @@ export function ListadoIngresos({
 }) {
   const [verificado, setVerificado] = useState(false);
   const [pagos, setPagos] = useState<Pago[]>([]);
+  const [pendientes, setPendientes] = useState<{ monto: number; cantidad: number }>({ monto: 0, cantidad: 0 });
   const [cargando, setCargando] = useState(true);
   const [q, setQ] = useState("");
   const [mesFiltro, setMesFiltro] = useState<string>(""); // 'YYYY-MM' o ''
   const [diaFiltro, setDiaFiltro] = useState<string>(""); // 'YYYY-MM-DD' o ''
+  const [medioPagoFiltro, setMedioPagoFiltro] = useState<string>(""); // '' = todos
+  const [desdeFiltro, setDesdeFiltro] = useState<string>(""); // 'YYYY-MM-DD' o ''
+  const [hastaFiltro, setHastaFiltro] = useState<string>(""); // 'YYYY-MM-DD' o ''
+  const [avanzadoAbierto, setAvanzadoAbierto] = useState(false);
   const [calendarioAbierto, setCalendarioAbierto] = useState(false);
   const [mesCalendario, setMesCalendario] = useState<Date>(new Date());
   const calendarioRef = useRef<HTMLDivElement>(null);
@@ -82,6 +94,7 @@ export function ListadoIngresos({
       if (res.ok) {
         const data = await res.json();
         setPagos(data.pagos || []);
+        setPendientes(data.pendientes || { monto: 0, cantidad: 0 });
       }
     } catch (error) {
       console.error("Error al cargar pagos:", error);
@@ -112,10 +125,23 @@ export function ListadoIngresos({
     ? pagosFiltradosPorRango.filter((p) => p.fecha_pago.startsWith(diaFiltro))
     : pagosFiltradosPorRango;
 
-  // 3) Filtrar por nombre sobre el resultado anterior
+  // 3) Filtrar por rango de fechas custom (desde/hasta)
+  const pagosFiltradosPorRangoCustom = pagosFiltradosPorDia.filter((p) => {
+    const fecha = p.fecha_pago.slice(0, 10);
+    if (desdeFiltro && fecha < desdeFiltro) return false;
+    if (hastaFiltro && fecha > hastaFiltro) return false;
+    return true;
+  });
+
+  // 4) Filtrar por método de pago
+  const pagosFiltradosPorMedio = medioPagoFiltro
+    ? pagosFiltradosPorRangoCustom.filter((p) => p.medio_pago === medioPagoFiltro)
+    : pagosFiltradosPorRangoCustom;
+
+  // 5) Filtrar por nombre sobre el resultado anterior
   const pagosFiltrados = filtro
-    ? pagosFiltradosPorDia.filter((p) => norm(p.cliente_nombre).includes(filtro))
-    : pagosFiltradosPorDia;
+    ? pagosFiltradosPorMedio.filter((p) => norm(p.cliente_nombre).includes(filtro))
+    : pagosFiltradosPorMedio;
 
   // Días con al menos un pago (para marcarlos con un punto en el calendario)
   const diasConPago = useMemo(() => {
@@ -137,6 +163,20 @@ export function ListadoIngresos({
     });
     return Array.from(map.entries()).map(([date, total]) => ({ date, total }));
   }, [pagosFiltrados]);
+
+  // Comparativa mes actual vs mes anterior (sobre el total de pagos, sin filtros)
+  const comparativaMeses = useMemo(() => {
+    const hoy = new Date();
+    const mesActual = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}`;
+    const mesAnteriorDate = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1);
+    const mesAnterior = `${mesAnteriorDate.getFullYear()}-${String(mesAnteriorDate.getMonth() + 1).padStart(2, "0")}`;
+
+    const totalActual = pagos.filter((p) => p.fecha_pago.startsWith(mesActual)).reduce((s, p) => s + p.monto, 0);
+    const totalAnterior = pagos.filter((p) => p.fecha_pago.startsWith(mesAnterior)).reduce((s, p) => s + p.monto, 0);
+    const variacionPct = totalAnterior > 0 ? ((totalActual - totalAnterior) / totalAnterior) * 100 : null;
+
+    return { mesActual, mesAnterior, totalActual, totalAnterior, variacionPct };
+  }, [pagos]);
 
   if (!verificado) {
     return null; // El modal maneja la verificación
@@ -233,6 +273,20 @@ export function ListadoIngresos({
             <option value="">Todos los meses</option>
             {mesesDisponibles.map((m) => (
               <option key={m} value={m}>{formatearMes(m)}</option>
+            ))}
+          </select>
+        </label>
+
+        <label className="flex items-center gap-2">
+          <span className="text-[11px] font-bold uppercase tracking-[0.07em] text-ink-soft shrink-0">Método</span>
+          <select
+            value={medioPagoFiltro}
+            onChange={(e) => setMedioPagoFiltro(e.target.value)}
+            className="h-11 min-w-[140px] rounded-[10px] border border-rule bg-paper text-[16px] px-3 outline-none transition-[border-color] duration-150 focus:border-ink"
+          >
+            <option value="">Todos</option>
+            {MEDIOS_PAGO.map((m) => (
+              <option key={m.value} value={m.value}>{m.label}</option>
             ))}
           </select>
         </label>
@@ -355,6 +409,103 @@ export function ListadoIngresos({
           pagosFiltrados={mesFiltro ? pagosFiltrados : []}
           rangoLabel={mesFiltro ? formatearMes(mesFiltro) : ''}
         />
+      </div>
+
+      <div className="flex items-center gap-2 flex-wrap">
+        <label className="flex items-center gap-2">
+          <span className="text-[11px] font-bold uppercase tracking-[0.07em] text-ink-soft shrink-0">Desde</span>
+          <input
+            type="date"
+            value={desdeFiltro}
+            onChange={(e) => setDesdeFiltro(e.target.value)}
+            className="h-10 rounded-[10px] border border-rule bg-paper text-sm px-3 outline-none focus:border-ink"
+          />
+        </label>
+        <label className="flex items-center gap-2">
+          <span className="text-[11px] font-bold uppercase tracking-[0.07em] text-ink-soft shrink-0">Hasta</span>
+          <input
+            type="date"
+            value={hastaFiltro}
+            onChange={(e) => setHastaFiltro(e.target.value)}
+            className="h-10 rounded-[10px] border border-rule bg-paper text-sm px-3 outline-none focus:border-ink"
+          />
+        </label>
+        {(desdeFiltro || hastaFiltro) ? (
+          <button
+            type="button"
+            onClick={() => {
+              hapticoImpactoSuave();
+              setDesdeFiltro("");
+              setHastaFiltro("");
+            }}
+            className="flex items-center gap-1 text-xs text-ink-soft hover:text-ink"
+          >
+            <X aria-hidden className="size-3.5" />
+            Quitar rango
+          </button>
+        ) : null}
+      </div>
+
+      {/* Opciones avanzadas: comparativas y proyección, colapsadas por defecto */}
+      <div className="rounded-[10px] border border-rule bg-paper-2 overflow-hidden">
+        <button
+          type="button"
+          onClick={() => {
+            hapticoImpactoSuave();
+            setAvanzadoAbierto((v) => !v);
+          }}
+          className="w-full flex items-center justify-between gap-2 px-4 py-3 text-sm font-medium text-ink-soft hover:text-ink"
+        >
+          <span className="flex items-center gap-2">
+            <SlidersHorizontal aria-hidden strokeWidth={2} className="size-4" />
+            Opciones avanzadas
+          </span>
+          <ChevronDown
+            aria-hidden
+            strokeWidth={2}
+            className={`size-4 transition-transform ${avanzadoAbierto ? "rotate-180" : ""}`}
+          />
+        </button>
+
+        {avanzadoAbierto ? (
+          <div className="px-4 pb-4 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-[10px] border border-rule bg-paper p-3">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-ink-soft mb-1">
+                {formatearMes(comparativaMeses.mesActual)} vs {formatearMes(comparativaMeses.mesAnterior)}
+              </p>
+              <div className="flex items-baseline gap-2">
+                <p className="text-xl font-display text-ink">
+                  ${comparativaMeses.totalActual.toLocaleString("es-AR")}
+                </p>
+                {comparativaMeses.variacionPct !== null ? (
+                  <span
+                    className={`text-xs font-bold font-mono ${
+                      comparativaMeses.variacionPct >= 0 ? "text-emerald-500" : "text-danger"
+                    }`}
+                  >
+                    {comparativaMeses.variacionPct >= 0 ? "+" : ""}
+                    {comparativaMeses.variacionPct.toFixed(1)}%
+                  </span>
+                ) : null}
+              </div>
+              <p className="text-xs text-ink-soft mt-0.5">
+                Mes anterior: ${comparativaMeses.totalAnterior.toLocaleString("es-AR")}
+              </p>
+            </div>
+
+            <div className="rounded-[10px] border border-rule bg-paper p-3">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-ink-soft mb-1">
+                Cobranza pendiente
+              </p>
+              <p className="text-xl font-display text-ink">
+                ${pendientes.monto.toLocaleString("es-AR")}
+              </p>
+              <p className="text-xs text-ink-soft mt-0.5">
+                {pendientes.cantidad} {pendientes.cantidad === 1 ? "socio" : "socios"} vencido{pendientes.cantidad === 1 ? "" : "s"} o por vencer
+              </p>
+            </div>
+          </div>
+        ) : null}
       </div>
 
       <input

@@ -73,7 +73,7 @@ export default async function AjustesPage({
     supabase
       .from("gimnasios")
       .select(
-        "id, slug, nombre, tema, logo_url, dias_aviso_morosidad, estado, plan_plataforma_vence_el, pago_alias, pago_cbu, pago_titular, tipo_cuenta, afip_habilitado, afip_cuit, afip_razon_social, afip_condicion_iva, afip_punto_venta, asistente_ia_activo, asistente_ia_llamadas_mes, plantilla_cumpleanos, capacidad_maxima",
+        "id, slug, nombre, tema, logo_url, dias_aviso_morosidad, estado, plan_plataforma_vence_el, pago_alias, pago_cbu, pago_titular, tipo_cuenta, afip_habilitado, afip_cuit, afip_razon_social, afip_condicion_iva, afip_punto_venta, afip_incluir_transferencias, afip_incluir_gastos, afip_incluir_servicios, asistente_ia_activo, asistente_ia_llamadas_mes, plantilla_cumpleanos, capacidad_maxima",
       )
       .eq("id", profile.gimnasio_id)
       .maybeSingle(),
@@ -261,6 +261,9 @@ export default async function AjustesPage({
               razonSocial={gym.afip_razon_social ?? null}
               condicionIva={gym.afip_condicion_iva ?? null}
               puntoVenta={gym.afip_punto_venta ?? null}
+              incluirTransferencias={gym.afip_incluir_transferencias ?? true}
+              incluirGastos={gym.afip_incluir_gastos ?? true}
+              incluirServicios={gym.afip_incluir_servicios ?? true}
             />
           </AjustesSeccionModal>
         ) : null}

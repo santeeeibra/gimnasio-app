@@ -27,6 +27,7 @@ export function PagoForm({
     planActual ?? planes[0]?.id ?? "",
   );
   const [montoCustom, setMontoCustom] = useState<string>("");
+  const [medioPago, setMedioPago] = useState<"efectivo" | "transferencia">("efectivo");
 
   useEffect(() => {
     if (state.ok) {
@@ -126,6 +127,27 @@ export function PagoForm({
           })}
         </div>
       ) : null}
+
+      <div>
+        <span className="block text-[13px] font-medium text-ink-soft mb-1.5">Medio de pago</span>
+        <input type="hidden" name="medio_pago" value={medioPago} />
+        <div className="flex gap-2">
+          {(["efectivo", "transferencia"] as const).map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => setMedioPago(m)}
+              className={`px-3 py-1.5 rounded-[5px] border text-sm capitalize transition-colors ${
+                medioPago === m
+                  ? "border-ink bg-ink text-paper font-medium"
+                  : "border-rule bg-paper text-ink-soft hover:border-ink/40"
+              }`}
+            >
+              {m}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <label className="block">
         <span className="block text-[13px] font-medium text-ink-soft mb-1.5">

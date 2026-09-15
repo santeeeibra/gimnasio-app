@@ -17,6 +17,9 @@ export function AfipForm({
   razonSocial,
   condicionIva,
   puntoVenta,
+  incluirTransferencias,
+  incluirGastos,
+  incluirServicios,
 }: {
   gimnasioId: string;
   habilitado: boolean;
@@ -24,6 +27,9 @@ export function AfipForm({
   razonSocial: string | null;
   condicionIva: string | null;
   puntoVenta: number | null;
+  incluirTransferencias: boolean;
+  incluirGastos: boolean;
+  incluirServicios: boolean;
 }) {
   const [state, formAction, pending] = useActionState(actualizarDatosAfip, {
     error: undefined,
@@ -81,6 +87,28 @@ export function AfipForm({
             defaultValue={puntoVenta ?? ""}
             placeholder="Ej: 1"
           />
+
+          <div className="sm:col-span-2 grid gap-3 pt-2 border-t border-line">
+            <p className="text-sm font-medium text-ink-2">Qué facturar automáticamente</p>
+            <Toggle
+              name="afip_incluir_transferencias"
+              label="Pagos por transferencia"
+              hint="Cobros de cuotas registrados con medio de pago transferencia"
+              defaultChecked={incluirTransferencias}
+            />
+            <Toggle
+              name="afip_incluir_gastos"
+              label="Gastos"
+              hint="Egresos de caja cargados como gasto"
+              defaultChecked={incluirGastos}
+            />
+            <Toggle
+              name="afip_incluir_servicios"
+              label="Servicios"
+              hint="Cobros por servicios adicionales del gimnasio"
+              defaultChecked={incluirServicios}
+            />
+          </div>
         </div>
       ) : null}
 

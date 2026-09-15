@@ -209,6 +209,7 @@ export async function POST(req: NextRequest) {
             proveedor: "mercadopago",
             proveedor_ref: strId,
             comprobante_ref: "MP débito automático",
+            medio_pago: "mercadopago",
           },
           { onConflict: "proveedor,proveedor_ref" },
         );

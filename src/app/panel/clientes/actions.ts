@@ -258,6 +258,8 @@ async function registrarPagoInterno(
     String(formData.get("fecha_vencimiento_manual") ?? "").trim() || null;
   const comprobanteRef =
     String(formData.get("comprobante_ref") ?? "").trim() || null;
+  const medioPagoRaw = String(formData.get("medio_pago") ?? "").trim();
+  const medioPago = medioPagoRaw === "transferencia" ? "transferencia" : "efectivo";
   if (!clienteId || !planId) return { error: "Elegí el plan que pagó." };
   if (fechaManual && !/^\d{4}-\d{2}-\d{2}$/.test(fechaManual)) {
     return { error: "La fecha de vencimiento no es válida." };
@@ -292,6 +294,7 @@ async function registrarPagoInterno(
     cubre_hasta: cubreHasta,
     registrado_por: dueno.id,
     comprobante_ref: comprobanteRef,
+    medio_pago: medioPago,
   }).select("id").maybeSingle();
 
   if (pagoErr) {
@@ -309,7 +312,7 @@ async function registrarPagoInterno(
       dueno.gimnasio_id,
       pagoInsertado?.id ?? "",
       montoFinal,
-      comprobanteRef ? "transferencia" : "efectivo",
+      medioPago,
       `Cuota: ${nombreSocio} (${plan.duracion_dias}d)`,
       dueno.id,
     ),

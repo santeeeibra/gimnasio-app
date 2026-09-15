@@ -243,6 +243,9 @@ export async function actualizarDatosAfip(
   const condicionIva = limpiar(formData.get("afip_condicion_iva"), 30);
   const puntoVentaRaw = limpiar(formData.get("afip_punto_venta"), 6);
   const puntoVenta = puntoVentaRaw ? Number(puntoVentaRaw) : null;
+  const incluirTransferencias = formData.get("afip_incluir_transferencias") === "on";
+  const incluirGastos = formData.get("afip_incluir_gastos") === "on";
+  const incluirServicios = formData.get("afip_incluir_servicios") === "on";
 
   if (habilitado) {
     if (!cuit || !/^\d{11}$/.test(cuit)) {
@@ -268,6 +271,9 @@ export async function actualizarDatosAfip(
       afip_razon_social: razonSocial,
       afip_condicion_iva: condicionIva,
       afip_punto_venta: puntoVenta,
+      afip_incluir_transferencias: incluirTransferencias,
+      afip_incluir_gastos: incluirGastos,
+      afip_incluir_servicios: incluirServicios,
     })
     .eq("id", gimnasioId);
 
