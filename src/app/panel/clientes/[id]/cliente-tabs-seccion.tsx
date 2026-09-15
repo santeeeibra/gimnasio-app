@@ -57,7 +57,7 @@ export function ClienteTabsSeccion({
           <Dumbbell className="size-4 shrink-0" />
           <span>Rutina</span>
           {tieneRutina && (
-            <span className="size-2 rounded-full bg-ok shrink-0 animate-pulse" />
+            <span title="Rutina generada" className="size-2 rounded-full bg-ok shrink-0 animate-pulse" />
           )}
         </button>
 

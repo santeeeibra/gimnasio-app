@@ -65,11 +65,17 @@ export default async function MiAjustesPage() {
         <VozGuiadaToggle />
       </div>
 
+      {/* No es un ajuste del socio, es una herramienta de soporte del
+          superadmin — separada visualmente para que no se confunda con
+          una preferencia real de la cuenta. */}
       {imp ? (
-        <div>
-          <h2 className="text-sm font-bold uppercase tracking-wider text-ink-soft mb-2">
-            Controles de soporte
-          </h2>
+        <div className="rounded-[12px] border border-dashed border-rule bg-paper px-4 py-3 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold text-ink-soft">Modo soporte (solo vos)</p>
+            <p className="text-[11px] text-ink-soft/80 mt-0.5">
+              Esto no lo ve el socio real.
+            </p>
+          </div>
           <ToggleOcultarControlesImpersonacion />
         </div>
       ) : null}

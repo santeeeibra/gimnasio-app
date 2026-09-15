@@ -34,6 +34,15 @@ import { AsistenteIaForm } from "./asistente-ia-form";
 import { CapacidadAforoForm } from "./capacidad-aforo-form";
 import { TECHO_LLAMADAS_IA_MES } from "@/lib/n8n/asistente-ia";
 
+// Enmascara el email en la vista previa de la card (se ve completo recién
+// al abrir el modal) — antes quedaba expuesto en el listado sin querer.
+function enmascararEmail(email: string): string {
+  const [usuario, dominio] = email.split("@");
+  if (!dominio) return email;
+  const visible = usuario.slice(0, 2);
+  return `${visible}${"•".repeat(Math.max(usuario.length - 2, 3))}@${dominio}`;
+}
+
 const ESTADO_LABEL: Record<string, string> = {
   prueba: "En prueba",
   activo: "Activo",
@@ -168,9 +177,25 @@ export default async function AjustesPage({
 
       {gym?.slug ? <LinkAccesoCard slug={gym.slug} /> : null}
 
-      {/* SECCIONES EN GRILLA CON MODALES */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-        {/* TEMA Y MARCA */}
+      {/* SOLO SUPERADMIN IMPERSONANDO: no es un ajuste del gimnasio, es una
+          herramienta de soporte — separada del grid real a propósito para
+          que no se confunda con una config del dueño. */}
+      {imp ? (
+        <div className="rounded-[12px] border border-dashed border-rule bg-paper px-4 py-3 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold text-ink-soft">Modo soporte (solo vos)</p>
+            <p className="text-[11px] text-ink-soft/80 mt-0.5">
+              Esto no lo ve el dueño real — es para que ocultes el switch flotante al grabar un video.
+            </p>
+          </div>
+          <ToggleOcultarControlesImpersonacion />
+        </div>
+      ) : null}
+
+      {/* SECCIÓN: MARCA */}
+      <div>
+        <h2 className="text-xs font-bold uppercase tracking-wider text-ink-soft px-1 mb-2">Marca</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {gym ? (
           <AjustesSeccionModal
             titulo="Tema y marca"
@@ -189,7 +214,13 @@ export default async function AjustesPage({
             />
           </AjustesSeccionModal>
         ) : null}
+        </div>
+      </div>
 
+      {/* SECCIÓN: COBROS */}
+      <div>
+        <h2 className="text-xs font-bold uppercase tracking-wider text-ink-soft px-1 mb-2">Cobros</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* DATOS DE TRANSFERENCIA */}
         {gym ? (
           <AjustesSeccionModal
@@ -208,24 +239,6 @@ export default async function AjustesPage({
               cbu={gym.pago_cbu ?? null}
               titular={gym.pago_titular ?? null}
             />
-          </AjustesSeccionModal>
-        ) : null}
-
-        {/* EMPLEADOS / STAFF DE RECEPCIÓN */}
-        {gym ? (
-          <AjustesSeccionModal
-            titulo="Empleados"
-            subtitulo="Cuentas de recepción y staff con acceso operativo al gimnasio."
-            icon={<Users className="size-4" />}
-            resumen={
-              <p className="text-[11px] text-ink-soft font-mono">
-                {empleados.length === 0
-                  ? "Sin empleados"
-                  : `${staffActivosCount} activo${staffActivosCount === 1 ? "" : "s"} / ${empleados.length} total`}
-              </p>
-            }
-          >
-            <StaffForm empleados={empleados} gimnasioSlug={gym.slug} />
           </AjustesSeccionModal>
         ) : null}
 
@@ -251,7 +264,37 @@ export default async function AjustesPage({
             />
           </AjustesSeccionModal>
         ) : null}
+        </div>
+      </div>
 
+      {/* SECCIÓN: PERSONAL */}
+      <div>
+        <h2 className="text-xs font-bold uppercase tracking-wider text-ink-soft px-1 mb-2">Personal</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* EMPLEADOS / STAFF DE RECEPCIÓN */}
+        {gym ? (
+          <AjustesSeccionModal
+            titulo="Empleados"
+            subtitulo="Cuentas de recepción y staff con acceso operativo al gimnasio."
+            icon={<Users className="size-4" />}
+            resumen={
+              <p className="text-[11px] text-ink-soft font-mono">
+                {empleados.length === 0
+                  ? "Sin empleados"
+                  : `${staffActivosCount} activo${staffActivosCount === 1 ? "" : "s"} / ${empleados.length} total`}
+              </p>
+            }
+          >
+            <StaffForm empleados={empleados} gimnasioSlug={gym.slug} />
+          </AjustesSeccionModal>
+        ) : null}
+        </div>
+      </div>
+
+      {/* SECCIÓN: NOTIFICACIONES Y ELITE */}
+      <div>
+        <h2 className="text-xs font-bold uppercase tracking-wider text-ink-soft px-1 mb-2">Notificaciones y funciones Elite</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* AVISOS DE MOROSIDAD */}
         {gym ? (
           <AjustesSeccionModal
@@ -368,7 +411,13 @@ export default async function AjustesPage({
             </BloqueoEliteGate>
           </AjustesSeccionModal>
         ) : null}
+        </div>
+      </div>
 
+      {/* SECCIÓN: OPERACIÓN */}
+      <div>
+        <h2 className="text-xs font-bold uppercase tracking-wider text-ink-soft px-1 mb-2">Operación</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* CAPACIDAD MÁXIMA DE AFORO */}
         {gym ? (
           <AjustesSeccionModal
@@ -387,7 +436,13 @@ export default async function AjustesPage({
             />
           </AjustesSeccionModal>
         ) : null}
+        </div>
+      </div>
 
+      {/* SECCIÓN: SEGURIDAD Y ACCESO */}
+      <div>
+        <h2 className="text-xs font-bold uppercase tracking-wider text-ink-soft px-1 mb-2">Seguridad y acceso</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* EMAIL DE RECUPERACIÓN */}
         <AjustesSeccionModal
           titulo="Email de recuperación"
@@ -395,7 +450,9 @@ export default async function AjustesPage({
           icon={<KeyRound className="size-4" />}
           resumen={
             <p className="text-[11px] text-ink-soft font-mono">
-              {miPerfil?.email_recuperacion ?? "Sin email registrado"}
+              {miPerfil?.email_recuperacion
+                ? enmascararEmail(miPerfil.email_recuperacion)
+                : "Sin email registrado"}
             </p>
           }
         >
@@ -419,7 +476,13 @@ export default async function AjustesPage({
             <CredencialesIndividualForm telefono={miPerfil?.telefono ?? null} />
           </AjustesSeccionModal>
         ) : null}
+        </div>
+      </div>
 
+      {/* SECCIÓN: SOCIOS */}
+      <div>
+        <h2 className="text-xs font-bold uppercase tracking-wider text-ink-soft px-1 mb-2">Socios</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* LINK PARA PROBAR SIN LOGIN (SOCIO NUEVO) */}
         <AjustesSeccionModal
           titulo="Invitar a un socio a probar su cuenta"
@@ -428,7 +491,13 @@ export default async function AjustesPage({
         >
           <LinkPruebaSocioCard socios={socios} />
         </AjustesSeccionModal>
+        </div>
+      </div>
 
+      {/* SECCIÓN: AYUDA */}
+      <div>
+        <h2 className="text-xs font-bold uppercase tracking-wider text-ink-soft px-1 mb-2">Ayuda</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* CONTACTAR SOPORTE */}
         <AjustesSeccionModal
           titulo="Contactar soporte"
@@ -437,17 +506,7 @@ export default async function AjustesPage({
         >
           <ContactarSoporteForm />
         </AjustesSeccionModal>
-
-        {/* SOLO SUPERADMIN IMPERSONANDO: esconder el switch flotante Dueño/Socio */}
-        {imp ? (
-          <AjustesSeccionModal
-            titulo="Controles de soporte"
-            subtitulo="Solo vos (superadmin) lo ves mientras impersonás."
-            icon={<HelpCircle className="size-4" />}
-          >
-            <ToggleOcultarControlesImpersonacion />
-          </AjustesSeccionModal>
-        ) : null}
+        </div>
       </div>
 
       {/* MERCADO PAGO INTEGRACIÓN */}

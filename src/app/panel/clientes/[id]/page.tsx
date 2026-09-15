@@ -236,7 +236,22 @@ export default async function ClienteDetallePage({
               </div>
               <p className="text-sm text-ink-soft mt-0.5">
                 DNI {c.profile?.dni}
-                {c.profile?.telefono ? ` · ${c.profile.telefono}` : ""}
+                {c.profile?.telefono ? (
+                  <>
+                    {" · "}
+                    <a
+                      href={`https://wa.me/54${c.profile.telefono.replace(/\D/g, "")}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-brand underline underline-offset-2 hover:brightness-110"
+                    >
+                      {c.profile.telefono}
+                    </a>
+                  </>
+                ) : (
+                  ""
+                )}
+                {c.fecha_inicio ? ` · Socio desde ${c.fecha_inicio}` : ""}
               </p>
             </div>
           </div>
