@@ -20,7 +20,7 @@ export default async function PanelLayout({
   const supabase = await createClient();
   const { data: gym } = await supabase
     .from("gimnasios")
-    .select("nombre, tema, logo_url, tipo_cuenta")
+    .select("nombre, slug, tema, logo_url, tipo_cuenta")
     .eq("id", profile.gimnasio_id)
     .single();
 
@@ -28,6 +28,20 @@ export default async function PanelLayout({
   const temaVars = temaToVars(tema);
   const esSuper =
     !!process.env.SUPERADMIN_ID && profile.id === process.env.SUPERADMIN_ID;
+
+  // Switch rápido dueño/socio en el sidebar, solo mientras se prueba el gym
+  // de testing "sante" — evita ir y volver a /admin para alternar la vista.
+  let switchSante: { duenoId: string; socioId: string } | null = null;
+  if (esSuper && gym?.slug === "sante") {
+    const { data: perfilesSante } = await supabase
+      .from("profiles")
+      .select("id, rol")
+      .eq("gimnasio_id", profile.gimnasio_id)
+      .in("rol", ["dueno", "cliente"]);
+    const duenoId = perfilesSante?.find((p) => p.rol === "dueno")?.id;
+    const socioId = perfilesSante?.find((p) => p.rol === "cliente")?.id;
+    if (duenoId && socioId) switchSante = { duenoId, socioId };
+  }
 
   return (
     <div
@@ -50,6 +64,7 @@ export default async function PanelLayout({
         tipoCuenta={gym?.tipo_cuenta ?? "gym"}
         esSuper={esSuper}
         rol={profile.rol}
+        switchSante={switchSante}
       />
 
       <div className="flex min-h-screen flex-col">
