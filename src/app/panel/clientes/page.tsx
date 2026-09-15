@@ -23,36 +23,42 @@ export default async function ClientesPage({
   const dueno = await requireStaffODueno();
   const supabase = await createClient();
   const adminDb = createAdminClient();
-  const [cupo, { data: clientesData }, { data: planesData }, { data: registrosData }] =
-    await Promise.all([
-      cupoSocios(adminDb, dueno.gimnasio_id),
-      supabase
-        .from("clientes")
-        .select(
-          "id, estado_cuota, fecha_vencimiento, plan_id, foto_url, en_prueba, profile:profiles(nombre, dni, telefono), plan:planes(nombre)",
-        )
-        .order("fecha_vencimiento", { ascending: true, nullsFirst: true })
-        .then(async (res) => {
-          if (res.error) {
-            return await supabase
-              .from("clientes")
-              .select(
-                "id, estado_cuota, fecha_vencimiento, plan_id, en_prueba, profile:profiles(nombre, dni, telefono), plan:planes(nombre)",
-              )
-              .order("fecha_vencimiento", { ascending: true, nullsFirst: true });
-          }
-          return res;
-        }),
-      supabase
-        .from("planes")
-        .select("id, nombre")
-        .eq("activo", true)
-        .order("nombre"),
-      supabase.from("registros_entrada").select("cliente_id"),
-    ]);
+  const [cupo, { data: clientesData }, { data: planesData }] = await Promise.all([
+    cupoSocios(adminDb, dueno.gimnasio_id),
+    supabase
+      .from("clientes")
+      .select(
+        "id, estado_cuota, fecha_vencimiento, plan_id, foto_url, en_prueba, profile:profiles(nombre, dni, telefono), plan:planes(nombre)",
+      )
+      .order("fecha_vencimiento", { ascending: true, nullsFirst: true })
+      .then(async (res) => {
+        if (res.error) {
+          return await supabase
+            .from("clientes")
+            .select(
+              "id, estado_cuota, fecha_vencimiento, plan_id, en_prueba, profile:profiles(nombre, dni, telefono), plan:planes(nombre)",
+            )
+            .order("fecha_vencimiento", { ascending: true, nullsFirst: true });
+        }
+        return res;
+      }),
+    supabase.from("planes").select("id, nombre").eq("activo", true).order("nombre"),
+  ]);
 
   const clientes = (clientesData ?? []) as unknown as ClienteVista[];
   const planes = (planesData ?? []) as { id: string; nombre: string }[];
+
+  // Solo importa si un socio "en prueba" ya hizo check-in alguna vez (para marcar
+  // la prueba como vencida): filtramos por esos IDs en vez de traer la tabla
+  // registros_entrada completa, que crece sin límite con el historial del gym.
+  const idsEnPrueba = clientes.filter((c) => c.en_prueba).map((c) => c.id);
+  const { data: registrosData } =
+    idsEnPrueba.length > 0
+      ? await supabase
+          .from("registros_entrada")
+          .select("cliente_id")
+          .in("cliente_id", idsEnPrueba)
+      : { data: [] as { cliente_id: string }[] };
   const conIngreso = new Set(
     ((registrosData ?? []) as { cliente_id: string }[]).map((r) => r.cliente_id),
   );

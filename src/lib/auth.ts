@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { notFound, redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
@@ -25,7 +26,7 @@ export function claveInicial(dni: string): string {
   return `gym${limpio.slice(-4)}`;
 }
 
-export async function getSessionProfile(): Promise<Profile | null> {
+export const getSessionProfile = cache(async (): Promise<Profile | null> => {
   const supabase = await createClient();
   const {
     data: { user },
@@ -39,7 +40,7 @@ export async function getSessionProfile(): Promise<Profile | null> {
     .single();
 
   return (data as Profile) ?? null;
-}
+});
 
 export async function requireProfile(): Promise<Profile> {
   const profile = await getSessionProfile();
