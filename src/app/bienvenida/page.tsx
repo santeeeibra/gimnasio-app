@@ -9,8 +9,9 @@ export const revalidate = 0;
 export default async function BienvenidaPage() {
   const profile = await getSessionProfile();
   if (!profile) redirect("/login");
-  if (profile.rol !== "dueno") redirect("/mi");
-  if (!profile.debe_cambiar_clave) redirect("/panel");
+
+  const destino = profile.rol === "cliente" ? "/mi" : "/panel";
+  if (!profile.debe_cambiar_clave) redirect(destino);
 
   const supabase = await createClient();
   const { data: gym } = await supabase
@@ -26,6 +27,7 @@ export default async function BienvenidaPage() {
       slug={gym?.slug ?? ""}
       dni={profile.dni}
       claveDefault={claveInicial(profile.dni)}
+      destino={destino}
     />
   );
 }

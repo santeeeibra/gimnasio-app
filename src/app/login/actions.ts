@@ -90,8 +90,8 @@ export async function login(
   }
 
   if (profile?.debe_cambiar_clave) {
-    // Al dueño se le da a elegir en /bienvenida; al cliente y staff se los fuerza a cambiarla.
-    redirect(profile.rol === "dueno" ? "/bienvenida" : "/cambiar-clave");
+    // A todos se les da a elegir en /bienvenida (cambiar la clave o dejarla).
+    redirect("/bienvenida");
   }
 
   // Superadmin (vos): entrar directo al panel dev en vez del panel de gym normal.
@@ -247,7 +247,7 @@ export async function loginIndividual(
   }
 
   if (profile?.debe_cambiar_clave) {
-    redirect(profile.rol === "dueno" ? "/bienvenida" : "/cambiar-clave");
+    redirect("/bienvenida");
   }
 
   redirect(profile?.rol === "dueno" || profile?.rol === "staff" ? "/panel" : "/mi");
@@ -306,9 +306,7 @@ export async function asegurarPerfilGoogleAction(): Promise<{
     }
 
     const destino = profile.debe_cambiar_clave
-      ? profile.rol === "dueno"
-        ? "/bienvenida"
-        : "/cambiar-clave"
+      ? "/bienvenida"
       : profile.rol === "dueno" || profile.rol === "staff"
         ? "/panel"
         : "/mi";

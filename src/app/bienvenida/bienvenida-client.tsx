@@ -12,12 +12,14 @@ export function BienvenidaClient({
   slug,
   dni,
   claveDefault,
+  destino,
 }: {
   nombreDueno: string;
   nombreGym: string;
   slug: string;
   dni: string;
   claveDefault: string;
+  destino: string;
 }) {
   const router = useRouter();
   const [mostrarDatos, setMostrarDatos] = useState(false);
@@ -57,7 +59,7 @@ export function BienvenidaClient({
 
   function continuar() {
     hapticoImpactoSuave();
-    router.push("/panel");
+    router.push(destino);
   }
 
   if (mostrarDatos) {

@@ -48,8 +48,8 @@ export async function requireProfile(): Promise<Profile> {
     redirect("/login?error=cuenta_desactivada");
   }
   if (profile.debe_cambiar_clave) {
-    // Al dueño se le da a elegir en /bienvenida; al cliente y staff se los fuerza a cambiarla.
-    redirect(profile.rol === "dueno" ? "/bienvenida" : "/cambiar-clave");
+    // A todos se les da a elegir en /bienvenida (cambiar la clave o dejarla).
+    redirect("/bienvenida");
   }
 
   // Gate de gimnasio suspendido: corta el acceso de dueño y socios (el login

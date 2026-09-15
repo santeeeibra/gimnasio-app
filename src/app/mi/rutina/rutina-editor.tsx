@@ -426,6 +426,7 @@ export function RutinaEditor({
 
   function toggleSet(itemId: string, setIndex: number) {
     if (!guiaVista) descartarGuia();
+    let frase: string | null = null;
     setSetsCompletados((prev) => {
       const actuales = prev[itemId] ?? [];
       const existe = actuales.includes(setIndex);
@@ -443,9 +444,9 @@ export function RutinaEditor({
           });
         if (diaTerminado && !diaCompletadoAvisadoRef.current) {
           diaCompletadoAvisadoRef.current = true;
-          hablar(variar("dia-completado", FRASES_DIA_COMPLETADO));
+          frase = variar("dia-completado", FRASES_DIA_COMPLETADO);
         } else {
-          hablar(variar("serie-completada", FRASES_SERIE_COMPLETADA));
+          frase = variar("serie-completada", FRASES_SERIE_COMPLETADA);
         }
       }
       try {
@@ -455,6 +456,7 @@ export function RutinaEditor({
       }
       return next;
     });
+    if (frase) hablar(frase);
   }
 
   const multi = dias.length > 1;
