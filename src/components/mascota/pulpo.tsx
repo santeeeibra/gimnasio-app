@@ -29,9 +29,15 @@ export type PulpoProps = {
   /** Variante de gesto y contexto. */
   pose?: PulpoPose;
   className?: string;
+  /**
+   * Activa el loop de idle "viva": parpadeo, balanceo de cuerpo y ondeo de
+   * tentáculos (solo transform, compositor-only). Usar en momentos de
+   * celebración (récord, racha) en vez de una mascota estática.
+   */
+  viva?: boolean;
 };
 
-export function Pulpo({ size = 96, pose = "festejo", className = "" }: PulpoProps) {
+export function Pulpo({ size = 96, pose = "festejo", className = "", viva = false }: PulpoProps) {
   const isFestejo = pose === "festejo";
   const isDescanso = pose === "descanso";
   const isKettlebell = pose === "kettlebell";
@@ -61,28 +67,36 @@ export function Pulpo({ size = 96, pose = "festejo", className = "" }: PulpoProp
       {brazosLevantados ? (
         <>
           {/* Tentáculo izq sup en brazos levantados */}
-          <path
-            d="M 38 64 C 20 54 12 36 22 24 C 28 17 38 24 34 38 C 32 46 36 56 42 66 Z"
-            fill={PULPO_VERDE}
-          />
+          <g className={viva ? "pulpo-viva__tentaculo-izq" : undefined}>
+            <path
+              d="M 38 64 C 20 54 12 36 22 24 C 28 17 38 24 34 38 C 32 46 36 56 42 66 Z"
+              fill={PULPO_VERDE}
+            />
+          </g>
           {/* Tentáculo der sup en brazos levantados */}
-          <path
-            d="M 82 64 C 100 54 108 36 98 24 C 92 17 82 24 86 38 C 88 46 84 56 78 66 Z"
-            fill={PULPO_VERDE}
-          />
+          <g className={viva ? "pulpo-viva__tentaculo-der" : undefined}>
+            <path
+              d="M 82 64 C 100 54 108 36 98 24 C 92 17 82 24 86 38 C 88 46 84 56 78 66 Z"
+              fill={PULPO_VERDE}
+            />
+          </g>
         </>
       ) : (
         <>
           {/* Tentáculo izq sup en neutral / descanso */}
-          <path
-            d="M 36 66 C 22 60 14 46 22 36 C 28 30 36 38 32 48 Z"
-            fill={PULPO_VERDE}
-          />
+          <g className={viva ? "pulpo-viva__tentaculo-izq" : undefined}>
+            <path
+              d="M 36 66 C 22 60 14 46 22 36 C 28 30 36 38 32 48 Z"
+              fill={PULPO_VERDE}
+            />
+          </g>
           {/* Tentáculo der sup */}
-          <path
-            d="M 84 66 C 98 60 106 46 98 36 C 92 30 84 38 88 48 Z"
-            fill={PULPO_VERDE}
-          />
+          <g className={viva ? "pulpo-viva__tentaculo-der" : undefined}>
+            <path
+              d="M 84 66 C 98 60 106 46 98 36 C 92 30 84 38 88 48 Z"
+              fill={PULPO_VERDE}
+            />
+          </g>
         </>
       )}
 
@@ -104,6 +118,7 @@ export function Pulpo({ size = 96, pose = "festejo", className = "" }: PulpoProp
         fill={PULPO_VERDE}
       />
 
+      <g className={viva ? "pulpo-viva__cuerpo" : undefined}>
       {/* Cabeza / Cuerpo Principal de Pulpo (Squircle suave) */}
       <path
         d="M 60 18 C 34 18 28 40 28 64 C 28 80 42 86 60 86 C 78 86 92 80 92 64 C 92 40 86 18 60 18 Z"
@@ -199,6 +214,7 @@ export function Pulpo({ size = 96, pose = "festejo", className = "" }: PulpoProp
       )}
 
       {/* Ojos Glossy Flat */}
+      <g className={viva && !isMareado ? "pulpo-viva__ojos" : undefined}>
       {isMareado ? (
         <>
           {/* Ojos mareados en forma de X (X X) */}
@@ -236,6 +252,7 @@ export function Pulpo({ size = 96, pose = "festejo", className = "" }: PulpoProp
           <circle cx="70.5" cy="55.5" r="1.2" fill="#ffffff" />
         </>
       )}
+      </g>
 
       {/* Mejillas / Sonrojo deportivo */}
       <ellipse cx="40" cy="62" rx="4.5" ry="2.5" fill="#047857" opacity="0.45" />
@@ -261,6 +278,7 @@ export function Pulpo({ size = 96, pose = "festejo", className = "" }: PulpoProp
           strokeLinecap="round"
         />
       )}
+      </g>
     </svg>
   );
 }
@@ -281,6 +299,7 @@ export function PulpoCard({
   className,
   cardClassName = "",
   onClick,
+  viva = false,
 }: PulpoCardProps) {
   const handleClick = () => {
     iniciarAudioHaptico();
@@ -295,7 +314,7 @@ export function PulpoCard({
     >
       {/* Resplandor ambiental radial volt */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(16,231,160,0.18)_0%,transparent_70%)] pointer-events-none" />
-      <Pulpo size={size} pose={pose} className={className} />
+      <Pulpo size={size} pose={pose} className={className} viva={viva} />
     </div>
   );
 }

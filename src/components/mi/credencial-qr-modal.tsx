@@ -2,9 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import dynamic from "next/dynamic";
 import QRCode from "qrcode";
 import { QrCode, X, ShieldCheck, Dumbbell, Sparkles } from "lucide-react";
-import { hapticoImpactoSuave, hapticoExito, hapticoModalAbrir, hapticoModalCerrar } from "@/lib/ui/hapticos";
+import { hapticoExito, hapticoModalAbrir, hapticoModalCerrar } from "@/lib/ui/hapticos";
+
+const Lanyard = dynamic(() => import("./lanyard"), { ssr: false });
 
 type CredencialQRModalProps = {
   nombre: string;
@@ -34,12 +37,11 @@ export function CredencialQRModal({
   }, []);
 
   useEffect(() => {
-    if (abierto && dni) {
-      hapticoExito();
-      // Generar QR con el formato SYSGYM:DNI:<dni>
+    if (dni) {
+      // Generar QR en alta resolución con el formato SYSGYM:DNI:<dni>
       QRCode.toDataURL(`SYSGYM:DNI:${dni}`, {
-        width: 280,
-        margin: 1,
+        width: 600,
+        margin: 2,
         color: {
           dark: "#000000",
           light: "#FFFFFF",
@@ -48,11 +50,12 @@ export function CredencialQRModal({
         .then((url) => setQrUrl(url))
         .catch((err) => console.error("Error generando QR", err));
     }
-  }, [abierto, dni]);
+  }, [dni]);
 
   const toggleModal = () => {
     if (!abierto) {
       hapticoModalAbrir();
+      hapticoExito();
     } else {
       hapticoModalCerrar();
     }
@@ -106,22 +109,17 @@ export function CredencialQRModal({
                 </button>
               </div>
 
-              {/* Tarjeta de pase / QR */}
-              <div className="my-6 flex flex-col items-center justify-center rounded-[16px] border border-rule bg-paper p-6 text-center shadow-inner">
-                <div className="relative size-48 rounded-[12px] bg-white p-3 shadow-md grid place-items-center overflow-hidden border border-zinc-200">
-                  {qrUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={qrUrl}
-                      alt={`Código QR de ingreso para ${nombre}`}
-                      className="size-full object-contain"
-                    />
-                  ) : (
-                    <div className="size-full animate-pulse bg-zinc-200 rounded-[8px]" />
-                  )}
+              {/* Tarjeta contenedora con la Credencial 3D interactiva */}
+              <div className="my-4 flex flex-col items-center justify-center rounded-[16px] border border-rule bg-paper p-5 text-center shadow-inner overflow-hidden">
+                <div className="relative w-full h-64 -mt-2 -mb-2">
+                  <Lanyard
+                    position={[0, 0, 13]}
+                    gravity={[0, -40, 0]}
+                    frontImage={qrUrl || undefined}
+                  />
                 </div>
 
-                <div className="mt-4 space-y-1">
+                <div className="space-y-1 mt-2">
                   <h4 className="text-base font-bold text-ink truncate">{nombre}</h4>
                   <p className="font-mono text-xs text-ink-soft tracking-wider">
                     DNI {dni}

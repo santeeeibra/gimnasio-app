@@ -23,7 +23,6 @@ import {
   mensajeWhatsAppRecord,
 } from "@/lib/logros/compartir";
 import type { TipoLogro } from "@/lib/logros/tipos";
-import Image from "next/image";
 import { PulpoCard } from "@/components/mascota/pulpo";
 import { ConfetiCelebracion } from "@/components/ui/confeti-celebracion";
 import {
@@ -216,19 +215,16 @@ export function CartelLogro(props: CartelLogroProps) {
             <PulpoCard
               size={90}
               pose="festejo"
+              viva
               cardClassName="border-amber-500/40 shadow-amber-500/20 shadow-2xl !rounded-[22px] !p-4 bg-zinc-950"
             />
           ) : (
-            <div className="relative inline-flex items-center justify-center rounded-[22px] bg-zinc-950 border border-emerald-500/40 p-3 shadow-2xl shadow-emerald-500/20 overflow-hidden">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(16,231,160,0.25)_0%,transparent_70%)] pointer-events-none" />
-              <Image
-                src="/mascota/racha-activa.png"
-                alt="Pulpo Racha Activa"
-                width={96}
-                height={96}
-                className="object-cover rounded-[16px] select-none"
-              />
-            </div>
+            <PulpoCard
+              size={90}
+              pose="festejo"
+              viva
+              cardClassName="border-emerald-500/40 shadow-emerald-500/20 shadow-2xl !rounded-[22px] !p-4 bg-zinc-950"
+            />
           )}
         </div>
 

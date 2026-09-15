@@ -1094,3 +1094,46 @@ textarea {
     animation: none;
   }
 }
+
+/* Pulpo Volt "viva": idle loop para momentos de celebración (récord/racha).
+   Grupos SVG independientes, solo transform, listos para GPU compositing. */
+@keyframes pulpo-viva-cuerpo {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-3px) rotate(-1.5deg); }
+}
+@keyframes pulpo-viva-tentaculo-izq {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-10deg); }
+}
+@keyframes pulpo-viva-tentaculo-der {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(10deg); }
+}
+@keyframes pulpo-viva-parpadeo {
+  0%, 88%, 100% { transform: scaleY(1); }
+  92% { transform: scaleY(0.1); }
+}
+.pulpo-viva__cuerpo {
+  animation: pulpo-viva-cuerpo 2.2s var(--ease-in-out) infinite;
+  transform-origin: 60px 86px;
+}
+.pulpo-viva__tentaculo-izq {
+  animation: pulpo-viva-tentaculo-izq 1.9s var(--ease-in-out) infinite;
+  transform-origin: 42px 66px;
+}
+.pulpo-viva__tentaculo-der {
+  animation: pulpo-viva-tentaculo-der 1.9s var(--ease-in-out) infinite 0.15s;
+  transform-origin: 78px 66px;
+}
+.pulpo-viva__ojos {
+  animation: pulpo-viva-parpadeo 3.6s ease-in-out infinite;
+  transform-origin: 60px 54px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pulpo-viva__cuerpo,
+  .pulpo-viva__tentaculo-izq,
+  .pulpo-viva__tentaculo-der,
+  .pulpo-viva__ojos {
+    animation: none;
+  }
+}
