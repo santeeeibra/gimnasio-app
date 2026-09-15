@@ -37,6 +37,7 @@ import { ModalAvanzadoAfinarPlan } from "./modal-avanzado";
 import { BarraAforoAnimada } from "@/components/mi/barra-aforo-animada";
 import { obtenerAforo } from "@/lib/aforo/actions";
 import { MasOpcionesAcordeon } from "@/components/rutina/mas-opciones-acordeon";
+import { CacheAlVuelo } from "@/components/offline/cache-al-vuelo";
 
 export const dynamic = "force-dynamic";
 
@@ -388,6 +389,17 @@ export default async function MiRutinaPage() {
               );
             })()}
           </MasOpcionesAcordeon>
+          <CacheAlVuelo
+            clave="rutina:mi"
+            data={{
+              dias: agruparPorDia(
+                (itemsData ?? []) as any[],
+                (rutina.dias_titulos as string[] | null) ?? null,
+              ),
+              objetivo: rutina.objetivo,
+              nivel: rutina.nivel,
+            }}
+          />
         </>
       )}
     </main>

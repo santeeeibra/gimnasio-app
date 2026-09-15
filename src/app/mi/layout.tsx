@@ -11,6 +11,8 @@ import { MiBottomNav } from "./mi-nav";
 import { Tutorial } from "@/components/tutorial/tutorial";
 import { ImpersonationBanner, ImpersonationControls } from "@/components/impersonation/banner";
 import { OfflineProvider } from "@/components/offline/provider";
+import { RevalidarAlVolver } from "@/components/offline/revalidar-al-volver";
+import { RealtimeRevalida } from "@/components/offline/realtime-revalida";
 import { SplashScreen } from "@/components/mascota/splash-screen";
 import { PullToRefresh } from "@/components/mascota/pull-to-refresh";
 import { DemoToolbar } from "@/components/demo/demo-toolbar";
@@ -89,6 +91,8 @@ export default async function MiLayout({
     >
       <ImpersonationBanner />
       <ImpersonationControls />
+      <RevalidarAlVolver />
+      <RealtimeRevalida gimnasioId={profile.gimnasio_id} />
       <OfflineProvider />
       <SplashScreen />
       {gym?.logo_url ? (
