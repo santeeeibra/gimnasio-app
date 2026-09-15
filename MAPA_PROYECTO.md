@@ -23,7 +23,7 @@
 | Rutinas — zonas de dolor en generación inicial | `generar-form.tsx` (fieldset "Evitar dolor en"), `motor.ts` (`estaBloqueado`), `mi/rutina/actions.ts` + `panel/clientes/actions.ts` (`parseZonasDolor`) | ✅ código + typecheck + browser (2026-09-03), sin migración |
 | Rutinas — editor cliente | `src/app/mi/rutina/rutina-editor.tsx` | ✅ HECHO (animación 2 frames a mejorar) |
 | Rutinas — panel dueño | `src/app/panel/clientes/[id]/rutina-panel.tsx` | ✅ HECHO |
-| Rutinas — panel avanzado (dropset, myo-reps, etc.) | `SPEC_PANEL_AVANZADO_RUTINA.md` | 🔲 spec armado, no pasado a nadie |
+| Rutinas — panel avanzado (dropset, myo-reps, etc.) | `docs/specs/SPEC_PANEL_AVANZADO_RUTINA.md`, `src/app/mi/rutina/builder-manual.tsx`, `actions.ts` (`guardarRutinaManual`, `editarTecnica`), migración `0010_rutina_manual.sql` | ✅ HECHO — verificado en producción 2026-09-15 (contradecía este mapa). Link "¿Ya entrenás y querés armar tu rutina a mano?" en `/mi/rutina`, nunca por default |
 | Mensajería | compositor + bandeja + hilos | ✅ HECHO |
 | Branding / tema por gimnasio | `src/lib/tema.ts`, `src/lib/contraste.ts`, `/panel/ajustes` | ✅ COMPLETO |
 | Logo + paleta desde logo | `src/lib/logo/comprimir.ts`, `src/lib/logo/paleta.ts`, migración `0006_logo_gimnasio.sql` | ✅ Implementado — migración `0006` aplicada |
@@ -57,7 +57,7 @@
 | `SPEC_CHECKIN_PRUEBA.md` | — | ✅ implementado y verificado |
 | `SPEC_UI_HOME_RUTINA.md` | Claude Code | 🔄 pasado, no confirmado |
 | `SPEC_TUTORIAL_ONBOARDING.md` | Claude Code | 🔄 aparentemente ejecutado, falta confirmar |
-| `SPEC_PANEL_AVANZADO_RUTINA.md` | Claude Code | 🔲 armado, no pasado |
+| `SPEC_PANEL_AVANZADO_RUTINA.md` | Claude Code | ✅ ejecutado — ver fila de arriba (2026-09-15) |
 | `SPEC_GESTOR_MOROSIDAD.md` | — | ⚠️ no descrito en contex-sysgym.md — revisar contenido del archivo |
 | `SPEC_MONITOR_SUPABASE.md` | — | ⚠️ ver "memoria de progreso" (monitoreo % uso Supabase) |
 | `SPEC_RUTINA_AVANZADA.md` | — | ⚠️ ver si es el mismo que panel avanzado o distinto |
