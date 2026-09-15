@@ -82,29 +82,6 @@ export function ListadoIngresos({
     return [...set].sort((a, b) => b.localeCompare(a)); // desc
   }, [pagos]);
 
-  if (!verificado) {
-    return null; // El modal maneja la verificación
-  }
-
-  if (cargando) {
-    return (
-      <p className="flex items-center gap-2 text-sm text-ink-soft">
-        <Spinner />
-        Cargando ingresos…
-      </p>
-    );
-  }
-
-  if (pagos.length === 0) {
-    return (
-      <div className="rounded-[6px] border border-rule bg-paper-2 p-6 text-center">
-        <p className="text-sm text-ink-soft">
-          No hay pagos registrados todavía.
-        </p>
-      </div>
-    );
-  }
-
   const filtro = norm(q.trim());
 
   // 1) Filtrar por mes seleccionado
@@ -117,33 +94,10 @@ export function ListadoIngresos({
     ? pagosFiltradosPorRango.filter((p) => norm(p.cliente_nombre).includes(filtro))
     : pagosFiltradosPorRango;
 
-  // Agrupar por mes/año
-  const pagosPorMes: PagosPorMes = {};
-  let totalGeneral = 0;
-
-  pagosFiltrados.forEach((pago) => {
-    const fecha = new Date(pago.fecha_pago);
-    const mesAno = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, "0")}`;
-    
-    if (!pagosPorMes[mesAno]) {
-      pagosPorMes[mesAno] = { pagos: [], total: 0 };
-    }
-    
-    pagosPorMes[mesAno].pagos.push(pago);
-    pagosPorMes[mesAno].total += pago.monto;
-    totalGeneral += pago.monto;
-  });
-
-  // Ordenar meses descendente
-  const mesesOrdenados = Object.keys(pagosPorMes).sort((a, b) => b.localeCompare(a));
-
-  const formatearMes = (mesAno: string) => {
-    const [ano, mes] = mesAno.split("-");
-    const fecha = new Date(Number(ano), Number(mes) - 1);
-    return fecha.toLocaleDateString("es-AR", { month: "long", year: "numeric" });
-  };
-
-  // Agrupación por días para el gráfico Sparkline de tendencia
+  // Agrupación por días para el gráfico Sparkline de tendencia.
+  // Estos dos useMemo deben ejecutarse siempre en el mismo orden en cada
+  // render (Reglas de Hooks) — por eso van antes de los early return de
+  // abajo (!verificado / cargando / sin pagos), nunca después.
   const dailyData = useMemo(() => {
     const map = new Map<string, number>();
     const sorted = [...pagosFiltrados].sort((a, b) => a.fecha_pago.localeCompare(b.fecha_pago));
@@ -181,6 +135,55 @@ export function ListadoIngresos({
 
     return { path: pathStr, area: areaStr, points: pts };
   }, [dailyData]);
+
+  if (!verificado) {
+    return null; // El modal maneja la verificación
+  }
+
+  if (cargando) {
+    return (
+      <p className="flex items-center gap-2 text-sm text-ink-soft">
+        <Spinner />
+        Cargando ingresos…
+      </p>
+    );
+  }
+
+  if (pagos.length === 0) {
+    return (
+      <div className="rounded-[6px] border border-rule bg-paper-2 p-6 text-center">
+        <p className="text-sm text-ink-soft">
+          No hay pagos registrados todavía.
+        </p>
+      </div>
+    );
+  }
+
+  // Agrupar por mes/año
+  const pagosPorMes: PagosPorMes = {};
+  let totalGeneral = 0;
+
+  pagosFiltrados.forEach((pago) => {
+    const fecha = new Date(pago.fecha_pago);
+    const mesAno = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, "0")}`;
+
+    if (!pagosPorMes[mesAno]) {
+      pagosPorMes[mesAno] = { pagos: [], total: 0 };
+    }
+
+    pagosPorMes[mesAno].pagos.push(pago);
+    pagosPorMes[mesAno].total += pago.monto;
+    totalGeneral += pago.monto;
+  });
+
+  // Ordenar meses descendente
+  const mesesOrdenados = Object.keys(pagosPorMes).sort((a, b) => b.localeCompare(a));
+
+  const formatearMes = (mesAno: string) => {
+    const [ano, mes] = mesAno.split("-");
+    const fecha = new Date(Number(ano), Number(mes) - 1);
+    return fecha.toLocaleDateString("es-AR", { month: "long", year: "numeric" });
+  };
 
   return (
     <div className="space-y-6">

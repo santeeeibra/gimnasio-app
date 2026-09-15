@@ -58,6 +58,8 @@ import {
   hapticoExito,
   hapticoImpactoSuave,
   hapticoSeleccion,
+  hapticoSerieCompletada,
+  hapticoRecordPersonal,
 } from "@/lib/ui/hapticos";
 import { hablar, precargar, variar } from "@/lib/ui/voz";
 
@@ -1656,7 +1658,7 @@ function ItemFila({
                           }
 
                           if (!hecho) {
-                            hapticoExito();
+                            hapticoSerieCompletada();
                             const segs = extraerSegundosDescanso(item.nota);
                             if (typeof window !== "undefined") {
                               window.dispatchEvent(

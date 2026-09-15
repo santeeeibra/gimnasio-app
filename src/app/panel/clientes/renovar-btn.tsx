@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState, useRef, useState } from "react";
+import { useActionState, useRef, useState, useEffect } from "react";
 import { registrarPago } from "./actions";
+import { hapticoPagoAprobado } from "@/lib/ui/hapticos";
 
 /** Renovación de un toque desde la lista: registra un pago con el plan actual
  *  del socio (monto = precio del plan). Pide una confirmación antes de mandar. */
@@ -15,6 +16,12 @@ export function RenovarBtn({
   const [state, formAction, pending] = useActionState(registrarPago, {});
   const [armado, setArmado] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (state.ok) {
+      hapticoPagoAprobado();
+    }
+  }, [state.ok]);
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     if (!armado) {

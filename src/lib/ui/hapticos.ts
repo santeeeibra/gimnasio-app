@@ -680,6 +680,144 @@ export function hapticoRefresh() {
 }
 
 /**
+ * Escaneo exitoso de QR / Check-in en gimnasio (Scanner OK):
+ * Beep futurista de 2 tonos hiper-nítidos (1250Hz -> 1850Hz) con confirmación háptica.
+ */
+export function hapticoScanOK() {
+  vibrar([12, 30, 20]);
+  triggerIosSwitchHaptic();
+
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  if (ctx.state === "suspended") ctx.resume().catch(() => {});
+
+  const now = ctx.currentTime;
+
+  const playBeep = (freq: number, start: number, dur: number) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(freq, start);
+    gain.gain.setValueAtTime(0.09, start);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(start);
+    osc.stop(start + dur);
+  };
+
+  playBeep(1250, now, 0.045);
+  playBeep(1850, now + 0.05, 0.08);
+}
+
+/**
+ * Pago Aprobado / Renovación de Cuota de Alumno:
+ * Chime de billetera digital (A5 -> E6 -> A6) con thump de graves de confirmación.
+ */
+export function hapticoPagoAprobado() {
+  vibrar([15, 45, 20, 55, 30]);
+  triggerIosSwitchHaptic();
+
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  if (ctx.state === "suspended") ctx.resume().catch(() => {});
+
+  const now = ctx.currentTime;
+
+  // 1. Thump de confirmación bancaria / pago seguro (100Hz -> 50Hz)
+  const oscBass = ctx.createOscillator();
+  const gainBass = ctx.createGain();
+  oscBass.type = "triangle";
+  oscBass.frequency.setValueAtTime(100, now);
+  oscBass.frequency.exponentialRampToValueAtTime(50, now + 0.06);
+  gainBass.gain.setValueAtTime(0.3, now);
+  gainBass.gain.exponentialRampToValueAtTime(0.001, now + 0.065);
+  oscBass.connect(gainBass);
+  gainBass.connect(ctx.destination);
+  oscBass.start(now);
+  oscBass.stop(now + 0.07);
+
+  // 2. Chime cristalino estilo Apple Pay / MercadoPago
+  const playTone = (freq: number, start: number, dur: number, vol = 0.08) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(freq, start);
+    gain.gain.setValueAtTime(vol, start);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(start);
+    osc.stop(start + dur);
+  };
+
+  playTone(880, now + 0.02, 0.06, 0.08);    // A5
+  playTone(1320, now + 0.07, 0.08, 0.09);   // E6
+  playTone(1760, now + 0.14, 0.22, 0.10);   // A6
+}
+
+/**
+ * Recepción de nuevo mensaje / chat:
+ * Chime orgánico de 3 tonos amigables (F5 -> A5 -> C6).
+ */
+export function hapticoMensajeRecibido() {
+  vibrar([10, 20, 15]);
+  triggerIosSwitchHaptic();
+
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  if (ctx.state === "suspended") ctx.resume().catch(() => {});
+
+  const now = ctx.currentTime;
+  const playTone = (freq: number, start: number, dur: number) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(freq, start);
+    gain.gain.setValueAtTime(0.07, start);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(start);
+    osc.stop(start + dur);
+  };
+
+  playTone(698, now, 0.045);        // F5
+  playTone(880, now + 0.04, 0.055);  // A5
+  playTone(1046, now + 0.08, 0.09);  // C6
+}
+
+/**
+ * Alerta / Notificación de aviso importante:
+ * Doble pulso de tono amortiguado (580Hz -> 440Hz).
+ */
+export function hapticoAlerta() {
+  vibrar([20, 40, 20]);
+  triggerIosSwitchHaptic();
+
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  if (ctx.state === "suspended") ctx.resume().catch(() => {});
+
+  const now = ctx.currentTime;
+  const playTone = (freq: number, start: number, dur: number) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(freq, start);
+    gain.gain.setValueAtTime(0.08, start);
+    gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(start);
+    osc.stop(start + dur);
+  };
+
+  playTone(580, now, 0.06);
+  playTone(440, now + 0.07, 0.08);
+}
+
+/**
  * Hook utilitario para componentes de React
  */
 export function useHapticos() {
@@ -704,6 +842,10 @@ export function useHapticos() {
     modalAbrir: hapticoModalAbrir,
     modalCerrar: hapticoModalCerrar,
     refresh: hapticoRefresh,
+    scanOK: hapticoScanOK,
+    pagoAprobado: hapticoPagoAprobado,
+    mensaje: hapticoMensajeRecibido,
+    alerta: hapticoAlerta,
   };
 }
 

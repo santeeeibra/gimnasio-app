@@ -6,7 +6,7 @@
  * de fondo oscuro fijo sin parpadeos ni cajas blancas de PNG.
  */
 
-import { PulpoCard } from "./pulpo";
+import { PulpoImagenCard } from "./pulpo-imagen";
 
 export type MascotaLoadingProps = {
   /** Lado del sprite en px. */
@@ -30,9 +30,9 @@ export function MascotaLoading({
       className={`flex flex-col items-center justify-center gap-2 ${className}`}
     >
       <div className="relative shrink-0 flex items-center justify-center animate-bounce duration-700">
-        <PulpoCard
+        <PulpoImagenCard
           size={size}
-          pose="festejo"
+          pose="salto"
           cardClassName="!p-2.5 !rounded-full shadow-lg border-emerald-500/40"
         />
       </div>

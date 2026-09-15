@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Camera, CameraOff, RefreshCw, Sparkles, CheckCircle2, AlertCircle } from "lucide-react";
-import { hapticoExito, hapticoError, hapticoImpactoMedio } from "@/lib/ui/hapticos";
+import { hapticoScanOK, hapticoError, hapticoImpactoMedio } from "@/lib/ui/hapticos";
 
 type QRScannerTabProps = {
   onScan: (dni: string) => void;
@@ -71,7 +71,7 @@ export function QRScannerTab({ onScan, isProcessing }: QRScannerTabProps) {
 
     if (dni && dni.length >= 6 && dni.length <= 10 && dni !== escaneadoUltimo) {
       setEscaneadoUltimo(dni);
-      hapticoExito();
+      hapticoScanOK();
       onScan(dni);
       setTimeout(() => setEscaneadoUltimo(null), 3000);
     }

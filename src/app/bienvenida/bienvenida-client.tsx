@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui";
 import { hapticoImpactoSuave, hapticoExito } from "@/lib/ui/hapticos";
 import { confirmarMantenerClave } from "./actions";
+import { PulpoImagenCard } from "@/components/mascota/pulpo-imagen";
 
 export function BienvenidaClient({
   nombreDueno,
@@ -109,8 +110,11 @@ export function BienvenidaClient({
   return (
     <main className="min-h-screen flex items-center justify-center p-6 bg-paper">
       <div className="w-full max-w-sm card-cut card-cut-lg border border-rule bg-paper-2 p-6">
-        <h1 className="text-xl mb-1">¡Bienvenido, {nombreDueno}!</h1>
-        <p className="text-sm text-ink-soft mb-6">
+        <div className="flex justify-center mb-4">
+          <PulpoImagenCard pose="bienvenida" size={72} />
+        </div>
+        <h1 className="text-xl mb-1 text-center">¡Bienvenido, {nombreDueno}!</h1>
+        <p className="text-sm text-ink-soft mb-6 text-center">
           Entraste con la contraseña que te dieron. ¿Querés cambiarla ahora o
           dejarla como está?
         </p>

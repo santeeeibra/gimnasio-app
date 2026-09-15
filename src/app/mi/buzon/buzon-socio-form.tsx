@@ -1,13 +1,20 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import { Select, Button } from "@/components/ui";
 import { enviarComentario, type ComentarioState } from "./actions";
+import { hapticoMensajeRecibido } from "@/lib/ui/hapticos";
 
 const inicial: ComentarioState = {};
 
 export function BuzonSocioForm() {
   const [state, action, pending] = useActionState(enviarComentario, inicial);
+
+  useEffect(() => {
+    if (state.ok) {
+      hapticoMensajeRecibido();
+    }
+  }, [state.ok]);
 
   if (state.ok) {
     return (

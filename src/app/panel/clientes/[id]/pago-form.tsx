@@ -1,8 +1,9 @@
 "use client";
 
-import { useActionState, useState, useId } from "react";
+import { useActionState, useState, useId, useEffect } from "react";
 import { registrarPago } from "../actions";
 import { Button, Field } from "@/components/ui";
+import { hapticoPagoAprobado, hapticoError } from "@/lib/ui/hapticos";
 
 export interface PlanConDescuentos {
   id: string;
@@ -26,6 +27,14 @@ export function PagoForm({
     planActual ?? planes[0]?.id ?? "",
   );
   const [montoCustom, setMontoCustom] = useState<string>("");
+
+  useEffect(() => {
+    if (state.ok) {
+      hapticoPagoAprobado();
+    } else if (state.error) {
+      hapticoError();
+    }
+  }, [state]);
 
   const planSeleccionado = planes.find((p) => p.id === planSeleccionadoId);
   const descuentosActivos = (planSeleccionado?.descuentos ?? []).filter(

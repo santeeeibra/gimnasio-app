@@ -14,7 +14,9 @@ export type PulpoImagenPose =
   | "vacio"
   | "entrenador"
   | "buscando"
-  | "oops";
+  | "oops"
+  | "salto"
+  | "bienvenida";
 
 export type PulpoImagenProps = {
   size?: number;

@@ -3,13 +3,17 @@
 import { useActionState, useRef, useEffect } from "react";
 import { responderCliente } from "./actions";
 import { Button } from "@/components/ui";
+import { hapticoMensajeRecibido } from "@/lib/ui/hapticos";
 
 export function ReplyForm({ mensajeId }: { mensajeId: string }) {
   const [state, formAction, pending] = useActionState(responderCliente, {});
   const ref = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
-    if (!pending && !state.error) ref.current?.reset();
+    if (!pending && !state.error) {
+      ref.current?.reset();
+      hapticoMensajeRecibido();
+    }
   }, [pending, state]);
 
   return (
