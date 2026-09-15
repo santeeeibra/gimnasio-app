@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { pillClasses } from "@/components/ui";
-import { GraduationCap } from "lucide-react";
+import { GraduationCap, HelpCircle } from "lucide-react";
 import { Overlay } from "./overlay";
 import { pasosDueno } from "./pasos-dueno";
 import { pasosCliente } from "./pasos-cliente";
@@ -81,7 +81,10 @@ export function VerTutorialDeNuevo({
         aria-label="Ver tutorial"
         className={`inline-flex min-h-9 min-w-9 size-9 items-center justify-center rounded-[8px] text-ink-soft hover:text-ink hover:bg-paper select-none touch-manipulation transition-colors focus-visible:outline-none ${className ?? ""}`}
       >
-        <GraduationCap aria-hidden strokeWidth={2} className="size-4 shrink-0" />
+        {/* HelpCircle en vez de GraduationCap: en un botón sin texto (solo
+            visible en hover/title, que en touch nunca se ve) el "?" se
+            reconoce de entrada como ayuda; el birrete es más ambiguo. */}
+        <HelpCircle aria-hidden strokeWidth={2} className="size-4 shrink-0" />
       </button>
     );
   }

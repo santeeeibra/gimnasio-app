@@ -25,19 +25,19 @@ export function FeedLogros({ items }: { items: LogroFeedItem[] }) {
   return (
     <section
       data-feed-logros
-      className="w-full space-y-2.5 rounded-[22px] border border-white/5 bg-zinc-950/40 p-3.5 backdrop-blur-xl"
+      className="w-full space-y-2.5 rounded-[16px] border border-rule bg-paper p-3.5"
     >
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-1.5">
           <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-ok opacity-75" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-ok" />
           </span>
-          <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-ink-soft">
             Comunidad en vivo
           </span>
         </div>
-        <span className="text-[11px] font-medium text-zinc-500">
+        <span className="text-[11px] font-medium text-ink-soft">
           {items.length} {items.length === 1 ? "logro" : "logros"}
         </span>
       </div>
@@ -87,22 +87,22 @@ function ItemLogro({ item }: { item: LogroFeedItem }) {
     <div
       data-logro-item
       data-tipo={item.tipoLogro}
-      className={`group relative flex items-center justify-between gap-3 rounded-[16px] border p-3 shadow-md backdrop-blur-md transition-all duration-200 animate-in fade-in slide-in-from-bottom-2 ${
+      className={`group relative flex items-center justify-between gap-3 rounded-[14px] border p-3 shadow-sm transition-all duration-200 animate-in fade-in slide-in-from-bottom-2 ${
         esRecord
-          ? "border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-zinc-950/80 to-zinc-950/90 hover:border-amber-500/50 shadow-amber-500/5"
-          : "border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 via-zinc-950/80 to-zinc-950/90 hover:border-emerald-500/50 shadow-emerald-500/5"
+          ? "border-warn/30 bg-gradient-to-r from-warn/10 via-paper-2 to-paper-2 hover:border-warn/50"
+          : "border-ok/30 bg-gradient-to-r from-ok/10 via-paper-2 to-paper-2 hover:border-ok/50"
       }`}
     >
-      {/* Mascota en tarjeta fija oscura + badge identificador */}
+      {/* Mascota en tarjeta + badge identificador */}
       <div className="relative shrink-0">
         {esRecord ? (
           <PulpoCard
             size={34}
             pose="festejo"
-            cardClassName="w-11 h-11 !p-1 !rounded-[12px] shadow-md transition-transform duration-200 group-hover:scale-105 border-amber-500/40 bg-zinc-950"
+            cardClassName="w-11 h-11 !p-1 !rounded-[12px] shadow-sm transition-transform duration-200 group-hover:scale-105 border-warn/40 bg-paper"
           />
         ) : (
-          <div className="relative w-11 h-11 rounded-[12px] bg-zinc-950 border border-emerald-500/40 p-0.5 shadow-md flex items-center justify-center overflow-hidden transition-transform duration-200 group-hover:scale-105">
+          <div className="relative w-11 h-11 rounded-[12px] bg-paper border border-ok/40 p-0.5 shadow-sm flex items-center justify-center overflow-hidden transition-transform duration-200 group-hover:scale-105">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(16,231,160,0.2)_0%,transparent_70%)] pointer-events-none" />
             <Image
               src="/mascota/racha-activa.png"
@@ -116,8 +116,8 @@ function ItemLogro({ item }: { item: LogroFeedItem }) {
         <span
           className={`absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full border shadow-sm ${
             esRecord
-              ? "border-amber-400/80 bg-amber-500 text-zinc-950"
-              : "border-emerald-400/80 bg-emerald-500 text-zinc-950"
+              ? "border-warn/80 bg-warn text-paper"
+              : "border-ok/80 bg-ok text-paper"
           }`}
           aria-hidden="true"
         >
@@ -134,7 +134,7 @@ function ItemLogro({ item }: { item: LogroFeedItem }) {
         <div className="flex items-center gap-1.5 mb-0.5">
           <span
             className={`inline-flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wider ${
-              esRecord ? "text-amber-400" : "text-emerald-400"
+              esRecord ? "text-warn" : "text-ok"
             }`}
           >
             {esRecord ? "Récord Personal" : "Hito de Racha"}
@@ -142,10 +142,10 @@ function ItemLogro({ item }: { item: LogroFeedItem }) {
         </div>
         <p
           data-logro-titulo
-          className="text-xs leading-snug text-zinc-200 line-clamp-2"
+          className="text-xs leading-snug text-ink-soft line-clamp-2"
         >
-          <strong className="font-bold text-white">{item.clienteNombre}</strong>{" "}
-          <span className="text-zinc-400">—</span> {item.titulo}
+          <strong className="font-bold text-ink">{item.clienteNombre}</strong>{" "}
+          <span className="text-ink-soft">—</span> {item.titulo}
         </p>
       </div>
 
@@ -160,9 +160,9 @@ function ItemLogro({ item }: { item: LogroFeedItem }) {
         className={`relative flex min-h-[44px] min-w-[56px] shrink-0 items-center justify-center gap-1.5 rounded-[12px] border px-2.5 text-xs font-semibold select-none cursor-pointer transition-all duration-150 active:scale-90 ${
           miReaccion
             ? esRecord
-              ? "border-amber-500/60 bg-amber-500/20 text-amber-300 shadow-sm shadow-amber-500/20"
-              : "border-emerald-500/60 bg-emerald-500/20 text-emerald-300 shadow-sm shadow-emerald-500/20"
-            : "border-white/10 bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-zinc-200"
+              ? "border-warn/60 bg-warn/20 text-warn shadow-sm"
+              : "border-ok/60 bg-ok/20 text-ok shadow-sm"
+            : "border-rule bg-paper text-ink-soft hover:bg-paper-3 hover:text-ink"
         } ${pending ? "opacity-60 cursor-wait" : ""}`}
         aria-label={`Reaccionar con aplauso (${total} reacciones)`}
       >

@@ -25,29 +25,29 @@ export function ComunidadSeccion({ feedItems, ranking, miPosicion, desafio }: Pr
   return (
     <section
       data-comunidad-seccion
-      className="w-full space-y-3 rounded-[22px] border border-white/10 bg-zinc-950/60 p-4 backdrop-blur-xl shadow-xl"
+      className="card-cut w-full space-y-3 rounded-[16px] border border-rule bg-paper-2 p-4 shadow-sm"
     >
-      {/* Encabezado y pestañas estilo iOS */}
-      <div className="flex items-center justify-between pb-1 border-b border-white/5">
+      {/* Encabezado y pestañas — mismo lenguaje de card que el resto de /mi */}
+      <div className="flex items-center justify-between pb-1 border-b border-rule">
         <div className="flex items-center gap-2">
           <span className="relative flex h-2.5 w-2.5">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-ok opacity-75" />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-ok" />
           </span>
-          <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-300">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-ink-soft">
             Comunidad Gym
           </h2>
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex items-center gap-1 rounded-[12px] bg-zinc-900/90 p-1 border border-white/5">
+        <div className="flex items-center gap-1 rounded-[12px] bg-paper p-1 border border-rule">
           <button
             type="button"
             onClick={() => cambiarTab("feed")}
             className={`flex h-7 items-center gap-1.5 rounded-[9px] px-2.5 text-xs font-semibold transition-all duration-150 ${
               tab === "feed"
-                ? "bg-emerald-500 text-zinc-950 shadow-sm"
-                : "text-zinc-400 hover:text-zinc-200"
+                ? "bg-ok text-paper shadow-sm"
+                : "text-ink-soft hover:text-ink"
             }`}
           >
             <Flame className="h-3.5 w-3.5" />
@@ -58,8 +58,8 @@ export function ComunidadSeccion({ feedItems, ranking, miPosicion, desafio }: Pr
             onClick={() => cambiarTab("ranking")}
             className={`flex h-7 items-center gap-1.5 rounded-[9px] px-2.5 text-xs font-semibold transition-all duration-150 ${
               tab === "ranking"
-                ? "bg-amber-500 text-zinc-950 shadow-sm"
-                : "text-zinc-400 hover:text-zinc-200"
+                ? "bg-warn text-paper shadow-sm"
+                : "text-ink-soft hover:text-ink"
             }`}
           >
             <Trophy className="h-3.5 w-3.5" />
@@ -71,7 +71,7 @@ export function ComunidadSeccion({ feedItems, ranking, miPosicion, desafio }: Pr
             className={`flex h-7 items-center gap-1.5 rounded-[9px] px-2.5 text-xs font-semibold transition-all duration-150 ${
               tab === "desafio"
                 ? "bg-volt text-volt-ink shadow-sm"
-                : "text-zinc-400 hover:text-zinc-200"
+                : "text-ink-soft hover:text-ink"
             }`}
           >
             <Target className="h-3.5 w-3.5" />
@@ -86,8 +86,8 @@ export function ComunidadSeccion({ feedItems, ranking, miPosicion, desafio }: Pr
           {feedItems.length > 0 ? (
             <FeedLogros items={feedItems} />
           ) : (
-            <div className="rounded-[16px] border border-white/5 bg-zinc-900/40 p-4 text-center">
-              <p className="text-xs text-zinc-400">
+            <div className="rounded-[16px] border border-rule bg-paper p-4 text-center">
+              <p className="text-xs text-ink-soft">
                 Aún no hay récords ni hitos hoy. ¡Entrená y sé el primero en aparecer! 🔥
               </p>
             </div>
@@ -97,7 +97,7 @@ export function ComunidadSeccion({ feedItems, ranking, miPosicion, desafio }: Pr
 
       {tab === "ranking" && (
         <div className="space-y-2 pt-1 animate-in fade-in-50 duration-200">
-          <div className="flex items-center justify-between px-1 text-[11px] text-zinc-400 font-medium">
+          <div className="flex items-center justify-between px-1 text-[11px] text-ink-soft font-medium">
             <span>Ranking Asistencia (Este mes)</span>
             <span>Clases</span>
           </div>
@@ -113,8 +113,8 @@ export function ComunidadSeccion({ feedItems, ranking, miPosicion, desafio }: Pr
                     key={item.clienteId}
                     className={`flex items-center justify-between rounded-[14px] border p-2.5 text-xs transition-all ${
                       item.esUsuarioActual
-                        ? "border-amber-500/50 bg-amber-500/10 font-bold text-white shadow-sm"
-                        : "border-white/5 bg-zinc-900/60 text-zinc-300"
+                        ? "border-warn/50 bg-warn/10 font-bold text-ink shadow-sm"
+                        : "border-rule bg-paper text-ink-soft"
                     }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
@@ -125,7 +125,7 @@ export function ComunidadSeccion({ feedItems, ranking, miPosicion, desafio }: Pr
                         {item.nombre} {item.esUsuarioActual && "(Tú)"}
                       </span>
                     </div>
-                    <span className="font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                    <span className="font-mono font-bold text-ok bg-ok/10 px-2 py-0.5 rounded-full border border-ok/20">
                       {item.asistencias}
                     </span>
                   </div>
@@ -133,22 +133,22 @@ export function ComunidadSeccion({ feedItems, ranking, miPosicion, desafio }: Pr
               })}
 
               {miPosicion && miPosicion.posicion > 5 && (
-                <div className="mt-2 flex items-center justify-between rounded-[14px] border border-amber-500/40 bg-amber-500/10 p-2.5 text-xs font-bold text-white">
+                <div className="mt-2 flex items-center justify-between rounded-[14px] border border-warn/40 bg-warn/10 p-2.5 text-xs font-bold text-ink">
                   <div className="flex items-center gap-2.5">
                     <span className="w-5 text-center font-mono font-bold text-xs">
                       #{miPosicion.posicion}
                     </span>
                     <span>{miPosicion.nombre} (Tú)</span>
                   </div>
-                  <span className="font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                  <span className="font-mono text-ok bg-ok/10 px-2 py-0.5 rounded-full border border-ok/20">
                     {miPosicion.asistencias}
                   </span>
                 </div>
               )}
             </div>
           ) : (
-            <div className="rounded-[16px] border border-white/5 bg-zinc-900/40 p-4 text-center">
-              <p className="text-xs text-zinc-400">
+            <div className="rounded-[16px] border border-rule bg-paper p-4 text-center">
+              <p className="text-xs text-ink-soft">
                 La tabla se actualizará con los primeros check-ins del mes. 🏋️‍♂️
               </p>
             </div>
@@ -158,11 +158,11 @@ export function ComunidadSeccion({ feedItems, ranking, miPosicion, desafio }: Pr
 
       {tab === "desafio" && desafio && (
         <div className="space-y-3 pt-1 animate-in fade-in-50 duration-200">
-          <div className="rounded-[16px] border border-volt/30 bg-gradient-to-br from-volt/10 via-zinc-950 to-zinc-950 p-3.5 space-y-3">
+          <div className="rounded-[16px] border border-volt/30 bg-gradient-to-br from-volt/10 via-paper to-paper p-3.5 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Medal className="h-5 w-5 text-volt" />
-                <h3 className="text-xs font-bold text-white">{desafio.titulo}</h3>
+                <Medal className="h-5 w-5 text-volt-ink" />
+                <h3 className="text-xs font-bold text-ink">{desafio.titulo}</h3>
               </div>
               {desafio.completado && (
                 <span className="text-[10px] font-extrabold uppercase tracking-wider bg-volt text-volt-ink px-2 py-0.5 rounded-full">
@@ -174,14 +174,14 @@ export function ComunidadSeccion({ feedItems, ranking, miPosicion, desafio }: Pr
             {/* Barra de progreso */}
             <div className="space-y-1">
               <div className="flex justify-between text-[11px] font-semibold">
-                <span className="text-zinc-300">Tu avance:</span>
-                <span className="font-mono text-volt">
+                <span className="text-ink-soft">Tu avance:</span>
+                <span className="font-mono text-volt-ink">
                   {desafio.misAsistencias} / {desafio.metaAsistencias} asistencias
                 </span>
               </div>
-              <div className="h-2.5 w-full rounded-full bg-zinc-900 border border-white/10 overflow-hidden">
+              <div className="h-2.5 w-full rounded-full bg-paper border border-rule overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-emerald-500 to-volt transition-all duration-500 rounded-full"
+                  className="h-full bg-gradient-to-r from-ok to-volt transition-all duration-500 rounded-full"
                   style={{
                     width: `${Math.min(
                       100,
@@ -192,8 +192,8 @@ export function ComunidadSeccion({ feedItems, ranking, miPosicion, desafio }: Pr
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5 pt-1 text-[11px] text-zinc-400">
-              <Users className="h-3.5 w-3.5 text-zinc-400" />
+            <div className="flex items-center gap-1.5 pt-1 text-[11px] text-ink-soft">
+              <Users className="h-3.5 w-3.5 text-ink-soft" />
               <span>
                 <strong>{desafio.totalSociosCumplidos} socios</strong> de tu gym ya lo lograron este mes.
               </span>
