@@ -24,6 +24,8 @@ import {
   hapticoExito,
   hapticoError,
   hapticoSeleccion,
+  hapticoModalAbrir,
+  hapticoModalCerrar,
 } from "@/lib/ui/hapticos";
 import {
   buscarReemplazoMaquinaOcupada,
@@ -148,7 +150,7 @@ export function PulpoAsistenteChat({
 
   const abrir = () => {
     iniciarAudioHaptico();
-    hapticoImpactoSuave();
+    hapticoModalAbrir();
     setVista("menu");
     setMensajeError(null);
     setReporteEnviado(false);
@@ -156,7 +158,7 @@ export function PulpoAsistenteChat({
   };
 
   const cerrar = () => {
-    hapticoImpactoSuave();
+    hapticoModalCerrar();
     setAbierto(false);
     setTimeout(() => {
       setVista("menu");

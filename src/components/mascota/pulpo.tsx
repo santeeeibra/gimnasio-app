@@ -1,5 +1,7 @@
 "use client";
 
+import { hapticoNotificacionAmigable, iniciarAudioHaptico } from "@/lib/ui/hapticos";
+
 /**
  * Mascota oficial de SysGym (pulpo verde-volt).
  *
@@ -265,6 +267,7 @@ export function Pulpo({ size = 96, pose = "festejo", className = "" }: PulpoProp
 
 export type PulpoCardProps = PulpoProps & {
   cardClassName?: string;
+  onClick?: () => void;
 };
 
 /**
@@ -277,10 +280,18 @@ export function PulpoCard({
   pose = "festejo",
   className,
   cardClassName = "",
+  onClick,
 }: PulpoCardProps) {
+  const handleClick = () => {
+    iniciarAudioHaptico();
+    hapticoNotificacionAmigable();
+    onClick?.();
+  };
+
   return (
     <div
-      className={`relative inline-flex items-center justify-center rounded-[20px] bg-zinc-950 border border-emerald-500/30 p-3 shadow-xl overflow-hidden ${cardClassName}`}
+      onClick={handleClick}
+      className={`relative inline-flex items-center justify-center rounded-[20px] bg-zinc-950 border border-emerald-500/30 p-3 shadow-xl overflow-hidden cursor-pointer active:scale-95 transition-transform ${cardClassName}`}
     >
       {/* Resplandor ambiental radial volt */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(16,231,160,0.18)_0%,transparent_70%)] pointer-events-none" />

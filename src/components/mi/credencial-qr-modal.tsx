@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import QRCode from "qrcode";
 import { QrCode, X, ShieldCheck, Dumbbell, Sparkles } from "lucide-react";
-import { hapticoImpactoSuave, hapticoExito } from "@/lib/ui/hapticos";
+import { hapticoImpactoSuave, hapticoExito, hapticoModalAbrir, hapticoModalCerrar } from "@/lib/ui/hapticos";
 
 type CredencialQRModalProps = {
   nombre: string;
@@ -51,7 +51,11 @@ export function CredencialQRModal({
   }, [abierto, dni]);
 
   const toggleModal = () => {
-    hapticoImpactoSuave();
+    if (!abierto) {
+      hapticoModalAbrir();
+    } else {
+      hapticoModalCerrar();
+    }
     setAbierto((prev) => !prev);
   };
 

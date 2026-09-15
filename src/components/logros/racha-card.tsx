@@ -11,7 +11,7 @@
 
 import Image from "next/image";
 import { RACHA_MINIMA_VISIBLE, type ResultadoRacha } from "@/lib/logros/tipos";
-import { hapticoImpactoMedio, iniciarAudioHaptico } from "@/lib/ui/hapticos";
+import { hapticoLogroStreak, iniciarAudioHaptico } from "@/lib/ui/hapticos";
 import { Share2, Flame, ShieldCheck } from "lucide-react";
 
 export type RachaCardProps = {
@@ -25,7 +25,7 @@ export function RachaCard({ racha, onCompartir }: RachaCardProps) {
 
   function handleCompartir() {
     iniciarAudioHaptico();
-    hapticoImpactoMedio();
+    hapticoLogroStreak();
     onCompartir?.();
   }
 

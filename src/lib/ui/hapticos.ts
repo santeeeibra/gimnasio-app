@@ -475,6 +475,211 @@ export function hapticoWarmupTick() {
 }
 
 /**
+ * Transición de pantalla / navegación entre pestañas:
+ * Sonido orgánico y fluido con ligero barrido de frecuencia y háptico suave.
+ */
+export function hapticoNavegacionPantalla() {
+  vibrar(8);
+  triggerIosSwitchHaptic();
+
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  if (ctx.state === "suspended") ctx.resume().catch(() => {});
+
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "sine";
+  osc.frequency.setValueAtTime(420, now);
+  osc.frequency.exponentialRampToValueAtTime(680, now + 0.04);
+  osc.frequency.exponentialRampToValueAtTime(540, now + 0.08);
+
+  gain.gain.setValueAtTime(0.04, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.085);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(now);
+  osc.stop(now + 0.09);
+}
+
+/**
+ * Notificación amigable / burbuja de diálogo de Mascota Pulpo Volt:
+ * Pop de marimba super cálido y moderno (C5 -> G5 -> C6).
+ */
+export function hapticoNotificacionAmigable() {
+  vibrar([6, 20, 10]);
+  triggerIosSwitchHaptic();
+
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  if (ctx.state === "suspended") ctx.resume().catch(() => {});
+
+  const now = ctx.currentTime;
+  const playPop = (freq: number, start: number, dur: number, vol = 0.06) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(freq, start);
+    gain.gain.setValueAtTime(vol, start);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(start);
+    osc.stop(start + dur);
+  };
+
+  playPop(523, now, 0.04, 0.06);       // C5
+  playPop(784, now + 0.035, 0.05, 0.07); // G5
+  playPop(1046, now + 0.07, 0.08, 0.08); // C6
+}
+
+/**
+ * Celebración de Racha / Fuego (Streak):
+ * Acorde ascendente estimulante de 4 notas con vibración continua.
+ */
+export function hapticoLogroStreak() {
+  vibrar([12, 35, 18, 45, 25]);
+  triggerIosSwitchHaptic();
+
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  if (ctx.state === "suspended") ctx.resume().catch(() => {});
+
+  const now = ctx.currentTime;
+  const playNote = (freq: number, start: number, dur: number) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(freq, start);
+    gain.gain.setValueAtTime(0.08, start);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(start);
+    osc.stop(start + dur);
+  };
+
+  playNote(659, now, 0.06);        // E5
+  playNote(830, now + 0.05, 0.07);   // G#5
+  playNote(987, now + 0.10, 0.08);   // B5
+  playNote(1318, now + 0.16, 0.18);  // E6
+}
+
+/**
+ * Deslizar tarjeta / Swipe de carrusel:
+ * Click elástico y fluido con micro-caída de frecuencia.
+ */
+export function hapticoCardSwipe() {
+  vibrar(7);
+  triggerIosSwitchHaptic();
+
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  if (ctx.state === "suspended") ctx.resume().catch(() => {});
+
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "sine";
+  osc.frequency.setValueAtTime(750, now);
+  osc.frequency.exponentialRampToValueAtTime(380, now + 0.03);
+
+  gain.gain.setValueAtTime(0.035, now);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.035);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(now);
+  osc.stop(now + 0.04);
+}
+
+/**
+ * Apertura de Modal / Sheet desplegable:
+ * Tono elástico de elevación moderna (380Hz -> 650Hz).
+ */
+export function hapticoModalAbrir() {
+  vibrar(9);
+  triggerIosSwitchHaptic();
+
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  if (ctx.state === "suspended") ctx.resume().catch(() => {});
+
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "sine";
+  osc.frequency.setValueAtTime(380, now);
+  osc.frequency.exponentialRampToValueAtTime(650, now + 0.065);
+
+  gain.gain.setValueAtTime(0.05, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(now);
+  osc.stop(now + 0.075);
+}
+
+/**
+ * Cierre de Modal / Sheet:
+ * Tono elástico de descenso suave (580Hz -> 320Hz).
+ */
+export function hapticoModalCerrar() {
+  vibrar(6);
+  triggerIosSwitchHaptic();
+
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  if (ctx.state === "suspended") ctx.resume().catch(() => {});
+
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "sine";
+  osc.frequency.setValueAtTime(580, now);
+  osc.frequency.exponentialRampToValueAtTime(320, now + 0.05);
+
+  gain.gain.setValueAtTime(0.035, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.055);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(now);
+  osc.stop(now + 0.06);
+}
+
+/**
+ * Pull to Refresh (Recargar pantalla):
+ * Sensación de muelle elástico que se tensa y suelta.
+ */
+export function hapticoRefresh() {
+  vibrar([10, 25, 10]);
+  triggerIosSwitchHaptic();
+
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  if (ctx.state === "suspended") ctx.resume().catch(() => {});
+
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "sine";
+  osc.frequency.setValueAtTime(400, now);
+  osc.frequency.exponentialRampToValueAtTime(750, now + 0.05);
+  osc.frequency.exponentialRampToValueAtTime(550, now + 0.09);
+
+  gain.gain.setValueAtTime(0.06, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.095);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(now);
+  osc.stop(now + 0.1);
+}
+
+/**
  * Hook utilitario para componentes de React
  */
 export function useHapticos() {
@@ -492,6 +697,13 @@ export function useHapticos() {
     error: hapticoError,
     warmupExpand: hapticoWarmupExpand,
     warmupTick: hapticoWarmupTick,
+    navegacion: hapticoNavegacionPantalla,
+    notificacion: hapticoNotificacionAmigable,
+    streak: hapticoLogroStreak,
+    swipe: hapticoCardSwipe,
+    modalAbrir: hapticoModalAbrir,
+    modalCerrar: hapticoModalCerrar,
+    refresh: hapticoRefresh,
   };
 }
 

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireDueno } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { ComposeForm } from "./compose-form";
+import { PulpoImagenCard } from "@/components/mascota/pulpo-imagen";
 
 export default async function MensajesPage() {
   const dueno = await requireDueno();
@@ -56,7 +57,15 @@ export default async function MensajesPage() {
       <section className="space-y-3">
         <h2 className="text-lg">Enviados</h2>
         {mensajes.length === 0 ? (
-          <p className="text-sm text-ink-soft">Todavía no enviaste mensajes.</p>
+          <div className="card-cut border border-rule bg-paper-2 p-8 text-center flex flex-col items-center justify-center gap-3">
+            <PulpoImagenCard pose="vacio" size={80} />
+            <div>
+              <p className="font-semibold text-ink text-base">Todavía no enviaste mensajes</p>
+              <p className="text-xs text-ink-soft mt-1 max-w-sm">
+                Redactá un aviso o comunicado arriba para que tus socios lo reciban directo en su app.
+              </p>
+            </div>
+          </div>
         ) : (
           <ul className="card-cut overflow-hidden border border-rule divide-y divide-rule">
             {mensajes.map((m) => {

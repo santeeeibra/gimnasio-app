@@ -2,6 +2,7 @@
 
 import { useState, useTransition, useActionState } from "react";
 import { Button } from "@/components/ui";
+import { PulpoCard } from "@/components/mascota/pulpo";
 import {
   responderComentario,
   marcarResuelto,
@@ -193,18 +194,20 @@ export function BuzonDuenoList({ comentarios }: { comentarios: Comentario[] }) {
       </div>
 
       {filtrados.length === 0 ? (
-        <div className="card-cut border border-rule bg-paper-2 px-5 py-9 text-center">
-          <span aria-hidden className="mx-auto mb-3 block size-2 rounded-full bg-volt" />
-          <p className="font-display text-xl">
-            {filtro === "pendiente" ? "Todo al día" : "Sin comentarios"}
-          </p>
-          <p className="mt-1 text-sm text-ink-soft">
-            {filtro === "pendiente"
-              ? "No hay comentarios pendientes."
-              : filtro === "resuelto"
-                ? "No hay comentarios resueltos."
-                : "Todavía no llegaron comentarios."}
-          </p>
+        <div className="card-cut border border-rule bg-paper-2 px-5 py-9 text-center flex flex-col items-center justify-center gap-3">
+          <PulpoCard pose={filtro === "pendiente" ? "festejo" : "buzon"} size={80} />
+          <div>
+            <p className="font-display text-xl text-ink">
+              {filtro === "pendiente" ? "¡Todo al día!" : "Sin comentarios aún"}
+            </p>
+            <p className="mt-1 text-xs text-ink-soft max-w-sm">
+              {filtro === "pendiente"
+                ? "No tenés comentarios pendientes por responder."
+                : filtro === "resuelto"
+                  ? "No tenés comentarios archivados como resueltos."
+                  : "El buzón de sugerencias está vacío por ahora. Los comentarios de tus socios aparecerán acá."}
+            </p>
+          </div>
         </div>
       ) : (
         <ul className="card-cut overflow-hidden border border-rule bg-paper-2 divide-y divide-rule">

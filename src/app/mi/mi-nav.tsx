@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Dumbbell, House, Inbox, MessageSquare, User } from "lucide-react";
 
+import { hapticoNavegacionPantalla } from "@/lib/ui/hapticos";
+
 // Íconos: SIEMPRE de lucide-react (REGLAS_UI_EMIL.md §14). Nunca SVG a mano.
 const NAV = [
   { href: "/mi", label: "Inicio", Icono: House },
@@ -49,6 +51,7 @@ export function MiBottomNav() {
               key={item.href}
               href={item.href}
               prefetch={true}
+              onClick={() => hapticoNavegacionPantalla()}
               aria-current={active ? "page" : undefined}
               className={`relative flex-1 flex min-h-14 flex-col items-center justify-center gap-1 py-2 text-[11px] tracking-tight touch-manipulation active:scale-95 transition-[transform,color] duration-150 [transition-timing-function:var(--ease-out)] ${
                 active ? "text-ink" : "text-ink-soft"

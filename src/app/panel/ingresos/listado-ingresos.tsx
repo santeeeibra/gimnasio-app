@@ -143,22 +143,117 @@ export function ListadoIngresos({
     return fecha.toLocaleDateString("es-AR", { month: "long", year: "numeric" });
   };
 
+  // Agrupación por días para el gráfico Sparkline de tendencia
+  const dailyData = useMemo(() => {
+    const map = new Map<string, number>();
+    const sorted = [...pagosFiltrados].sort((a, b) => a.fecha_pago.localeCompare(b.fecha_pago));
+    sorted.forEach((p) => {
+      map.set(p.fecha_pago, (map.get(p.fecha_pago) || 0) + p.monto);
+    });
+    return Array.from(map.entries()).map(([date, total]) => ({ date, total }));
+  }, [pagosFiltrados]);
+
+  const sparklineSvg = useMemo(() => {
+    if (dailyData.length === 0) return null;
+    const width = 300;
+    const height = 44;
+    const pad = 6;
+    const maxVal = Math.max(...dailyData.map((d) => d.total), 1);
+    const minVal = 0;
+
+    if (dailyData.length === 1) {
+      const y = height / 2;
+      return {
+        path: `M ${pad} ${y} L ${width - pad} ${y}`,
+        area: `M ${pad} ${height - pad} L ${pad} ${y} L ${width - pad} ${y} L ${width - pad} ${height - pad} Z`,
+        points: [{ x: width / 2, y, total: dailyData[0].total }],
+      };
+    }
+
+    const pts = dailyData.map((d, i) => {
+      const x = pad + (i / (dailyData.length - 1)) * (width - 2 * pad);
+      const y = height - pad - ((d.total - minVal) / (maxVal - minVal || 1)) * (height - 2 * pad);
+      return { x, y, total: d.total };
+    });
+
+    const pathStr = pts.reduce((acc, p, i) => (i === 0 ? `M ${p.x.toFixed(1)} ${p.y.toFixed(1)}` : `${acc} L ${p.x.toFixed(1)} ${p.y.toFixed(1)}`), "");
+    const areaStr = `${pathStr} L ${pts[pts.length - 1].x.toFixed(1)} ${height} L ${pts[0].x.toFixed(1)} ${height} Z`;
+
+    return { path: pathStr, area: areaStr, points: pts };
+  }, [dailyData]);
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-ink-soft">
-            {filtro ? "Total filtrado" : "Total general"}
-          </p>
-          <p className="text-2xl font-display">${totalGeneral.toLocaleString("es-AR")}</p>
+      {/* Tarjeta de Resumen con Sparkline de Tendencia */}
+      <div className="card-cut border border-rule bg-paper-2 p-5 rounded-[16px] space-y-4 shadow-sm">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-ink-soft">
+              {filtro ? "Total filtrado" : mesFiltro ? `Ingresos ${formatearMes(mesFiltro)}` : "Total general"}
+            </p>
+            <div className="flex items-baseline gap-2 mt-1">
+              <p className="text-3xl font-display text-ink">${totalGeneral.toLocaleString("es-AR")}</p>
+              <span className="text-xs text-ink-soft font-mono">
+                ({pagosFiltrados.length} {pagosFiltrados.length === 1 ? "pago" : "pagos"})
+              </span>
+            </div>
+          </div>
+          <Link
+            href="/panel/ingresos/configurar-pin"
+            className={pillClasses.neutra}
+          >
+            <KeyRound aria-hidden strokeWidth={2} className="size-4" />
+            PIN
+          </Link>
         </div>
-        <Link
-          href="/panel/ingresos/configurar-pin"
-          className={pillClasses.neutra}
-        >
-          <KeyRound aria-hidden strokeWidth={2} className="size-4" />
-          Cambiar PIN
-        </Link>
+
+        {/* Sparkline SVG Inline */}
+        {sparklineSvg && (
+          <div className="pt-2 border-t border-rule/50">
+            <div className="flex items-center justify-between text-xs text-ink-soft mb-1.5">
+              <span className="font-medium text-[11px] uppercase tracking-wider text-emerald-500 flex items-center gap-1">
+                <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
+                Tendencia de Ingresos
+              </span>
+              <span className="font-mono text-[11px]">
+                {dailyData.length} {dailyData.length === 1 ? "día registrado" : "días registrados"}
+              </span>
+            </div>
+
+            <div className="w-full h-12 relative overflow-hidden rounded-[8px] bg-black/20 p-1 border border-rule/30">
+              <svg
+                viewBox="0 0 300 44"
+                preserveAspectRatio="none"
+                className="w-full h-full overflow-visible"
+              >
+                <defs>
+                  <linearGradient id="ingresosSparklineGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#10e7a0" stopOpacity="0.4" />
+                    <stop offset="100%" stopColor="#10e7a0" stopOpacity="0.0" />
+                  </linearGradient>
+                </defs>
+                <path d={sparklineSvg.area} fill="url(#ingresosSparklineGrad)" />
+                <path
+                  d={sparklineSvg.path}
+                  fill="none"
+                  stroke="#10e7a0"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                {sparklineSvg.points.map((pt, idx) => (
+                  <circle
+                    key={idx}
+                    cx={pt.x}
+                    cy={pt.y}
+                    r="2.5"
+                    fill="#10e7a0"
+                  />
+                ))}
+              </svg>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">

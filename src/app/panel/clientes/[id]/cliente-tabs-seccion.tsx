@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { hapticoDial } from "@/lib/ui/hapticos";
-import { KeyRound, Dumbbell, Scale, Paperclip } from "lucide-react";
+import { CreditCard, KeyRound, Dumbbell, Scale, Paperclip } from "lucide-react";
 
 interface ClienteTabsSeccionProps {
+  cuotaContent: React.ReactNode;
   accesoContent: React.ReactNode;
   rutinaContent: React.ReactNode;
   pesoContent: React.ReactNode;
@@ -13,17 +14,18 @@ interface ClienteTabsSeccionProps {
 }
 
 export function ClienteTabsSeccion({
+  cuotaContent,
   accesoContent,
   rutinaContent,
   pesoContent,
   archivosContent,
   tieneRutina,
 }: ClienteTabsSeccionProps) {
-  const [activeTab, setActiveTab] = useState<"acceso" | "rutina" | "peso" | "archivos">(
-    tieneRutina ? "rutina" : "acceso",
+  const [activeTab, setActiveTab] = useState<"cuota" | "acceso" | "rutina" | "peso" | "archivos">(
+    "cuota"
   );
 
-  const handleTabChange = (tab: "acceso" | "rutina" | "peso" | "archivos") => {
+  const handleTabChange = (tab: "cuota" | "acceso" | "rutina" | "peso" | "archivos") => {
     hapticoDial();
     setActiveTab(tab);
   };
@@ -32,6 +34,19 @@ export function ClienteTabsSeccion({
     <div className="space-y-4">
       {/* Selector de Pills estilo iOS */}
       <div className="flex items-center gap-1.5 p-1 bg-surface-dark border border-rule/60 rounded-[12px] overflow-x-auto">
+        <button
+          type="button"
+          onClick={() => handleTabChange("cuota")}
+          className={`flex-1 min-h-[42px] px-3.5 py-2 rounded-[9px] text-xs sm:text-sm font-medium transition-all flex items-center justify-center gap-2 whitespace-nowrap ${
+            activeTab === "cuota"
+              ? "bg-brand text-black font-semibold shadow-sm"
+              : "text-ink-soft hover:text-ink hover:bg-surface-elevated/40"
+          }`}
+        >
+          <CreditCard className="size-4 shrink-0" />
+          <span>Cuota y Pagos</span>
+        </button>
+
         <button
           type="button"
           onClick={() => handleTabChange("acceso")}
@@ -88,19 +103,22 @@ export function ClienteTabsSeccion({
         </button>
       </div>
 
-      {/* Contenido dinámico según Tab activo */}
+      {/* Contenido dinámico según Tab activo (animación compositor-only fade+slide) */}
       <div className="transition-all duration-200">
+        {activeTab === "cuota" && (
+          <div className="animate-in fade-in-50 slide-in-from-bottom-1 duration-150">{cuotaContent}</div>
+        )}
         {activeTab === "acceso" && (
-          <div className="animate-in fade-in-50 duration-150">{accesoContent}</div>
+          <div className="animate-in fade-in-50 slide-in-from-bottom-1 duration-150">{accesoContent}</div>
         )}
         {activeTab === "rutina" && (
-          <div className="animate-in fade-in-50 duration-150">{rutinaContent}</div>
+          <div className="animate-in fade-in-50 slide-in-from-bottom-1 duration-150">{rutinaContent}</div>
         )}
         {activeTab === "peso" && (
-          <div className="animate-in fade-in-50 duration-150">{pesoContent}</div>
+          <div className="animate-in fade-in-50 slide-in-from-bottom-1 duration-150">{pesoContent}</div>
         )}
         {activeTab === "archivos" && (
-          <div className="animate-in fade-in-50 duration-150">{archivosContent}</div>
+          <div className="animate-in fade-in-50 slide-in-from-bottom-1 duration-150">{archivosContent}</div>
         )}
       </div>
     </div>

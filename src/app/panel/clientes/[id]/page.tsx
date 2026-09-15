@@ -288,136 +288,133 @@ export default async function ClienteDetallePage({
         </div>
       ) : null}
 
-      {/* LAYOUT DE 2 COLUMNAS PARA PC (lg:grid-cols-12) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
-        
-        {/* COLUMNA IZQUIERDA (PAGOS & CAJA - PRIORIDAD 1) - 5 Cols en PC */}
-        <div className="lg:col-span-5 space-y-6 lg:space-y-8">
-          {/* Card Resumen de Cuota */}
-          <Panel className="p-5 space-y-3">
-            <div className="flex items-center justify-between border-b border-rule/50 pb-3">
-              <h2 className="text-sm font-semibold text-ink uppercase tracking-wider flex items-center gap-2">
-                <CreditCard className="size-4 text-brand" />
-                Estado de Cuota
-              </h2>
-              <span className="text-xs text-ink-soft font-mono">ID: {c.id.slice(0, 8)}</span>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-xs text-ink-soft">Plan contratado</p>
-                <p className="font-medium text-ink">{c.plan?.nombre ?? "Sin plan"}</p>
-              </div>
-              <div>
-                <p className="text-xs text-ink-soft">Vencimiento</p>
-                <p className="font-medium text-ink">
-                  {c.fecha_vencimiento ?? "—"}
-                  {dias !== null && (
-                    <span className="block text-xs text-ink-soft">
-                      ({dias < 0 ? `venció hace ${Math.abs(dias)}d` : dias === 0 ? "vence hoy" : `en ${dias} días`})
-                    </span>
-                  )}
-                </p>
-              </div>
-            </div>
-          </Panel>
-
-          {/* Card Formulario Directo Registrar Pago */}
-          <Panel className="p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-semibold text-ink flex items-center gap-2">
-                <span>⚡ Registrar Pago</span>
-              </h2>
-            </div>
-            <PagoForm
-              clienteId={c.id}
-              planes={planes}
-              planActual={c.plan_id}
-            />
-          </Panel>
-
-          {/* Card Historial de Pagos */}
-          <div className="space-y-3">
-            <h2 className="text-base font-semibold text-ink px-1">Historial de Pagos</h2>
-            {pagos.length === 0 ? (
-              <Panel className="p-4 text-center text-sm text-ink-soft">
-                Sin pagos registrados aún.
-              </Panel>
-            ) : (
-              <ul className="border border-rule rounded-[12px] divide-y divide-rule text-sm overflow-hidden bg-surface">
-                {pagos.map((p) => {
-                  const ref: string | null = p.comprobante_ref ?? null;
-                  const esUrl =
-                    ref && (ref.startsWith("http://") || ref.startsWith("https://"));
-                  return (
-                    <li
-                      key={p.id}
-                      className="px-4 py-3 flex flex-col gap-1 hover:bg-surface-elevated/30 transition-colors"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium text-ink">
-                          {p.fecha_pago} · {p.plan?.nombre ?? "—"}
+      {/* SECCIÓN PRINCIPAL CON TABS ESTILO IOS */}
+      <div>
+        <ClienteTabsSeccion
+          tieneRutina={!!rutina}
+          cuotaContent={
+            <div className="space-y-6">
+              {/* Card Resumen de Cuota */}
+              <Panel className="p-5 space-y-3">
+                <div className="flex items-center justify-between border-b border-rule/50 pb-3">
+                  <h2 className="text-sm font-semibold text-ink uppercase tracking-wider flex items-center gap-2">
+                    <CreditCard className="size-4 text-brand" />
+                    Estado de Cuota
+                  </h2>
+                  <span className="text-xs text-ink-soft font-mono">ID: {c.id.slice(0, 8)}</span>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-xs text-ink-soft">Plan contratado</p>
+                    <p className="font-medium text-ink">{c.plan?.nombre ?? "Sin plan"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-ink-soft">Vencimiento</p>
+                    <p className="font-medium text-ink">
+                      {c.fecha_vencimiento ?? "—"}
+                      {dias !== null && (
+                        <span className="block text-xs text-ink-soft">
+                          ({dias < 0 ? `venció hace ${Math.abs(dias)}d` : dias === 0 ? "vence hoy" : `en ${dias} días`})
                         </span>
-                        <span className="font-semibold text-ok">
-                          ${p.monto}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between text-xs text-ink-soft">
-                        <span>Cubre hasta {p.cubre_hasta}</span>
-                        {ref ? (
-                          esUrl ? (
-                            <a
-                              href={ref}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-brand underline underline-offset-2 hover:brightness-110"
-                            >
-                              🔗 Comprobante
-                            </a>
-                          ) : (
-                            <span className="truncate max-w-[120px]">Ref: {ref}</span>
-                          )
-                        ) : null}
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </div>
-        </div>
-
-        {/* COLUMNA DERECHA (Pills / Tabs de Gestión: Acceso, Rutina, Peso) - 7 Cols en PC */}
-        <div className="lg:col-span-7">
-          <ClienteTabsSeccion
-            tieneRutina={!!rutina}
-            accesoContent={
-              <Panel className="p-5">
-                <h2 className="text-lg font-semibold text-ink mb-4">Credenciales y Datos de Acceso</h2>
-                <AccesoSocio
-                  clienteId={c.id}
-                  gimnasio={gym?.nombre ?? ""}
-                  slug={gym?.slug ?? ""}
-                  dni={c.profile?.dni ?? ""}
-                  claveInicial={claveInicial(c.profile?.dni ?? "")}
-                  yaCambio={c.profile?.debe_cambiar_clave === false}
-                  bloqueado={bloqueado}
-                />
-
-                <div className="mt-6 pt-5 border-t border-rule/50">
-                  <h3 className="text-sm font-semibold text-ink mb-3">Editar Datos Personales</h3>
-                  <EditarDatos
-                    clienteId={c.id}
-                    nombre={c.profile?.nombre ?? ""}
-                    dni={c.profile?.dni ?? ""}
-                    telefono={c.profile?.telefono ?? null}
-                    email={(c.email as string | null) ?? null}
-                    sexo={(c.sexo as Sexo | null) ?? null}
-                    esDueno={dueno.rol === "dueno"}
-                  />
+                      )}
+                    </p>
+                  </div>
                 </div>
               </Panel>
-            }
+
+              {/* Card Formulario Directo Registrar Pago */}
+              <Panel className="p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-base font-semibold text-ink flex items-center gap-2">
+                    <span>⚡ Registrar Pago</span>
+                  </h2>
+                </div>
+                <PagoForm
+                  clienteId={c.id}
+                  planes={planes}
+                  planActual={c.plan_id}
+                />
+              </Panel>
+
+              {/* Card Historial de Pagos */}
+              <div className="space-y-3">
+                <h2 className="text-base font-semibold text-ink px-1">Historial de Pagos</h2>
+                {pagos.length === 0 ? (
+                  <Panel className="p-4 text-center text-sm text-ink-soft">
+                    Sin pagos registrados aún.
+                  </Panel>
+                ) : (
+                  <ul className="border border-rule rounded-[12px] divide-y divide-rule text-sm overflow-hidden bg-surface">
+                    {pagos.map((p) => {
+                      const ref: string | null = p.comprobante_ref ?? null;
+                      const esUrl =
+                        ref && (ref.startsWith("http://") || ref.startsWith("https://"));
+                      return (
+                        <li
+                          key={p.id}
+                          className="px-4 py-3 flex flex-col gap-1 hover:bg-surface-elevated/30 transition-colors"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium text-ink">
+                              {p.fecha_pago} · {p.plan?.nombre ?? "—"}
+                            </span>
+                            <span className="font-semibold text-ok">
+                              ${p.monto}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between text-xs text-ink-soft">
+                            <span>Cubre hasta {p.cubre_hasta}</span>
+                            {ref ? (
+                              esUrl ? (
+                                <a
+                                  href={ref}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-brand underline underline-offset-2 hover:brightness-110"
+                                >
+                                  🔗 Comprobante
+                                </a>
+                              ) : (
+                                <span className="truncate max-w-[120px]">Ref: {ref}</span>
+                              )
+                            ) : null}
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            </div>
+          }
+          accesoContent={
+            <Panel className="p-5">
+              <h2 className="text-lg font-semibold text-ink mb-4">Credenciales y Datos de Acceso</h2>
+              <AccesoSocio
+                clienteId={c.id}
+                gimnasio={gym?.nombre ?? ""}
+                slug={gym?.slug ?? ""}
+                dni={c.profile?.dni ?? ""}
+                claveInicial={claveInicial(c.profile?.dni ?? "")}
+                yaCambio={c.profile?.debe_cambiar_clave === false}
+                bloqueado={bloqueado}
+              />
+
+              <div className="mt-6 pt-5 border-t border-rule/50">
+                <h3 className="text-sm font-semibold text-ink mb-3">Editar Datos Personales</h3>
+                <EditarDatos
+                  clienteId={c.id}
+                  nombre={c.profile?.nombre ?? ""}
+                  dni={c.profile?.dni ?? ""}
+                  telefono={c.profile?.telefono ?? null}
+                  email={(c.email as string | null) ?? null}
+                  sexo={(c.sexo as Sexo | null) ?? null}
+                  esDueno={dueno.rol === "dueno"}
+                />
+              </div>
+            </Panel>
+          }
             rutinaContent={
               <Panel className="p-5">
                 <div className="flex items-center justify-between gap-3 mb-4">
@@ -512,6 +509,5 @@ export default async function ClienteDetallePage({
           />
         </div>
       </div>
-    </div>
-  );
-}
+    );
+  }

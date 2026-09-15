@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Search, X } from "lucide-react";
 import { ClienteRow, type ClienteVista } from "./cliente-row";
 import { hapticoImpactoSuave, hapticoSeleccion } from "@/lib/ui/hapticos";
+import { PulpoCard } from "@/components/mascota/pulpo";
 
 const norm = (s: string) =>
   s
@@ -158,9 +159,12 @@ export function ListadoClientes({
 
       {/* Client List Rows */}
       {clientesFiltrados.length === 0 ? (
-        <div className="py-10 text-center bg-[#141416] border border-white/10 rounded-[20px] p-6">
-          <p className="text-sm font-bold text-white mb-1">Ningún socio coincide con los filtros</p>
-          <p className="text-xs text-neutral-400">Probá borrando la búsqueda o seleccionando "Todos".</p>
+        <div className="py-10 text-center bg-[#141416] border border-white/10 rounded-[20px] p-6 flex flex-col items-center justify-center gap-3">
+          <PulpoCard pose="vacio" size={72} />
+          <div>
+            <p className="text-sm font-bold text-white mb-1">Ningún socio coincide con los filtros</p>
+            <p className="text-xs text-neutral-400">Probá borrando la búsqueda o seleccionando "Todos".</p>
+          </div>
         </div>
       ) : (
         <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

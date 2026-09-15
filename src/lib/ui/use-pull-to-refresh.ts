@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { hapticoExito, hapticoImpactoSuave } from "@/lib/ui/hapticos";
+import { hapticoRefresh, hapticoImpactoSuave } from "@/lib/ui/hapticos";
 
 /**
  * Pull-to-refresh táctil propio, sin dependencias.
@@ -116,7 +116,7 @@ export function usePullToRefresh(onRefresh: () => Promise<void> | void) {
         return;
       }
 
-      hapticoExito();
+      hapticoRefresh();
       setFase("refreshing");
       setDistancia(UMBRAL);
       Promise.resolve(onRefresh()).finally(() => {
