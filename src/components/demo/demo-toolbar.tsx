@@ -120,6 +120,7 @@ export function DemoToolbar({
         // que navegar y volver para ver el pago/alta/etc. recién creado.
         router.refresh();
       }
+      setTimeout(() => setMensaje(null), 4000);
     });
   }
 
