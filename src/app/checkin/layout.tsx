@@ -5,6 +5,8 @@ import { OfflineProvider } from "@/components/offline/provider";
 import { PantallaReposo } from "@/components/checkin/pantalla-reposo";
 import { verificarPlanGimnasio } from "@/lib/plataforma/plan-gate";
 import { CheckinBloqueadoElite } from "./bloqueado-elite";
+import { DemoToolbar } from "@/components/demo/demo-toolbar";
+import { puedeImpersonar } from "@/lib/impersonation";
 
 export default async function CheckinLayout({
   children,
@@ -13,13 +15,14 @@ export default async function CheckinLayout({
 }) {
   const profile = await requireStaffODueno();
   const supabase = await createClient();
-  const [{ data: gym }, infoPlan] = await Promise.all([
+  const [{ data: gym }, infoPlan, puedeVerDemo] = await Promise.all([
     supabase
       .from("gimnasios")
       .select("nombre, tema, logo_url")
       .eq("id", profile.gimnasio_id)
       .single(),
     verificarPlanGimnasio(supabase, profile.gimnasio_id),
+    puedeImpersonar(),
   ]);
 
   const tema = parseTema(gym?.tema);
@@ -129,6 +132,8 @@ export default async function CheckinLayout({
       >
         Gestionado con SysGym
       </p>
+
+      <DemoToolbar rol="dueno" habilitado={puedeVerDemo} />
     </div>
   );
 }

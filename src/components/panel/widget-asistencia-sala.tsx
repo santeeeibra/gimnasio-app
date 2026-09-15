@@ -44,9 +44,15 @@ export function WidgetAsistenciaSala({
   // Polling y suscripción Realtime a nuevos pedidos
   useEffect(() => {
     const supabase = createClient();
+    let activo = true;
 
+    // Nombre único por montaje: supabase-js reutiliza el canal existente si
+    // el nombre coincide, y en dev (doble efecto de StrictMode/Fast Refresh)
+    // Date.now() podía repetirse en el mismo milisegundo, devolviendo un
+    // canal ya suscripto y rompiendo el .on() posterior. crypto.randomUUID()
+    // garantiza que cada montaje tenga su propio canal.
     const canal = supabase
-      .channel(`pedidos_asistencia_sala_${gimnasioId}_${Date.now()}`)
+      .channel(`pedidos_asistencia_sala_${gimnasioId}_${crypto.randomUUID()}`)
       .on(
         "postgres_changes",
         {
@@ -56,9 +62,10 @@ export function WidgetAsistenciaSala({
           filter: `gimnasio_id=eq.${gimnasioId}`,
         },
         () => {
+          if (!activo) return;
           // Re-cargar la lista activa
           obtenerPedidosActivos().then((res) => {
-            setPedidos(res.pedidos);
+            if (activo) setPedidos(res.pedidos);
           });
         }
       )
@@ -67,11 +74,12 @@ export function WidgetAsistenciaSala({
     // Chequeo periódico cada 15 segundos por si no entra socket
     const interval = setInterval(() => {
       obtenerPedidosActivos().then((res) => {
-        setPedidos(res.pedidos);
+        if (activo) setPedidos(res.pedidos);
       });
     }, 15000);
 
     return () => {
+      activo = false;
       supabase.removeChannel(canal);
       clearInterval(interval);
     };

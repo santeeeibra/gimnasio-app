@@ -32,8 +32,22 @@ interface CajaAbiertaViewProps {
   esDueno: boolean;
 }
 
+import { DescargarCajaPdf } from "@/components/pdf/descargar-caja-pdf";
+import { DescargarCajaExcel } from "@/components/pdf/descargar-caja-excel";
+
 export function CajaAbiertaView({ sesion, esDueno }: CajaAbiertaViewProps) {
   const [filtroTipo, setFiltroTipo] = useState<"todos" | "ingreso" | "egreso">("todos");
+
+  const movimientosParaExportar = useMemo(() => {
+    return sesion.movimientos.map((m) => ({
+      id: m.id,
+      created_at: m.creado_en,
+      tipo: m.tipo,
+      concepto: m.concepto,
+      monto: Number(m.monto) || 0,
+      metodo_pago: m.medio_pago,
+    }));
+  }, [sesion.movimientos]);
 
   // Cálculos dinámicos de caja
   const { totalIngresos, totalEgresos, ingresosEfectivo, egresosEfectivo, efectivoEnCaja } = useMemo(() => {
@@ -99,6 +113,8 @@ export function CajaAbiertaView({ sesion, esDueno }: CajaAbiertaViewProps) {
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
+            <DescargarCajaPdf movimientos={movimientosParaExportar} saldoInicial={sesion.monto_inicial_efectivo} gimnasioNombre="Gimnasio" />
+            <DescargarCajaExcel movimientos={movimientosParaExportar} gimnasioNombre="Gimnasio" />
             <ModalMovimientoCaja />
             <ModalCerrarCaja turnoNombre={sesion.turno_nombre} />
           </div>

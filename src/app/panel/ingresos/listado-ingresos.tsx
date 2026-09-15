@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { Spinner, pillClasses } from "@/components/ui";
-import { KeyRound } from "lucide-react";
+import { KeyRound, CalendarDays, X } from "lucide-react";
 import { DescargarIngresosPdf } from "@/components/pdf/descargar-ingresos-pdf";
 import { DescargarIngresosExcel } from "@/components/pdf/descargar-ingresos-excel";
+import { hapticoImpactoSuave, hapticoModalAbrir, hapticoModalCerrar } from "@/lib/ui/hapticos";
+import { GraficoIngresos } from "./grafico-ingresos";
 
 type Pago = {
   id: string;
@@ -43,6 +45,22 @@ export function ListadoIngresos({
   const [cargando, setCargando] = useState(true);
   const [q, setQ] = useState("");
   const [mesFiltro, setMesFiltro] = useState<string>(""); // 'YYYY-MM' o ''
+  const [diaFiltro, setDiaFiltro] = useState<string>(""); // 'YYYY-MM-DD' o ''
+  const [calendarioAbierto, setCalendarioAbierto] = useState(false);
+  const [mesCalendario, setMesCalendario] = useState<Date>(new Date());
+  const calendarioRef = useRef<HTMLDivElement>(null);
+
+  // Cerrar el mini calendario al hacer click afuera
+  useEffect(() => {
+    if (!calendarioAbierto) return;
+    const onClick = (e: MouseEvent) => {
+      if (calendarioRef.current && !calendarioRef.current.contains(e.target as Node)) {
+        setCalendarioAbierto(false);
+      }
+    };
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, [calendarioAbierto]);
 
   // Verificar si el PIN fue ingresado (o entrar directo si no se requiere PIN)
   useEffect(() => {
@@ -89,10 +107,22 @@ export function ListadoIngresos({
     ? pagos.filter((p) => p.fecha_pago.startsWith(mesFiltro))
     : pagos;
 
-  // 2) Filtrar por nombre sobre el resultado anterior
-  const pagosFiltrados = filtro
-    ? pagosFiltradosPorRango.filter((p) => norm(p.cliente_nombre).includes(filtro))
+  // 2) Filtrar por día exacto (si se eligió uno en el mini calendario)
+  const pagosFiltradosPorDia = diaFiltro
+    ? pagosFiltradosPorRango.filter((p) => p.fecha_pago.startsWith(diaFiltro))
     : pagosFiltradosPorRango;
+
+  // 3) Filtrar por nombre sobre el resultado anterior
+  const pagosFiltrados = filtro
+    ? pagosFiltradosPorDia.filter((p) => norm(p.cliente_nombre).includes(filtro))
+    : pagosFiltradosPorDia;
+
+  // Días con al menos un pago (para marcarlos con un punto en el calendario)
+  const diasConPago = useMemo(() => {
+    const set = new Set<string>();
+    pagos.forEach((p) => set.add(p.fecha_pago.slice(0, 10)));
+    return set;
+  }, [pagos]);
 
   // Agrupación por días para el gráfico Sparkline de tendencia.
   // Estos dos useMemo deben ejecutarse siempre en el mismo orden en cada
@@ -102,39 +132,11 @@ export function ListadoIngresos({
     const map = new Map<string, number>();
     const sorted = [...pagosFiltrados].sort((a, b) => a.fecha_pago.localeCompare(b.fecha_pago));
     sorted.forEach((p) => {
-      map.set(p.fecha_pago, (map.get(p.fecha_pago) || 0) + p.monto);
+      const fechaCorta = p.fecha_pago.slice(0, 10);
+      map.set(fechaCorta, (map.get(fechaCorta) || 0) + p.monto);
     });
     return Array.from(map.entries()).map(([date, total]) => ({ date, total }));
   }, [pagosFiltrados]);
-
-  const sparklineSvg = useMemo(() => {
-    if (dailyData.length === 0) return null;
-    const width = 300;
-    const height = 44;
-    const pad = 6;
-    const maxVal = Math.max(...dailyData.map((d) => d.total), 1);
-    const minVal = 0;
-
-    if (dailyData.length === 1) {
-      const y = height / 2;
-      return {
-        path: `M ${pad} ${y} L ${width - pad} ${y}`,
-        area: `M ${pad} ${height - pad} L ${pad} ${y} L ${width - pad} ${y} L ${width - pad} ${height - pad} Z`,
-        points: [{ x: width / 2, y, total: dailyData[0].total }],
-      };
-    }
-
-    const pts = dailyData.map((d, i) => {
-      const x = pad + (i / (dailyData.length - 1)) * (width - 2 * pad);
-      const y = height - pad - ((d.total - minVal) / (maxVal - minVal || 1)) * (height - 2 * pad);
-      return { x, y, total: d.total };
-    });
-
-    const pathStr = pts.reduce((acc, p, i) => (i === 0 ? `M ${p.x.toFixed(1)} ${p.y.toFixed(1)}` : `${acc} L ${p.x.toFixed(1)} ${p.y.toFixed(1)}`), "");
-    const areaStr = `${pathStr} L ${pts[pts.length - 1].x.toFixed(1)} ${height} L ${pts[0].x.toFixed(1)} ${height} Z`;
-
-    return { path: pathStr, area: areaStr, points: pts };
-  }, [dailyData]);
 
   if (!verificado) {
     return null; // El modal maneja la verificación
@@ -187,79 +189,40 @@ export function ListadoIngresos({
 
   return (
     <div className="space-y-6">
-      {/* Tarjeta de Resumen con Sparkline de Tendencia */}
-      <div className="card-cut border border-rule bg-paper-2 p-5 rounded-[16px] space-y-4 shadow-sm">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-ink-soft">
-              {filtro ? "Total filtrado" : mesFiltro ? `Ingresos ${formatearMes(mesFiltro)}` : "Total general"}
-            </p>
-            <div className="flex items-baseline gap-2 mt-1">
-              <p className="text-3xl font-display text-ink">${totalGeneral.toLocaleString("es-AR")}</p>
-              <span className="text-xs text-ink-soft font-mono">
-                ({pagosFiltrados.length} {pagosFiltrados.length === 1 ? "pago" : "pagos"})
-              </span>
-            </div>
+      {/* Tarjeta de Resumen con botón PIN */}
+      <div className="card-cut border border-rule bg-paper-2 p-5 rounded-[16px] shadow-sm flex items-center justify-between gap-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-ink-soft">
+            {filtro
+              ? "Total filtrado"
+              : diaFiltro
+              ? `Ingresos ${new Date(diaFiltro + "T00:00:00").toLocaleDateString("es-AR", { day: "numeric", month: "long", year: "numeric" })}`
+              : mesFiltro
+              ? `Ingresos ${formatearMes(mesFiltro)}`
+              : "Total general"}
+          </p>
+          <div className="flex items-baseline gap-2 mt-1">
+            <p className="text-3xl font-display text-ink">${totalGeneral.toLocaleString("es-AR")}</p>
+            <span className="text-xs text-ink-soft font-mono">
+              ({pagosFiltrados.length} {pagosFiltrados.length === 1 ? "pago" : "pagos"})
+            </span>
           </div>
-          <Link
-            href="/panel/ingresos/configurar-pin"
-            className={pillClasses.neutra}
-          >
-            <KeyRound aria-hidden strokeWidth={2} className="size-4" />
-            PIN
-          </Link>
         </div>
-
-        {/* Sparkline SVG Inline */}
-        {sparklineSvg && (
-          <div className="pt-2 border-t border-rule/50">
-            <div className="flex items-center justify-between text-xs text-ink-soft mb-1.5">
-              <span className="font-medium text-[11px] uppercase tracking-wider text-emerald-500 flex items-center gap-1">
-                <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
-                Tendencia de Ingresos
-              </span>
-              <span className="font-mono text-[11px]">
-                {dailyData.length} {dailyData.length === 1 ? "día registrado" : "días registrados"}
-              </span>
-            </div>
-
-            <div className="w-full h-12 relative overflow-hidden rounded-[8px] bg-black/20 p-1 border border-rule/30">
-              <svg
-                viewBox="0 0 300 44"
-                preserveAspectRatio="none"
-                className="w-full h-full overflow-visible"
-              >
-                <defs>
-                  <linearGradient id="ingresosSparklineGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#10e7a0" stopOpacity="0.4" />
-                    <stop offset="100%" stopColor="#10e7a0" stopOpacity="0.0" />
-                  </linearGradient>
-                </defs>
-                <path d={sparklineSvg.area} fill="url(#ingresosSparklineGrad)" />
-                <path
-                  d={sparklineSvg.path}
-                  fill="none"
-                  stroke="#10e7a0"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                {sparklineSvg.points.map((pt, idx) => (
-                  <circle
-                    key={idx}
-                    cx={pt.x}
-                    cy={pt.y}
-                    r="2.5"
-                    fill="#10e7a0"
-                  />
-                ))}
-              </svg>
-            </div>
-          </div>
-        )}
+        <Link
+          href="/panel/ingresos/configurar-pin"
+          className={pillClasses.neutra}
+        >
+          <KeyRound aria-hidden strokeWidth={2} className="size-4" />
+          PIN
+        </Link>
       </div>
 
-      <div className="flex items-center gap-2 flex-wrap">
+      {/* Gráfico de Tendencia de Ingresos Detallado e Interactivo */}
+      {dailyData.length > 0 && (
+        <GraficoIngresos data={dailyData} totalGeneral={totalGeneral} />
+      )}
+
+      <div className="flex items-center gap-2 flex-wrap relative">
         <label className="flex items-center gap-2 flex-1">
           <span className="text-[11px] font-bold uppercase tracking-[0.07em] text-ink-soft shrink-0">Período</span>
           <select
@@ -273,6 +236,113 @@ export function ListadoIngresos({
             ))}
           </select>
         </label>
+
+        <div className="relative" ref={calendarioRef}>
+          <button
+            type="button"
+            onClick={() => {
+              if (!calendarioAbierto) hapticoModalAbrir();
+              else hapticoModalCerrar();
+              setCalendarioAbierto((v) => !v);
+            }}
+            aria-label="Ver pagos por día"
+            className={`${pillClasses.neutra} h-11 ${diaFiltro ? "border-emerald-400 text-emerald-500" : ""}`}
+          >
+            <CalendarDays aria-hidden strokeWidth={2} className="size-4" />
+          </button>
+
+          {calendarioAbierto ? (
+            <div className="absolute right-0 top-[calc(100%+6px)] z-20 w-[280px] rounded-[14px] border border-rule bg-paper shadow-lg p-3 card-cut">
+              <div className="flex items-center justify-between mb-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    hapticoImpactoSuave();
+                    setMesCalendario((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1));
+                  }}
+                  className="size-7 flex items-center justify-center rounded-full hover:bg-paper-2 text-ink-soft"
+                  aria-label="Mes anterior"
+                >
+                  ‹
+                </button>
+                <p className="text-sm font-medium capitalize">
+                  {mesCalendario.toLocaleDateString("es-AR", { month: "long", year: "numeric" })}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    hapticoImpactoSuave();
+                    setMesCalendario((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1));
+                  }}
+                  className="size-7 flex items-center justify-center rounded-full hover:bg-paper-2 text-ink-soft"
+                  aria-label="Mes siguiente"
+                >
+                  ›
+                </button>
+              </div>
+
+              <div className="grid grid-cols-7 gap-1 text-center text-[10px] text-ink-soft mb-1">
+                {["D", "L", "M", "M", "J", "V", "S"].map((d, i) => (
+                  <span key={i}>{d}</span>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-7 gap-1">
+                {(() => {
+                  const year = mesCalendario.getFullYear();
+                  const month = mesCalendario.getMonth();
+                  const primerDia = new Date(year, month, 1).getDay();
+                  const diasEnMes = new Date(year, month + 1, 0).getDate();
+                  const celdas = [];
+                  for (let i = 0; i < primerDia; i++) {
+                    celdas.push(<span key={`vacio-${i}`} />);
+                  }
+                  for (let dia = 1; dia <= diasEnMes; dia++) {
+                    const fechaStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
+                    const tienePago = diasConPago.has(fechaStr);
+                    const seleccionado = diaFiltro === fechaStr;
+                    celdas.push(
+                      <button
+                        key={fechaStr}
+                        type="button"
+                        onClick={() => {
+                          hapticoImpactoSuave();
+                          setDiaFiltro(seleccionado ? "" : fechaStr);
+                          setCalendarioAbierto(false);
+                        }}
+                        disabled={!tienePago}
+                        className={`relative h-8 w-8 rounded-full text-xs flex items-center justify-center transition-colors
+                          ${seleccionado ? "bg-emerald-400 text-black font-semibold" : tienePago ? "text-ink hover:bg-paper-2" : "text-ink-soft/30 cursor-default"}`}
+                      >
+                        {dia}
+                        {tienePago && !seleccionado ? (
+                          <span className="absolute bottom-0.5 size-1 rounded-full bg-emerald-400" />
+                        ) : null}
+                      </button>
+                    );
+                  }
+                  return celdas;
+                })()}
+              </div>
+
+              {diaFiltro ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    hapticoImpactoSuave();
+                    setDiaFiltro("");
+                    setCalendarioAbierto(false);
+                  }}
+                  className="mt-2 w-full flex items-center justify-center gap-1.5 text-xs text-ink-soft hover:text-ink py-1.5"
+                >
+                  <X aria-hidden className="size-3.5" />
+                  Quitar filtro de día
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+
         <DescargarIngresosPdf
           pagos={pagos}
           pagosFiltrados={mesFiltro ? pagosFiltrados : []}

@@ -47,27 +47,42 @@ export function DescargarComprobantePdf({
       const margen = 14;
       let y = margen;
 
+      // Logo SysGym en encabezado derecho
+      let sysLogoDataUrl: string | null = null;
+      let sysLogoAspect = 5.915;
+      try {
+        const r = await cargarImagenCompleta("/logo-sysgym.png", "image/png");
+        sysLogoDataUrl = r.dataUrl;
+        sysLogoAspect = r.w / r.h || 5.915;
+      } catch { /* ok */ }
+
       if (logoUrl) {
         try {
-          const imgData = await cargarImagen(logoUrl);
-          doc.addImage(imgData, "WEBP", margen, y, 16, 16);
+          const imgData = await cargarImagenCompleta(logoUrl);
+          doc.addImage(imgData.dataUrl, "WEBP", margen, y, 14, 14);
         } catch {
           /* sin logo */
         }
       }
-      const txtX = logoUrl ? margen + 20 : margen;
+      const txtX = logoUrl ? margen + 18 : margen;
 
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(15);
-      doc.text(gimnasioNombre, txtX, y + 7);
+      doc.setFontSize(14);
+      doc.text(gimnasioNombre, txtX, y + 6);
 
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(9);
+      doc.setFontSize(8.5);
       doc.setTextColor(100);
-      doc.text(afip?.razonSocial ? afip.razonSocial : "Comprobante de pago", txtX, y + 13);
+      doc.text(afip?.razonSocial ? afip.razonSocial : "Comprobante de pago", txtX, y + 12);
       doc.setTextColor(0);
 
-      y += 24;
+      if (sysLogoDataUrl) {
+        const logoH = 5;
+        const logoW = logoH * sysLogoAspect;
+        doc.addImage(sysLogoDataUrl, "PNG", pageW - margen - logoW, y, logoW, logoH);
+      }
+
+      y += 20;
       doc.setDrawColor(220);
       doc.setLineWidth(0.4);
       doc.line(margen, y, pageW - margen, y);
@@ -179,16 +194,19 @@ function formatFecha(s: string) {
   });
 }
 
-function cargarImagen(url: string): Promise<string> {
+function cargarImagenCompleta(url: string, format = "WEBP"): Promise<{ dataUrl: string; w: number; h: number }> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.onload = () => {
       const canvas = document.createElement("canvas");
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      canvas.getContext("2d")!.drawImage(img, 0, 0);
-      resolve(canvas.toDataURL("image/webp"));
+      canvas.width = img.naturalWidth || img.width;
+      canvas.height = img.naturalHeight || img.height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return reject("no-ctx");
+      ctx.drawImage(img, 0, 0);
+      const mime = format === "PNG" || format === "image/png" ? "image/png" : "image/webp";
+      resolve({ dataUrl: canvas.toDataURL(mime), w: canvas.width, h: canvas.height });
     };
     img.onerror = reject;
     img.src = url;

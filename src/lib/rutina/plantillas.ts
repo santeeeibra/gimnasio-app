@@ -183,7 +183,8 @@ export async function clonarPlantillaParaCliente(
     rutinaId = data.id as string;
   }
 
-  await supabase.from("rutina_items").delete().eq("rutina_id", rutinaId);
+  const { error: errorBorrado } = await supabase.from("rutina_items").delete().eq("rutina_id", rutinaId);
+  if (errorBorrado) return { error: "No se pudieron reemplazar los ejercicios de la rutina." };
 
   const filas = items
     .map((it) => {

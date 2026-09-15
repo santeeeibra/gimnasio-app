@@ -1,11 +1,13 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { requireStaffODueno, dniAEmail } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { enviarPush } from "@/lib/push/enviar";
 import { registrarError } from "@/lib/admin/errores";
 import { verificarPlanGimnasio } from "@/lib/plataforma/plan-gate";
+import { puedeImpersonar } from "@/lib/impersonation";
 
 export type CheckinState = {
   estado?: "ok" | "prueba_vencida" | "cuota_vencida" | "no_encontrado";
@@ -76,6 +78,9 @@ async function marcarIngresoInterno(
     cliente_id: cliente.id,
   });
 
+  revalidatePath("/panel/asistencia");
+  revalidatePath("/panel");
+
   const esPrimerIngreso = (previos ?? 0) === 0;
 
   if (cliente.en_prueba && esPrimerIngreso && !cliente.prueba_iniciada_en) {
@@ -134,5 +139,21 @@ export async function salirModoCheckin(
   });
   if (error) return { error: "Clave incorrecta." };
 
+  redirect("/panel");
+}
+
+/**
+ * Atajo de soporte: sale del modo kiosko sin pedir la clave del dueño.
+ * Solo para superadmin o mientras hay una impersonación en curso (mismo
+ * chequeo que habilita el resto de "Modo Demo") — NO es un bypass general:
+ * si `puedeImpersonar()` da false (un dueño/staff real, sin sesión de
+ * soporte detrás), se rechaza y el kiosko sigue pidiendo la clave como
+ * siempre. El gate de seguridad real sigue siendo ese, no la UI.
+ */
+export async function salirCheckinSoporte(): Promise<{ error?: string; ok?: string }> {
+  await requireStaffODueno();
+  if (!(await puedeImpersonar())) {
+    return { error: "No autorizado: esto es solo para la sesión de soporte." };
+  }
   redirect("/panel");
 }

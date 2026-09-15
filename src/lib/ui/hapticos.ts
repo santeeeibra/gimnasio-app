@@ -136,10 +136,10 @@ export function reproducirPulsoAcustico(volumen = 1) {
   const gainBass = ctx.createGain();
   oscBass.type = "triangle";
   oscBass.frequency.setValueAtTime(115, now);
-  oscBass.frequency.exponentialRampToValueAtTime(65, now + 0.03);
+  oscBass.frequency.exponentialRampToValueAtTime(65, now + 0.035);
 
-  gainBass.gain.setValueAtTime(0.28 * volumen, now);
-  gainBass.gain.exponentialRampToValueAtTime(0.001, now + 0.035);
+  gainBass.gain.setValueAtTime(0.65 * volumen, now);
+  gainBass.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
 
   oscBass.connect(gainBass);
   gainBass.connect(ctx.destination);
@@ -149,19 +149,19 @@ export function reproducirPulsoAcustico(volumen = 1) {
   const gainClick = ctx.createGain();
   oscClick.type = "sine";
   oscClick.frequency.setValueAtTime(950, now);
-  oscClick.frequency.exponentialRampToValueAtTime(600, now + 0.018);
+  oscClick.frequency.exponentialRampToValueAtTime(600, now + 0.02);
 
-  gainClick.gain.setValueAtTime(0.06 * volumen, now);
-  gainClick.gain.exponentialRampToValueAtTime(0.0001, now + 0.025);
+  gainClick.gain.setValueAtTime(0.25 * volumen, now);
+  gainClick.gain.exponentialRampToValueAtTime(0.0001, now + 0.028);
 
   oscClick.connect(gainClick);
   gainClick.connect(ctx.destination);
 
   // Arrancar y parar con auto-limpieza
   oscBass.start(now);
-  oscBass.stop(now + 0.038);
+  oscBass.stop(now + 0.042);
   oscClick.start(now);
-  oscClick.stop(now + 0.028);
+  oscClick.stop(now + 0.03);
 
   oscBass.onended = () => {
     try {
@@ -178,7 +178,7 @@ export function reproducirPulsoAcustico(volumen = 1) {
 /**
  * Disparo combinado de háptico para ticks de dial / calibrador:
  * - Throttle de 18ms para evitar saturación en arrastres rápidos.
- * - Vibración física con navigator.vibrate (10ms).
+ * - Vibración física con navigator.vibrate (15ms).
  * - Taptic Engine de iOS 17.4+ con switch click.
  * - Acoustic Haptics con resonancia en altavoces estéreo y click seco.
  */
@@ -188,20 +188,20 @@ export function hapticoDial(minIntervalMs = 18) {
   lastTickTime = now;
 
   // 1. Android / navegadores con Vibration API
-  vibrar(10);
+  vibrar(15);
 
   // 2. iOS 17.4+ Taptic Engine
   triggerIosSwitchHaptic();
 
   // 3. Acoustic Haptics (vibración física por altavoces en iPhone + sonido de tick)
-  reproducirPulsoAcustico(1);
+  reproducirPulsoAcustico(1.3);
 }
 
 /**
  * Feedback háptico y sonoro para confirmación exitosa (p. ej. guardar peso)
  */
 export function hapticoExito() {
-  vibrar([10, 40, 15]);
+  vibrar([20, 45, 25]);
   triggerIosSwitchHaptic();
 
   const ctx = getAudioContext();
@@ -214,7 +214,7 @@ export function hapticoExito() {
     const gain = ctx.createGain();
     osc.type = "sine";
     osc.frequency.setValueAtTime(freq, start);
-    gain.gain.setValueAtTime(0.08, start);
+    gain.gain.setValueAtTime(0.24, start);
     gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
     osc.connect(gain);
     gain.connect(ctx.destination);
@@ -230,7 +230,7 @@ export function hapticoExito() {
  * Feedback háptico y sonoro para error
  */
 export function hapticoError() {
-  vibrar(25);
+  vibrar(45);
   const ctx = getAudioContext();
   if (!ctx) return;
   if (ctx.state === "suspended") ctx.resume().catch(() => {});
@@ -240,7 +240,7 @@ export function hapticoError() {
   const gain = ctx.createGain();
   osc.type = "triangle";
   osc.frequency.setValueAtTime(280, now);
-  gain.gain.setValueAtTime(0.12, now);
+  gain.gain.setValueAtTime(0.30, now);
   gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
   osc.connect(gain);
   gain.connect(ctx.destination);
@@ -253,9 +253,9 @@ export function hapticoError() {
  * Para botones secundarios, badges, cards clickeables y micro-taps.
  */
 export function hapticoImpactoSuave() {
-  vibrar(6);
+  vibrar(14);
   triggerIosSwitchHaptic();
-  reproducirPulsoAcustico(0.4);
+  reproducirPulsoAcustico(0.85);
 }
 
 /**
@@ -263,9 +263,9 @@ export function hapticoImpactoSuave() {
  * Para botones primarios CTA, confirmaciones y modales.
  */
 export function hapticoImpactoMedio() {
-  vibrar(12);
+  vibrar(25);
   triggerIosSwitchHaptic();
-  reproducirPulsoAcustico(0.8);
+  reproducirPulsoAcustico(1.4);
 }
 
 /**
@@ -273,16 +273,16 @@ export function hapticoImpactoMedio() {
  * Para acciones irreversibles, eliminar o finalizaciones.
  */
 export function hapticoImpactoFuerte() {
-  vibrar(20);
+  vibrar(45);
   triggerIosSwitchHaptic();
-  reproducirPulsoAcustico(1.2);
+  reproducirPulsoAcustico(2.0);
 }
 
 /**
  * Selección de pestaña o segmented control estilo UISelectionFeedbackGenerator
  */
 export function hapticoSeleccion() {
-  vibrar(8);
+  vibrar(18);
   triggerIosSwitchHaptic();
   const ctx = getAudioContext();
   if (!ctx) return;
@@ -294,7 +294,7 @@ export function hapticoSeleccion() {
   osc.type = "sine";
   osc.frequency.setValueAtTime(750, now);
   osc.frequency.exponentialRampToValueAtTime(500, now + 0.02);
-  gain.gain.setValueAtTime(0.04, now);
+  gain.gain.setValueAtTime(0.18, now);
   gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.02);
   osc.connect(gain);
   gain.connect(ctx.destination);
@@ -307,7 +307,7 @@ export function hapticoSeleccion() {
  * Golpe físico en chasis + chime deportivo estimulante.
  */
 export function hapticoSerieCompletada() {
-  vibrar([15, 30, 25]);
+  vibrar([30, 45, 35]);
   triggerIosSwitchHaptic();
 
   const ctx = getAudioContext();
@@ -322,7 +322,7 @@ export function hapticoSerieCompletada() {
   oscBass.type = "triangle";
   oscBass.frequency.setValueAtTime(95, now);
   oscBass.frequency.exponentialRampToValueAtTime(48, now + 0.05);
-  gainBass.gain.setValueAtTime(0.35, now);
+  gainBass.gain.setValueAtTime(0.75, now);
   gainBass.gain.exponentialRampToValueAtTime(0.001, now + 0.055);
   oscBass.connect(gainBass);
   gainBass.connect(ctx.destination);
@@ -335,7 +335,7 @@ export function hapticoSerieCompletada() {
     const gain = ctx.createGain();
     osc.type = "sine";
     osc.frequency.setValueAtTime(freq, start);
-    gain.gain.setValueAtTime(0.07, start);
+    gain.gain.setValueAtTime(0.25, start);
     gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
     osc.connect(gain);
     gain.connect(ctx.destination);
@@ -352,7 +352,7 @@ export function hapticoSerieCompletada() {
  * Doble campana cristalina clara sin saturar los oídos del atleta.
  */
 export function hapticoTimerFin() {
-  vibrar([40, 60, 40, 60, 80]);
+  vibrar([50, 70, 50, 70, 100]);
   triggerIosSwitchHaptic();
 
   const ctx = getAudioContext();
@@ -365,7 +365,7 @@ export function hapticoTimerFin() {
     const gain = ctx.createGain();
     osc.type = "sine";
     osc.frequency.setValueAtTime(freq, start);
-    gain.gain.setValueAtTime(0.15, start);
+    gain.gain.setValueAtTime(0.40, start);
     gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.28);
     osc.connect(gain);
     gain.connect(ctx.destination);
@@ -382,7 +382,7 @@ export function hapticoTimerFin() {
  * Fanfarria sintética ascendente de 3 notas triunfales.
  */
 export function hapticoRecordPersonal() {
-  vibrar([15, 40, 20, 40, 40]);
+  vibrar([25, 50, 30, 50, 50]);
   triggerIosSwitchHaptic();
 
   const ctx = getAudioContext();
@@ -395,7 +395,7 @@ export function hapticoRecordPersonal() {
     const gain = ctx.createGain();
     osc.type = "sine";
     osc.frequency.setValueAtTime(freq, start);
-    gain.gain.setValueAtTime(0.09, start);
+    gain.gain.setValueAtTime(0.30, start);
     gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
     osc.connect(gain);
     gain.connect(ctx.destination);
@@ -413,7 +413,7 @@ export function hapticoRecordPersonal() {
  * Sweep armónico ascendente (apertura) o descendente (cierre) con respuesta táctil.
  */
 export function hapticoWarmupExpand(expandiendo = true) {
-  vibrar(expandiendo ? 10 : 6);
+  vibrar(expandiendo ? 20 : 12);
   triggerIosSwitchHaptic();
 
   const ctx = getAudioContext();
@@ -428,12 +428,12 @@ export function hapticoWarmupExpand(expandiendo = true) {
   if (expandiendo) {
     osc.frequency.setValueAtTime(320, now);
     osc.frequency.exponentialRampToValueAtTime(580, now + 0.08);
-    gain.gain.setValueAtTime(0.06, now);
+    gain.gain.setValueAtTime(0.20, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
   } else {
     osc.frequency.setValueAtTime(500, now);
     osc.frequency.exponentialRampToValueAtTime(280, now + 0.06);
-    gain.gain.setValueAtTime(0.04, now);
+    gain.gain.setValueAtTime(0.15, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
   }
 
@@ -448,9 +448,9 @@ export function hapticoWarmupExpand(expandiendo = true) {
  * Click elástico con doble tono ascendente (880Hz -> 1320Hz) y thump de chasis.
  */
 export function hapticoWarmupTick() {
-  vibrar([8, 20, 12]);
+  vibrar([15, 30, 20]);
   triggerIosSwitchHaptic();
-  reproducirPulsoAcustico(0.6);
+  reproducirPulsoAcustico(1.1);
 
   const ctx = getAudioContext();
   if (!ctx) return;
@@ -462,7 +462,7 @@ export function hapticoWarmupTick() {
     const gain = ctx.createGain();
     osc.type = "sine";
     osc.frequency.setValueAtTime(freq, start);
-    gain.gain.setValueAtTime(0.07, start);
+    gain.gain.setValueAtTime(0.22, start);
     gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
     osc.connect(gain);
     gain.connect(ctx.destination);
@@ -479,7 +479,7 @@ export function hapticoWarmupTick() {
  * Sonido orgánico y fluido con ligero barrido de frecuencia y háptico suave.
  */
 export function hapticoNavegacionPantalla() {
-  vibrar(8);
+  vibrar(18);
   triggerIosSwitchHaptic();
 
   const ctx = getAudioContext();
@@ -494,7 +494,7 @@ export function hapticoNavegacionPantalla() {
   osc.frequency.exponentialRampToValueAtTime(680, now + 0.04);
   osc.frequency.exponentialRampToValueAtTime(540, now + 0.08);
 
-  gain.gain.setValueAtTime(0.04, now);
+  gain.gain.setValueAtTime(0.22, now);
   gain.gain.exponentialRampToValueAtTime(0.001, now + 0.085);
 
   osc.connect(gain);
@@ -508,7 +508,7 @@ export function hapticoNavegacionPantalla() {
  * Pop de marimba super cálido y moderno (C5 -> G5 -> C6).
  */
 export function hapticoNotificacionAmigable() {
-  vibrar([6, 20, 10]);
+  vibrar([15, 30, 20]);
   triggerIosSwitchHaptic();
 
   const ctx = getAudioContext();
@@ -516,7 +516,7 @@ export function hapticoNotificacionAmigable() {
   if (ctx.state === "suspended") ctx.resume().catch(() => {});
 
   const now = ctx.currentTime;
-  const playPop = (freq: number, start: number, dur: number, vol = 0.06) => {
+  const playPop = (freq: number, start: number, dur: number, vol = 0.25) => {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = "sine";
@@ -529,9 +529,9 @@ export function hapticoNotificacionAmigable() {
     osc.stop(start + dur);
   };
 
-  playPop(523, now, 0.04, 0.06);       // C5
-  playPop(784, now + 0.035, 0.05, 0.07); // G5
-  playPop(1046, now + 0.07, 0.08, 0.08); // C6
+  playPop(523, now, 0.04, 0.22);       // C5
+  playPop(784, now + 0.035, 0.05, 0.25); // G5
+  playPop(1046, now + 0.07, 0.08, 0.28); // C6
 }
 
 /**
@@ -539,7 +539,7 @@ export function hapticoNotificacionAmigable() {
  * Acorde ascendente estimulante de 4 notas con vibración continua.
  */
 export function hapticoLogroStreak() {
-  vibrar([12, 35, 18, 45, 25]);
+  vibrar([25, 45, 25, 55, 35]);
   triggerIosSwitchHaptic();
 
   const ctx = getAudioContext();
@@ -552,7 +552,7 @@ export function hapticoLogroStreak() {
     const gain = ctx.createGain();
     osc.type = "sine";
     osc.frequency.setValueAtTime(freq, start);
-    gain.gain.setValueAtTime(0.08, start);
+    gain.gain.setValueAtTime(0.28, start);
     gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
     osc.connect(gain);
     gain.connect(ctx.destination);
@@ -571,7 +571,7 @@ export function hapticoLogroStreak() {
  * Click elástico y fluido con micro-caída de frecuencia.
  */
 export function hapticoCardSwipe() {
-  vibrar(7);
+  vibrar(15);
   triggerIosSwitchHaptic();
 
   const ctx = getAudioContext();
@@ -585,7 +585,7 @@ export function hapticoCardSwipe() {
   osc.frequency.setValueAtTime(750, now);
   osc.frequency.exponentialRampToValueAtTime(380, now + 0.03);
 
-  gain.gain.setValueAtTime(0.035, now);
+  gain.gain.setValueAtTime(0.18, now);
   gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.035);
 
   osc.connect(gain);
@@ -599,7 +599,7 @@ export function hapticoCardSwipe() {
  * Tono elástico de elevación moderna (380Hz -> 650Hz).
  */
 export function hapticoModalAbrir() {
-  vibrar(9);
+  vibrar(20);
   triggerIosSwitchHaptic();
 
   const ctx = getAudioContext();
@@ -613,7 +613,7 @@ export function hapticoModalAbrir() {
   osc.frequency.setValueAtTime(380, now);
   osc.frequency.exponentialRampToValueAtTime(650, now + 0.065);
 
-  gain.gain.setValueAtTime(0.05, now);
+  gain.gain.setValueAtTime(0.24, now);
   gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
 
   osc.connect(gain);
@@ -627,7 +627,7 @@ export function hapticoModalAbrir() {
  * Tono elástico de descenso suave (580Hz -> 320Hz).
  */
 export function hapticoModalCerrar() {
-  vibrar(6);
+  vibrar(14);
   triggerIosSwitchHaptic();
 
   const ctx = getAudioContext();
@@ -641,7 +641,7 @@ export function hapticoModalCerrar() {
   osc.frequency.setValueAtTime(580, now);
   osc.frequency.exponentialRampToValueAtTime(320, now + 0.05);
 
-  gain.gain.setValueAtTime(0.035, now);
+  gain.gain.setValueAtTime(0.18, now);
   gain.gain.exponentialRampToValueAtTime(0.001, now + 0.055);
 
   osc.connect(gain);
@@ -655,7 +655,7 @@ export function hapticoModalCerrar() {
  * Sensación de muelle elástico que se tensa y suelta.
  */
 export function hapticoRefresh() {
-  vibrar([10, 25, 10]);
+  vibrar([20, 40, 20]);
   triggerIosSwitchHaptic();
 
   const ctx = getAudioContext();
@@ -670,7 +670,7 @@ export function hapticoRefresh() {
   osc.frequency.exponentialRampToValueAtTime(750, now + 0.05);
   osc.frequency.exponentialRampToValueAtTime(550, now + 0.09);
 
-  gain.gain.setValueAtTime(0.06, now);
+  gain.gain.setValueAtTime(0.26, now);
   gain.gain.exponentialRampToValueAtTime(0.001, now + 0.095);
 
   osc.connect(gain);

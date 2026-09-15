@@ -138,16 +138,21 @@ export async function salirImpersonacion(): Promise<void> {
   const refresh = jar.get(STASH)?.value;
   const supabase = await createClient();
 
+  let sesionRecuperada = false;
   if (refresh) {
     const { error } = await supabase.auth.refreshSession({
       refresh_token: refresh,
     });
-    // Token del superadmin ya vencido/rotado: cerramos sesión para no dejar
-    // al usuario atrapado en la vista impersonada.
-    if (error) await supabase.auth.signOut();
-  } else {
-    await supabase.auth.signOut();
+    sesionRecuperada = !error;
   }
+
+  // Token del superadmin ya vencido/rotado (rotación de refresh tokens de
+  // Supabase: si la sesión del superadmin se refrescó en otra pestaña
+  // mientras impersonaba, este token queda stale). Antes hacíamos signOut()
+  // y redirect("/admin"), pero sin sesión el guard de superadmin te manda a
+  // /login sin explicación — parece que falló el login en vez de que
+  // expiró la sesión de soporte.
+  if (!sesionRecuperada) await supabase.auth.signOut();
 
   jar.delete(STASH);
   jar.delete(FLAG);
@@ -157,5 +162,5 @@ export async function salirImpersonacion(): Promise<void> {
     after(() => registrarAccionAdmin(superId, "salir_impersonacion", null, {}));
   }
 
-  redirect("/admin");
+  redirect(sesionRecuperada ? "/admin" : "/login?error=sesion_soporte_expirada");
 }

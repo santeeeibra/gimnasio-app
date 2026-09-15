@@ -13,6 +13,8 @@ import { ImpersonationBanner, ImpersonationControls } from "@/components/imperso
 import { OfflineProvider } from "@/components/offline/provider";
 import { SplashScreen } from "@/components/mascota/splash-screen";
 import { PullToRefresh } from "@/components/mascota/pull-to-refresh";
+import { DemoToolbar } from "@/components/demo/demo-toolbar";
+import { puedeImpersonar } from "@/lib/impersonation";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -23,6 +25,7 @@ export default async function MiLayout({
   children: React.ReactNode;
 }) {
   const profile = await requireProfile();
+  const puedeVerDemo = await puedeImpersonar();
   const supabase = await createClient();
   const [{ data: gym }, cliRes] = await Promise.all([
     supabase
@@ -111,6 +114,7 @@ export default async function MiLayout({
       </div>
       <MiBottomNav />
       <Tutorial rol="cliente" />
+      <DemoToolbar rol="socio" habilitado={puedeVerDemo} />
       <div id="portal-root" />
     </div>
   );

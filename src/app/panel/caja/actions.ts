@@ -218,6 +218,15 @@ export async function vincularPagoCuotaACaja(
   perfilId: string,
 ) {
   try {
+    // Guard propio: aunque hoy solo se llama server-side con datos ya
+    // validados por el caller (registrarPago), este archivo es "use server"
+    // y por lo tanto un endpoint invocable directo — no debe confiar en que
+    // gimnasioId/perfilId lleguen limpios desde afuera.
+    const user = await requireStaffODueno();
+    if (user.gimnasio_id !== gimnasioId || user.id !== perfilId) {
+      return;
+    }
+
     // Buscar si hay sesión de caja abierta
     const { data: sesion } = await adminDb
       .from("caja_sesiones")

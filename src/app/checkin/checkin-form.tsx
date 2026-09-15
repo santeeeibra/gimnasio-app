@@ -1,12 +1,12 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { marcarIngreso, type CheckinState } from "./actions";
 import { Button } from "@/components/ui";
 import { SalirModoCheckin } from "./salir-form";
 import { encolar } from "@/lib/offline/cola";
 
-import { QrCode, Hash } from "lucide-react";
+import { Camera, CameraOff, Pencil } from "lucide-react";
 import { QRScannerTab } from "@/components/checkin/qr-scanner-tab";
 import { hapticoImpactoSuave } from "@/lib/ui/hapticos";
 
@@ -42,12 +42,78 @@ const TONO: Record<Tono, { rail: string; kicker: string; texto: string }> = {
 
 const TIMEOUT_MS = 8_000;
 
+// Tecla que prende/apaga la cámara del QR. Function key por defecto: un
+// lector de DNI por USB (keyboard-wedge) tipea dígitos + Enter, nunca manda
+// F2, así que no hay riesgo de que un DNI escaneado la dispare sin querer.
+const TECLA_CAMARA_DEFAULT = "F2";
+const TECLA_CAMARA_KEY = "checkin_tecla_camara";
+
 export function CheckinForm() {
-  const [modo, setModo] = useState<"qr" | "dni">("qr");
   const [pending, startTransition] = useTransition();
   const [state, setState] = useState<CheckinState & { encolado?: boolean }>({});
   const formRef = useRef<HTMLFormElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const [camaraActiva, setCamaraActiva] = useState(false);
+  const [teclaCamara, setTeclaCamara] = useState(TECLA_CAMARA_DEFAULT);
+  const [capturandoTecla, setCapturandoTecla] = useState(false);
+
+  // Cargar la tecla configurada (por gimnasio/recepción, queda en este navegador).
+  useEffect(() => {
+    try {
+      const guardada = localStorage.getItem(TECLA_CAMARA_KEY);
+      // Si quedó una tecla inválida guardada de antes de esta guarda (Enter,
+      // Tab, un dígito), se ignora y se vuelve al default.
+      const esValida = guardada && guardada !== "Enter" && guardada !== "Tab" && !/^[0-9]$/.test(guardada);
+      if (esValida) setTeclaCamara(guardada);
+      else if (guardada) localStorage.removeItem(TECLA_CAMARA_KEY);
+    } catch {
+      /* localStorage no disponible: se queda con el default */
+    }
+  }, []);
+
+  // Listener global: togglea la cámara con la tecla configurada, o la
+  // reconfigura si estamos en modo "capturar próxima tecla". El input de DNI
+  // sigue enfocado todo el tiempo (no hace falta clickear nada), así que este
+  // listener corre en paralelo sin robarle el foco al lector de DNI.
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (capturandoTecla) {
+        if (["Shift", "Control", "Alt", "Meta"].includes(e.key)) return;
+        if (e.key === "Escape") {
+          e.preventDefault();
+          setCapturandoTecla(false);
+          return;
+        }
+        // Nunca permitir bindear Enter, Tab o un dígito: son justo lo que
+        // manda un lector de DNI por USB al terminar de escanear (dígitos +
+        // Enter), y Tab rompe la navegación del formulario. Si se bindeara
+        // por error, el próximo DNI escaneado activaría/apagaría la cámara
+        // en vez de (o además de) registrar el ingreso.
+        if (e.key === "Enter" || e.key === "Tab" || /^[0-9]$/.test(e.key)) {
+          e.preventDefault();
+          return;
+        }
+        e.preventDefault();
+        const nueva = e.key;
+        setTeclaCamara(nueva);
+        setCapturandoTecla(false);
+        try {
+          localStorage.setItem(TECLA_CAMARA_KEY, nueva);
+        } catch {
+          /* ok */
+        }
+        return;
+      }
+      if (e.key === teclaCamara) {
+        e.preventDefault();
+        hapticoImpactoSuave();
+        setCamaraActiva((v) => !v);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [teclaCamara, capturandoTecla]);
 
   const limpiar = () => {
     formRef.current?.reset();
@@ -103,75 +169,81 @@ export function CheckinForm() {
         <div>
           <h1 className="font-display text-3xl leading-tight">Ingreso al Gym</h1>
           <p className="mt-1 text-[14px] text-ink-soft">
-            {modo === "qr" ? "Escaneá tu pase digital QR" : "Escribí tu DNI y tocá ingresar"}
+            Escribí tu DNI o escaneá tu pase QR
           </p>
         </div>
       </div>
 
-      {/* Tabs Escáner QR / Teclado DNI */}
-      <div className="mt-5 grid grid-cols-2 gap-1 rounded-[12px] bg-paper-3 p-1 border border-rule">
-        <button
-          type="button"
-          onClick={() => {
-            hapticoImpactoSuave();
-            setModo("qr");
-          }}
-          className={`flex items-center justify-center gap-2 rounded-[9px] py-2 text-xs font-semibold transition-all ${
-            modo === "qr"
-              ? "bg-paper text-ink shadow-sm"
-              : "text-ink-soft hover:text-ink"
-          }`}
+      {/* DNI: siempre visible y enfocado, listo para un lector USB o para tipear a mano */}
+      <form ref={formRef} onSubmit={onSubmit} className="mt-5">
+        <label className="block">
+          <span className="sr-only">DNI</span>
+          <input
+            ref={inputRef}
+            name="dni"
+            inputMode="numeric"
+            autoComplete="off"
+            autoFocus
+            placeholder="DNI"
+            className="w-full h-16 px-4 rounded-[8px] border border-rule bg-paper text-center font-display text-3xl tracking-[0.12em] outline-none transition-[border-color,box-shadow] duration-200 [transition-timing-function:var(--ease-out)] focus:border-ink focus:shadow-[0_0_0_3px_rgb(22_24_29_/_0.08)]"
+          />
+        </label>
+
+        <Button
+          type="submit"
+          loading={pending}
+          className="mt-4 h-14 w-full text-base"
         >
-          <QrCode className="size-4 text-volt" />
-          <span>Escanear QR</span>
-        </button>
+          {pending ? "Marcando…" : "Marcar ingreso"}
+        </Button>
+      </form>
+
+      {/* Cámara QR: apagada por defecto, se prende con la tecla configurable
+          (evita tenerla encendida todo el turno) o tocando el botón. */}
+      <div className="mt-6">
+        {camaraActiva ? (
+          <div className="space-y-3">
+            <QRScannerTab onScan={procesarDniIngreso} isProcessing={pending} />
+            <button
+              type="button"
+              onClick={() => {
+                hapticoImpactoSuave();
+                setCamaraActiva(false);
+              }}
+              className="mx-auto flex items-center gap-1.5 text-xs text-ink-soft hover:text-ink"
+            >
+              <CameraOff className="size-3.5" />
+              Apagar cámara ({teclaCamara})
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => {
+              hapticoImpactoSuave();
+              setCamaraActiva(true);
+            }}
+            className="flex w-full flex-col items-center justify-center gap-2 rounded-[16px] border border-dashed border-rule bg-paper/60 py-6 text-ink-soft transition-colors hover:border-ink/30 hover:text-ink"
+          >
+            <Camera className="size-6" />
+            <span className="text-xs font-medium">
+              Cámara apagada — tocá acá o presioná <b className="text-ink">{teclaCamara}</b> para escanear un QR
+            </span>
+          </button>
+        )}
 
         <button
           type="button"
           onClick={() => {
             hapticoImpactoSuave();
-            setModo("dni");
-            setTimeout(() => inputRef.current?.focus(), 100);
+            setCapturandoTecla(true);
           }}
-          className={`flex items-center justify-center gap-2 rounded-[9px] py-2 text-xs font-semibold transition-all ${
-            modo === "dni"
-              ? "bg-paper text-ink shadow-sm"
-              : "text-ink-soft hover:text-ink"
-          }`}
+          className="mx-auto mt-2 flex items-center gap-1.5 text-[11px] text-ink-soft/70 hover:text-ink-soft"
         >
-          <Hash className="size-4" />
-          <span>Por DNI</span>
+          <Pencil className="size-3" />
+          {capturandoTecla ? "Presioná la tecla que querés usar…" : "Cambiar tecla de la cámara"}
         </button>
       </div>
-
-      {modo === "qr" ? (
-        <div className="mt-6">
-          <QRScannerTab onScan={procesarDniIngreso} isProcessing={pending} />
-        </div>
-      ) : (
-        <form ref={formRef} onSubmit={onSubmit} className="mt-6">
-          <label className="block">
-            <span className="sr-only">DNI</span>
-            <input
-              ref={inputRef}
-              name="dni"
-              inputMode="numeric"
-              autoComplete="off"
-              autoFocus
-              placeholder="DNI"
-              className="w-full h-16 px-4 rounded-[8px] border border-rule bg-paper text-center font-display text-3xl tracking-[0.12em] outline-none transition-[border-color,box-shadow] duration-200 [transition-timing-function:var(--ease-out)] focus:border-ink focus:shadow-[0_0_0_3px_rgb(22_24_29_/_0.08)]"
-            />
-          </label>
-
-          <Button
-            type="submit"
-            loading={pending}
-            className="mt-4 h-14 w-full text-base"
-          >
-            {pending ? "Marcando…" : "Marcar ingreso"}
-          </Button>
-        </form>
-      )}
 
       {state.error ? (
         <p role="alert" className="mt-4 text-sm text-danger">

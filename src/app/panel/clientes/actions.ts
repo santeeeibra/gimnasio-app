@@ -318,6 +318,8 @@ async function registrarPagoInterno(
   revalidatePath(`/panel/clientes/${clienteId}`);
   revalidatePath("/panel/clientes");
   revalidatePath("/panel/caja");
+  revalidatePath("/panel/ingresos");
+  revalidatePath("/panel");
   return { ok: `Pago registrado. Cuota al día hasta ${cubreHasta}.` };
 
 }

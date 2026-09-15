@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp, CheckCircle2, AlertTriangle, Clock, User, Calendar, Coins } from "lucide-react";
 import type { MovimientoCaja } from "./caja-abierta-view";
+import { DescargarCajaPdf } from "@/components/pdf/descargar-caja-pdf";
+import { DescargarCajaExcel } from "@/components/pdf/descargar-caja-excel";
 
 export type SesionCajaCerrada = {
   id: string;
@@ -157,6 +159,33 @@ export function HistorialTurnos({ sesiones }: HistorialTurnosProps) {
                       {esExacto ? "$0" : `${esSobrante ? "+" : ""}$${dif.toLocaleString("es-AR")}`}
                     </p>
                   </div>
+                </div>
+
+                {/* Exportar Turno Histórico */}
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-rule/50">
+                  <DescargarCajaPdf
+                    movimientos={(s.movimientos || []).map((m) => ({
+                      id: m.id,
+                      created_at: m.creado_en,
+                      tipo: m.tipo,
+                      concepto: m.concepto,
+                      monto: Number(m.monto) || 0,
+                      metodo_pago: m.medio_pago,
+                    }))}
+                    saldoInicial={s.monto_inicial_efectivo}
+                    gimnasioNombre="Gimnasio"
+                  />
+                  <DescargarCajaExcel
+                    movimientos={(s.movimientos || []).map((m) => ({
+                      id: m.id,
+                      created_at: m.creado_en,
+                      tipo: m.tipo,
+                      concepto: m.concepto,
+                      monto: Number(m.monto) || 0,
+                      metodo_pago: m.medio_pago,
+                    }))}
+                    gimnasioNombre="Gimnasio"
+                  />
                 </div>
 
                 {s.notas_cierre && (

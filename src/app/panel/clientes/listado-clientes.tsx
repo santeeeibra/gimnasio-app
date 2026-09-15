@@ -6,6 +6,9 @@ import { ClienteRow, type ClienteVista } from "./cliente-row";
 import { hapticoImpactoSuave, hapticoSeleccion } from "@/lib/ui/hapticos";
 import { PulpoCard } from "@/components/mascota/pulpo";
 
+import { DescargarClientesPdf } from "@/components/pdf/descargar-clientes-pdf";
+import { DescargarClientesExcel } from "@/components/pdf/descargar-clientes-excel";
+
 const norm = (s: string) =>
   s
     .toLowerCase()
@@ -48,12 +51,31 @@ export function ListadoClientes({
     });
   }, [clientes, filtroText, filtroEstado]);
 
+  const clientesParaExportar = useMemo(() => {
+    return clientesFiltrados.map((c) => ({
+      id: c.id,
+      nombre: c.profile?.nombre || "Sin nombre",
+      apellido: "",
+      dni: c.profile?.dni,
+      telefono: c.profile?.telefono,
+      plan_nombre: c.plan?.nombre || "Sin plan",
+      estado_cuota: c.estado_cuota,
+      created_at: c.fecha_vencimiento ? `Vence: ${c.fecha_vencimiento}` : null,
+    }));
+  }, [clientesFiltrados]);
+
   if (clientes.length === 0) {
     return <p className="text-sm text-neutral-400">Todavía no hay clientes cargados.</p>;
   }
 
   return (
     <div className="space-y-4">
+      {/* Botones de Exportación PDF & Excel */}
+      <div className="flex items-center justify-end gap-2">
+        <DescargarClientesPdf clientes={clientesParaExportar} gimnasioNombre="Gimnasio" />
+        <DescargarClientesExcel clientes={clientesParaExportar} gimnasioNombre="Gimnasio" />
+      </div>
+
       {/* Sleek Pill Search Bar (Estilo iOS / Apple HIG - Imagen 2) */}
       <div className="group relative flex items-center bg-[#18181c] border border-white/15 focus-within:border-[#c8ff00] focus-within:ring-2 focus-within:ring-[#c8ff00]/25 rounded-full px-4 h-12 shadow-lg transition-all duration-200">
         {/* Animated Search Icon */}

@@ -7,6 +7,8 @@ import { ImpersonationBanner, ImpersonationControls } from "@/components/imperso
 import { OfflineProvider } from "@/components/offline/provider";
 import { SplashScreen } from "@/components/mascota/splash-screen";
 import { PullToRefresh } from "@/components/mascota/pull-to-refresh";
+import { DemoToolbar } from "@/components/demo/demo-toolbar";
+import { puedeImpersonar } from "@/lib/impersonation";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -28,6 +30,7 @@ export default async function PanelLayout({
   const temaVars = temaToVars(tema);
   const esSuper =
     !!process.env.SUPERADMIN_ID && profile.id === process.env.SUPERADMIN_ID;
+  const puedeVerDemo = await puedeImpersonar();
 
   return (
     <div
@@ -67,6 +70,7 @@ export default async function PanelLayout({
       </div>
 
       {profile.rol === "dueno" ? <Tutorial rol="dueno" /> : null}
+      <DemoToolbar rol="dueno" habilitado={puedeVerDemo} />
       <div id="portal-root" />
     </div>
   );

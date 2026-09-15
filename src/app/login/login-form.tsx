@@ -183,6 +183,8 @@ export function LoginForm({
                   <p>
                     {initialError === "cuenta_desactivada"
                       ? "Tu cuenta ha sido desactivada. Consultá con la administración del gimnasio."
+                      : initialError === "sesion_soporte_expirada"
+                      ? "Tu sesión de soporte expiró. Iniciá sesión de nuevo."
                       : initialError}
                   </p>
                 </div>
