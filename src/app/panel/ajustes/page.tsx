@@ -18,6 +18,8 @@ import { ContactarSoporteForm } from "./contactar-soporte-form";
 import { VerTutorialDeNuevo } from "@/components/tutorial/tutorial";
 import { LinkAccesoCard } from "./link-acceso-card";
 import { MercadoPagoAjustesCard } from "./mp-card";
+import { impersonacionActiva } from "@/lib/impersonation";
+import { ToggleOcultarControlesImpersonacion } from "@/components/impersonation/toggle-ocultar";
 import { estadoCobroAutomatico } from "@/lib/pagos/cobro-socio";
 import { connectConfigurado } from "@/lib/pagos/mercadopago-connect";
 import { BotonInstalarApp } from "@/components/pwa/boton-instalar-app";
@@ -45,6 +47,7 @@ export default async function AjustesPage({
   const profile = await requireDueno();
   const supabase = await createClient();
   const db = createAdminClient();
+  const imp = await impersonacionActiva();
 
   const [
     { data: gym },
@@ -416,6 +419,17 @@ export default async function AjustesPage({
         >
           <ContactarSoporteForm />
         </AjustesSeccionModal>
+
+        {/* SOLO SUPERADMIN IMPERSONANDO: esconder el switch flotante Dueño/Socio */}
+        {imp ? (
+          <AjustesSeccionModal
+            titulo="Controles de soporte"
+            subtitulo="Solo vos (superadmin) lo ves mientras impersonás."
+            icon={<HelpCircle className="size-4" />}
+          >
+            <ToggleOcultarControlesImpersonacion />
+          </AjustesSeccionModal>
+        ) : null}
       </div>
 
       {/* MERCADO PAGO INTEGRACIÓN */}

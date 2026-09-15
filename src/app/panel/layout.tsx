@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { parseTema, temaToVars, polaridadTema, resolverMotion } from "@/lib/tema";
 import { PanelSidebar, PanelTopbar, PanelBottomNav } from "./panel-nav";
 import { Tutorial } from "@/components/tutorial/tutorial";
-import { ImpersonationBanner } from "@/components/impersonation/banner";
+import { ImpersonationBanner, ImpersonationControls } from "@/components/impersonation/banner";
 import { OfflineProvider } from "@/components/offline/provider";
 import { SplashScreen } from "@/components/mascota/splash-screen";
 import { PullToRefresh } from "@/components/mascota/pull-to-refresh";
@@ -29,20 +29,6 @@ export default async function PanelLayout({
   const esSuper =
     !!process.env.SUPERADMIN_ID && profile.id === process.env.SUPERADMIN_ID;
 
-  // Switch rápido dueño/socio en el sidebar, solo mientras se prueba el gym
-  // de testing "sante" — evita ir y volver a /admin para alternar la vista.
-  let switchSante: { duenoId: string; socioId: string } | null = null;
-  if (esSuper && gym?.slug === "sante") {
-    const { data: perfilesSante } = await supabase
-      .from("profiles")
-      .select("id, rol")
-      .eq("gimnasio_id", profile.gimnasio_id)
-      .in("rol", ["dueno", "cliente"]);
-    const duenoId = perfilesSante?.find((p) => p.rol === "dueno")?.id;
-    const socioId = perfilesSante?.find((p) => p.rol === "cliente")?.id;
-    if (duenoId && socioId) switchSante = { duenoId, socioId };
-  }
-
   return (
     <div
       className="capa-ambiental min-h-screen bg-paper text-ink md:grid md:grid-cols-[256px_1fr] 2xl:grid-cols-[280px_1fr] transition-[grid-template-columns] duration-200"
@@ -54,6 +40,7 @@ export default async function PanelLayout({
       <div className="md:col-span-2">
         <ImpersonationBanner />
       </div>
+      <ImpersonationControls />
       <OfflineProvider />
       <SplashScreen />
 
@@ -64,7 +51,6 @@ export default async function PanelLayout({
         tipoCuenta={gym?.tipo_cuenta ?? "gym"}
         esSuper={esSuper}
         rol={profile.rol}
-        switchSante={switchSante}
       />
 
       <div className="flex min-h-screen flex-col">

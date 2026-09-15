@@ -6,12 +6,15 @@ import { AjustesSocioForm } from "./ajustes-socio-form";
 import { VozGuiadaToggle } from "@/components/rutinas/voz-guiada-toggle";
 import { pillClasses } from "@/components/ui";
 import { ChevronLeft } from "lucide-react";
+import { impersonacionActiva } from "@/lib/impersonation";
+import { ToggleOcultarControlesImpersonacion } from "@/components/impersonation/toggle-ocultar";
 
 export const dynamic = "force-dynamic";
 
 export default async function MiAjustesPage() {
   const profile = await requireProfile();
   const supabase = await createClient();
+  const imp = await impersonacionActiva();
 
   const [{ data: gym }, cliRes] = await Promise.all([
     supabase
@@ -61,6 +64,15 @@ export default async function MiAjustesPage() {
         </h2>
         <VozGuiadaToggle />
       </div>
+
+      {imp ? (
+        <div>
+          <h2 className="text-sm font-bold uppercase tracking-wider text-ink-soft mb-2">
+            Controles de soporte
+          </h2>
+          <ToggleOcultarControlesImpersonacion />
+        </div>
+      ) : null}
     </main>
   );
 }

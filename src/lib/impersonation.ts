@@ -21,7 +21,12 @@ import { registrarAccionAdmin } from "@/lib/admin/audit";
 const STASH = "sb-super-stash";
 const FLAG = "imp-activa";
 
-export type ImpFlag = { nombre: string; rol: "dueno" | "cliente"; gym: string };
+export type ImpFlag = {
+  nombre: string;
+  rol: "dueno" | "cliente";
+  gym: string;
+  gymSlug: string;
+};
 
 // Sin maxAge quedaban como cookies de sesión del navegador: al cerrar la PWA
 // del todo se borraban, pero la sesión real de Supabase (persistente) seguía
@@ -111,6 +116,7 @@ export async function entrarComo(profileId: string): Promise<void> {
     nombre: perfil.nombre,
     rol: perfil.rol as "dueno" | "cliente",
     gym: gym.nombre,
+    gymSlug: gym.slug,
   };
   jar.set(FLAG, JSON.stringify(flag), { ...cookieBase, httpOnly: false });
 

@@ -4,8 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logout } from "@/app/actions";
 import { pillClasses } from "@/components/ui";
-import { hapticoSeleccion, hapticoImpactoMedio } from "@/lib/ui/hapticos";
-import { entrarComoAction } from "@/app/admin/impersonar-actions";
+import { hapticoSeleccion } from "@/lib/ui/hapticos";
 import {
   Award,
   Coins,
@@ -126,62 +125,6 @@ function LogoMark({
   );
 }
 
-/** Switch de 1 click entre dueño/socio del gym de testing "sante", sin
- * volver a /admin. Solo se renderiza cuando el layout lo habilita. */
-function QuickSwitchSante({
-  duenoId,
-  socioId,
-  rolActual,
-  compacto = false,
-}: {
-  duenoId: string;
-  socioId: string;
-  rolActual: string;
-  compacto?: boolean;
-}) {
-  const esDueno = rolActual !== "cliente";
-  const base = compacto
-    ? "px-2.5 py-1 text-[11px]"
-    : "h-8.5 px-3 text-xs";
-
-  return (
-    <div className={`inline-flex overflow-hidden rounded-[8px] border border-rule ${compacto ? "" : "w-full"}`}>
-      <form
-        action={entrarComoAction}
-        className={compacto ? "" : "flex-1"}
-        onSubmit={() => hapticoImpactoMedio()}
-      >
-        <input type="hidden" name="profile_id" value={duenoId} />
-        <button
-          type="submit"
-          disabled={esDueno}
-          className={`${base} w-full font-medium transition-colors ${
-            esDueno ? "bg-ink text-paper" : "bg-paper text-ink-soft hover:bg-paper-2"
-          }`}
-        >
-          Dueño
-        </button>
-      </form>
-      <form
-        action={entrarComoAction}
-        className={compacto ? "" : "flex-1"}
-        onSubmit={() => hapticoImpactoMedio()}
-      >
-        <input type="hidden" name="profile_id" value={socioId} />
-        <button
-          type="submit"
-          disabled={!esDueno}
-          className={`${base} w-full border-l border-rule font-medium transition-colors ${
-            !esDueno ? "bg-ink text-paper" : "bg-paper text-ink-soft hover:bg-paper-2"
-          }`}
-        >
-          Socio
-        </button>
-      </form>
-    </div>
-  );
-}
-
 const SECCION_TITULOS: Record<string, string> = {
   operativo: "Mostrador",
   gestion: "Gestión",
@@ -196,7 +139,6 @@ export function PanelSidebar({
   tipoCuenta = "gym",
   esSuper = false,
   rol = "dueno",
-  switchSante = null,
 }: {
   nombre?: string | null;
   dueno: string;
@@ -204,7 +146,6 @@ export function PanelSidebar({
   tipoCuenta?: string;
   esSuper?: boolean;
   rol?: string;
-  switchSante?: { duenoId: string; socioId: string } | null;
 }) {
   const pathname = usePathname();
   const items = getNavItems(tipoCuenta, rol);
@@ -280,13 +221,6 @@ export function PanelSidebar({
 
       {/* Pie de sidebar */}
       <div className="flex flex-col gap-2 pt-3 border-t border-rule mt-2">
-        {switchSante ? (
-          <QuickSwitchSante
-            duenoId={switchSante.duenoId}
-            socioId={switchSante.socioId}
-            rolActual={rol}
-          />
-        ) : null}
         <a
           href={whatsappReporteUrl(nombre)}
           target="_blank"

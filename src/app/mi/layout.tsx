@@ -9,7 +9,7 @@ import {
 } from "@/lib/tema";
 import { MiBottomNav } from "./mi-nav";
 import { Tutorial } from "@/components/tutorial/tutorial";
-import { ImpersonationBanner } from "@/components/impersonation/banner";
+import { ImpersonationBanner, ImpersonationControls } from "@/components/impersonation/banner";
 import { OfflineProvider } from "@/components/offline/provider";
 import { SplashScreen } from "@/components/mascota/splash-screen";
 import { PullToRefresh } from "@/components/mascota/pull-to-refresh";
@@ -85,6 +85,7 @@ export default async function MiLayout({
       data-motion={resolverMotion(tema)}
     >
       <ImpersonationBanner />
+      <ImpersonationControls />
       <OfflineProvider />
       <SplashScreen />
       {gym?.logo_url ? (
