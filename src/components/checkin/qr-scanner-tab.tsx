@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Camera, CameraOff, RefreshCw, Sparkles, CheckCircle2, AlertCircle } from "lucide-react";
+import jsQR from "jsqr";
 import { hapticoScanOK, hapticoError, hapticoImpactoMedio } from "@/lib/ui/hapticos";
 
 type QRScannerTabProps = {
@@ -108,7 +109,20 @@ export function QRScannerTab({ onScan, isProcessing }: QRScannerTabProps) {
             procesarTextoQR(barcodes[0].rawValue);
           }
         } catch (err) {
-          // Fallback a canvas
+          // Sigue al fallback de abajo
+        }
+      } else if (ctx) {
+        // Safari/iOS no tiene BarcodeDetector nativo: decodificamos el frame
+        // a mano con jsQR (JS puro, sin dependencias nativas).
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const imagen = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const resultado = jsQR(imagen.data, imagen.width, imagen.height, {
+          inversionAttempts: "dontInvert",
+        });
+        if (resultado?.data) {
+          procesarTextoQR(resultado.data);
         }
       }
 
