@@ -5,6 +5,7 @@ import {
   cuentaMP,
   leerNotificacion,
   leerPagoConToken,
+  validarFirmaWebhookMP,
 } from "@/lib/pagos/mercadopago-connect";
 
 // Webhook del cobro SOCIO -> DUEÑO (Mercado Pago Connect). Multi-tenant: el
@@ -31,6 +32,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "webhook inválido" }, { status: 400 });
   }
   if (!notif) return NextResponse.json({ ok: true, ignorado: true });
+
+  const xSignature = req.headers.get("x-signature");
+  const xRequestId = req.headers.get("x-request-id");
+  if (!validarFirmaWebhookMP(xSignature, xRequestId, notif.dataId)) {
+    console.warn("[pagos-socio/webhook] Firma inválida o ausente, rechazado:", notif.dataId);
+    return NextResponse.json({ error: "Firma inválida" }, { status: 401 });
+  }
 
   const db = createAdminClient();
 
