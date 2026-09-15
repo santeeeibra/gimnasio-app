@@ -14,6 +14,7 @@ import {
   crearSuscripcionPreapproval,
   cuentaMP,
 } from "@/lib/pagos/mercadopago-connect";
+import { enviarPush } from "@/lib/push/enviar";
 
 // El socio paga su cuota con Mercado Pago. La plata va a la cuenta del DUEÑO
 // (token de MP Connect del gimnasio), no a la de la plataforma.
@@ -261,4 +262,36 @@ export async function crearSuscripcionMP(
         "No pudimos iniciar el cobro automático de Mercado Pago. Podés pagar por transferencia con los datos de abajo.",
     };
   }
+}
+
+// El socio avisa que ya transfirió, para gyms sin cobro automático de MP:
+// manda un push a dueño(s) y staff. No confirma el pago solo (eso lo sigue
+// haciendo el dueño desde la ficha), es solo el aviso para que no dependa
+// de un mensaje aparte por WhatsApp.
+export async function avisarTransferenciaAction(): Promise<{
+  ok: boolean;
+  msg: string;
+}> {
+  const profile = await requireProfile();
+  const admin = createAdminClient();
+
+  const { data: receptores } = await admin
+    .from("profiles")
+    .select("id")
+    .eq("gimnasio_id", profile.gimnasio_id)
+    .in("rol", ["dueno", "staff"]);
+
+  const ids = (receptores ?? []).map((r) => r.id);
+  if (ids.length === 0) {
+    return { ok: false, msg: "No encontramos a quién avisar." };
+  }
+
+  await enviarPush(ids, {
+    title: "Aviso de pago",
+    body: `${profile.nombre} dice que ya transfirió la cuota.`,
+    url: "/panel/clientes",
+    tag: `transferencia-${profile.id}-${new Date().toISOString().slice(0, 10)}`,
+  });
+
+  return { ok: true, msg: "Le avisamos a tu gimnasio." };
 }

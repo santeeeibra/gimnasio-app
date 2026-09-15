@@ -8,6 +8,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { estadoCobroAutomatico } from "@/lib/pagos/cobro-socio";
 import { PagarMpButton } from "./pagar-mp-button";
 import { DescargarComprobantePdf } from "@/components/pdf/descargar-comprobante-pdf";
+import { AvisoTransferenciaButton } from "./aviso-transferencia-button";
 
 export const dynamic = "force-dynamic";
 
@@ -117,6 +118,8 @@ export default async function MisPagosPage() {
         cbu={gym?.pago_cbu ?? null}
         titular={gym?.pago_titular ?? null}
       />
+
+      {gym?.pago_alias || gym?.pago_cbu ? <AvisoTransferenciaButton /> : null}
 
       {pagos.length === 0 ? (
         <div className="rounded-[14px] border border-rule bg-paper-2 p-8 text-center text-sm text-ink-soft shadow-sm">
