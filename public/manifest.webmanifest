@@ -2,7 +2,7 @@
   "name": "Gestión de gimnasio",
   "short_name": "Mi gimnasio",
   "description": "Cuotas, rutinas y avisos en un solo lugar.",
-  "start_url": "/mi",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
