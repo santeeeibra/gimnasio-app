@@ -3,6 +3,7 @@
 import { useState, useTransition, useActionState } from "react";
 import { Button } from "@/components/ui";
 import { PulpoCard } from "@/components/mascota/pulpo";
+import { PulpoImagenCard } from "@/components/mascota/pulpo-imagen";
 import {
   responderComentario,
   marcarResuelto,
@@ -195,7 +196,11 @@ export function BuzonDuenoList({ comentarios }: { comentarios: Comentario[] }) {
 
       {filtrados.length === 0 ? (
         <div className="card-cut border border-rule bg-paper-2 px-5 py-9 text-center flex flex-col items-center justify-center gap-3">
-          <PulpoCard pose={filtro === "pendiente" ? "festejo" : "buzon"} size={80} />
+          {filtro === "pendiente" ? (
+            <PulpoCard pose="festejo" size={80} />
+          ) : (
+            <PulpoImagenCard pose="vacio" size={80} />
+          )}
           <div>
             <p className="font-display text-xl text-ink">
               {filtro === "pendiente" ? "¡Todo al día!" : "Sin comentarios aún"}

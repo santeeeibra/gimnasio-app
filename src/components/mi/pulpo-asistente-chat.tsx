@@ -35,6 +35,7 @@ import {
 } from "@/app/mi/rutina/asistente-actions";
 import { obtenerClasificacionEjercicio } from "@/lib/rutina/clasificacion-muscular";
 import { PulpoCard } from "@/components/mascota/pulpo";
+import { PulpoImagenCard, type PulpoImagenPose } from "@/components/mascota/pulpo-imagen";
 
 interface Alternativa {
   id: string;
@@ -147,6 +148,25 @@ export function PulpoAsistenteChat({
   const [textoLibre, setTextoLibre] = useState("");
   const [molestiaDetectada, setMolestiaDetectada] = useState<string | null>(null);
   const [resumen, setResumen] = useState<ResumenSesion | null>(null);
+
+  // Pose de Pulpo Volt en el header del sheet según la vista/estado actual
+  // (matriz de la sysgym-mascot-skill: saludo al abrir, buscando mientras
+  // carga, entrenador en técnica, festejo al encontrar alternativa, oops
+  // cuando no hay alternativas en el gimnasio).
+  const headerPose: PulpoImagenPose | null =
+    vista === "menu"
+      ? "saludo"
+      : vista === "tecnica"
+      ? "entrenador"
+      : vista === "maquina"
+      ? cargando
+        ? "buscando"
+        : mensajeError && alternativas.length === 0
+        ? "oops"
+        : alternativas.length > 0
+        ? "festejo"
+        : null
+      : null;
 
   const abrir = () => {
     iniciarAudioHaptico();
@@ -337,9 +357,17 @@ export function PulpoAsistenteChat({
           {/* Header del Sheet */}
           <div className="flex items-center justify-between px-4 py-2.5 border-b border-rule/70">
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="size-7 rounded-[8px] bg-accent/10 text-accent grid place-items-center shrink-0">
-                <Sparkles className="size-4" />
-              </div>
+              {headerPose ? (
+                <PulpoImagenCard
+                  pose={headerPose}
+                  size={20}
+                  cardClassName="!rounded-[8px] !p-1 shrink-0"
+                />
+              ) : (
+                <div className="size-7 rounded-[8px] bg-accent/10 text-accent grid place-items-center shrink-0">
+                  <Sparkles className="size-4" />
+                </div>
+              )}
               <div className="min-w-0">
                 <h3 className="text-sm font-semibold text-ink truncate leading-tight">
                   {vista === "menu"
