@@ -24,12 +24,12 @@ export async function ImpersonationControls() {
 
   let duenoId: string | null = null;
   let socioId: string | null = null;
-  if (imp.gymSlug === "sante") {
+  if (imp.gymSlug) {
     const db = createAdminClient();
     const { data: gym } = await db
       .from("gimnasios")
       .select("id")
-      .eq("slug", "sante")
+      .eq("slug", imp.gymSlug)
       .maybeSingle();
     if (gym) {
       const { data: perfiles } = await db
