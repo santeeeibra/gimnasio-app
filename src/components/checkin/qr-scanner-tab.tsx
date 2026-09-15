@@ -16,6 +16,10 @@ export function QRScannerTab({ onScan, isProcessing }: QRScannerTabProps) {
   const [cargandoCamara, setCargandoCamara] = useState(true);
   const [errorCamara, setErrorCamara] = useState<string | null>(null);
   const [escaneadoUltimo, setEscaneadoUltimo] = useState<string | null>(null);
+  // El loop de escaneo corre en un closure creado una sola vez (mount): sin
+  // ref, seguiría comparando siempre contra el estado inicial (null) y
+  // dispararía onScan en cada frame mientras el QR esté en cámara.
+  const escaneadoUltimoRef = useRef<string | null>(null);
   const animFrameRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -70,11 +74,15 @@ export function QRScannerTab({ onScan, isProcessing }: QRScannerTabProps) {
     }
     dni = dni.replace(/\D/g, "");
 
-    if (dni && dni.length >= 6 && dni.length <= 10 && dni !== escaneadoUltimo) {
+    if (dni && dni.length >= 6 && dni.length <= 10 && dni !== escaneadoUltimoRef.current) {
+      escaneadoUltimoRef.current = dni;
       setEscaneadoUltimo(dni);
       hapticoScanOK();
       onScan(dni);
-      setTimeout(() => setEscaneadoUltimo(null), 3000);
+      setTimeout(() => {
+        escaneadoUltimoRef.current = null;
+        setEscaneadoUltimo(null);
+      }, 3000);
     }
   };
 

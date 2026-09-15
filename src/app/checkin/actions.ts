@@ -72,11 +72,28 @@ async function marcarIngresoInterno(
     .select("id", { count: "exact", head: true })
     .eq("cliente_id", cliente.id);
 
-  // El registro se guarda siempre: queda constancia de que entró.
-  await supabase.from("registros_entrada").insert({
-    gimnasio_id: dueno.gimnasio_id,
-    cliente_id: cliente.id,
-  });
+  // Reintentos de la cola offline (o un doble tap/escaneo repetido) pueden
+  // llamar esto varias veces para el mismo ingreso: si ya marcó hace menos
+  // de 2 minutos, no duplicamos la fila.
+  const { data: ultimoIngreso } = await supabase
+    .from("registros_entrada")
+    .select("creado_en")
+    .eq("cliente_id", cliente.id)
+    .order("creado_en", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const yaMarcoRecien =
+    !!ultimoIngreso &&
+    Date.now() - new Date(ultimoIngreso.creado_en).getTime() < 2 * 60 * 1000;
+
+  if (!yaMarcoRecien) {
+    // El registro se guarda siempre: queda constancia de que entró.
+    await supabase.from("registros_entrada").insert({
+      gimnasio_id: dueno.gimnasio_id,
+      cliente_id: cliente.id,
+    });
+  }
 
   revalidatePath("/panel/asistencia");
   revalidatePath("/panel");
