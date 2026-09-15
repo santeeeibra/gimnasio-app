@@ -52,6 +52,7 @@ export default async function AdminGimnasioDetalle({
     { data: clientes },
     { data: pagos },
     { data: dueno },
+    { data: staff },
     { data: planesData },
     { data: pagosPlataformaData },
   ] = await Promise.all([
@@ -75,6 +76,12 @@ export default async function AdminGimnasioDetalle({
       .eq("rol", "dueno")
       .limit(1)
       .maybeSingle(),
+    db
+      .from("profiles")
+      .select("id, nombre, dni")
+      .eq("gimnasio_id", id)
+      .eq("rol", "staff")
+      .order("nombre", { ascending: true }),
     db
       .from("planes_plataforma")
       .select("id, nombre, max_socios")
@@ -104,6 +111,7 @@ export default async function AdminGimnasioDetalle({
   }[];
 
   const duenoInfo = dueno as { id: string; nombre: string | null } | null;
+  const staffInfo = (staff ?? []) as { id: string; nombre: string | null; dni: string | null }[];
 
   const planP = (gym.plan ?? null) as unknown as {
     id: string;
@@ -252,6 +260,29 @@ export default async function AdminGimnasioDetalle({
         ) : (
           <p className="text-xs text-ink-soft">Sin dueño cargado.</p>
         )}
+
+        {staffInfo.length > 0 ? (
+          <div className="mt-5 border-t border-rule pt-4">
+            <h3 className="mb-3 text-xs uppercase tracking-[0.14em] text-ink-soft">
+              Staff ({staffInfo.length})
+            </h3>
+            <ul className="space-y-2">
+              {staffInfo.map((s) => (
+                <li key={s.id} className="flex flex-wrap items-center gap-3">
+                  <span className="text-sm min-w-0 truncate">{s.nombre ?? `DNI ${s.dni}`}</span>
+                  <form action={entrarComoAction}>
+                    <input type="hidden" name="profile_id" value={s.id} />
+                    <button type="submit" className={`text-xs ${linkClasses.inline}`}>
+                      entrar como
+                    </button>
+                  </form>
+                  <BotonResetClave profileId={s.id} nombre={s.nombre} dni={s.dni} rol="staff" compacto />
+                  <BotonLinkPrueba profileId={s.id} nombre={s.nombre} rol="staff" />
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
       </div>
 
       <div className="mb-3 flex items-center justify-between">

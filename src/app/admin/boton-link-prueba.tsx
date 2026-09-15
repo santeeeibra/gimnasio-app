@@ -12,7 +12,7 @@ export function BotonLinkPrueba({
 }: {
   profileId: string;
   nombre?: string | null;
-  rol?: "dueno" | "cliente";
+  rol?: "dueno" | "cliente" | "staff";
 }) {
   const [isPending, startTransition] = useTransition();
   const [url, setUrl] = useState<string | null>(null);

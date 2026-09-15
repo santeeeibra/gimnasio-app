@@ -15,7 +15,7 @@ export function BotonResetClave({
   profileId: string;
   nombre?: string | null;
   dni?: string | null;
-  rol?: "dueno" | "cliente";
+  rol?: "dueno" | "cliente" | "staff";
   compacto?: boolean;
 }) {
   const [isPending, startTransition] = useTransition();
@@ -27,7 +27,12 @@ export function BotonResetClave({
     e.preventDefault();
     e.stopPropagation();
 
-    const sujeto = rol === "dueno" ? `al dueño ${nombre || ""}` : `al socio ${nombre || dni || ""}`;
+    const sujeto =
+      rol === "dueno"
+        ? `al dueño ${nombre || ""}`
+        : rol === "staff"
+          ? `al staff ${nombre || dni || ""}`
+          : `al socio ${nombre || dni || ""}`;
     const confirmar = window.confirm(`¿Seguro que querés restablecer la contraseña ${sujeto}? Se generará su clave inicial (gym<últimos 4 del DNI>).`);
     if (!confirmar) return;
 
