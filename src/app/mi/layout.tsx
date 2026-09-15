@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -32,7 +33,7 @@ export default async function MiLayout({
   const [{ data: gym }, cliRes] = await Promise.all([
     supabase
       .from("gimnasios")
-      .select("nombre, tema, logo_url")
+      .select("nombre, tema, logo_url, tipo_cuenta")
       .eq("id", profile.gimnasio_id)
       .single(),
     supabase
@@ -41,6 +42,16 @@ export default async function MiLayout({
       .eq("profile_id", profile.id)
       .maybeSingle(),
   ]);
+
+  // start_url de la PWA (o un deep link viejo) puede mandar a un dueño/staff
+  // de un gimnasio real directo a /mi: esa vista es solo para cuentas
+  // individuales, donde el dueño entrena y no gestiona a nadie más.
+  if (
+    (profile.rol === "dueno" || profile.rol === "staff") &&
+    gym?.tipo_cuenta !== "individual"
+  ) {
+    redirect("/panel");
+  }
 
   let cli = cliRes.data;
   // Fallback defensivo si la columna tema_personalizado todavía no fue migrada en la DB
