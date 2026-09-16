@@ -263,17 +263,19 @@ function PulpoPlaceholder({ estado }: { estado: React.RefObject<TrackState> }) {
   );
 }
 
+// Plano de corte para modo avatar: oculta todo lo que queda por debajo de los hombros
+// Se aplica como clippingPlane en Three.js con localClippingEnabled=true en el renderer
+const AVATAR_CLIP_Y = -0.18; // en unidades de escena (ajustado para modelo normalizado a escala ~2.4)
+
 function PulpoModelo({
   estado,
   rotacionY = -Math.PI / 2,
-  escala = 1.6,
   invertirEspejo = true,
   invertirPitch = false,
   offsetCalibrado = { x: 0, y: 0, z: 0 },
 }: {
   estado: React.RefObject<TrackState>;
   rotacionY?: number;
-  escala?: number;
   invertirEspejo?: boolean;
   invertirPitch?: boolean;
   offsetCalibrado?: { x: number; y: number; z: number };
@@ -281,36 +283,61 @@ function PulpoModelo({
   const grupo = useRef<THREE.Group>(null);
   const gltf = useGLTF(MODEL_PATH);
 
-  // Normalizar y recentrar el modelo con SkeletonUtils para preservar rigs/esqueletos
+  // Plano de corte: elimina todo lo que esté por debajo de AVATAR_CLIP_Y en espacio de escena
+  // El plano tiene normal apuntando hacia +Y, así que corta todo con Y < -AVATAR_CLIP_Y
+  const clipPlane = useMemo(
+    () => new THREE.Plane(new THREE.Vector3(0, 1, 0), -AVATAR_CLIP_Y),
+    []
+  );
+
+  // Escala mayor para llenar el visor con cabeza+hombros
+  const ESCALA_AVATAR = 2.4;
   const modeloCentrado = useMemo(() => {
     const scene = SkeletonUtils.clone(gltf.scene);
     const box = new THREE.Box3().setFromObject(scene);
     const center = box.getCenter(new THREE.Vector3());
     const size = box.getSize(new THREE.Vector3());
     const maxDim = Math.max(size.x, size.y, size.z);
-    const factorEscala = escala / (maxDim || 1);
+    const factorEscala = ESCALA_AVATAR / (maxDim || 1);
 
-    scene.position.sub(center);
+    // Centrar en X y Z; en Y subimos para que la cabeza quede en el centro-alto del visor
+    scene.position.x = -center.x * factorEscala;
+    scene.position.z = -center.z * factorEscala;
+    // Subir el modelo: la cabeza debe quedar ~en Y=0.4..0.6 del visor
+    scene.position.y = (-center.y + size.y * 0.28) * factorEscala;
     scene.scale.setScalar(factorEscala);
 
     scene.traverse((child) => {
-      if ((child as THREE.Mesh).isMesh) {
-        child.castShadow = true;
-        child.receiveShadow = true;
+      const mesh = child as THREE.Mesh;
+      if (mesh.isMesh) {
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        // Aplicar el plano de corte a cada material del modelo
+        if (Array.isArray(mesh.material)) {
+          mesh.material = mesh.material.map((m) => {
+            const mat = m.clone();
+            mat.clippingPlanes = [clipPlane];
+            mat.clipShadows = true;
+            return mat;
+          });
+        } else if (mesh.material) {
+          const mat = (mesh.material as THREE.Material).clone();
+          (mat as THREE.MeshStandardMaterial).clippingPlanes = [clipPlane];
+          (mat as THREE.MeshStandardMaterial).clipShadows = true;
+          mesh.material = mat;
+        }
       }
     });
 
     return scene;
-  }, [gltf.scene, escala]);
+  }, [gltf.scene, clipPlane]);
 
   useFrame((_, delta) => {
     if (!grupo.current) return;
     const e = estado.current;
     if (e.ready) {
-      // Extraer Euler en orden YXZ (Yaw primero, luego Pitch, luego Roll)
       const eulerRaw = new THREE.Euler().setFromRotationMatrix(e.matrix, "YXZ");
 
-      // Filtro dead-zone para eliminar micro-temblores del sensor de la cámara
       const deadZone = (val: number, umbral = 0.007) =>
         Math.abs(val) < umbral ? 0 : val;
 
@@ -318,7 +345,6 @@ function PulpoModelo({
       const deltaYaw = deadZone(eulerRaw.y - offsetCalibrado.y);
       const deltaRoll = deadZone(eulerRaw.z - offsetCalibrado.z);
 
-      // Clamping ergonómico para rangos anatómicos naturales
       const pitch = THREE.MathUtils.clamp(
         (invertirPitch ? -1 : 1) * deltaPitch,
         -0.65,
@@ -331,14 +357,11 @@ function PulpoModelo({
       );
       const roll = THREE.MathUtils.clamp(-deltaRoll, -0.5, 0.5);
 
-      // Componer con la rotación base del modelo (de frente a la cámara)
       const targetEuler = new THREE.Euler(pitch, yaw + rotacionY, roll, "YXZ");
       const targetQuat = new THREE.Quaternion().setFromEuler(targetEuler);
-
-      // Suavizado cinemático continuo (slerp 0.22)
       grupo.current.quaternion.slerp(targetQuat, 0.22);
 
-      // Reacción orgánica facial: squash & stretch con mandíbula + cejas/sonrisa
+      // Squash & stretch orgánico (solo en el grupo pivote, no afecta el clip)
       const targetScaleY = 1 + (e.jawOpen || 0) * 0.15;
       const targetScaleXZ = 1 - (e.jawOpen || 0) * 0.05;
       const smileBoost = ((e.mouthSmileLeft + e.mouthSmileRight) / 2) * 0.04;
@@ -376,8 +399,8 @@ export default function MemojiPoc() {
   const [video, setVideo] = useState<HTMLVideoElement | null>(null);
   const [camError, setCamError] = useState<string | null>(null);
   const [hayModelo, setHayModelo] = useState<boolean | null>(null);
-  const [rotacionY, setRotacionY] = useState<number>(-Math.PI / 2); // -90° mira de frente por defecto
-  const [escala, setEscala] = useState<number>(1.6);
+  // rotacionY fijo: -90° = de frente a la cámara (modo avatar, no se cambia)
+  const ROT_Y_FRENTE = -Math.PI / 2;
   const [invertirEspejo, setInvertirEspejo] = useState<boolean>(true);
   const [invertirPitch, setInvertirPitch] = useState<boolean>(false);
   const [offsetCalibrado, setOffsetCalibrado] = useState<{
@@ -482,12 +505,8 @@ export default function MemojiPoc() {
     }
   };
 
-  const presetsAngulo = [
-    { label: "Frente (-90°)", val: -Math.PI / 2 },
-    { label: "Perfil Der (0°)", val: 0 },
-    { label: "Espalda (90°)", val: Math.PI / 2 },
-    { label: "Perfil Izq (180°)", val: Math.PI },
-  ];
+
+
 
   return (
     <div className="min-h-screen bg-[#070c0a] text-white flex flex-col p-4 md:p-6 font-sans">
@@ -550,8 +569,8 @@ export default function MemojiPoc() {
         {/* Visor 3D Principal */}
         <div className="relative w-full max-w-[420px] aspect-square sm:aspect-[4/4.5] rounded-[24px] overflow-hidden bg-gradient-to-b from-[#0e1613] to-[#080d0b] border border-white/10 shadow-2xl flex items-center justify-center">
           <Canvas
-            camera={{ position: [0, 0, 2.5], fov: 42 }}
-            gl={{ antialias: true, alpha: true }}
+            camera={{ position: [0, 0.1, 1.4], fov: 36 }}
+            gl={{ antialias: true, alpha: true, localClippingEnabled: true }}
             className="w-full h-full"
           >
             {/* Iluminación de estudio 3 puntos */}
@@ -566,8 +585,7 @@ export default function MemojiPoc() {
               <Suspense fallback={<PulpoPlaceholder estado={estado} />}>
                 <PulpoModelo
                   estado={estado}
-                  rotacionY={rotacionY}
-                  escala={escala}
+                  rotacionY={ROT_Y_FRENTE}
                   invertirEspejo={invertirEspejo}
                   invertirPitch={invertirPitch}
                   offsetCalibrado={offsetCalibrado}
@@ -620,95 +638,36 @@ export default function MemojiPoc() {
             🎯 Calibrar centro
           </button>
 
-          {/* Controles flotantes sobre el visor */}
-          <div className="absolute bottom-3 inset-x-3 flex flex-col gap-2 bg-black/60 backdrop-blur-md p-2 rounded-[18px] border border-white/10 text-xs">
-            {/* Fila 1: Presets de rotación del modelo */}
-            <div className="flex items-center justify-between gap-1 overflow-x-auto pb-0.5">
-              <span className="text-[10px] text-white/50 pl-1 font-mono uppercase">
-                Orientación:
-              </span>
-              <div className="flex items-center gap-1">
-                {presetsAngulo.map((p) => {
-                  const activo = Math.abs(rotacionY - p.val) < 0.05;
-                  return (
-                    <button
-                      key={p.label}
-                      onClick={() => {
-                        hapticoDial();
-                        setRotacionY(p.val);
-                      }}
-                      className={`px-2 py-0.5 rounded-[7px] text-[10px] transition ${
-                        activo
-                          ? "bg-[#10e7a0] text-black font-semibold shadow-sm shadow-[#10e7a0]/30"
-                          : "bg-white/10 hover:bg-white/20 text-white/70"
-                      }`}
-                    >
-                      {p.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Fila 2: Toggles de espejo, pitch y zoom */}
-            <div className="flex items-center justify-between pt-1 border-t border-white/10">
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={() => {
-                    hapticoDial();
-                    setInvertirEspejo(!invertirEspejo);
-                  }}
-                  className={`px-2 py-1 rounded-[8px] text-[11px] font-medium transition ${
-                    invertirEspejo
-                      ? "bg-[#10e7a0]/20 text-[#10e7a0] border border-[#10e7a0]/40"
-                      : "bg-white/10 text-white/60"
-                  }`}
-                  title="Invertir giro horizontal (modo espejo)"
-                >
-                  🪞 Espejo {invertirEspejo ? "ON" : "OFF"}
-                </button>
-                <button
-                  onClick={() => {
-                    hapticoDial();
-                    setInvertirPitch(!invertirPitch);
-                  }}
-                  className={`px-2 py-1 rounded-[8px] text-[11px] font-medium transition ${
-                    invertirPitch
-                      ? "bg-[#10e7a0]/20 text-[#10e7a0] border border-[#10e7a0]/40"
-                      : "bg-white/10 text-white/60"
-                  }`}
-                  title="Invertir inclinación vertical (arriba/abajo)"
-                >
-                  ↕️ Vertical {invertirPitch ? "INV" : "NORM"}
-                </button>
-              </div>
-
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => {
-                    hapticoDial();
-                    setEscala((s) => Math.max(0.8, Number((s - 0.2).toFixed(1))));
-                  }}
-                  className="w-6 h-6 flex items-center justify-center rounded-[7px] bg-white/10 hover:bg-white/20 active:scale-95 transition font-bold"
-                  title="Alejar"
-                >
-                  -
-                </button>
-                <span className="text-[11px] font-mono px-1 text-white/70">
-                  {escala.toFixed(1)}x
-                </span>
-                <button
-                  onClick={() => {
-                    hapticoDial();
-                    setEscala((s) => Math.min(2.6, Number((s + 0.2).toFixed(1))));
-                  }}
-                  className="w-6 h-6 flex items-center justify-center rounded-[7px] bg-white/10 hover:bg-white/20 active:scale-95 transition font-bold"
-                  title="Acercar"
-                >
-                  +
-                </button>
-              </div>
-            </div>
+          {/* Controles flotantes sobre el visor — solo espejo y pitch */}
+          <div className="absolute bottom-3 inset-x-3 flex items-center justify-center gap-2 bg-black/60 backdrop-blur-md px-3 py-2 rounded-[18px] border border-white/10 text-xs">
+            <button
+              onClick={() => {
+                hapticoDial();
+                setInvertirEspejo(!invertirEspejo);
+              }}
+              className={`px-2 py-1 rounded-[8px] text-[11px] font-medium transition ${
+                invertirEspejo
+                  ? "bg-[#10e7a0]/20 text-[#10e7a0] border border-[#10e7a0]/40"
+                  : "bg-white/10 text-white/60"
+              }`}
+              title="Invertir giro horizontal (modo espejo)"
+            >
+              🪞 Espejo {invertirEspejo ? "ON" : "OFF"}
+            </button>
+            <button
+              onClick={() => {
+                hapticoDial();
+                setInvertirPitch(!invertirPitch);
+              }}
+              className={`px-2 py-1 rounded-[8px] text-[11px] font-medium transition ${
+                invertirPitch
+                  ? "bg-[#10e7a0]/20 text-[#10e7a0] border border-[#10e7a0]/40"
+                  : "bg-white/10 text-white/60"
+              }`}
+              title="Invertir inclinación vertical (arriba/abajo)"
+            >
+              ↕️ Vertical {invertirPitch ? "INV" : "NORM"}
+            </button>
           </div>
         </div>
 
