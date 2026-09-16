@@ -1293,8 +1293,13 @@ function PulpoModelo({
     if (!grupo.current) return;
     const e = estado.current;
 
-    // Actualizar los Morph Targets inyectados en la malla 3D de Volt
-    if (modeloCentrado && e.facialState) {
+    // Morph Targets del GLB (Blender face rig): DESACTIVADOS por ahora.
+    // El FaceRig procedural de abajo (leftEye/rightEye/leftBrow/rightBrow/mouth)
+    // ya cubre ojos/cejas/boca con geometria propia (incluye iris+gaze, Fase 3).
+    // Ambos sistemas moviendose a la vez sobre la misma cara se pisan y rompen
+    // el render (cejas/boca duplicadas, z-fighting). Reactivar esto requiere
+    // primero ocultar el FaceRig procedural equivalente, no antes.
+    if (modeloCentrado && e.facialState && false) {
       modeloCentrado.traverse((child) => {
         const mesh = child as THREE.Mesh;
         if (mesh.isMesh && mesh.morphTargetDictionary && mesh.morphTargetInfluences) {
