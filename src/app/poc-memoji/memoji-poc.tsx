@@ -41,24 +41,27 @@ type TrackState = {
 
 const FACE_CONFIG = {
   offsetX: 0,
-  offsetY: 0,
+  offsetY: 0.05,
   offsetZ: 0,
+  rotationX: 0,
+  rotationY: 0,
+  rotationZ: 0,
 
   eyeX: 0.14,
   eyeY: 0.04,
-  eyeZ: 0.32,
-  eyeRadius: 0.038,
+  eyeZ: -0.34,
+  eyeRadius: 0.042,
 
   browX: 0.14,
-  browY: 0.12,
-  browZ: 0.32,
-  browWidth: 0.08,
-  browHeight: 0.02,
+  browY: 0.14,
+  browZ: -0.34,
+  browWidth: 0.09,
+  browHeight: 0.022,
 
   mouthY: -0.09,
-  mouthZ: 0.32,
-  mouthWidth: 0.12,
-  mouthHeight: 0.035,
+  mouthZ: -0.34,
+  mouthWidth: 0.14,
+  mouthHeight: 0.04,
 };
 
 export interface FaceRigElements {
@@ -78,6 +81,11 @@ function createFaceRig(): FaceRigElements {
     FACE_CONFIG.offsetX,
     FACE_CONFIG.offsetY,
     FACE_CONFIG.offsetZ
+  );
+  group.rotation.set(
+    FACE_CONFIG.rotationX,
+    FACE_CONFIG.rotationY,
+    FACE_CONFIG.rotationZ
   );
 
   const mat = new THREE.MeshStandardMaterial({
@@ -120,7 +128,7 @@ function createFaceRig(): FaceRigElements {
   mouth.name = "Mouth";
   mouth.position.set(0, FACE_CONFIG.mouthY, FACE_CONFIG.mouthZ);
 
-  const axesHelper = new THREE.AxesHelper(0.2);
+  const axesHelper = new THREE.AxesHelper(0.3);
   axesHelper.visible = false;
 
   group.add(leftEye);
