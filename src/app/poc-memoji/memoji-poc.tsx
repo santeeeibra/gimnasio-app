@@ -45,6 +45,8 @@ export type FacialState = {
   browDownRight: number;
   browUpLeft: number;
   browUpRight: number;
+  lookX: number; // -1 (izq) .. 1 (der), combinado ambos ojos
+  lookY: number; // -1 (abajo) .. 1 (arriba)
 };
 
 type TrackState = {
@@ -87,6 +89,8 @@ const FACE_CONFIG = {
 export interface EyeAssembly {
   group: THREE.Group;
   sclera: THREE.Mesh;           // Esclera (blanco del ojo)
+  iris: THREE.Mesh;             // Iris (oscuro)
+  highlight: THREE.Mesh;        // Highlight (reflejo blanco)
   upperLid: THREE.Mesh;         // Párpado superior
   lowerLid: THREE.Mesh;         // Párpado inferior
   upperLidPivot: THREE.Group;   // Pivote para rotación del párpado superior
@@ -106,7 +110,7 @@ export interface FaceRigElements {
 let _faceRigLogged = false;
 
 /**
- * Crea un ensamble de ojo con esclera + párpados como casquetes esféricos.
+ * Crea un ensamble de ojo con esclera + iris + highlight + párpados como casquetes esféricos.
  * Los párpados rotan sobre pivotes para cerrar (no escalan).
  */
 function createEyeAssembly(name: string, config: LiveCoords): EyeAssembly {
@@ -130,6 +134,37 @@ function createEyeAssembly(name: string, config: LiveCoords): EyeAssembly {
   const sclera = new THREE.Mesh(scleraGeo, scleraMat);
   sclera.name = `${name}_Sclera`;
   group.add(sclera);
+
+  // Iris (oscuro #052e22) - Geometría circular sobre la superficie frontal (+X)
+  const irisRadius = eyeRadius * 0.48;
+  const irisGeo = new THREE.CircleGeometry(irisRadius, 24);
+  const irisMat = new THREE.MeshStandardMaterial({
+    color: 0x052e22,
+    roughness: 0.3,
+    metalness: 0.0,
+    depthTest: true,
+    depthWrite: true,
+  });
+  const iris = new THREE.Mesh(irisGeo, irisMat);
+  iris.name = `${name}_Iris`;
+  // Posición ligeramente sobre la esclera para evitar z-fighting (+X es forward)
+  iris.position.set(eyeRadius * 1.005, 0, 0);
+  iris.rotation.y = Math.PI / 2;
+  group.add(iris);
+
+  // Highlight (brillo blanco #ffffff) - Pequeño reflejo especular
+  const highlightRadius = eyeRadius * 0.14;
+  const highlightGeo = new THREE.CircleGeometry(highlightRadius, 16);
+  const highlightMat = new THREE.MeshBasicMaterial({
+    color: 0xffffff,
+    depthTest: true,
+    depthWrite: true,
+  });
+  const highlight = new THREE.Mesh(highlightGeo, highlightMat);
+  highlight.name = `${name}_Highlight`;
+  highlight.position.set(eyeRadius * 1.010, 0.007, 0.006);
+  highlight.rotation.y = Math.PI / 2;
+  group.add(highlight);
 
   // Material de los párpados (color piel del pulpo)
   const lidMat = new THREE.MeshStandardMaterial({
@@ -187,6 +222,8 @@ function createEyeAssembly(name: string, config: LiveCoords): EyeAssembly {
   return {
     group,
     sclera,
+    iris,
+    highlight,
     upperLid,
     lowerLid,
     upperLidPivot,
@@ -367,11 +404,94 @@ function computeEyeClosure(autoBlink: number, blinkTracked: number, squintTracke
   return Math.max(finalBlink, squintCap);
 }
 
+// ─────────────────────────────────────────────
+//  MOTOR DE IDLE SACCADES (Fase 3C)
+// ─────────────────────────────────────────────
+interface SaccadeState {
+  phase: 'fixating' | 'moving';
+  progress: number;
+  nextSaccadeTime: number;
+  startX: number;
+  startY: number;
+  currentX: number;
+  currentY: number;
+  targetX: number;
+  targetY: number;
+}
+
+const saccadeIdleState: SaccadeState = {
+  phase: 'fixating',
+  progress: 0,
+  nextSaccadeTime: performance.now() + 2000 + Math.random() * 2000,
+  startX: 0,
+  startY: 0,
+  currentX: 0,
+  currentY: 0,
+  targetX: 0,
+  targetY: 0,
+};
+
+// Timings según spec Fase 3C
+const SACCADE_TIMING = {
+  fixationMin: 2000,  // 2s
+  fixationMax: 4000,  // 4s
+  movement: 50,       // 50ms (saccade rápido)
+  maxX: 0.3,          // Amplitud horizontal máxima (micro-mirada)
+  maxY: 0.2,          // Amplitud vertical máxima (micro-mirada)
+};
+
+function easeOutCubic(t: number): number {
+  return 1 - Math.pow(1 - t, 3);
+}
+
+/**
+ * Actualiza el motor de saccades idle (solo activo cuando NO hay rostro detectado)
+ */
+function updateSaccadeIdle(state: SaccadeState, now: number): { x: number; y: number } {
+  switch (state.phase) {
+    case 'fixating':
+      if (now >= state.nextSaccadeTime) {
+        // Generar nuevo target aleatorio (micro-mirada)
+        state.targetX = (Math.random() - 0.5) * 2 * SACCADE_TIMING.maxX;
+        state.targetY = (Math.random() - 0.5) * 2 * SACCADE_TIMING.maxY;
+        state.startX = state.currentX;
+        state.startY = state.currentY;
+        state.phase = 'moving';
+        state.progress = 0;
+      }
+      return { x: state.currentX, y: state.currentY };
+
+    case 'moving':
+      state.progress += (1000 / 60) / SACCADE_TIMING.movement;
+      if (state.progress >= 1) {
+        // Fin del movimiento
+        state.currentX = state.targetX;
+        state.currentY = state.targetY;
+        state.phase = 'fixating';
+        state.progress = 0;
+        const jitter = SACCADE_TIMING.fixationMin + 
+                       Math.random() * (SACCADE_TIMING.fixationMax - SACCADE_TIMING.fixationMin);
+        state.nextSaccadeTime = now + jitter;
+      } else {
+        // Interpolación desde start hacia target con easeOutCubic
+        const t = Math.min(state.progress, 1);
+        const eased = easeOutCubic(t);
+        state.currentX = state.startX + (state.targetX - state.startX) * eased;
+        state.currentY = state.startY + (state.targetY - state.startY) * eased;
+      }
+      return { x: state.currentX, y: state.currentY };
+
+    default:
+      return { x: state.currentX, y: state.currentY };
+  }
+}
+
 function updateFaceRig(
   elements: FaceRigElements,
   targetState: FacialState,
   currentState: FacialState,
-  debugMode: boolean
+  debugMode: boolean,
+  faceDetected: boolean
 ) {
   const LERP_FACTOR = 0.25;
 
@@ -388,9 +508,44 @@ function updateFaceRig(
   currentState.browUpRight = THREE.MathUtils.lerp(currentState.browUpRight, targetState.browUpRight, LERP_FACTOR);
 
   // ─────────────────────────────────────────────
+  // BLEND MIRADA: MediaPipe vs Idle Saccades (Fase 3C)
+  // ─────────────────────────────────────────────
+  // Nota: usamos 'now' que se define más abajo para blink
+  // Movemos la actualización de saccades después de definir 'now'
+
+  // ─────────────────────────────────────────────
+  // 1. MIRADA E IRIS (Fase 3B)
+  // ─────────────────────────────────────────────
+  const MAX_LOOK_Y = 0.010; // Límite vertical conservador (metros)
+  const MAX_LOOK_Z = 0.010; // Límite horizontal conservador (metros)
+  const EYE_RADIUS = 0.038;
+
+  // ─────────────────────────────────────────────
   // 1. PARPADEO CON PÁRPADOS QUE ROTAN (Fase 0+1) + SQUINT (Fase 2)
   // ─────────────────────────────────────────────
   const now = performance.now();
+
+  // Actualizar idle saccades (Fase 3C)
+  const saccadeIdle = updateSaccadeIdle(saccadeIdleState, now);
+
+  // MediaPipe tiene prioridad absoluta cuando faceDetected=true
+  // Sin rostro, usamos idle saccades
+  // La transición es suave gracias al smoothing 0.20 existente
+  const effectiveTargetX = faceDetected ? targetState.lookX : saccadeIdle.x;
+  const effectiveTargetY = faceDetected ? targetState.lookY : saccadeIdle.y;
+
+  currentState.lookX = THREE.MathUtils.lerp(currentState.lookX, effectiveTargetX, 0.20);
+  currentState.lookY = THREE.MathUtils.lerp(currentState.lookY, effectiveTargetY, 0.20);
+
+  // Aplicar mirada al iris
+  const dY = currentState.lookY * MAX_LOOK_Y;
+  const dZ = currentState.lookX * MAX_LOOK_Z;
+  const dX = Math.sqrt(Math.max(0, EYE_RADIUS * EYE_RADIUS - dY * dY - dZ * dZ)) * 1.005;
+
+  for (const eye of [elements.leftEye, elements.rightEye]) {
+    eye.iris.position.set(dX, dY, dZ);
+    eye.highlight.position.set(dX + 0.00019, dY + 0.007, dZ + 0.006);
+  }
 
   // Auto-blink bilateral (sincronizado)
   const autoBlink = updateAutoBlink(autoBlinkState, now);
@@ -450,6 +605,8 @@ function usarFaceTracking(
       browDownRight: 0,
       browUpLeft: 0,
       browUpRight: 0,
+      lookX: 0,
+      lookY: 0,
     },
     ready: false,
   });
@@ -594,6 +751,24 @@ function usarFaceTracking(
                 shapes["browInnerUp"] ??
                 shapes["browOuterUpRight"] ??
                 0;
+
+              // Extracción de blendshapes de mirada (Fase 3B)
+              const lookInL   = shapes["eyeLookInLeft"]    ?? 0;
+              const lookOutL  = shapes["eyeLookOutLeft"]   ?? 0;
+              const lookUpL   = shapes["eyeLookUpLeft"]    ?? 0;
+              const lookDownL = shapes["eyeLookDownLeft"]  ?? 0;
+
+              const lookInR   = shapes["eyeLookInRight"]   ?? 0;
+              const lookOutR  = shapes["eyeLookOutRight"]  ?? 0;
+              const lookUpR   = shapes["eyeLookUpRight"]   ?? 0;
+              const lookDownR = shapes["eyeLookDownRight"] ?? 0;
+
+              // Mapeo horizontal (lookX: -1 izq .. +1 der) y vertical (lookY: -1 abajo .. +1 arriba)
+              const rawLookX = ((lookInL - lookOutL) + (lookOutR - lookInR)) / 2;
+              const rawLookY = ((lookUpL - lookDownL) + (lookUpR - lookDownR)) / 2;
+
+              fs.lookX = THREE.MathUtils.clamp(rawLookX, -1, 1);
+              fs.lookY = THREE.MathUtils.clamp(rawLookY, -1, 1);
             }
 
             if (now - lastUiUpdate > 120) {
@@ -845,6 +1020,7 @@ function PulpoModelo({
     squintLeft: 0, squintRight: 0,
     browDownLeft: 0, browDownRight: 0,
     browUpLeft: 0, browUpRight: 0,
+    lookX: 0, lookY: 0,
   });
 
   const ESCALA_AVATAR = 2.15;
@@ -915,7 +1091,7 @@ function PulpoModelo({
     const e = estado.current;
 
     if (faceRigElements && e.facialState && !calibMode) {
-      updateFaceRig(faceRigElements, e.facialState, currentFacialState.current, debugFaceRig);
+      updateFaceRig(faceRigElements, e.facialState, currentFacialState.current, debugFaceRig, e.ready);
     } else if (faceRigElements) {
       faceRigElements.axesHelper.visible = debugFaceRig;
     }
