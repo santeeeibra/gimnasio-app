@@ -246,6 +246,24 @@ function createEyeAssembly(name: string, config: LiveCoords): EyeAssembly {
   };
 }
 
+function updateTubeGeometryInPlace(
+  geometry: THREE.BufferGeometry,
+  curve: THREE.Curve<THREE.Vector3>,
+  tubularSegments = 16,
+  radius = 0.0024,
+  radialSegments = 8,
+  closed = false
+) {
+  const tempGeo = new THREE.TubeGeometry(curve, tubularSegments, radius, radialSegments, closed);
+  const pos = geometry.attributes.position as THREE.BufferAttribute;
+  const tempPos = tempGeo.attributes.position as THREE.BufferAttribute;
+  if (pos && tempPos && pos.count === tempPos.count) {
+    pos.copy(tempPos);
+    pos.needsUpdate = true;
+  }
+  tempGeo.dispose();
+}
+
 function buildLipCurve(
   isUpper: boolean,
   jawOpen: number,
@@ -722,11 +740,8 @@ function updateFaceRig(
   const upperCurve = buildLipCurve(true, effectiveJawOpen, currentState.smileLeft, currentState.smileRight);
   const lowerCurve = buildLipCurve(false, effectiveJawOpen, currentState.smileLeft, currentState.smileRight);
 
-  elements.mouth.upperLip.geometry.dispose();
-  elements.mouth.upperLip.geometry = new THREE.TubeGeometry(upperCurve, 16, 0.0024, 8, false);
-
-  elements.mouth.lowerLip.geometry.dispose();
-  elements.mouth.lowerLip.geometry = new THREE.TubeGeometry(lowerCurve, 16, 0.0024, 8, false);
+  updateTubeGeometryInPlace(elements.mouth.upperLip.geometry, upperCurve);
+  updateTubeGeometryInPlace(elements.mouth.lowerLip.geometry, lowerCurve);
 
   const cavityScaleY = 0.2 + effectiveJawOpen * 1.6;
   const cavityScaleZ = 0.95 + smileAvg * 0.15;
