@@ -1,8 +1,8 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { useGLTF } from "@react-three/drei";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { useGLTF, TransformControls } from "@react-three/drei";
 import * as THREE from "three";
 import * as SkeletonUtils from "three/examples/jsm/utils/SkeletonUtils.js";
 import {
@@ -14,6 +14,24 @@ import { hapticoDial } from "@/lib/ui/hapticos";
 
 const MODEL_PATH = "/models/pulpo-volt.glb";
 useGLTF.preload(MODEL_PATH);
+
+const ELEMENT_KEYS = ["leftEye", "rightEye", "leftBrow", "rightBrow", "mouth"] as const;
+type ElementKey = typeof ELEMENT_KEYS[number];
+
+const ELEMENT_LABELS: Record<ElementKey, string> = {
+  leftEye:   "Left Eye",
+  rightEye:  "Right Eye",
+  leftBrow:  "Left Brow",
+  rightBrow: "Right Brow",
+  mouth:     "Mouth",
+};
+
+type LiveCoords = {
+  position: [number, number, number];
+  rotation: [number, number, number]; // degrees
+  scale:    [number, number, number];
+};
+
 
 export type FacialState = {
   jawOpen: number;
@@ -39,29 +57,26 @@ type TrackState = {
   ready: boolean;
 };
 
+// ─────────────────────────────────────────────
+//  FACE CONFIG — coordenadas locales del bone Head
+//  +X = frente de la cara
+//  +Y = arriba
+//  +Z = lateral derecha
+// ─────────────────────────────────────────────
 const FACE_CONFIG = {
-  offsetX: 0,
-  offsetY: 0.05,
-  offsetZ: 0,
-  rotationX: 0,
-  rotationY: 0,
-  rotationZ: 0,
+  forward: 0.28,       // X: distancia desde el bone hacia la cara
+  eyeY: 0.03,          // Y: altura de los ojos
+  eyeSpacing: 0.11,    // Z: separación izquierda/derecha de los ojos
+  eyeRadius: 0.038,    // radio de la esfera del ojo
 
-  eyeX: 0.14,
-  eyeY: 0.04,
-  eyeZ: -0.34,
-  eyeRadius: 0.042,
+  browY: 0.10,         // Y: altura de las cejas
+  browSpacing: 0.11,   // Z: separación izquierda/derecha de las cejas
+  browW: 0.09,         // Z: ancho de la ceja
+  browH: 0.020,        // Y: grosor de la ceja
 
-  browX: 0.14,
-  browY: 0.14,
-  browZ: -0.34,
-  browWidth: 0.09,
-  browHeight: 0.022,
-
-  mouthY: -0.09,
-  mouthZ: -0.34,
-  mouthWidth: 0.14,
-  mouthHeight: 0.04,
+  mouthY: -0.065,      // Y: altura de la boca
+  mouthW: 0.13,        // Z: ancho de la boca
+  mouthH: 0.030,       // Y: alto de la boca en reposo
 };
 
 export interface FaceRigElements {
@@ -74,80 +89,98 @@ export interface FaceRigElements {
   axesHelper: THREE.AxesHelper;
 }
 
+let _faceRigLogged = false;
+
 function createFaceRig(): FaceRigElements {
+  // El grupo vive en el origen del bone Head (no se traslada ni rota)
   const group = new THREE.Group();
   group.name = "FaceRig";
-  group.position.set(
-    FACE_CONFIG.offsetX,
-    FACE_CONFIG.offsetY,
-    FACE_CONFIG.offsetZ
-  );
-  group.rotation.set(
-    FACE_CONFIG.rotationX,
-    FACE_CONFIG.rotationY,
-    FACE_CONFIG.rotationZ
-  );
+  group.position.set(0, 0, 0);
+  group.rotation.set(0, 0, 0);
 
+  // ── Material ─────────────────────────────
   const mat = new THREE.MeshStandardMaterial({
-    color: 0x050505,
-    roughness: 0.3,
+    color: 0x080808,
+    roughness: 0.25,
+    metalness: 0.0,
+    depthTest: true,
+    depthWrite: true,
   });
 
-  const eyeGeo = new THREE.SphereGeometry(FACE_CONFIG.eyeRadius, 16, 16);
-  eyeGeo.scale(1, 1, 0.4);
+  // ── OJOS ─────────────────────────────────
+  // Esfera achatada en X (la esfera mira hacia +X, no necesita rotación)
+  const eyeGeo = new THREE.SphereGeometry(FACE_CONFIG.eyeRadius, 16, 12);
 
   const leftEye = new THREE.Mesh(eyeGeo, mat);
   leftEye.name = "LeftEye";
-  leftEye.position.set(-FACE_CONFIG.eyeX, FACE_CONFIG.eyeY, FACE_CONFIG.eyeZ);
+  // +X = frente | eyeY = altura | -eyeSpacing = izquierda (Z negativo)
+  leftEye.position.set(FACE_CONFIG.forward, FACE_CONFIG.eyeY, -FACE_CONFIG.eyeSpacing);
+  leftEye.scale.set(0.5, 1, 0.85); // achatado en profundidad
 
   const rightEye = new THREE.Mesh(eyeGeo, mat);
   rightEye.name = "RightEye";
-  rightEye.position.set(FACE_CONFIG.eyeX, FACE_CONFIG.eyeY, FACE_CONFIG.eyeZ);
+  rightEye.position.set(FACE_CONFIG.forward, FACE_CONFIG.eyeY, FACE_CONFIG.eyeSpacing);
+  rightEye.scale.set(0.5, 1, 0.85);
 
-  const browGeo = new THREE.BoxGeometry(
-    FACE_CONFIG.browWidth,
-    FACE_CONFIG.browHeight,
-    0.01
-  );
+  // ── CEJAS ────────────────────────────────
+  // BoxGeometry: args = (X depth, Y height, Z width)
+  // Su cara visible mira hacia +X → no requiere rotación en Y
+  const browGeo = new THREE.BoxGeometry(0.008, FACE_CONFIG.browH, FACE_CONFIG.browW);
 
   const leftBrow = new THREE.Mesh(browGeo, mat);
   leftBrow.name = "LeftBrow";
-  leftBrow.position.set(-FACE_CONFIG.browX, FACE_CONFIG.browY, FACE_CONFIG.browZ);
+  leftBrow.position.set(FACE_CONFIG.forward, FACE_CONFIG.browY, -FACE_CONFIG.browSpacing);
 
   const rightBrow = new THREE.Mesh(browGeo, mat);
   rightBrow.name = "RightBrow";
-  rightBrow.position.set(FACE_CONFIG.browX, FACE_CONFIG.browY, FACE_CONFIG.browZ);
+  rightBrow.position.set(FACE_CONFIG.forward, FACE_CONFIG.browY, FACE_CONFIG.browSpacing);
 
-  const mouthGeo = new THREE.BoxGeometry(
-    FACE_CONFIG.mouthWidth,
-    FACE_CONFIG.mouthHeight,
-    0.01
-  );
+  // ── BOCA ─────────────────────────────────
+  // BoxGeometry: args = (X depth, Y height, Z width)
+  const mouthGeo = new THREE.BoxGeometry(0.008, FACE_CONFIG.mouthH, FACE_CONFIG.mouthW);
 
   const mouth = new THREE.Mesh(mouthGeo, mat);
   mouth.name = "Mouth";
-  mouth.position.set(0, FACE_CONFIG.mouthY, FACE_CONFIG.mouthZ);
+  mouth.position.set(FACE_CONFIG.forward, FACE_CONFIG.mouthY, 0);
 
-  const axesHelper = new THREE.AxesHelper(0.3);
+  // ── AXIS MARKERS (debug) ──────────────────
+  const mkMat = (color: number) =>
+    new THREE.MeshBasicMaterial({ color, depthTest: false });
+
+  const mkGeo = new THREE.SphereGeometry(0.012, 8, 8);
+
+  const markerX = new THREE.Mesh(mkGeo, mkMat(0xff2222)); // rojo = +X frente
+  markerX.name = "MarkerX";
+  markerX.position.set(0.18, 0, 0);
+
+  const markerY = new THREE.Mesh(mkGeo, mkMat(0x22ff22)); // verde = +Y arriba
+  markerY.name = "MarkerY";
+  markerY.position.set(0, 0.18, 0);
+
+  const markerZ = new THREE.Mesh(mkGeo, mkMat(0x2255ff)); // azul = +Z lateral
+  markerZ.name = "MarkerZ";
+  markerZ.position.set(0, 0, 0.18);
+
+  // ── AxesHelper ───────────────────────────
+  const axesHelper = new THREE.AxesHelper(0.22);
   axesHelper.visible = false;
 
-  group.add(leftEye);
-  group.add(rightEye);
-  group.add(leftBrow);
-  group.add(rightBrow);
-  group.add(mouth);
+  group.add(leftEye, rightEye, leftBrow, rightBrow, mouth);
+  group.add(markerX, markerY, markerZ);
   group.add(axesHelper);
 
-  return {
-    group,
-    leftEye,
-    rightEye,
-    leftBrow,
-    rightBrow,
-    mouth,
-    axesHelper,
-  };
+  // Log único — nunca en frame loop
+  if (!_faceRigLogged) {
+    _faceRigLogged = true;
+    console.log("[FaceRig] Head local axes = +X forward | +Y up | +Z lateral");
+    console.log("[FaceRig] leftEye local:", leftEye.position);
+    console.log("[FaceRig] rightEye local:", rightEye.position);
+    console.log("[FaceRig] mouth local:", mouth.position);
+  }
+
+  return { group, leftEye, rightEye, leftBrow, rightBrow, mouth, axesHelper };
 }
+
 
 function updateFaceRig(
   elements: FaceRigElements,
@@ -203,43 +236,32 @@ function updateFaceRig(
     LERP_FACTOR
   );
 
-  // 1. PARPADEO
-  elements.leftEye.scale.y = THREE.MathUtils.lerp(
-    1,
-    0.08,
-    currentState.blinkLeft
-  );
-  elements.rightEye.scale.y = THREE.MathUtils.lerp(
-    1,
-    0.08,
-    currentState.blinkRight
-  );
+  // 1. PARPADEO — escala Y de la esfera del ojo
+  elements.leftEye.scale.y = THREE.MathUtils.lerp(1, 0.08, currentState.blinkLeft);
+  elements.rightEye.scale.y = THREE.MathUtils.lerp(1, 0.08, currentState.blinkRight);
 
   // 2. BOCA Y SONRISA
+  // La geometría de la boca: X=depth(0.008) | Y=height(mouthH) | Z=width(mouthW)
+  // Apertura: escala en Y (crece en alto cuando abre)
+  // Sonrisa: escala en Z (se ensancha)
   const smileAvg = (currentState.smileLeft + currentState.smileRight) / 2;
-  const mouthScaleY = THREE.MathUtils.lerp(1, 3.2, currentState.jawOpen);
-  const mouthScaleX = THREE.MathUtils.lerp(1, 1.4, smileAvg);
-  const mouthPosY =
-    FACE_CONFIG.mouthY - currentState.jawOpen * 0.02 + smileAvg * 0.01;
+  const mouthScaleY = THREE.MathUtils.lerp(1, 4.0, currentState.jawOpen);
+  const mouthScaleZ = THREE.MathUtils.lerp(1, 1.5, smileAvg);
+  const mouthPosY = FACE_CONFIG.mouthY - currentState.jawOpen * 0.018 + smileAvg * 0.008;
 
-  elements.mouth.scale.set(mouthScaleX, mouthScaleY, 1);
+  elements.mouth.scale.set(1, mouthScaleY, mouthScaleZ);
   elements.mouth.position.y = mouthPosY;
 
-  // 3. CEJAS
-  const leftBrowYOffset =
-    currentState.browUpLeft * 0.03 - currentState.browDownLeft * 0.02;
-  const rightBrowYOffset =
-    currentState.browUpRight * 0.03 - currentState.browDownRight * 0.02;
+  // 3. CEJAS — solo mueven en Y, rotan en Z (expresión)
+  const leftBrowYOffset  = currentState.browUpLeft  * 0.03 - currentState.browDownLeft  * 0.02;
+  const rightBrowYOffset = currentState.browUpRight * 0.03 - currentState.browDownRight * 0.02;
 
-  const leftBrowRotZ =
-    currentState.browDownLeft * 0.25 - currentState.browUpLeft * 0.1;
-  const rightBrowRotZ =
-    -currentState.browDownRight * 0.25 + currentState.browUpRight * 0.1;
+  const leftBrowRotZ  =  currentState.browDownLeft  * 0.25 - currentState.browUpLeft  * 0.10;
+  const rightBrowRotZ = -currentState.browDownRight * 0.25 + currentState.browUpRight * 0.10;
 
-  elements.leftBrow.position.y = FACE_CONFIG.browY + leftBrowYOffset;
+  elements.leftBrow.position.y  = FACE_CONFIG.browY + leftBrowYOffset;
   elements.rightBrow.position.y = FACE_CONFIG.browY + rightBrowYOffset;
-
-  elements.leftBrow.rotation.z = leftBrowRotZ;
+  elements.leftBrow.rotation.z  = leftBrowRotZ;
   elements.rightBrow.rotation.z = rightBrowRotZ;
 
   elements.axesHelper.visible = debugMode;
@@ -470,6 +492,116 @@ function usarFaceTracking(
   };
 }
 
+// ──────────────────────────────────────────────────────────
+//  FACE RIG CALIBRATOR — localStorage helpers
+// ──────────────────────────────────────────────────────────
+const LS_KEY = "facerig_calibration_v1";
+
+function saveCalibToLS(rig: FaceRigElements) {
+  const data: Record<string, unknown> = {};
+  for (const k of ELEMENT_KEYS) {
+    const mesh = rig[k] as THREE.Mesh;
+    data[k] = {
+      position: [mesh.position.x, mesh.position.y, mesh.position.z],
+      rotation: [mesh.rotation.x, mesh.rotation.y, mesh.rotation.z],
+      scale:    [mesh.scale.x,    mesh.scale.y,    mesh.scale.z],
+    };
+  }
+  localStorage.setItem(LS_KEY, JSON.stringify(data));
+}
+
+function loadCalibFromLS(rig: FaceRigElements) {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw) as Record<string, { position: number[]; rotation: number[]; scale: number[] }>;
+    for (const k of ELEMENT_KEYS) {
+      if (!data[k]) continue;
+      const mesh = rig[k] as THREE.Mesh;
+      const { position: p, rotation: r, scale: s } = data[k];
+      if (p) mesh.position.set(p[0], p[1], p[2]);
+      if (r) mesh.rotation.set(r[0], r[1], r[2]);
+      if (s) mesh.scale.set(s[0], s[1], s[2]);
+    }
+  } catch {}
+}
+
+function buildConfigString(rig: FaceRigElements): string {
+  const lines: string[] = ["const FACE_CONFIG_CALIBRATED = {"];
+  for (const k of ELEMENT_KEYS) {
+    const mesh = rig[k] as THREE.Mesh;
+    const p = mesh.position;
+    const r = mesh.rotation;
+    const s = mesh.scale;
+    lines.push(`  ${k}: {`);
+    lines.push(`    position: [${p.x.toFixed(4)}, ${p.y.toFixed(4)}, ${p.z.toFixed(4)}],`);
+    lines.push(`    rotation: [${r.x.toFixed(4)}, ${r.y.toFixed(4)}, ${r.z.toFixed(4)}],`);
+    lines.push(`    scale:    [${s.x.toFixed(4)}, ${s.y.toFixed(4)}, ${s.z.toFixed(4)}],`);
+    lines.push(`  },`);
+  }
+  lines.push("};");
+  return lines.join("\n");
+}
+
+// Initial positions snapshot (set on first load)
+const INITIAL_POSITIONS: Partial<Record<ElementKey, { p: THREE.Vector3; r: THREE.Euler; s: THREE.Vector3 }>> = {};
+
+// ──────────────────────────────────────────────────────────
+//  FaceRigGizmo — runs inside <Canvas>
+// ──────────────────────────────────────────────────────────
+function FaceRigGizmo({
+  faceRigRef,
+  selectedEl,
+  gizmoMode,
+  onCoordsUpdate,
+}: {
+  faceRigRef: React.MutableRefObject<FaceRigElements | null>;
+  selectedEl: ElementKey | null;
+  gizmoMode: "translate" | "rotate" | "scale";
+  onCoordsUpdate: (c: LiveCoords) => void;
+}) {
+  const { gl } = useThree();
+  const lastUpdate = useRef(0);
+
+  const selectedMesh = useMemo<THREE.Mesh | null>(() => {
+    if (!selectedEl || !faceRigRef.current) return null;
+    return faceRigRef.current[selectedEl] as THREE.Mesh;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedEl, faceRigRef.current]);
+
+  useFrame(() => {
+    if (!selectedMesh) return;
+    const now = performance.now();
+    if (now - lastUpdate.current < 60) return;
+    lastUpdate.current = now;
+    const p = selectedMesh.position;
+    const r = selectedMesh.rotation;
+    const s = selectedMesh.scale;
+    onCoordsUpdate({
+      position: [p.x, p.y, p.z],
+      rotation: [
+        THREE.MathUtils.radToDeg(r.x),
+        THREE.MathUtils.radToDeg(r.y),
+        THREE.MathUtils.radToDeg(r.z),
+      ],
+      scale: [s.x, s.y, s.z],
+    });
+  });
+
+  if (!selectedMesh) return null;
+
+  return (
+    <TransformControls
+      object={selectedMesh}
+      mode={gizmoMode}
+      space="local"
+      size={0.6}
+      onMouseDown={() => gl.domElement.style.cursor = "grabbing"}
+      onMouseUp={()   => gl.domElement.style.cursor = "default"}
+    />
+  );
+}
+
 function PulpoPlaceholder({ estado }: { estado: React.RefObject<TrackState> }) {
   const grupo = useRef<THREE.Group>(null);
   const mandibula = useRef<THREE.Mesh>(null);
@@ -517,6 +649,8 @@ function PulpoModelo({
   invertirPitch = false,
   offsetCalibrado = { x: 0, y: 0, z: 0 },
   debugFaceRig = false,
+  calibMode = false,
+  faceRigRef,
 }: {
   estado: React.RefObject<TrackState>;
   rotacionY?: number;
@@ -524,20 +658,17 @@ function PulpoModelo({
   invertirPitch?: boolean;
   offsetCalibrado?: { x: number; y: number; z: number };
   debugFaceRig?: boolean;
+  calibMode?: boolean;
+  faceRigRef?: React.MutableRefObject<FaceRigElements | null>;
 }) {
   const grupo = useRef<THREE.Group>(null);
   const gltf = useGLTF(MODEL_PATH);
 
   const currentFacialState = useRef<FacialState>({
-    jawOpen: 0,
-    smileLeft: 0,
-    smileRight: 0,
-    blinkLeft: 0,
-    blinkRight: 0,
-    browDownLeft: 0,
-    browDownRight: 0,
-    browUpLeft: 0,
-    browUpRight: 0,
+    jawOpen: 0, smileLeft: 0, smileRight: 0,
+    blinkLeft: 0, blinkRight: 0,
+    browDownLeft: 0, browDownRight: 0,
+    browUpLeft: 0, browUpRight: 0,
   });
 
   const ESCALA_AVATAR = 2.15;
@@ -553,13 +684,8 @@ function PulpoModelo({
 
     const todosLosBones: THREE.Bone[] = [];
     scene.traverse((child) => {
-      if ((child as THREE.Mesh).isMesh) {
-        child.castShadow = true;
-        child.receiveShadow = true;
-      }
-      if ((child as THREE.Bone).isBone) {
-        todosLosBones.push(child as THREE.Bone);
-      }
+      if ((child as THREE.Mesh).isMesh) { child.castShadow = true; child.receiveShadow = true; }
+      if ((child as THREE.Bone).isBone) todosLosBones.push(child as THREE.Bone);
     });
 
     const headBone = todosLosBones.find(
@@ -572,12 +698,25 @@ function PulpoModelo({
     if (headBone) {
       console.log("[PulpoVolt FaceRig] Head encontrado");
       elements = createFaceRig();
+
+      // Snapshot initial positions for Reset
+      for (const k of ELEMENT_KEYS) {
+        const mesh = elements[k] as THREE.Mesh;
+        INITIAL_POSITIONS[k] = {
+          p: mesh.position.clone(),
+          r: mesh.rotation.clone(),
+          s: mesh.scale.clone(),
+        };
+      }
+
+      // Load saved calibration if available
+      loadCalibFromLS(elements);
+
       headBone.add(elements.group);
       console.log("[PulpoVolt FaceRig] FaceRig creado");
 
       scene.updateMatrixWorld(true);
       headBone.getWorldPosition(headPosWorld);
-
       scene.position.x = -headPosWorld.x;
       scene.position.y = -headPosWorld.y - 0.26;
       scene.position.z = -headPosWorld.z;
@@ -589,73 +728,50 @@ function PulpoModelo({
       scene.position.z = -center.z * factorEscala;
     }
 
-    return {
-      modeloCentrado: scene,
-      faceRigElements: elements,
-    };
-  }, [gltf.scene]);
+    // Expose to parent via ref
+    if (faceRigRef) faceRigRef.current = elements;
+
+    return { modeloCentrado: scene, faceRigElements: elements };
+  }, [gltf.scene]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useFrame((_, delta) => {
     if (!grupo.current) return;
     const e = estado.current;
 
-    if (faceRigElements && e.facialState) {
-      updateFaceRig(
-        faceRigElements,
-        e.facialState,
-        currentFacialState.current,
-        debugFaceRig
+    if (faceRigElements && e.facialState && !calibMode) {
+      updateFaceRig(faceRigElements, e.facialState, currentFacialState.current, debugFaceRig);
+    } else if (faceRigElements) {
+      faceRigElements.axesHelper.visible = debugFaceRig;
+    }
+
+    // En modo calibración: congela la rotación en frente (-90° Y)
+    if (calibMode) {
+      const targetQuat = new THREE.Quaternion().setFromEuler(
+        new THREE.Euler(0, rotacionY, 0, "YXZ")
       );
+      grupo.current.quaternion.slerp(targetQuat, 0.15);
+      grupo.current.scale.setScalar(1);
+      return;
     }
 
     if (e.ready) {
       const eulerRaw = new THREE.Euler().setFromRotationMatrix(e.matrix, "YXZ");
+      const deadZone = (val: number, umbral = 0.007) => Math.abs(val) < umbral ? 0 : val;
 
-      const deadZone = (val: number, umbral = 0.007) =>
-        Math.abs(val) < umbral ? 0 : val;
+      const pitch = THREE.MathUtils.clamp((invertirPitch ? -1 : 1) * deadZone(eulerRaw.x - offsetCalibrado.x), -0.65, 0.65);
+      const yaw   = THREE.MathUtils.clamp((invertirEspejo ? -1 : 1) * deadZone(eulerRaw.y - offsetCalibrado.y), -1.15, 1.15);
+      const roll  = THREE.MathUtils.clamp(-deadZone(eulerRaw.z - offsetCalibrado.z), -0.5, 0.5);
 
-      const deltaPitch = deadZone(eulerRaw.x - offsetCalibrado.x);
-      const deltaYaw = deadZone(eulerRaw.y - offsetCalibrado.y);
-      const deltaRoll = deadZone(eulerRaw.z - offsetCalibrado.z);
-
-      const pitch = THREE.MathUtils.clamp(
-        (invertirPitch ? -1 : 1) * deltaPitch,
-        -0.65,
-        0.65
+      grupo.current.quaternion.slerp(
+        new THREE.Quaternion().setFromEuler(new THREE.Euler(pitch, yaw + rotacionY, roll, "YXZ")),
+        0.22
       );
-      const yaw = THREE.MathUtils.clamp(
-        (invertirEspejo ? -1 : 1) * deltaYaw,
-        -1.15,
-        1.15
-      );
-      const roll = THREE.MathUtils.clamp(-deltaRoll, -0.5, 0.5);
 
-      const targetEuler = new THREE.Euler(pitch, yaw + rotacionY, roll, "YXZ");
-      const targetQuat = new THREE.Quaternion().setFromEuler(targetEuler);
-      grupo.current.quaternion.slerp(targetQuat, 0.22);
-
-      const targetScaleY = 1 + (e.jawOpen || 0) * 0.15;
-      const targetScaleXZ = 1 - (e.jawOpen || 0) * 0.05;
+      const jawO = e.jawOpen || 0;
       const smileBoost = ((e.mouthSmileLeft + e.mouthSmileRight) / 2) * 0.04;
-
-      grupo.current.scale.y = THREE.MathUtils.damp(
-        grupo.current.scale.y,
-        targetScaleY + smileBoost,
-        14,
-        delta
-      );
-      grupo.current.scale.x = THREE.MathUtils.damp(
-        grupo.current.scale.x,
-        targetScaleXZ + smileBoost,
-        14,
-        delta
-      );
-      grupo.current.scale.z = THREE.MathUtils.damp(
-        grupo.current.scale.z,
-        targetScaleXZ,
-        14,
-        delta
-      );
+      grupo.current.scale.y = THREE.MathUtils.damp(grupo.current.scale.y, 1 + jawO * 0.15 + smileBoost, 14, delta);
+      grupo.current.scale.x = THREE.MathUtils.damp(grupo.current.scale.x, 1 - jawO * 0.05 + smileBoost, 14, delta);
+      grupo.current.scale.z = THREE.MathUtils.damp(grupo.current.scale.z, 1 - jawO * 0.05, 14, delta);
     }
   });
 
@@ -665,6 +781,7 @@ function PulpoModelo({
     </group>
   );
 }
+
 
 export default function MemojiPoc() {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -683,6 +800,56 @@ export default function MemojiPoc() {
   const [mostrarCamara, setMostrarCamara] = useState<boolean>(true);
   const [intentoCamara, setIntentoCamara] = useState<number>(0);
   const [trackingIniciado, setTrackingIniciado] = useState<boolean>(false);
+
+  // ── Calibrador ──────────────────────────────────────────
+  const faceRigRef = useRef<FaceRigElements | null>(null);
+  const [calibMode, setCalibMode] = useState(false);
+  const [selectedEl, setSelectedEl] = useState<ElementKey | null>(null);
+  const [gizmoMode, setGizmoMode] = useState<"translate" | "rotate" | "scale">("translate");
+  const [liveCoords, setLiveCoords] = useState<LiveCoords>({
+    position: [0, 0, 0], rotation: [0, 0, 0], scale: [1, 1, 1],
+  });
+  const [configText, setConfigText] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  const handleCoordsUpdate = useCallback((c: LiveCoords) => setLiveCoords(c), []);
+
+  const handleReset = () => {
+    const rig = faceRigRef.current;
+    if (!rig) return;
+    for (const k of ELEMENT_KEYS) {
+      const snap = INITIAL_POSITIONS[k];
+      if (!snap) continue;
+      (rig[k] as THREE.Mesh).position.copy(snap.p);
+      (rig[k] as THREE.Mesh).rotation.copy(snap.r);
+      (rig[k] as THREE.Mesh).scale.copy(snap.s);
+    }
+  };
+
+  const handleSave = () => {
+    const rig = faceRigRef.current;
+    if (!rig) return;
+    saveCalibToLS(rig);
+    hapticoDial();
+  };
+
+  const handleCopy = () => {
+    const rig = faceRigRef.current;
+    if (!rig) return;
+    const txt = buildConfigString(rig);
+    setConfigText(txt);
+    navigator.clipboard.writeText(txt).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  const handleXStep = (delta: number) => {
+    if (!selectedEl || !faceRigRef.current) return;
+    const mesh = faceRigRef.current[selectedEl] as THREE.Mesh;
+    mesh.position.x += delta;
+  };
+
 
   useEffect(() => {
     fetch(MODEL_PATH, { method: "HEAD" })
@@ -836,7 +1003,7 @@ export default function MemojiPoc() {
       <main className="max-w-4xl mx-auto w-full flex-1 flex flex-col lg:flex-row gap-6 items-center justify-center">
         {/* Visor 3D Principal */}
         <div className="relative w-full max-w-[420px] aspect-square sm:aspect-[4/4.5] rounded-[24px] overflow-hidden bg-gradient-to-b from-[#0e1613] to-[#080d0b] border border-white/10 shadow-2xl flex items-center justify-center">
-          <Canvas
+        <Canvas
             camera={{ position: [0, 0, 2.0], fov: 40 }}
             gl={{ antialias: true, alpha: true }}
             className="w-full h-full"
@@ -856,10 +1023,21 @@ export default function MemojiPoc() {
                   invertirPitch={invertirPitch}
                   offsetCalibrado={offsetCalibrado}
                   debugFaceRig={debugFaceRig}
+                  calibMode={calibMode}
+                  faceRigRef={faceRigRef}
                 />
               </Suspense>
             ) : (
               <PulpoPlaceholder estado={estado} />
+            )}
+
+            {calibMode && (
+              <FaceRigGizmo
+                faceRigRef={faceRigRef}
+                selectedEl={selectedEl}
+                gizmoMode={gizmoMode}
+                onCoordsUpdate={handleCoordsUpdate}
+              />
             )}
           </Canvas>
 
@@ -1068,15 +1246,133 @@ export default function MemojiPoc() {
             </div>
           </div>
 
-          <div className="p-4 rounded-[20px] bg-[#0c1410]/60 border border-white/5 text-xs text-white/50 leading-relaxed space-y-1.5">
-            <p>
-              💡 <b>Tip de calibración:</b> Mirá al centro de la pantalla y tocá{" "}
-              <b>"🎯 Calibrar centro"</b> para alinear la mirada a tu posición
-              neutral.
-            </p>
-            <p>
-              FaceRig procedural sincronizado directamente con los blendshapes del rostro.
-            </p>
+          {/* ── FACE RIG CALIBRATOR PANEL ─────────────── */}
+          <div className="p-4 rounded-[20px] bg-[#0c1410] border border-amber-400/20 flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-bold text-amber-300 flex items-center gap-1.5">
+                🎛️ Face Rig Calibrator
+              </h2>
+              <button
+                onClick={() => { hapticoDial(); setCalibMode(v => !v); }}
+                className={`px-2 py-1 rounded-[8px] text-[11px] font-bold transition ${
+                  calibMode
+                    ? "bg-amber-400/20 text-amber-300 border border-amber-400/40"
+                    : "bg-white/10 text-white/50"
+                }`}
+              >
+                {calibMode ? "🔒 CALIBRACIÓN ON" : "📐 Activar calibración"}
+              </button>
+            </div>
+
+            {calibMode && (
+              <>
+                {/* Selector de elemento */}
+                <div className="grid grid-cols-3 gap-1">
+                  {ELEMENT_KEYS.map(k => (
+                    <button
+                      key={k}
+                      onClick={() => { hapticoDial(); setSelectedEl(k === selectedEl ? null : k); }}
+                      className={`px-1.5 py-1 rounded-[7px] text-[10px] font-semibold transition text-center ${
+                        selectedEl === k
+                          ? "bg-amber-400/25 text-amber-300 border border-amber-400/50"
+                          : "bg-white/8 text-white/60 border border-white/10"
+                      }`}
+                    >
+                      {ELEMENT_LABELS[k]}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Modo de gizmo */}
+                <div className="flex gap-1">
+                  {(["translate","rotate","scale"] as const).map(m => (
+                    <button key={m}
+                      onClick={() => { hapticoDial(); setGizmoMode(m); }}
+                      className={`flex-1 px-1 py-1 rounded-[7px] text-[10px] font-bold uppercase transition ${
+                        gizmoMode === m
+                          ? "bg-[#10e7a0]/20 text-[#10e7a0] border border-[#10e7a0]/40"
+                          : "bg-white/8 text-white/50"
+                      }`}
+                    >
+                      {m === "translate" ? "Mover" : m === "rotate" ? "Rotar" : "Escalar"}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Coordenadas en vivo */}
+                {selectedEl && (
+                  <div className="bg-black/30 rounded-[10px] p-3 font-mono text-[11px] space-y-1.5">
+                    <p className="text-amber-300 font-bold mb-1">{ELEMENT_LABELS[selectedEl]}</p>
+                    {(["position","rotation","scale"] as const).map(section => (
+                      <div key={section}>
+                        <p className="text-white/40 text-[10px] uppercase mb-0.5">{section}</p>
+                        {(["X","Y","Z"] as const).map((ax, i) => (
+                          <div key={ax} className="flex justify-between text-[11px]">
+                            <span className="text-white/60">{ax}:</span>
+                            <span className={
+                              section === "position" ? "text-[#10e7a0]"
+                              : section === "rotation" ? "text-amber-300"
+                              : "text-blue-300"
+                            }>
+                              {section === "rotation"
+                                ? `${liveCoords[section][i].toFixed(2)}°`
+                                : liveCoords[section][i].toFixed(4)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+
+                    {/* Control de X (profundidad) */}
+                    <div className="pt-2 border-t border-white/10">
+                      <p className="text-white/40 text-[10px] mb-1">X (profundidad)</p>
+                      <div className="flex items-center gap-1">
+                        <button onClick={() => handleXStep(-0.01)} className="px-2 py-0.5 rounded bg-white/10 text-white/80 text-xs hover:bg-white/20">−</button>
+                        <span className="flex-1 text-center text-[#10e7a0] text-xs font-mono">{liveCoords.position[0].toFixed(4)}</span>
+                        <button onClick={() => handleXStep(0.01)} className="px-2 py-0.5 rounded bg-white/10 text-white/80 text-xs hover:bg-white/20">+</button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Acciones */}
+                <div className="flex flex-col gap-1.5">
+                  <button onClick={handleCopy}
+                    className="w-full py-1.5 rounded-[8px] bg-[#10e7a0]/15 text-[#10e7a0] border border-[#10e7a0]/30 text-xs font-bold hover:bg-[#10e7a0]/25 transition">
+                    {copied ? "✅ Copiado!" : "📋 Copiar configuración"}
+                  </button>
+                  <div className="flex gap-1.5">
+                    <button onClick={handleSave}
+                      className="flex-1 py-1.5 rounded-[8px] bg-blue-500/15 text-blue-300 border border-blue-500/30 text-xs font-semibold hover:bg-blue-500/25 transition">
+                      💾 Guardar
+                    </button>
+                    <button onClick={() => { localStorage.removeItem(LS_KEY); hapticoDial(); }}
+                      className="flex-1 py-1.5 rounded-[8px] bg-white/8 text-white/50 border border-white/10 text-xs hover:bg-white/15 transition">
+                      🗑️ Borrar
+                    </button>
+                    <button onClick={handleReset}
+                      className="flex-1 py-1.5 rounded-[8px] bg-rose-500/15 text-rose-300 border border-rose-500/30 text-xs font-semibold hover:bg-rose-500/25 transition">
+                      ↩️ Reset
+                    </button>
+                  </div>
+                </div>
+
+                {/* Output textarea */}
+                {configText && (
+                  <textarea
+                    readOnly
+                    value={configText}
+                    className="w-full h-28 text-[10px] font-mono bg-black/40 text-[#10e7a0] rounded-[8px] p-2 border border-[#10e7a0]/20 resize-none"
+                  />
+                )}
+              </>
+            )}
+
+            {!calibMode && (
+              <p className="text-[11px] text-white/40 leading-relaxed">
+                Activá el modo calibración para seleccionar y arrastrar los elementos del FaceRig con el gizmo 3D.
+              </p>
+            )}
           </div>
         </div>
       </main>
