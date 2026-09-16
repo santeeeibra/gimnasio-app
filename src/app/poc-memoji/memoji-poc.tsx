@@ -119,6 +119,7 @@ export interface FaceRigElements {
   rightBrow: THREE.Mesh;
   mouth: MouthAssembly;
   axesHelper: THREE.AxesHelper;
+  markers?: THREE.Mesh[];
 }
 
 let _faceRigLogged = false;
@@ -406,9 +407,10 @@ function createFaceRig(): FaceRigElements {
   // Markers
   const mkMat = (color: number) => new THREE.MeshBasicMaterial({ color, depthTest: false });
   const mkGeo = new THREE.SphereGeometry(0.012, 8, 8);
-  const markerX = new THREE.Mesh(mkGeo, mkMat(0xff2222)); markerX.position.set(0.18, 0, 0);
-  const markerY = new THREE.Mesh(mkGeo, mkMat(0x22ff22)); markerY.position.set(0, 0.18, 0);
-  const markerZ = new THREE.Mesh(mkGeo, mkMat(0x2255ff)); markerZ.position.set(0, 0, 0.18);
+  const markerX = new THREE.Mesh(mkGeo, mkMat(0xff2222)); markerX.position.set(0.18, 0, 0); markerX.visible = false;
+  const markerY = new THREE.Mesh(mkGeo, mkMat(0x22ff22)); markerY.position.set(0, 0.18, 0); markerY.visible = false;
+  const markerZ = new THREE.Mesh(mkGeo, mkMat(0x2255ff)); markerZ.position.set(0, 0, 0.18); markerZ.visible = false;
+  const markers = [markerX, markerY, markerZ];
 
   const axesHelper = new THREE.AxesHelper(0.22);
   axesHelper.visible = false;
@@ -422,7 +424,7 @@ function createFaceRig(): FaceRigElements {
     console.log("[FaceRig] FaceRig elements calibrated and created with eyelid assembly and Memoji mouth.");
   }
 
-  return { group, leftEye, rightEye, leftBrow, rightBrow, mouth, axesHelper };
+  return { group, leftEye, rightEye, leftBrow, rightBrow, mouth, axesHelper, markers };
 }
 
 // ─────────────────────────────────────────────
@@ -756,6 +758,9 @@ function updateFaceRig(
   elements.rightBrow.rotation.z = FACE_CONFIG.rightBrow.rotation[2] + rightBrowRotZ;
 
   elements.axesHelper.visible = debugMode;
+  if (elements.markers) {
+    for (const m of elements.markers) m.visible = debugMode;
+  }
 }
 
 function usarFaceTracking(
@@ -1269,6 +1274,9 @@ function PulpoModelo({
       updateFaceRig(faceRigElements, e.facialState, currentFacialState.current, debugFaceRig, e.ready);
     } else if (faceRigElements) {
       faceRigElements.axesHelper.visible = debugFaceRig;
+      if (faceRigElements.markers) {
+        for (const m of faceRigElements.markers) m.visible = debugFaceRig;
+      }
     }
 
     // En modo calibración: congela la rotación en frente (-90° Y)
