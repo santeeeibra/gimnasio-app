@@ -131,3 +131,4 @@
 - 2026-09-16: FaceRig procedural para Pulpo Volt parentado al bone Head (src/app/poc-memoji/memoji-poc.tsx). Ojos (LeftEye, RightEye), cejas (LeftBrow, RightBrow) y boca (Mouth) sincronizados en tiempo real mediante blendshapes de MediaPipe (jawOpen, mouthSmileLeft/Right, eyeBlinkLeft/Right, browDownLeft/Right, browUpLeft/Right) con smoothing lerp(0.25), telemetría en UI y toggle DEBUG FACE RIG.
 
 - Fix eje X local como frente en FaceRig y agregado Face Rig Calibrator interactivo en memoji-poc.tsx
+- Aplicado FACE_CONFIG calibrado y mejorado el FaceRig Calibrator con OrbitControls y ajuste fino XYZ (posición, rotación, escala).

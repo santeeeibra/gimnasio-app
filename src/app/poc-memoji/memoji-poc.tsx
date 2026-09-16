@@ -2,7 +2,7 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { useGLTF, TransformControls } from "@react-three/drei";
+import { useGLTF, TransformControls, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import * as SkeletonUtils from "three/examples/jsm/utils/SkeletonUtils.js";
 import {
@@ -59,24 +59,33 @@ type TrackState = {
 
 // ─────────────────────────────────────────────
 //  FACE CONFIG — coordenadas locales del bone Head
-//  +X = frente de la cara
-//  +Y = arriba
-//  +Z = lateral derecha
 // ─────────────────────────────────────────────
 const FACE_CONFIG = {
-  forward: 0.28,       // X: distancia desde el bone hacia la cara
-  eyeY: 0.03,          // Y: altura de los ojos
-  eyeSpacing: 0.11,    // Z: separación izquierda/derecha de los ojos
-  eyeRadius: 0.038,    // radio de la esfera del ojo
-
-  browY: 0.10,         // Y: altura de las cejas
-  browSpacing: 0.11,   // Z: separación izquierda/derecha de las cejas
-  browW: 0.09,         // Z: ancho de la ceja
-  browH: 0.020,        // Y: grosor de la ceja
-
-  mouthY: -0.065,      // Y: altura de la boca
-  mouthW: 0.13,        // Z: ancho de la boca
-  mouthH: 0.030,       // Y: alto de la boca en reposo
+  leftEye: {
+    position: [-0.0767, 0.1572, -0.1100],
+    rotation: [0.1479, 1.4814, -0.0000],
+    scale:    [0.5000, 0.8569, 0.8500],
+  },
+  rightEye: {
+    position: [0.0834, 0.1673, -0.1008],
+    rotation: [0.0000, 1.4468, 0.0000],
+    scale:    [0.5000, 0.9776, 0.8500],
+  },
+  leftBrow: {
+    position: [-0.0975, 0.2201, -0.1196],
+    rotation: [-2.9019, 1.4026, 2.9888],
+    scale:    [1.0000, 1.0000, 1.0000],
+  },
+  rightBrow: {
+    position: [0.0874, 0.2286, -0.1185],
+    rotation: [-0.1908, 1.2704, 0.1795],
+    scale:    [1.0000, 1.0000, 1.0000],
+  },
+  mouth: {
+    position: [0.0019, 0.0747, -0.1117],
+    rotation: [-1.9768, 1.5040, 2.3083],
+    scale:    [1.0000, 1.0035, 1.0003],
+  },
 };
 
 export interface FaceRigElements {
@@ -92,13 +101,11 @@ export interface FaceRigElements {
 let _faceRigLogged = false;
 
 function createFaceRig(): FaceRigElements {
-  // El grupo vive en el origen del bone Head (no se traslada ni rota)
   const group = new THREE.Group();
   group.name = "FaceRig";
   group.position.set(0, 0, 0);
   group.rotation.set(0, 0, 0);
 
-  // ── Material ─────────────────────────────
   const mat = new THREE.MeshStandardMaterial({
     color: 0x080808,
     roughness: 0.25,
@@ -107,61 +114,49 @@ function createFaceRig(): FaceRigElements {
     depthWrite: true,
   });
 
-  // ── OJOS ─────────────────────────────────
-  // Esfera achatada en X (la esfera mira hacia +X, no necesita rotación)
-  const eyeGeo = new THREE.SphereGeometry(FACE_CONFIG.eyeRadius, 16, 12);
-
+  const eyeGeo = new THREE.SphereGeometry(0.038, 16, 12);
+  
   const leftEye = new THREE.Mesh(eyeGeo, mat);
   leftEye.name = "LeftEye";
-  // +X = frente | eyeY = altura | -eyeSpacing = izquierda (Z negativo)
-  leftEye.position.set(FACE_CONFIG.forward, FACE_CONFIG.eyeY, -FACE_CONFIG.eyeSpacing);
-  leftEye.scale.set(0.5, 1, 0.85); // achatado en profundidad
+  leftEye.position.fromArray(FACE_CONFIG.leftEye.position);
+  leftEye.rotation.fromArray(FACE_CONFIG.leftEye.rotation as [number,number,number]);
+  leftEye.scale.fromArray(FACE_CONFIG.leftEye.scale);
 
   const rightEye = new THREE.Mesh(eyeGeo, mat);
   rightEye.name = "RightEye";
-  rightEye.position.set(FACE_CONFIG.forward, FACE_CONFIG.eyeY, FACE_CONFIG.eyeSpacing);
-  rightEye.scale.set(0.5, 1, 0.85);
+  rightEye.position.fromArray(FACE_CONFIG.rightEye.position);
+  rightEye.rotation.fromArray(FACE_CONFIG.rightEye.rotation as [number,number,number]);
+  rightEye.scale.fromArray(FACE_CONFIG.rightEye.scale);
 
-  // ── CEJAS ────────────────────────────────
-  // BoxGeometry: args = (X depth, Y height, Z width)
-  // Su cara visible mira hacia +X → no requiere rotación en Y
-  const browGeo = new THREE.BoxGeometry(0.008, FACE_CONFIG.browH, FACE_CONFIG.browW);
+  const browGeo = new THREE.BoxGeometry(0.008, 0.020, 0.09);
 
   const leftBrow = new THREE.Mesh(browGeo, mat);
   leftBrow.name = "LeftBrow";
-  leftBrow.position.set(FACE_CONFIG.forward, FACE_CONFIG.browY, -FACE_CONFIG.browSpacing);
+  leftBrow.position.fromArray(FACE_CONFIG.leftBrow.position);
+  leftBrow.rotation.fromArray(FACE_CONFIG.leftBrow.rotation as [number,number,number]);
+  leftBrow.scale.fromArray(FACE_CONFIG.leftBrow.scale);
 
   const rightBrow = new THREE.Mesh(browGeo, mat);
   rightBrow.name = "RightBrow";
-  rightBrow.position.set(FACE_CONFIG.forward, FACE_CONFIG.browY, FACE_CONFIG.browSpacing);
+  rightBrow.position.fromArray(FACE_CONFIG.rightBrow.position);
+  rightBrow.rotation.fromArray(FACE_CONFIG.rightBrow.rotation as [number,number,number]);
+  rightBrow.scale.fromArray(FACE_CONFIG.rightBrow.scale);
 
-  // ── BOCA ─────────────────────────────────
-  // BoxGeometry: args = (X depth, Y height, Z width)
-  const mouthGeo = new THREE.BoxGeometry(0.008, FACE_CONFIG.mouthH, FACE_CONFIG.mouthW);
+  const mouthGeo = new THREE.BoxGeometry(0.008, 0.030, 0.13);
 
   const mouth = new THREE.Mesh(mouthGeo, mat);
   mouth.name = "Mouth";
-  mouth.position.set(FACE_CONFIG.forward, FACE_CONFIG.mouthY, 0);
+  mouth.position.fromArray(FACE_CONFIG.mouth.position);
+  mouth.rotation.fromArray(FACE_CONFIG.mouth.rotation as [number,number,number]);
+  mouth.scale.fromArray(FACE_CONFIG.mouth.scale);
 
-  // ── AXIS MARKERS (debug) ──────────────────
-  const mkMat = (color: number) =>
-    new THREE.MeshBasicMaterial({ color, depthTest: false });
-
+  // Markers
+  const mkMat = (color: number) => new THREE.MeshBasicMaterial({ color, depthTest: false });
   const mkGeo = new THREE.SphereGeometry(0.012, 8, 8);
+  const markerX = new THREE.Mesh(mkGeo, mkMat(0xff2222)); markerX.position.set(0.18, 0, 0);
+  const markerY = new THREE.Mesh(mkGeo, mkMat(0x22ff22)); markerY.position.set(0, 0.18, 0);
+  const markerZ = new THREE.Mesh(mkGeo, mkMat(0x2255ff)); markerZ.position.set(0, 0, 0.18);
 
-  const markerX = new THREE.Mesh(mkGeo, mkMat(0xff2222)); // rojo = +X frente
-  markerX.name = "MarkerX";
-  markerX.position.set(0.18, 0, 0);
-
-  const markerY = new THREE.Mesh(mkGeo, mkMat(0x22ff22)); // verde = +Y arriba
-  markerY.name = "MarkerY";
-  markerY.position.set(0, 0.18, 0);
-
-  const markerZ = new THREE.Mesh(mkGeo, mkMat(0x2255ff)); // azul = +Z lateral
-  markerZ.name = "MarkerZ";
-  markerZ.position.set(0, 0, 0.18);
-
-  // ── AxesHelper ───────────────────────────
   const axesHelper = new THREE.AxesHelper(0.22);
   axesHelper.visible = false;
 
@@ -169,18 +164,13 @@ function createFaceRig(): FaceRigElements {
   group.add(markerX, markerY, markerZ);
   group.add(axesHelper);
 
-  // Log único — nunca en frame loop
   if (!_faceRigLogged) {
     _faceRigLogged = true;
-    console.log("[FaceRig] Head local axes = +X forward | +Y up | +Z lateral");
-    console.log("[FaceRig] leftEye local:", leftEye.position);
-    console.log("[FaceRig] rightEye local:", rightEye.position);
-    console.log("[FaceRig] mouth local:", mouth.position);
+    console.log("[FaceRig] FaceRig elements calibrated and created.");
   }
 
   return { group, leftEye, rightEye, leftBrow, rightBrow, mouth, axesHelper };
 }
-
 
 function updateFaceRig(
   elements: FaceRigElements,
@@ -190,79 +180,41 @@ function updateFaceRig(
 ) {
   const LERP_FACTOR = 0.25;
 
-  currentState.jawOpen = THREE.MathUtils.lerp(
-    currentState.jawOpen,
-    targetState.jawOpen,
-    LERP_FACTOR
-  );
-  currentState.smileLeft = THREE.MathUtils.lerp(
-    currentState.smileLeft,
-    targetState.smileLeft,
-    LERP_FACTOR
-  );
-  currentState.smileRight = THREE.MathUtils.lerp(
-    currentState.smileRight,
-    targetState.smileRight,
-    LERP_FACTOR
-  );
-  currentState.blinkLeft = THREE.MathUtils.lerp(
-    currentState.blinkLeft,
-    targetState.blinkLeft,
-    LERP_FACTOR
-  );
-  currentState.blinkRight = THREE.MathUtils.lerp(
-    currentState.blinkRight,
-    targetState.blinkRight,
-    LERP_FACTOR
-  );
-  currentState.browDownLeft = THREE.MathUtils.lerp(
-    currentState.browDownLeft,
-    targetState.browDownLeft,
-    LERP_FACTOR
-  );
-  currentState.browDownRight = THREE.MathUtils.lerp(
-    currentState.browDownRight,
-    targetState.browDownRight,
-    LERP_FACTOR
-  );
-  currentState.browUpLeft = THREE.MathUtils.lerp(
-    currentState.browUpLeft,
-    targetState.browUpLeft,
-    LERP_FACTOR
-  );
-  currentState.browUpRight = THREE.MathUtils.lerp(
-    currentState.browUpRight,
-    targetState.browUpRight,
-    LERP_FACTOR
-  );
+  currentState.jawOpen = THREE.MathUtils.lerp(currentState.jawOpen, targetState.jawOpen, LERP_FACTOR);
+  currentState.smileLeft = THREE.MathUtils.lerp(currentState.smileLeft, targetState.smileLeft, LERP_FACTOR);
+  currentState.smileRight = THREE.MathUtils.lerp(currentState.smileRight, targetState.smileRight, LERP_FACTOR);
+  currentState.blinkLeft = THREE.MathUtils.lerp(currentState.blinkLeft, targetState.blinkLeft, LERP_FACTOR);
+  currentState.blinkRight = THREE.MathUtils.lerp(currentState.blinkRight, targetState.blinkRight, LERP_FACTOR);
+  currentState.browDownLeft = THREE.MathUtils.lerp(currentState.browDownLeft, targetState.browDownLeft, LERP_FACTOR);
+  currentState.browDownRight = THREE.MathUtils.lerp(currentState.browDownRight, targetState.browDownRight, LERP_FACTOR);
+  currentState.browUpLeft = THREE.MathUtils.lerp(currentState.browUpLeft, targetState.browUpLeft, LERP_FACTOR);
+  currentState.browUpRight = THREE.MathUtils.lerp(currentState.browUpRight, targetState.browUpRight, LERP_FACTOR);
 
-  // 1. PARPADEO — escala Y de la esfera del ojo
-  elements.leftEye.scale.y = THREE.MathUtils.lerp(1, 0.08, currentState.blinkLeft);
-  elements.rightEye.scale.y = THREE.MathUtils.lerp(1, 0.08, currentState.blinkRight);
+  // 1. PARPADEO
+  elements.leftEye.scale.y = THREE.MathUtils.lerp(FACE_CONFIG.leftEye.scale[1], FACE_CONFIG.leftEye.scale[1] * 0.08, currentState.blinkLeft);
+  elements.rightEye.scale.y = THREE.MathUtils.lerp(FACE_CONFIG.rightEye.scale[1], FACE_CONFIG.rightEye.scale[1] * 0.08, currentState.blinkRight);
 
   // 2. BOCA Y SONRISA
-  // La geometría de la boca: X=depth(0.008) | Y=height(mouthH) | Z=width(mouthW)
-  // Apertura: escala en Y (crece en alto cuando abre)
-  // Sonrisa: escala en Z (se ensancha)
   const smileAvg = (currentState.smileLeft + currentState.smileRight) / 2;
-  const mouthScaleY = THREE.MathUtils.lerp(1, 4.0, currentState.jawOpen);
-  const mouthScaleZ = THREE.MathUtils.lerp(1, 1.5, smileAvg);
-  const mouthPosY = FACE_CONFIG.mouthY - currentState.jawOpen * 0.018 + smileAvg * 0.008;
+  const mouthScaleY = THREE.MathUtils.lerp(FACE_CONFIG.mouth.scale[1], FACE_CONFIG.mouth.scale[1] * 4.0, currentState.jawOpen);
+  const mouthScaleZ = THREE.MathUtils.lerp(FACE_CONFIG.mouth.scale[2], FACE_CONFIG.mouth.scale[2] * 1.5, smileAvg);
+  const mouthPosY = FACE_CONFIG.mouth.position[1] - currentState.jawOpen * 0.018 + smileAvg * 0.008;
 
-  elements.mouth.scale.set(1, mouthScaleY, mouthScaleZ);
+  elements.mouth.scale.set(FACE_CONFIG.mouth.scale[0], mouthScaleY, mouthScaleZ);
   elements.mouth.position.y = mouthPosY;
 
-  // 3. CEJAS — solo mueven en Y, rotan en Z (expresión)
+  // 3. CEJAS
   const leftBrowYOffset  = currentState.browUpLeft  * 0.03 - currentState.browDownLeft  * 0.02;
   const rightBrowYOffset = currentState.browUpRight * 0.03 - currentState.browDownRight * 0.02;
 
   const leftBrowRotZ  =  currentState.browDownLeft  * 0.25 - currentState.browUpLeft  * 0.10;
   const rightBrowRotZ = -currentState.browDownRight * 0.25 + currentState.browUpRight * 0.10;
 
-  elements.leftBrow.position.y  = FACE_CONFIG.browY + leftBrowYOffset;
-  elements.rightBrow.position.y = FACE_CONFIG.browY + rightBrowYOffset;
-  elements.leftBrow.rotation.z  = leftBrowRotZ;
-  elements.rightBrow.rotation.z = rightBrowRotZ;
+  elements.leftBrow.position.y  = FACE_CONFIG.leftBrow.position[1] + leftBrowYOffset;
+  elements.rightBrow.position.y = FACE_CONFIG.rightBrow.position[1] + rightBrowYOffset;
+  
+  elements.leftBrow.rotation.z  = FACE_CONFIG.leftBrow.rotation[2] + leftBrowRotZ;
+  elements.rightBrow.rotation.z = FACE_CONFIG.rightBrow.rotation[2] + rightBrowRotZ;
 
   elements.axesHelper.visible = debugMode;
 }
@@ -844,10 +796,12 @@ export default function MemojiPoc() {
     });
   };
 
-  const handleXStep = (delta: number) => {
+  const handleStep = (axis: "x" | "y" | "z", delta: number) => {
     if (!selectedEl || !faceRigRef.current) return;
     const mesh = faceRigRef.current[selectedEl] as THREE.Mesh;
-    mesh.position.x += delta;
+    if (gizmoMode === "translate") mesh.position[axis] += delta;
+    else if (gizmoMode === "rotate") mesh.rotation[axis] += delta * (Math.PI / 180);
+    else if (gizmoMode === "scale") mesh.scale[axis] += delta;
   };
 
 
@@ -1032,12 +986,15 @@ export default function MemojiPoc() {
             )}
 
             {calibMode && (
-              <FaceRigGizmo
-                faceRigRef={faceRigRef}
-                selectedEl={selectedEl}
-                gizmoMode={gizmoMode}
-                onCoordsUpdate={handleCoordsUpdate}
-              />
+              <>
+                <OrbitControls makeDefault />
+                <FaceRigGizmo
+                  faceRigRef={faceRigRef}
+                  selectedEl={selectedEl}
+                  gizmoMode={gizmoMode}
+                  onCoordsUpdate={handleCoordsUpdate}
+                />
+              </>
             )}
           </Canvas>
 
@@ -1323,14 +1280,23 @@ export default function MemojiPoc() {
                       </div>
                     ))}
 
-                    {/* Control de X (profundidad) */}
-                    <div className="pt-2 border-t border-white/10">
-                      <p className="text-white/40 text-[10px] mb-1">X (profundidad)</p>
-                      <div className="flex items-center gap-1">
-                        <button onClick={() => handleXStep(-0.01)} className="px-2 py-0.5 rounded bg-white/10 text-white/80 text-xs hover:bg-white/20">−</button>
-                        <span className="flex-1 text-center text-[#10e7a0] text-xs font-mono">{liveCoords.position[0].toFixed(4)}</span>
-                        <button onClick={() => handleXStep(0.01)} className="px-2 py-0.5 rounded bg-white/10 text-white/80 text-xs hover:bg-white/20">+</button>
-                      </div>
+                    {/* Controles paso a paso (X, Y, Z) */}
+                    <div className="pt-2 border-t border-white/10 space-y-1">
+                      <p className="text-white/40 text-[10px] mb-1">
+                        Ajuste fino de {gizmoMode === "translate" ? "Posición" : gizmoMode === "rotate" ? "Rotación" : "Escala"}
+                      </p>
+                      {(["x", "y", "z"] as const).map((ax, i) => (
+                        <div key={ax} className="flex items-center gap-1">
+                          <span className="text-[10px] text-white/50 w-3 uppercase">{ax}</span>
+                          <button onClick={() => handleStep(ax, gizmoMode === "rotate" ? -5 : -0.01)} className="px-2 py-0.5 rounded bg-white/10 text-white/80 text-[10px] font-bold hover:bg-white/20 active:scale-95">−</button>
+                          <span className="flex-1 text-center text-white/70 text-[10px] font-mono">
+                            {gizmoMode === "translate" ? liveCoords.position[i].toFixed(4) :
+                             gizmoMode === "rotate"    ? `${liveCoords.rotation[i].toFixed(1)}°` :
+                                                         liveCoords.scale[i].toFixed(4)}
+                          </span>
+                          <button onClick={() => handleStep(ax, gizmoMode === "rotate" ? 5 : 0.01)} className="px-2 py-0.5 rounded bg-white/10 text-white/80 text-[10px] font-bold hover:bg-white/20 active:scale-95">+</button>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
