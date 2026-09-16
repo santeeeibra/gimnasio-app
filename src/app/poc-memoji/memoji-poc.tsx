@@ -279,32 +279,75 @@ function PulpoModelo({
   const grupo = useRef<THREE.Group>(null);
   const gltf = useGLTF(MODEL_PATH);
 
-  // Encuadre Avatar Memoji (Cabeza + Hombros):
-  // Escalamos adecuadamente y desplazamos verticalmente para centrar la cabeza y hombros.
-  const ESCALA_AVATAR = 2.4;
+  // Escala para avatar (cabeza + hombros ocupan el 70% del viewport)
+  const ESCALA_AVATAR = 3.2;
 
-  const modeloCentrado = useMemo(() => {
+  const { modeloCentrado, headEncontrado, posHeadLocal } = useMemo(() => {
     const scene = SkeletonUtils.clone(gltf.scene);
+    
+    // 1. Escalar la escena para tamaño avatar
     const box = new THREE.Box3().setFromObject(scene);
-    const center = box.getCenter(new THREE.Vector3());
     const size = box.getSize(new THREE.Vector3());
     const maxDim = Math.max(size.x, size.y, size.z);
     const factorEscala = ESCALA_AVATAR / (maxDim || 1);
-
-    // Centrar en el centro geométrico base y desplazar Y para traer la cabeza al foco principal
-    scene.position.x = -center.x * factorEscala;
-    scene.position.y = (-center.y - size.y * 0.18) * factorEscala;
-    scene.position.z = -center.z * factorEscala;
     scene.scale.setScalar(factorEscala);
 
+    // 2. Buscar SkinnedMesh y Bones en la jerarquía
+    const todosLosBones: THREE.Bone[] = [];
     scene.traverse((child) => {
       if ((child as THREE.Mesh).isMesh) {
         child.castShadow = true;
         child.receiveShadow = true;
       }
+      if ((child as THREE.Bone).isBone) {
+        todosLosBones.push(child as THREE.Bone);
+      }
     });
 
-    return scene;
+    const nombresBones = todosLosBones.map((b) => b.name);
+    console.log("[PulpoVolt Avatar] Bones encontrados en el modelo GLB:", nombresBones);
+
+    // 3. Buscar bone "Head" (case insensitive)
+    const headBone = todosLosBones.find(
+      (b) => b.name === "Head" || b.name.toLowerCase().includes("head")
+    );
+
+    let headFound = false;
+    const headPosWorld = new THREE.Vector3();
+
+    if (headBone) {
+      headFound = true;
+      scene.updateMatrixWorld(true);
+      headBone.getWorldPosition(headPosWorld);
+      console.log("[PulpoVolt Avatar] Bone 'Head' encontrado! Posición world inicial:", {
+        x: headPosWorld.x,
+        y: headPosWorld.y,
+        z: headPosWorld.z,
+        name: headBone.name,
+      });
+
+      // Mover la escena para que la cabeza (Head bone) quede exactamente en Y ~ 0.1 (ligeramente arriba del centro)
+      // y centrada en X y Z.
+      scene.position.x = -headPosWorld.x;
+      scene.position.y = -headPosWorld.y + 0.12; // Un ligero offset para ver los hombros abajo
+      scene.position.z = -headPosWorld.z;
+    } else {
+      console.warn(
+        "⚠️ Head bone not found en el GLB! Bones disponibles:",
+        nombresBones
+      );
+      // Fallback si no hay bone Head: usar parte superior del bounding box
+      const center = box.getCenter(new THREE.Vector3());
+      scene.position.x = -center.x * factorEscala;
+      scene.position.y = (-center.y - size.y * 0.15) * factorEscala;
+      scene.position.z = -center.z * factorEscala;
+    }
+
+    return {
+      modeloCentrado: scene,
+      headEncontrado: headFound,
+      posHeadLocal: headPosWorld,
+    };
   }, [gltf.scene]);
 
   useFrame((_, delta) => {
@@ -336,7 +379,7 @@ function PulpoModelo({
       const targetQuat = new THREE.Quaternion().setFromEuler(targetEuler);
       grupo.current.quaternion.slerp(targetQuat, 0.22);
 
-      // Squash & stretch orgánico (solo en el grupo pivote, no afecta el clip)
+      // Reacción facial Squash & Stretch
       const targetScaleY = 1 + (e.jawOpen || 0) * 0.15;
       const targetScaleXZ = 1 - (e.jawOpen || 0) * 0.05;
       const smileBoost = ((e.mouthSmileLeft + e.mouthSmileRight) / 2) * 0.04;
