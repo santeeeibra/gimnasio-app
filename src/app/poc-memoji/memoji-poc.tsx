@@ -39,6 +39,8 @@ export type FacialState = {
   smileRight: number;
   blinkLeft: number;
   blinkRight: number;
+  squintLeft: number;
+  squintRight: number;
   browDownLeft: number;
   browDownRight: number;
   browUpLeft: number;
@@ -48,12 +50,6 @@ export type FacialState = {
 type TrackState = {
   matrix: THREE.Matrix4;
   facialState: FacialState;
-  jawOpen: number;
-  eyeBlinkLeft: number;
-  eyeBlinkRight: number;
-  mouthSmileLeft: number;
-  mouthSmileRight: number;
-  browInnerUp: number;
   ready: boolean;
 };
 
@@ -298,6 +294,10 @@ function easeOutQuad(t: number): number {
   return t * (2 - t);
 }
 
+// Fase 2 — eyeSquint: tope de cierre por contracción, sensiblemente menor a
+// un blink completo (1.0) para que se lea como gesto de esfuerzo, no parpadeo.
+const SQUINT_CAP = 0.4;
+
 /**
  * Actualiza el auto-blink procedural (evento bilateral sincronizado)
  */
@@ -353,6 +353,20 @@ function updateAutoBlink(state: BlinkState, now: number): number {
   }
 }
 
+const UPPER_LID_ROT_MAX = Math.PI * 0.85; // ~85% del cierre
+const LOWER_LID_ROT_MAX = Math.PI * 0.15; // ~15% del cierre
+
+function applyEyeClosure(eye: EyeAssembly, closure: number) {
+  eye.upperLidPivot.rotation.x = closure * UPPER_LID_ROT_MAX;
+  eye.lowerLidPivot.rotation.x = -closure * LOWER_LID_ROT_MAX;
+}
+
+function computeEyeClosure(autoBlink: number, blinkTracked: number, squintTracked: number): number {
+  const finalBlink = Math.max(autoBlink, blinkTracked);
+  const squintCap = THREE.MathUtils.clamp(squintTracked * SQUINT_CAP, 0, SQUINT_CAP);
+  return Math.max(finalBlink, squintCap);
+}
+
 function updateFaceRig(
   elements: FaceRigElements,
   targetState: FacialState,
@@ -366,36 +380,28 @@ function updateFaceRig(
   currentState.smileRight = THREE.MathUtils.lerp(currentState.smileRight, targetState.smileRight, LERP_FACTOR);
   currentState.blinkLeft = THREE.MathUtils.lerp(currentState.blinkLeft, targetState.blinkLeft, LERP_FACTOR);
   currentState.blinkRight = THREE.MathUtils.lerp(currentState.blinkRight, targetState.blinkRight, LERP_FACTOR);
+  currentState.squintLeft = THREE.MathUtils.lerp(currentState.squintLeft, targetState.squintLeft, LERP_FACTOR);
+  currentState.squintRight = THREE.MathUtils.lerp(currentState.squintRight, targetState.squintRight, LERP_FACTOR);
   currentState.browDownLeft = THREE.MathUtils.lerp(currentState.browDownLeft, targetState.browDownLeft, LERP_FACTOR);
   currentState.browDownRight = THREE.MathUtils.lerp(currentState.browDownRight, targetState.browDownRight, LERP_FACTOR);
   currentState.browUpLeft = THREE.MathUtils.lerp(currentState.browUpLeft, targetState.browUpLeft, LERP_FACTOR);
   currentState.browUpRight = THREE.MathUtils.lerp(currentState.browUpRight, targetState.browUpRight, LERP_FACTOR);
 
   // ─────────────────────────────────────────────
-  // 1. PARPADEO CON PÁRPADOS QUE ROTAN (Fase 0+1)
+  // 1. PARPADEO CON PÁRPADOS QUE ROTAN (Fase 0+1) + SQUINT (Fase 2)
   // ─────────────────────────────────────────────
   const now = performance.now();
-  
+
   // Auto-blink bilateral (sincronizado)
   const autoBlink = updateAutoBlink(autoBlinkState, now);
-  
-  // Blend: max(auto, tracked) — permite guiños independientes via MediaPipe
-  const finalBlinkLeft = Math.max(autoBlink, currentState.blinkLeft);
-  const finalBlinkRight = Math.max(autoBlink, currentState.blinkRight);
-  
+
+  // Blend: max(auto, tracked) + Squint (fase 2)
+  const closureLeft = computeEyeClosure(autoBlink, currentState.blinkLeft, currentState.squintLeft);
+  const closureRight = computeEyeClosure(autoBlink, currentState.blinkRight, currentState.squintRight);
+
   // Aplicar rotación a los párpados
-  // Párpado superior: 80-90% del cierre (rotación hacia abajo)
-  // Párpado inferior: 10-20% del cierre (rotación hacia arriba)
-  const upperLidRotationMax = Math.PI * 0.85; // ~85% del cierre
-  const lowerLidRotationMax = Math.PI * 0.15; // ~15% del cierre
-  
-  // Ojo izquierdo
-  elements.leftEye.upperLidPivot.rotation.x = finalBlinkLeft * upperLidRotationMax;
-  elements.leftEye.lowerLidPivot.rotation.x = -finalBlinkLeft * lowerLidRotationMax;
-  
-  // Ojo derecho
-  elements.rightEye.upperLidPivot.rotation.x = finalBlinkRight * upperLidRotationMax;
-  elements.rightEye.lowerLidPivot.rotation.x = -finalBlinkRight * lowerLidRotationMax;
+  applyEyeClosure(elements.leftEye, closureLeft);
+  applyEyeClosure(elements.rightEye, closureRight);
 
   // ─────────────────────────────────────────────
   // 2. BOCA Y SONRISA (sin cambios - Fase 4 y 5)
@@ -438,17 +444,13 @@ function usarFaceTracking(
       smileRight: 0,
       blinkLeft: 0,
       blinkRight: 0,
+      squintLeft: 0,
+      squintRight: 0,
       browDownLeft: 0,
       browDownRight: 0,
       browUpLeft: 0,
       browUpRight: 0,
     },
-    jawOpen: 0,
-    eyeBlinkLeft: 0,
-    eyeBlinkRight: 0,
-    mouthSmileLeft: 0,
-    mouthSmileRight: 0,
-    browInnerUp: 0,
     ready: false,
   });
   const [status, setStatus] = useState<
@@ -460,6 +462,8 @@ function usarFaceTracking(
   const [sonrisaNivel, setSonrisaNivel] = useState<number>(0);
   const [parpadeoL, setParpadeoL] = useState<number>(0);
   const [parpadeoR, setParpadeoR] = useState<number>(0);
+  const [squintL, setSquintL] = useState<number>(0);
+  const [squintR, setSquintR] = useState<number>(0);
 
   const videoRefActual = useRef<HTMLVideoElement | null>(video);
   videoRefActual.current = video;
@@ -576,6 +580,8 @@ function usarFaceTracking(
               fs.smileRight = shapes["mouthSmileRight"] ?? 0;
               fs.blinkLeft = shapes["eyeBlinkLeft"] ?? 0;
               fs.blinkRight = shapes["eyeBlinkRight"] ?? 0;
+              fs.squintLeft = shapes["eyeSquintLeft"] ?? 0;
+              fs.squintRight = shapes["eyeSquintRight"] ?? 0;
               fs.browDownLeft = shapes["browDownLeft"] ?? 0;
               fs.browDownRight = shapes["browDownRight"] ?? 0;
               fs.browUpLeft =
@@ -588,13 +594,6 @@ function usarFaceTracking(
                 shapes["browInnerUp"] ??
                 shapes["browOuterUpRight"] ??
                 0;
-
-              estado.current.jawOpen = fs.jawOpen;
-              estado.current.eyeBlinkLeft = fs.blinkLeft;
-              estado.current.eyeBlinkRight = fs.blinkRight;
-              estado.current.mouthSmileLeft = fs.smileLeft;
-              estado.current.mouthSmileRight = fs.smileRight;
-              estado.current.browInnerUp = fs.browUpLeft;
             }
 
             if (now - lastUiUpdate > 120) {
@@ -615,6 +614,12 @@ function usarFaceTracking(
               );
               setParpadeoR(
                 Math.round(estado.current.facialState.blinkRight * 100)
+              );
+              setSquintL(
+                Math.round(estado.current.facialState.squintLeft * 100)
+              );
+              setSquintR(
+                Math.round(estado.current.facialState.squintRight * 100)
               );
             }
           } catch {
@@ -648,6 +653,8 @@ function usarFaceTracking(
     sonrisaNivel,
     parpadeoL,
     parpadeoR,
+    squintL,
+    squintR,
   };
 }
 
@@ -782,7 +789,7 @@ function PulpoPlaceholder({ estado }: { estado: React.RefObject<TrackState> }) {
       grupo.current.quaternion.slerp(rot, 0.35);
     }
     if (mandibula.current) {
-      const apertura = 0.05 + e.jawOpen * 0.35;
+      const apertura = 0.05 + (e.facialState?.jawOpen ?? 0) * 0.35;
       mandibula.current.scale.y = apertura / 0.05;
       mandibula.current.position.y = -0.35 - apertura / 2;
     }
@@ -835,6 +842,7 @@ function PulpoModelo({
   const currentFacialState = useRef<FacialState>({
     jawOpen: 0, smileLeft: 0, smileRight: 0,
     blinkLeft: 0, blinkRight: 0,
+    squintLeft: 0, squintRight: 0,
     browDownLeft: 0, browDownRight: 0,
     browUpLeft: 0, browUpRight: 0,
   });
@@ -935,8 +943,8 @@ function PulpoModelo({
         0.22
       );
 
-      const jawO = e.jawOpen || 0;
-      const smileBoost = ((e.mouthSmileLeft + e.mouthSmileRight) / 2) * 0.04;
+      const jawO = e.facialState?.jawOpen || 0;
+      const smileBoost = (((e.facialState?.smileLeft || 0) + (e.facialState?.smileRight || 0)) / 2) * 0.04;
       grupo.current.scale.y = THREE.MathUtils.damp(grupo.current.scale.y, 1 + jawO * 0.15 + smileBoost, 14, delta);
       grupo.current.scale.x = THREE.MathUtils.damp(grupo.current.scale.x, 1 - jawO * 0.05 + smileBoost, 14, delta);
       grupo.current.scale.z = THREE.MathUtils.damp(grupo.current.scale.z, 1 - jawO * 0.05, 14, delta);
@@ -1088,6 +1096,10 @@ export default function MemojiPoc() {
 
     return () => {
       activo = false;
+      if (videoRef.current) {
+        videoRef.current.onloadedmetadata = null;
+        videoRef.current.srcObject = null;
+      }
       stream?.getTracks().forEach((t) => t.stop());
     };
   }, [trackingIniciado, intentoCamara]);
@@ -1101,6 +1113,8 @@ export default function MemojiPoc() {
     sonrisaNivel,
     parpadeoL,
     parpadeoR,
+    squintL,
+    squintR,
   } = usarFaceTracking(video, trackingIniciado);
 
   const calibrarCentro = () => {
@@ -1414,6 +1428,38 @@ export default function MemojiPoc() {
                   </div>
                   <span className="font-mono text-white/90 w-8 text-right">
                     {parpadeoR}%
+                  </span>
+                </div>
+              </div>
+
+              {/* Medidor Squint L */}
+              <div className="flex justify-between items-center">
+                <span>Squint L:</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-24 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-[#10e7a0] transition-all duration-75"
+                      style={{ width: `${Math.min(100, squintL)}%` }}
+                    />
+                  </div>
+                  <span className="font-mono text-white/90 w-8 text-right">
+                    {squintL}%
+                  </span>
+                </div>
+              </div>
+
+              {/* Medidor Squint R */}
+              <div className="flex justify-between items-center">
+                <span>Squint R:</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-24 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-[#10e7a0] transition-all duration-75"
+                      style={{ width: `${Math.min(100, squintR)}%` }}
+                    />
+                  </div>
+                  <span className="font-mono text-white/90 w-8 text-right">
+                    {squintR}%
                   </span>
                 </div>
               </div>

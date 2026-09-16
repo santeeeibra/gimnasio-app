@@ -3,6 +3,7 @@
 > **Regla de Cierre:** Al finalizar cada feature o sesión, el agente debe actualizar este archivo con 1 o 2 viñetas telegráficas sobre lo que acaba de hacer (en UTF-8). NO leas el contexto completo para actualizar esto.
 
 ## Últimos Cambios
+- **Saneamiento Quirúrgico PoC Memoji 3D (2026-09-16)**: Factorizadas funciones auxiliares de párpados (`applyEyeClosure`, `computeEyeClosure`), eliminado estado duplicado en `TrackState` (`jawOpen`, `eyeBlinkLeft`, etc.), corregida fuga de memoria en listener `onloadedmetadata` de cámara y saneadas lecturas de `facialState` en `src/app/poc-memoji/memoji-poc.tsx`.
 - **Arquitectura Offline-First (100% Funcional sin Internet) (2026-09-15)**: Implementada la precarga automática de la pantalla `/checkin` en `sw.js` (`sysgym-shell-v2`), junto con el almacenamiento masivo de socios en `IndexedDB` (`src/lib/offline/indexeddb.ts`) y la sincronización background en `padron.ts` para permitir el check-in local instantáneo con resincronización automática de asistencias.
 - **Exportación Global PDF/Excel con Logo SysGym e Imagen de Gráfico (2026-09-15)**: Integrada la marca oficial SysGym (`/logo-sysgym.png`) en los PDFs de comprobantes, ingresos, socios y caja diaria. Incorporada la captura de gráfico SVG interactivo dentro del PDF de Ingresos y creados los módulos `DescargarClientesPdf`, `DescargarClientesExcel`, `DescargarCajaPdf` y `DescargarCajaExcel`.
 - **Reordenamiento Jerárquico /mi/rutina**: Reestructurado el layout visual exactamente en 7 pasos (Header -> Aforo -> Título -> Selector Día + Modo Foco -> Hero Card de Sesión Activa con badge Pulpo Volt `#10e7a0` -> Lista Ejercicios -> Acordeón suave `MasOpcionesAcordeon` colapsado con Agendar, Descargar PDF, Frase motivacional y Opciones de personalización con haptics).
@@ -135,3 +136,5 @@
 - Aplicado FACE_CONFIG calibrado y mejorado el FaceRig Calibrator con OrbitControls y ajuste fino XYZ (posición, rotación, escala).
 - 2026-09-16: Actualizado PROMPT_ANTIGRAVITY_MEMOJI_EYES.md con la jerarquía estricta de QA (P0-P5: oclusión -> timing 80-100ms/150-180ms -> integración -> expresión -> material -> microdetalle), modos QA e Implementación, y directivas de transición Track A -> Track B para Blender/glTF.
 - 2026-09-16: PoC Memoji: Cambiado el color del material de los párpados de `0x9b59b6` (púrpura) a `0x10e7a0` (Verde Pulpo Volt) en `src/app/poc-memoji/memoji-poc.tsx` (P2 Integración).
+
+- 2026-09-16: Fase 2 Memoji eyeSquint implementada (memoji-poc.tsx): fs.squintLeft/Right desde eyeSquintLeft/Right de MediaPipe, blend max() con auto-blink via SQUINT_CAP=0.4, telemetria Squint L/R en debug panel. Pendiente QA visual (gesto de esfuerzo, no confundir con guino).

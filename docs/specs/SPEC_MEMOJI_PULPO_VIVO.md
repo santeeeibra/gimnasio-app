@@ -188,8 +188,8 @@ auto-blink del pulpo — está listo.
 
 ## Progreso
 
-- [ ] Fase 0+1 — solo blink (párpado por rotación, sin squint/iris/boca/cejas)
-- [ ] Fase 2 — eyeSquint
+- [x] Fase 0+1 — solo blink (párpado por rotación, sin squint/iris/boca/cejas) — commits f5b0036, 41aeeeb, fe07d7a. P0/P2 aprobados en QA visual (guiño independiente + párpado verde integrado).
+- [x] Fase 2 — eyeSquint (tope 0.4, blend max con auto-blink, telemetría en debug panel) — pendiente QA visual
 - [ ] Fase 3 — iris + mirada
 - [ ] Fase 4 — boca/jaw
 - [ ] Fase 5 — sonrisa
