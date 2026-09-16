@@ -1208,6 +1208,14 @@ function PulpoModelo({
   const grupo = useRef<THREE.Group>(null);
   const gltf = useGLTF(MODEL_PATH);
 
+  // Fase 7 — Microanimaciones idle: fases aleatorias para que respiración/sway
+  // de dos instancias nunca se vean sincronizadas entre sí.
+  const idleLifeRef = useRef({
+    breathPhase: Math.random() * Math.PI * 2,
+    swayPhaseYaw: Math.random() * Math.PI * 2,
+    swayPhasePitch: Math.random() * Math.PI * 2,
+  });
+
   const currentFacialState = useRef<FacialState>({
     jawOpen: 0, smileLeft: 0, smileRight: 0,
     blinkLeft: 0, blinkRight: 0,
@@ -1298,6 +1306,13 @@ function PulpoModelo({
           if ('smileRight' in dict) inf[dict['smileRight']] = fs.smileRight || 0;
           if ('blinkLeft' in dict) inf[dict['blinkLeft']] = fs.blinkLeft || 0;
           if ('blinkRight' in dict) inf[dict['blinkRight']] = fs.blinkRight || 0;
+          if ('squintLeft' in dict) inf[dict['squintLeft']] = fs.squintLeft || 0;
+          if ('squintRight' in dict) inf[dict['squintRight']] = fs.squintRight || 0;
+          if ('browUpLeft' in dict) inf[dict['browUpLeft']] = fs.browUpLeft || 0;
+          if ('browUpRight' in dict) inf[dict['browUpRight']] = fs.browUpRight || 0;
+          if ('browDownLeft' in dict) inf[dict['browDownLeft']] = fs.browDownLeft || 0;
+          if ('browDownRight' in dict) inf[dict['browDownRight']] = fs.browDownRight || 0;
+          if ('browInnerUp' in dict) inf[dict['browInnerUp']] = fs.browInnerUp || 0;
         }
       });
     }
@@ -1321,6 +1336,17 @@ function PulpoModelo({
       return;
     }
 
+    // Fase 7 — Microanimaciones idle (respiración + head sway).
+    // Sin esto, Volt se congela apenas no hay tracking: la respiración corre
+    // siempre (viva incluso con cara detectada), el sway solo cuando no hay
+    // rostro (para no pelear con la rotación real del usuario).
+    const life = idleLifeRef.current;
+    const tSec = performance.now() / 1000;
+    const BREATH_CYCLE_S = 3.6;
+    const BREATH_AMOUNT = 0.012;
+    const breath = (Math.sin(tSec * ((Math.PI * 2) / BREATH_CYCLE_S) + life.breathPhase) + 1) / 2; // 0..1
+    const breathScale = 1 + breath * BREATH_AMOUNT;
+
     if (e.ready) {
       const eulerRaw = new THREE.Euler().setFromRotationMatrix(e.matrix, "YXZ");
       const deadZone = (val: number, umbral = 0.007) => Math.abs(val) < umbral ? 0 : val;
@@ -1336,9 +1362,26 @@ function PulpoModelo({
 
       const jawO = e.facialState?.jawOpen || 0;
       const smileBoost = (((e.facialState?.smileLeft || 0) + (e.facialState?.smileRight || 0)) / 2) * 0.04;
-      grupo.current.scale.y = THREE.MathUtils.damp(grupo.current.scale.y, 1 + jawO * 0.15 + smileBoost, 14, delta);
-      grupo.current.scale.x = THREE.MathUtils.damp(grupo.current.scale.x, 1 - jawO * 0.05 + smileBoost, 14, delta);
-      grupo.current.scale.z = THREE.MathUtils.damp(grupo.current.scale.z, 1 - jawO * 0.05, 14, delta);
+      grupo.current.scale.y = THREE.MathUtils.damp(grupo.current.scale.y, breathScale + jawO * 0.15 + smileBoost, 14, delta);
+      grupo.current.scale.x = THREE.MathUtils.damp(grupo.current.scale.x, breathScale - jawO * 0.05 + smileBoost, 14, delta);
+      grupo.current.scale.z = THREE.MathUtils.damp(grupo.current.scale.z, breathScale - jawO * 0.05, 14, delta);
+    } else {
+      // Sin rostro detectado: nada de tracking real que respetar. En vez de
+      // congelar la última pose, deriva lento con dos senoidales de período
+      // distinto (evita el loop mecánico de una sola onda) + respiración.
+      const SWAY_YAW_MAX = THREE.MathUtils.degToRad(0.5);
+      const SWAY_PITCH_MAX = THREE.MathUtils.degToRad(0.3);
+      const swayYaw = Math.sin(tSec * ((Math.PI * 2) / 7.1) + life.swayPhaseYaw) * SWAY_YAW_MAX;
+      const swayPitch = Math.sin(tSec * ((Math.PI * 2) / 5.3) + life.swayPhasePitch) * SWAY_PITCH_MAX;
+
+      grupo.current.quaternion.slerp(
+        new THREE.Quaternion().setFromEuler(new THREE.Euler(swayPitch, swayYaw + rotacionY, 0, "YXZ")),
+        0.05
+      );
+
+      grupo.current.scale.y = THREE.MathUtils.damp(grupo.current.scale.y, breathScale, 14, delta);
+      grupo.current.scale.x = THREE.MathUtils.damp(grupo.current.scale.x, breathScale, 14, delta);
+      grupo.current.scale.z = THREE.MathUtils.damp(grupo.current.scale.z, breathScale, 14, delta);
     }
   });
 

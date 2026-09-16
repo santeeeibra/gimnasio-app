@@ -178,11 +178,21 @@ Grabar 10s quieto mirando a cámara. Si un tercero mirando el video no puede
 distinguir en qué momento parpadeaste vos del momento en que parpadeó el
 auto-blink del pulpo — está listo.
 
-## Reparto de trabajo
+## Cola de tareas (traspaso async Claude Code ⇄ Antigravity)
 
-- **Claude Code**: Fases 0, 1, 2, 3, 5. Dueño del código y del deploy.
-- **Antigravity (Gemini 3.8)**: Fase 4 (Blender) si se activa, y QA visual de
-  screenshots/clips (juicio sobre si el blink "lee" como cierre real).
+Ver [COLA_TAREAS_MEMOJI.md](./COLA_TAREAS_MEMOJI.md) — ahí se coordina quién
+hace qué sin necesidad de que ambos estén online al mismo tiempo.
+
+## Reparto de trabajo (actualizado 2026-09-16)
+
+**Reparto anterior roto por decisión del usuario**: Claude Code ahora también
+ejecuta Fase 4/9 (Blender) en lugar de derivarla a Antigravity.
+
+- **Claude Code**: Fases 0, 1, 2, 3, 4/9 (Blender), 5. Dueño del código, del
+  rig 3D y del deploy.
+- **Antigravity (Gemini 3.8)**: QA visual de los resultados de Blender
+  (screenshots/clips) — juicio sobre si el blink/smile/jaw "leen" como reales,
+  no ejecuta el rig.
 - **ChatGPT**: consulta y criterio, sin tocar repo — ver
   [PROMPT_CHATGPT_MEMOJI_ASESORAMIENTO.md](../../PROMPT_CHATGPT_MEMOJI_ASESORAMIENTO.md).
 
@@ -190,11 +200,20 @@ auto-blink del pulpo — está listo.
 
 - [x] Fase 0+1 — solo blink (párpado por rotación, sin squint/iris/boca/cejas) — commits f5b0036, 41aeeeb, fe07d7a. P0/P2 aprobados en QA visual (guiño independiente + párpado verde integrado).
 - [x] Fase 2 — eyeSquint (tope 0.4, blend max con auto-blink, telemetría en debug panel) — pendiente QA visual
-- [ ] Fase 3 — iris + mirada
-- [ ] Fase 4 — boca/jaw
-- [ ] Fase 5 — sonrisa
-- [ ] Fase 6 — cejas
-- [ ] Fase 7 — microanimaciones idle
+- [x] Fase 3 — iris + mirada (commit 6ed7bd0, ya completa — checklist estaba desactualizado)
+- [x] Fase 4/9 — Blender face rig (2026-09-16, Claude Code, sin QA visual de Antigravity todavía):
+  - `public/models/pulpo-volt-facerig.blend` — escena de trabajo con el mesh Tripo (67452 verts) y su Armature.
+  - Los 5 shape keys que ya venían inyectados (`target_0`..`target_4`) resultaron **cosméticamente inútiles**: desplazamiento máx. de 0.04 unidades sobre una cabeza de ~1 unidad, invisibles a simple vista. No los usa el código en runtime (el código busca `jawOpen`/`smileLeft`/`smileRight`/`blinkLeft`/`blinkRight`, nombres que no existían en la malla → los morphTargetInfluences nunca hacían nada).
+  - Creados 5 shape keys nuevos con esos nombres exactos, esculpidos por selección geométrica con falloff (smoothstep) sobre landmarks ubicados por coordenadas mundiales (boca ≈ x0.28,y0,z0.615; comisuras ≈ x0.24,y±0.10,z0.60; ojos ≈ x0.20,y±0.13,z0.71-0.72):
+    - `jawOpen`: baja mentón/labio inferior, ensancha el surco de la boca.
+    - `smileLeft` / `smileRight`: eleva y abre cada comisura de forma independiente.
+    - `blinkLeft` / `blinkRight`: baja el párpado superior sobre el ojo. **Cierre parcial, no total** — el ojo es una protuberancia de la misma malla (no hay párpado como geometría separada), así que a día de hoy queda una hendidura visible en vez de un ojo 100% tapado. Candidato a refinar en una próxima pasada (agrandar el offset en Z o trabajar sobre loops de borde en vez de radio esférico).
+  - Material limpiado a verde de marca sólido `#10e7a0` (sin nodos de textura). **Importante**: existe `public/models/pulpo-volt.fbm/tripo_744dc947_7a5b_431d_b85d_3fa7524f0404.jpg` (2048×2048) con una textura tipo camuflaje generada por Tripo3D — **no se usó ni se debe embeber**, no tiene relación con rasgos faciales reales y contradice la regla de marca (mascota verde sólida, ver `.agents/skills/sysgym-mascot-skill`).
+  - `public/models/pulpo-volt.glb` re-exportado con Draco/MeshOptimizer, `export_morph=True`, `export_skins=True`, `export_animations=True`. El armature Tripo genérico (`Root/Hip/.../Head/...`) sigue sin huesos faciales — el gaze/mirada de Fase 3 seguirá siendo procedural en Three.js (no hay bone `L_Eye`/`R_Eye` en este esqueleto), no bloqueante para Fase 3.
+  - **Pendiente para Antigravity**: cargar `pulpo-volt.glb` actualizado en el visor real (`/poc-memoji`), ciclar `morphTargetInfluences` de `jawOpen/smileLeft/smileRight/blinkLeft/blinkRight` a 1.0 uno por uno y dar veredicto visual — sobre todo si el blink "lee" como cierre real o si conviene otra pasada de escultura.
+- [x] Fase 5 — sonrisa (commit 60b56cf F4B/F4C, ya completa vía FaceRig procedural — checklist estaba desactualizado)
+- [x] Fase 6 — cejas (commit 60b56cf/dd640e7, ya completa vía FaceRig procedural — checklist estaba desactualizado)
+- [ ] Fase 7 — microanimaciones idle (NO existe: sin respiración senoidal en torso, sin head sway idle — esto sí es un gap real)
 - [ ] Fase 8 — conformado a superficie
-- [ ] Fase 9 — Track B (Blender), si aplica
+- [x] Fase 9 — Track B (Blender) — ver Fase 4/9 arriba, ejecutada por Claude Code en vez de Antigravity
 - [ ] Fase 10 — render/pulido

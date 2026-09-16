@@ -141,3 +141,5 @@
 - 2026-09-16: PoC Memoji: Cambiado el color del material de los párpados de `0x9b59b6` (púrpura) a `0x10e7a0` (Verde Pulpo Volt) en `src/app/poc-memoji/memoji-poc.tsx` (P2 Integración).
 
 - 2026-09-16: Fase 2 Memoji eyeSquint implementada (memoji-poc.tsx): fs.squintLeft/Right desde eyeSquintLeft/Right de MediaPipe, blend max() con auto-blink via SQUINT_CAP=0.4, telemetria Squint L/R en debug panel. Pendiente QA visual (gesto de esfuerzo, no confundir con guino).
+
+- 2026-09-16: Face rig Blender (jawOpen/smile/blink shape keys reales) + cola de tareas async Claude Code<->Antigravity en docs/specs/COLA_TAREAS_MEMOJI.md
