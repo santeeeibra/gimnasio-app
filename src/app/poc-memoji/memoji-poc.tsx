@@ -272,21 +272,12 @@ interface BlinkState {
   doubleBlinkCount: number;
 }
 
-const autoBlinkState = {
-  left: {
-    phase: 'idle' as const,
-    progress: 0,
-    nextBlinkTime: performance.now() + 3000 + Math.random() * 2000,
-    isDoubleBlink: false,
-    doubleBlinkCount: 0,
-  },
-  right: {
-    phase: 'idle' as const,
-    progress: 0,
-    nextBlinkTime: performance.now() + 3000 + Math.random() * 2000,
-    isDoubleBlink: false,
-    doubleBlinkCount: 0,
-  },
+const autoBlinkState: BlinkState = {
+  phase: 'idle',
+  progress: 0,
+  nextBlinkTime: performance.now() + 3000 + Math.random() * 2000,
+  isDoubleBlink: false,
+  doubleBlinkCount: 0,
 };
 
 // Timings en ms según la spec
@@ -308,7 +299,7 @@ function easeOutQuad(t: number): number {
 }
 
 /**
- * Actualiza el auto-blink de un ojo (independiente por ojo)
+ * Actualiza el auto-blink procedural (evento bilateral sincronizado)
  */
 function updateAutoBlink(state: BlinkState, now: number): number {
   switch (state.phase) {
@@ -385,13 +376,12 @@ function updateFaceRig(
   // ─────────────────────────────────────────────
   const now = performance.now();
   
-  // Auto-blink independiente por ojo
-  const autoBlinkLeft = updateAutoBlink(autoBlinkState.left, now);
-  const autoBlinkRight = updateAutoBlink(autoBlinkState.right, now);
+  // Auto-blink bilateral (sincronizado)
+  const autoBlink = updateAutoBlink(autoBlinkState, now);
   
-  // Blend: max(auto, tracked)
-  const finalBlinkLeft = Math.max(autoBlinkLeft, currentState.blinkLeft);
-  const finalBlinkRight = Math.max(autoBlinkRight, currentState.blinkRight);
+  // Blend: max(auto, tracked) — permite guiños independientes via MediaPipe
+  const finalBlinkLeft = Math.max(autoBlink, currentState.blinkLeft);
+  const finalBlinkRight = Math.max(autoBlink, currentState.blinkRight);
   
   // Aplicar rotación a los párpados
   // Párpado superior: 80-90% del cierre (rotación hacia abajo)
