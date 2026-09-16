@@ -666,14 +666,23 @@ function usarFaceTracking(
 // ──────────────────────────────────────────────────────────
 const LS_KEY = "facerig_calibration_v1";
 
+function getRigObject(rig: FaceRigElements, key: ElementKey): THREE.Object3D {
+  const el = rig[key];
+  if (!el) return new THREE.Object3D();
+  if (key === 'leftEye' || key === 'rightEye') {
+    return (el as EyeAssembly).group || (el as unknown as THREE.Object3D);
+  }
+  return el as THREE.Mesh;
+}
+
 function saveCalibToLS(rig: FaceRigElements) {
   const data: Record<string, unknown> = {};
   for (const k of ELEMENT_KEYS) {
-    const mesh = rig[k] as THREE.Mesh;
+    const obj = getRigObject(rig, k);
     data[k] = {
-      position: [mesh.position.x, mesh.position.y, mesh.position.z],
-      rotation: [mesh.rotation.x, mesh.rotation.y, mesh.rotation.z],
-      scale:    [mesh.scale.x,    mesh.scale.y,    mesh.scale.z],
+      position: [obj.position.x, obj.position.y, obj.position.z],
+      rotation: [obj.rotation.x, obj.rotation.y, obj.rotation.z],
+      scale:    [obj.scale.x,    obj.scale.y,    obj.scale.z],
     };
   }
   localStorage.setItem(LS_KEY, JSON.stringify(data));
@@ -686,11 +695,11 @@ function loadCalibFromLS(rig: FaceRigElements) {
     const data = JSON.parse(raw) as Record<string, { position: number[]; rotation: number[]; scale: number[] }>;
     for (const k of ELEMENT_KEYS) {
       if (!data[k]) continue;
-      const mesh = rig[k] as THREE.Mesh;
+      const obj = getRigObject(rig, k);
       const { position: p, rotation: r, scale: s } = data[k];
-      if (p) mesh.position.set(p[0], p[1], p[2]);
-      if (r) mesh.rotation.set(r[0], r[1], r[2]);
-      if (s) mesh.scale.set(s[0], s[1], s[2]);
+      if (p) obj.position.set(p[0], p[1], p[2]);
+      if (r) obj.rotation.set(r[0], r[1], r[2]);
+      if (s) obj.scale.set(s[0], s[1], s[2]);
     }
   } catch {}
 }
@@ -698,10 +707,10 @@ function loadCalibFromLS(rig: FaceRigElements) {
 function buildConfigString(rig: FaceRigElements): string {
   const lines: string[] = ["const FACE_CONFIG_CALIBRATED = {"];
   for (const k of ELEMENT_KEYS) {
-    const mesh = rig[k] as THREE.Mesh;
-    const p = mesh.position;
-    const r = mesh.rotation;
-    const s = mesh.scale;
+    const obj = getRigObject(rig, k);
+    const p = obj.position;
+    const r = obj.rotation;
+    const s = obj.scale;
     lines.push(`  ${k}: {`);
     lines.push(`    position: [${p.x.toFixed(4)}, ${p.y.toFixed(4)}, ${p.z.toFixed(4)}],`);
     lines.push(`    rotation: [${r.x.toFixed(4)}, ${r.y.toFixed(4)}, ${r.z.toFixed(4)}],`);
@@ -732,9 +741,9 @@ function FaceRigGizmo({
   const { gl } = useThree();
   const lastUpdate = useRef(0);
 
-  const selectedMesh = useMemo<THREE.Mesh | null>(() => {
+  const selectedMesh = useMemo<THREE.Object3D | null>(() => {
     if (!selectedEl || !faceRigRef.current) return null;
-    return faceRigRef.current[selectedEl] as THREE.Mesh;
+    return getRigObject(faceRigRef.current, selectedEl);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedEl, faceRigRef.current]);
 
@@ -870,11 +879,11 @@ function PulpoModelo({
 
       // Snapshot initial positions for Reset
       for (const k of ELEMENT_KEYS) {
-        const mesh = elements[k] as THREE.Mesh;
+        const obj = getRigObject(elements, k);
         INITIAL_POSITIONS[k] = {
-          p: mesh.position.clone(),
-          r: mesh.rotation.clone(),
-          s: mesh.scale.clone(),
+          p: obj.position.clone(),
+          r: obj.rotation.clone(),
+          s: obj.scale.clone(),
         };
       }
 
@@ -989,9 +998,10 @@ export default function MemojiPoc() {
     for (const k of ELEMENT_KEYS) {
       const snap = INITIAL_POSITIONS[k];
       if (!snap) continue;
-      (rig[k] as THREE.Mesh).position.copy(snap.p);
-      (rig[k] as THREE.Mesh).rotation.copy(snap.r);
-      (rig[k] as THREE.Mesh).scale.copy(snap.s);
+      const obj = getRigObject(rig, k);
+      obj.position.copy(snap.p);
+      obj.rotation.copy(snap.r);
+      obj.scale.copy(snap.s);
     }
   };
 
@@ -1015,10 +1025,10 @@ export default function MemojiPoc() {
 
   const handleStep = (axis: "x" | "y" | "z", delta: number) => {
     if (!selectedEl || !faceRigRef.current) return;
-    const mesh = faceRigRef.current[selectedEl] as THREE.Mesh;
-    if (gizmoMode === "translate") mesh.position[axis] += delta;
-    else if (gizmoMode === "rotate") mesh.rotation[axis] += delta * (Math.PI / 180);
-    else if (gizmoMode === "scale") mesh.scale[axis] += delta;
+    const obj = getRigObject(faceRigRef.current, selectedEl);
+    if (gizmoMode === "translate") obj.position[axis] += delta;
+    else if (gizmoMode === "rotate") obj.rotation[axis] += delta * (Math.PI / 180);
+    else if (gizmoMode === "scale") obj.scale[axis] += delta;
   };
 
 
