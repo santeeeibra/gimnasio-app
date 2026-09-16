@@ -128,4 +128,5 @@
 - PoC Memoji 3D: Solucionado congelamiento y error de cámara. FaceLandmarker singleton con GPU delegate, throttle de inferencia a 30 FPS y fallback universal en getUserMedia.
 - PoC Memoji: Redirigida la raíz '/' a '/poc-memoji' para que el botón Preview no mande al login, y agregado arranque bajo demanda con botón 'Activar cámara' para carga instantánea y fluida sin congelamientos.
 
-- /poc-memoji avatar mode: implementado clipping plane (THREE.Plane Y+, AVATAR_CLIP_Y=-0.18) en todos los materiales del GLB con localClippingEnabled:true para ocultar tentáculos. Cámara ajustada a Z=1.4/fov=36 enfocada en cabeza+hombros, escala=2.4 con offset Y para centrar la cabeza. Eliminados botones Frente/Perfil/Espalda y zoom; tracking MediaPipe y Calibrar centro intactos.
+- 2026-09-16: FaceRig procedural para Pulpo Volt parentado al bone Head (src/app/poc-memoji/memoji-poc.tsx). Ojos (LeftEye, RightEye), cejas (LeftBrow, RightBrow) y boca (Mouth) sincronizados en tiempo real mediante blendshapes de MediaPipe (jawOpen, mouthSmileLeft/Right, eyeBlinkLeft/Right, browDownLeft/Right, browUpLeft/Right) con smoothing lerp(0.25), telemetría en UI y toggle DEBUG FACE RIG.
+

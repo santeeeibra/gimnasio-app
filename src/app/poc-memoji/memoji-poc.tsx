@@ -15,8 +15,21 @@ import { hapticoDial } from "@/lib/ui/hapticos";
 const MODEL_PATH = "/models/pulpo-volt.glb";
 useGLTF.preload(MODEL_PATH);
 
+export type FacialState = {
+  jawOpen: number;
+  smileLeft: number;
+  smileRight: number;
+  blinkLeft: number;
+  blinkRight: number;
+  browDownLeft: number;
+  browDownRight: number;
+  browUpLeft: number;
+  browUpRight: number;
+};
+
 type TrackState = {
   matrix: THREE.Matrix4;
+  facialState: FacialState;
   jawOpen: number;
   eyeBlinkLeft: number;
   eyeBlinkRight: number;
@@ -26,12 +39,221 @@ type TrackState = {
   ready: boolean;
 };
 
+const FACE_CONFIG = {
+  offsetX: 0,
+  offsetY: 0,
+  offsetZ: 0,
+
+  eyeX: 0.14,
+  eyeY: 0.04,
+  eyeZ: 0.32,
+  eyeRadius: 0.038,
+
+  browX: 0.14,
+  browY: 0.12,
+  browZ: 0.32,
+  browWidth: 0.08,
+  browHeight: 0.02,
+
+  mouthY: -0.09,
+  mouthZ: 0.32,
+  mouthWidth: 0.12,
+  mouthHeight: 0.035,
+};
+
+export interface FaceRigElements {
+  group: THREE.Group;
+  leftEye: THREE.Mesh;
+  rightEye: THREE.Mesh;
+  leftBrow: THREE.Mesh;
+  rightBrow: THREE.Mesh;
+  mouth: THREE.Mesh;
+  axesHelper: THREE.AxesHelper;
+}
+
+function createFaceRig(): FaceRigElements {
+  const group = new THREE.Group();
+  group.name = "FaceRig";
+  group.position.set(
+    FACE_CONFIG.offsetX,
+    FACE_CONFIG.offsetY,
+    FACE_CONFIG.offsetZ
+  );
+
+  const mat = new THREE.MeshStandardMaterial({
+    color: 0x050505,
+    roughness: 0.3,
+  });
+
+  const eyeGeo = new THREE.SphereGeometry(FACE_CONFIG.eyeRadius, 16, 16);
+  eyeGeo.scale(1, 1, 0.4);
+
+  const leftEye = new THREE.Mesh(eyeGeo, mat);
+  leftEye.name = "LeftEye";
+  leftEye.position.set(-FACE_CONFIG.eyeX, FACE_CONFIG.eyeY, FACE_CONFIG.eyeZ);
+
+  const rightEye = new THREE.Mesh(eyeGeo, mat);
+  rightEye.name = "RightEye";
+  rightEye.position.set(FACE_CONFIG.eyeX, FACE_CONFIG.eyeY, FACE_CONFIG.eyeZ);
+
+  const browGeo = new THREE.BoxGeometry(
+    FACE_CONFIG.browWidth,
+    FACE_CONFIG.browHeight,
+    0.01
+  );
+
+  const leftBrow = new THREE.Mesh(browGeo, mat);
+  leftBrow.name = "LeftBrow";
+  leftBrow.position.set(-FACE_CONFIG.browX, FACE_CONFIG.browY, FACE_CONFIG.browZ);
+
+  const rightBrow = new THREE.Mesh(browGeo, mat);
+  rightBrow.name = "RightBrow";
+  rightBrow.position.set(FACE_CONFIG.browX, FACE_CONFIG.browY, FACE_CONFIG.browZ);
+
+  const mouthGeo = new THREE.BoxGeometry(
+    FACE_CONFIG.mouthWidth,
+    FACE_CONFIG.mouthHeight,
+    0.01
+  );
+
+  const mouth = new THREE.Mesh(mouthGeo, mat);
+  mouth.name = "Mouth";
+  mouth.position.set(0, FACE_CONFIG.mouthY, FACE_CONFIG.mouthZ);
+
+  const axesHelper = new THREE.AxesHelper(0.2);
+  axesHelper.visible = false;
+
+  group.add(leftEye);
+  group.add(rightEye);
+  group.add(leftBrow);
+  group.add(rightBrow);
+  group.add(mouth);
+  group.add(axesHelper);
+
+  return {
+    group,
+    leftEye,
+    rightEye,
+    leftBrow,
+    rightBrow,
+    mouth,
+    axesHelper,
+  };
+}
+
+function updateFaceRig(
+  elements: FaceRigElements,
+  targetState: FacialState,
+  currentState: FacialState,
+  debugMode: boolean
+) {
+  const LERP_FACTOR = 0.25;
+
+  currentState.jawOpen = THREE.MathUtils.lerp(
+    currentState.jawOpen,
+    targetState.jawOpen,
+    LERP_FACTOR
+  );
+  currentState.smileLeft = THREE.MathUtils.lerp(
+    currentState.smileLeft,
+    targetState.smileLeft,
+    LERP_FACTOR
+  );
+  currentState.smileRight = THREE.MathUtils.lerp(
+    currentState.smileRight,
+    targetState.smileRight,
+    LERP_FACTOR
+  );
+  currentState.blinkLeft = THREE.MathUtils.lerp(
+    currentState.blinkLeft,
+    targetState.blinkLeft,
+    LERP_FACTOR
+  );
+  currentState.blinkRight = THREE.MathUtils.lerp(
+    currentState.blinkRight,
+    targetState.blinkRight,
+    LERP_FACTOR
+  );
+  currentState.browDownLeft = THREE.MathUtils.lerp(
+    currentState.browDownLeft,
+    targetState.browDownLeft,
+    LERP_FACTOR
+  );
+  currentState.browDownRight = THREE.MathUtils.lerp(
+    currentState.browDownRight,
+    targetState.browDownRight,
+    LERP_FACTOR
+  );
+  currentState.browUpLeft = THREE.MathUtils.lerp(
+    currentState.browUpLeft,
+    targetState.browUpLeft,
+    LERP_FACTOR
+  );
+  currentState.browUpRight = THREE.MathUtils.lerp(
+    currentState.browUpRight,
+    targetState.browUpRight,
+    LERP_FACTOR
+  );
+
+  // 1. PARPADEO
+  elements.leftEye.scale.y = THREE.MathUtils.lerp(
+    1,
+    0.08,
+    currentState.blinkLeft
+  );
+  elements.rightEye.scale.y = THREE.MathUtils.lerp(
+    1,
+    0.08,
+    currentState.blinkRight
+  );
+
+  // 2. BOCA Y SONRISA
+  const smileAvg = (currentState.smileLeft + currentState.smileRight) / 2;
+  const mouthScaleY = THREE.MathUtils.lerp(1, 3.2, currentState.jawOpen);
+  const mouthScaleX = THREE.MathUtils.lerp(1, 1.4, smileAvg);
+  const mouthPosY =
+    FACE_CONFIG.mouthY - currentState.jawOpen * 0.02 + smileAvg * 0.01;
+
+  elements.mouth.scale.set(mouthScaleX, mouthScaleY, 1);
+  elements.mouth.position.y = mouthPosY;
+
+  // 3. CEJAS
+  const leftBrowYOffset =
+    currentState.browUpLeft * 0.03 - currentState.browDownLeft * 0.02;
+  const rightBrowYOffset =
+    currentState.browUpRight * 0.03 - currentState.browDownRight * 0.02;
+
+  const leftBrowRotZ =
+    currentState.browDownLeft * 0.25 - currentState.browUpLeft * 0.1;
+  const rightBrowRotZ =
+    -currentState.browDownRight * 0.25 + currentState.browUpRight * 0.1;
+
+  elements.leftBrow.position.y = FACE_CONFIG.browY + leftBrowYOffset;
+  elements.rightBrow.position.y = FACE_CONFIG.browY + rightBrowYOffset;
+
+  elements.leftBrow.rotation.z = leftBrowRotZ;
+  elements.rightBrow.rotation.z = rightBrowRotZ;
+
+  elements.axesHelper.visible = debugMode;
+}
+
 function usarFaceTracking(
   video: HTMLVideoElement | null,
   activoTrack: boolean
 ) {
   const estado = useRef<TrackState>({
     matrix: new THREE.Matrix4(),
+    facialState: {
+      jawOpen: 0,
+      smileLeft: 0,
+      smileRight: 0,
+      blinkLeft: 0,
+      blinkRight: 0,
+      browDownLeft: 0,
+      browDownRight: 0,
+      browUpLeft: 0,
+      browUpRight: 0,
+    },
     jawOpen: 0,
     eyeBlinkLeft: 0,
     eyeBlinkRight: 0,
@@ -47,7 +269,8 @@ function usarFaceTracking(
   const [rostroDetectado, setRostroDetectado] = useState<boolean>(false);
   const [aperturaBoca, setAperturaBoca] = useState<number>(0);
   const [sonrisaNivel, setSonrisaNivel] = useState<number>(0);
-  const [ojosCerrados, setOjosCerrados] = useState<number>(0);
+  const [parpadeoL, setParpadeoL] = useState<number>(0);
+  const [parpadeoR, setParpadeoR] = useState<number>(0);
 
   const videoRefActual = useRef<HTMLVideoElement | null>(video);
   videoRefActual.current = video;
@@ -81,7 +304,6 @@ function usarFaceTracking(
         );
         if (!activo) return;
 
-        // Intentar GPU delegate para rendimiento liviano
         try {
           landmarker = await FaceLandmarker.createFromOptions(fileset, {
             baseOptions: {
@@ -95,7 +317,6 @@ function usarFaceTracking(
             numFaces: 1,
           });
         } catch {
-          // Fallback a CPU delegate
           landmarker = await FaceLandmarker.createFromOptions(fileset, {
             baseOptions: {
               modelAssetPath:
@@ -136,7 +357,6 @@ function usarFaceTracking(
         !detectando
       ) {
         const now = performance.now();
-        // Throttle a 30 FPS (33ms) para que el Event Loop y la UI respiren libremente
         if (now - lastInferenceTime >= 33 && vid.currentTime !== lastVideoTime) {
           lastInferenceTime = now;
           lastVideoTime = vid.currentTime;
@@ -161,36 +381,54 @@ function usarFaceTracking(
               for (let i = 0; i < cats.length; i++) {
                 shapes[cats[i].categoryName] = cats[i].score;
               }
-              estado.current.jawOpen = shapes["jawOpen"] ?? 0;
-              estado.current.eyeBlinkLeft = shapes["eyeBlinkLeft"] ?? 0;
-              estado.current.eyeBlinkRight = shapes["eyeBlinkRight"] ?? 0;
-              estado.current.mouthSmileLeft = shapes["mouthSmileLeft"] ?? 0;
-              estado.current.mouthSmileRight = shapes["mouthSmileRight"] ?? 0;
-              estado.current.browInnerUp = shapes["browInnerUp"] ?? 0;
+              const fs = estado.current.facialState;
+              fs.jawOpen = shapes["jawOpen"] ?? 0;
+              fs.smileLeft = shapes["mouthSmileLeft"] ?? 0;
+              fs.smileRight = shapes["mouthSmileRight"] ?? 0;
+              fs.blinkLeft = shapes["eyeBlinkLeft"] ?? 0;
+              fs.blinkRight = shapes["eyeBlinkRight"] ?? 0;
+              fs.browDownLeft = shapes["browDownLeft"] ?? 0;
+              fs.browDownRight = shapes["browDownRight"] ?? 0;
+              fs.browUpLeft =
+                shapes["browUpLeft"] ??
+                shapes["browInnerUp"] ??
+                shapes["browOuterUpLeft"] ??
+                0;
+              fs.browUpRight =
+                shapes["browUpRight"] ??
+                shapes["browInnerUp"] ??
+                shapes["browOuterUpRight"] ??
+                0;
+
+              estado.current.jawOpen = fs.jawOpen;
+              estado.current.eyeBlinkLeft = fs.blinkLeft;
+              estado.current.eyeBlinkRight = fs.blinkRight;
+              estado.current.mouthSmileLeft = fs.smileLeft;
+              estado.current.mouthSmileRight = fs.smileRight;
+              estado.current.browInnerUp = fs.browUpLeft;
             }
 
-            // Sincronizar indicadores de UI sin saturar React (cada 120ms)
             if (now - lastUiUpdate > 120) {
               lastUiUpdate = now;
               setRostroDetectado(estado.current.ready);
-              setAperturaBoca(Math.round(estado.current.jawOpen * 100));
+              setAperturaBoca(
+                Math.round(estado.current.facialState.jawOpen * 100)
+              );
               const smile = Math.round(
-                ((estado.current.mouthSmileLeft +
-                  estado.current.mouthSmileRight) /
+                ((estado.current.facialState.smileLeft +
+                  estado.current.facialState.smileRight) /
                   2) *
                   100
               );
               setSonrisaNivel(smile);
-              const blink = Math.round(
-                Math.max(
-                  estado.current.eyeBlinkLeft,
-                  estado.current.eyeBlinkRight
-                ) * 100
+              setParpadeoL(
+                Math.round(estado.current.facialState.blinkLeft * 100)
               );
-              setOjosCerrados(blink);
+              setParpadeoR(
+                Math.round(estado.current.facialState.blinkRight * 100)
+              );
             }
           } catch {
-            // Ignorar frame skips normales de timestamp
           } finally {
             detectando = false;
           }
@@ -219,7 +457,8 @@ function usarFaceTracking(
     rostroDetectado,
     aperturaBoca,
     sonrisaNivel,
-    ojosCerrados,
+    parpadeoL,
+    parpadeoR,
   };
 }
 
@@ -269,30 +508,41 @@ function PulpoModelo({
   invertirEspejo = true,
   invertirPitch = false,
   offsetCalibrado = { x: 0, y: 0, z: 0 },
+  debugFaceRig = false,
 }: {
   estado: React.RefObject<TrackState>;
   rotacionY?: number;
   invertirEspejo?: boolean;
   invertirPitch?: boolean;
   offsetCalibrado?: { x: number; y: number; z: number };
+  debugFaceRig?: boolean;
 }) {
   const grupo = useRef<THREE.Group>(null);
   const gltf = useGLTF(MODEL_PATH);
 
-  // Escala para avatar Memoji (cabeza completa + hombros, tentáculos laterales fuera de los bordes)
+  const currentFacialState = useRef<FacialState>({
+    jawOpen: 0,
+    smileLeft: 0,
+    smileRight: 0,
+    blinkLeft: 0,
+    blinkRight: 0,
+    browDownLeft: 0,
+    browDownRight: 0,
+    browUpLeft: 0,
+    browUpRight: 0,
+  });
+
   const ESCALA_AVATAR = 2.15;
 
-  const { modeloCentrado, headEncontrado, posHeadLocal } = useMemo(() => {
+  const { modeloCentrado, faceRigElements } = useMemo(() => {
     const scene = SkeletonUtils.clone(gltf.scene);
-    
-    // 1. Escalar la escena para tamaño avatar
+
     const box = new THREE.Box3().setFromObject(scene);
     const size = box.getSize(new THREE.Vector3());
     const maxDim = Math.max(size.x, size.y, size.z);
     const factorEscala = ESCALA_AVATAR / (maxDim || 1);
     scene.scale.setScalar(factorEscala);
 
-    // 2. Buscar SkinnedMesh y Bones en la jerarquía
     const todosLosBones: THREE.Bone[] = [];
     scene.traverse((child) => {
       if ((child as THREE.Mesh).isMesh) {
@@ -304,39 +554,27 @@ function PulpoModelo({
       }
     });
 
-    const nombresBones = todosLosBones.map((b) => b.name);
-    console.log("[PulpoVolt Avatar] Bones encontrados en el modelo GLB:", nombresBones);
-
-    // 3. Buscar bone "Head" (case insensitive)
     const headBone = todosLosBones.find(
       (b) => b.name === "Head" || b.name.toLowerCase().includes("head")
     );
 
-    let headFound = false;
+    let elements: FaceRigElements | null = null;
     const headPosWorld = new THREE.Vector3();
 
     if (headBone) {
-      headFound = true;
+      console.log("[PulpoVolt FaceRig] Head encontrado");
+      elements = createFaceRig();
+      headBone.add(elements.group);
+      console.log("[PulpoVolt FaceRig] FaceRig creado");
+
       scene.updateMatrixWorld(true);
       headBone.getWorldPosition(headPosWorld);
-      console.log("[PulpoVolt Avatar] Bone 'Head' encontrado! Posición world inicial:", {
-        x: headPosWorld.x,
-        y: headPosWorld.y,
-        z: headPosWorld.z,
-        name: headBone.name,
-      });
 
-      // Mover la escena para que la cabeza (Head bone) quede perfectamente encuadrada
-      // con la frente libre arriba y los hombros/pecho abajo sin mostrar tentáculos laterales.
       scene.position.x = -headPosWorld.x;
       scene.position.y = -headPosWorld.y - 0.26;
       scene.position.z = -headPosWorld.z;
     } else {
-      console.warn(
-        "⚠️ Head bone not found en el GLB! Bones disponibles:",
-        nombresBones
-      );
-      // Fallback si no hay bone Head: usar parte superior del bounding box
+      console.warn("⚠️ Head bone not found en el GLB!");
       const center = box.getCenter(new THREE.Vector3());
       scene.position.x = -center.x * factorEscala;
       scene.position.y = (-center.y - size.y * 0.15) * factorEscala;
@@ -345,14 +583,23 @@ function PulpoModelo({
 
     return {
       modeloCentrado: scene,
-      headEncontrado: headFound,
-      posHeadLocal: headPosWorld,
+      faceRigElements: elements,
     };
   }, [gltf.scene]);
 
   useFrame((_, delta) => {
     if (!grupo.current) return;
     const e = estado.current;
+
+    if (faceRigElements && e.facialState) {
+      updateFaceRig(
+        faceRigElements,
+        e.facialState,
+        currentFacialState.current,
+        debugFaceRig
+      );
+    }
+
     if (e.ready) {
       const eulerRaw = new THREE.Euler().setFromRotationMatrix(e.matrix, "YXZ");
 
@@ -379,7 +626,6 @@ function PulpoModelo({
       const targetQuat = new THREE.Quaternion().setFromEuler(targetEuler);
       grupo.current.quaternion.slerp(targetQuat, 0.22);
 
-      // Reacción facial Squash & Stretch
       const targetScaleY = 1 + (e.jawOpen || 0) * 0.15;
       const targetScaleXZ = 1 - (e.jawOpen || 0) * 0.05;
       const smileBoost = ((e.mouthSmileLeft + e.mouthSmileRight) / 2) * 0.04;
@@ -417,10 +663,10 @@ export default function MemojiPoc() {
   const [video, setVideo] = useState<HTMLVideoElement | null>(null);
   const [camError, setCamError] = useState<string | null>(null);
   const [hayModelo, setHayModelo] = useState<boolean | null>(null);
-  // rotacionY fijo: -90° = de frente a la cámara (modo avatar, no se cambia)
   const ROT_Y_FRENTE = -Math.PI / 2;
   const [invertirEspejo, setInvertirEspejo] = useState<boolean>(true);
   const [invertirPitch, setInvertirPitch] = useState<boolean>(false);
+  const [debugFaceRig, setDebugFaceRig] = useState<boolean>(false);
   const [offsetCalibrado, setOffsetCalibrado] = useState<{
     x: number;
     y: number;
@@ -448,7 +694,6 @@ export default function MemojiPoc() {
     async function pedirCamara() {
       setCamError(null);
       try {
-        // Intento 1: Resolución ideal amigable (640x480)
         try {
           stream = await navigator.mediaDevices.getUserMedia({
             video: {
@@ -459,7 +704,6 @@ export default function MemojiPoc() {
             audio: false,
           });
         } catch {
-          // Intento 2: Fallback universal para cualquier webcam de PC
           stream = await navigator.mediaDevices.getUserMedia({
             video: true,
             audio: false,
@@ -509,7 +753,8 @@ export default function MemojiPoc() {
     rostroDetectado,
     aperturaBoca,
     sonrisaNivel,
-    ojosCerrados,
+    parpadeoL,
+    parpadeoR,
   } = usarFaceTracking(video, trackingIniciado);
 
   const calibrarCentro = () => {
@@ -522,9 +767,6 @@ export default function MemojiPoc() {
       setOffsetCalibrado({ x: euler.x, y: euler.y, z: euler.z });
     }
   };
-
-
-
 
   return (
     <div className="min-h-screen bg-[#070c0a] text-white flex flex-col p-4 md:p-6 font-sans">
@@ -591,11 +833,9 @@ export default function MemojiPoc() {
             gl={{ antialias: true, alpha: true }}
             className="w-full h-full"
           >
-            {/* Iluminación de estudio 3 puntos */}
             <ambientLight intensity={0.65} />
             <directionalLight position={[2, 3, 3]} intensity={1.3} />
             <directionalLight position={[-1, -1, 2]} intensity={0.4} color="#ffffff" />
-            {/* Rim-light neón Pulpo Volt */}
             <directionalLight position={[-3, 2, -2]} intensity={2.6} color="#10e7a0" />
             <pointLight position={[0, -2, 1.5]} intensity={0.6} color="#10e7a0" />
 
@@ -607,6 +847,7 @@ export default function MemojiPoc() {
                   invertirEspejo={invertirEspejo}
                   invertirPitch={invertirPitch}
                   offsetCalibrado={offsetCalibrado}
+                  debugFaceRig={debugFaceRig}
                 />
               </Suspense>
             ) : (
@@ -614,7 +855,6 @@ export default function MemojiPoc() {
             )}
           </Canvas>
 
-          {/* Overlay de inicio controlado */}
           {!trackingIniciado && (
             <div className="absolute inset-0 bg-black/60 backdrop-blur-[3px] flex flex-col items-center justify-center gap-3 p-6 text-center z-20">
               <div className="w-14 h-14 rounded-2xl bg-[#10e7a0]/15 border border-[#10e7a0]/30 flex items-center justify-center text-2xl shadow-inner">
@@ -641,13 +881,11 @@ export default function MemojiPoc() {
             </div>
           )}
 
-          {/* Badge del Modelo GLB Rigged */}
           <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-[#10e7a0]/30 text-[11px] text-[#10e7a0] flex items-center gap-1.5 font-medium shadow-sm z-10">
             <span className="w-1.5 h-1.5 rounded-full bg-[#10e7a0] animate-ping" />
             🐙 Pulpo Volt (Rigged GLB)
           </div>
 
-          {/* Calibrar botón flotante */}
           <button
             onClick={calibrarCentro}
             className="absolute top-3 right-3 bg-black/50 hover:bg-[#10e7a0]/20 active:scale-95 transition backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10 text-[11px] text-[#10e7a0] font-medium flex items-center gap-1"
@@ -656,7 +894,6 @@ export default function MemojiPoc() {
             🎯 Calibrar centro
           </button>
 
-          {/* Controles flotantes sobre el visor — solo espejo y pitch */}
           <div className="absolute bottom-3 inset-x-3 flex items-center justify-center gap-2 bg-black/60 backdrop-blur-md px-3 py-2 rounded-[18px] border border-white/10 text-xs">
             <button
               onClick={() => {
@@ -685,6 +922,20 @@ export default function MemojiPoc() {
               title="Invertir inclinación vertical (arriba/abajo)"
             >
               ↕️ Vertical {invertirPitch ? "INV" : "NORM"}
+            </button>
+            <button
+              onClick={() => {
+                hapticoDial();
+                setDebugFaceRig(!debugFaceRig);
+              }}
+              className={`px-2 py-1 rounded-[8px] text-[11px] font-medium transition ${
+                debugFaceRig
+                  ? "bg-amber-400/20 text-amber-300 border border-amber-400/40"
+                  : "bg-white/10 text-white/60"
+              }`}
+              title="Mostrar AxesHelper y logs de debug de la cara"
+            >
+              🐛 DEBUG FACE RIG {debugFaceRig ? "ON" : "OFF"}
             </button>
           </div>
         </div>
@@ -761,7 +1012,7 @@ export default function MemojiPoc() {
 
               {/* Medidor Sonrisa */}
               <div className="flex justify-between items-center">
-                <span>Sonrisa / Ánimo:</span>
+                <span>Sonrisa:</span>
                 <div className="flex items-center gap-2">
                   <div className="w-24 h-1.5 bg-white/10 rounded-full overflow-hidden">
                     <div
@@ -775,18 +1026,34 @@ export default function MemojiPoc() {
                 </div>
               </div>
 
-              {/* Medidor Parpadeo / Guiño */}
+              {/* Medidor Parpadeo L */}
               <div className="flex justify-between items-center">
-                <span>Ojos / Parpadeo:</span>
+                <span>Parpadeo L:</span>
                 <div className="flex items-center gap-2">
                   <div className="w-24 h-1.5 bg-white/10 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-[#10e7a0] transition-all duration-75"
-                      style={{ width: `${Math.min(100, ojosCerrados)}%` }}
+                      style={{ width: `${Math.min(100, parpadeoL)}%` }}
                     />
                   </div>
                   <span className="font-mono text-white/90 w-8 text-right">
-                    {ojosCerrados}%
+                    {parpadeoL}%
+                  </span>
+                </div>
+              </div>
+
+              {/* Medidor Parpadeo R */}
+              <div className="flex justify-between items-center">
+                <span>Parpadeo R:</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-24 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-[#10e7a0] transition-all duration-75"
+                      style={{ width: `${Math.min(100, parpadeoR)}%` }}
+                    />
+                  </div>
+                  <span className="font-mono text-white/90 w-8 text-right">
+                    {parpadeoR}%
                   </span>
                 </div>
               </div>
@@ -800,8 +1067,7 @@ export default function MemojiPoc() {
               neutral.
             </p>
             <p>
-              Filtro de <b>dead-zone</b> y <b>clamping</b> activos para máxima
-              estabilidad sin temblores.
+              FaceRig procedural sincronizado directamente con los blendshapes del rostro.
             </p>
           </div>
         </div>
@@ -809,3 +1075,4 @@ export default function MemojiPoc() {
     </div>
   );
 }
+
