@@ -26,7 +26,10 @@ type TrackState = {
   ready: boolean;
 };
 
-function usarFaceTracking(video: HTMLVideoElement | null) {
+function usarFaceTracking(
+  video: HTMLVideoElement | null,
+  activoTrack: boolean
+) {
   const estado = useRef<TrackState>({
     matrix: new THREE.Matrix4(),
     jawOpen: 0,
@@ -37,7 +40,9 @@ function usarFaceTracking(video: HTMLVideoElement | null) {
     browInnerUp: 0,
     ready: false,
   });
-  const [status, setStatus] = useState<"cargando" | "listo" | "error">("cargando");
+  const [status, setStatus] = useState<
+    "inactivo" | "cargando" | "listo" | "error"
+  >("inactivo");
   const [detalleError, setDetalleError] = useState<string | null>(null);
   const [rostroDetectado, setRostroDetectado] = useState<boolean>(false);
   const [aperturaBoca, setAperturaBoca] = useState<number>(0);
@@ -48,6 +53,12 @@ function usarFaceTracking(video: HTMLVideoElement | null) {
   videoRefActual.current = video;
 
   useEffect(() => {
+    if (!activoTrack) {
+      setStatus("inactivo");
+      return;
+    }
+
+    setStatus("cargando");
     let landmarker: FaceLandmarker | null = null;
     let raf = 0;
     let activo = true;
@@ -117,7 +128,13 @@ function usarFaceTracking(video: HTMLVideoElement | null) {
       if (!activo) return;
 
       const vid = videoRefActual.current;
-      if (landmarker && vid && vid.readyState >= 2 && !vid.paused && !detectando) {
+      if (
+        landmarker &&
+        vid &&
+        vid.readyState >= 2 &&
+        !vid.paused &&
+        !detectando
+      ) {
         const now = performance.now();
         // Throttle a 30 FPS (33ms) para que el Event Loop y la UI respiren libremente
         if (now - lastInferenceTime >= 33 && vid.currentTime !== lastVideoTime) {
@@ -158,11 +175,17 @@ function usarFaceTracking(video: HTMLVideoElement | null) {
               setRostroDetectado(estado.current.ready);
               setAperturaBoca(Math.round(estado.current.jawOpen * 100));
               const smile = Math.round(
-                ((estado.current.mouthSmileLeft + estado.current.mouthSmileRight) / 2) * 100
+                ((estado.current.mouthSmileLeft +
+                  estado.current.mouthSmileRight) /
+                  2) *
+                  100
               );
               setSonrisaNivel(smile);
               const blink = Math.round(
-                Math.max(estado.current.eyeBlinkLeft, estado.current.eyeBlinkRight) * 100
+                Math.max(
+                  estado.current.eyeBlinkLeft,
+                  estado.current.eyeBlinkRight
+                ) * 100
               );
               setOjosCerrados(blink);
             }
@@ -187,7 +210,7 @@ function usarFaceTracking(video: HTMLVideoElement | null) {
         landmarker?.close();
       } catch {}
     };
-  }, []);
+  }, [activoTrack]);
 
   return {
     estado,
@@ -364,6 +387,7 @@ export default function MemojiPoc() {
   }>({ x: 0, y: 0, z: 0 });
   const [mostrarCamara, setMostrarCamara] = useState<boolean>(true);
   const [intentoCamara, setIntentoCamara] = useState<number>(0);
+  const [trackingIniciado, setTrackingIniciado] = useState<boolean>(false);
 
   useEffect(() => {
     fetch(MODEL_PATH, { method: "HEAD" })
@@ -376,6 +400,7 @@ export default function MemojiPoc() {
   }, []);
 
   useEffect(() => {
+    if (!trackingIniciado) return;
     let stream: MediaStream | null = null;
     let activo = true;
 
@@ -434,7 +459,7 @@ export default function MemojiPoc() {
       activo = false;
       stream?.getTracks().forEach((t) => t.stop());
     };
-  }, [intentoCamara]);
+  }, [trackingIniciado, intentoCamara]);
 
   const {
     estado,
@@ -444,7 +469,7 @@ export default function MemojiPoc() {
     aperturaBoca,
     sonrisaNivel,
     ojosCerrados,
-  } = usarFaceTracking(video);
+  } = usarFaceTracking(video, trackingIniciado);
 
   const calibrarCentro = () => {
     hapticoDial();
@@ -486,6 +511,8 @@ export default function MemojiPoc() {
                 ? "bg-[#10e7a0] animate-pulse"
                 : status === "cargando"
                 ? "bg-amber-400 animate-pulse"
+                : status === "inactivo"
+                ? "bg-white/30"
                 : "bg-rose-500"
             }`}
           />
@@ -493,7 +520,9 @@ export default function MemojiPoc() {
             {status === "listo"
               ? "Listo"
               : status === "cargando"
-              ? "Iniciando MediaPipe..."
+              ? "Iniciando..."
+              : status === "inactivo"
+              ? "Listo para iniciar"
               : "Error"}
           </span>
         </div>
@@ -549,8 +578,35 @@ export default function MemojiPoc() {
             )}
           </Canvas>
 
+          {/* Overlay de inicio controlado */}
+          {!trackingIniciado && (
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-[3px] flex flex-col items-center justify-center gap-3 p-6 text-center z-20">
+              <div className="w-14 h-14 rounded-2xl bg-[#10e7a0]/15 border border-[#10e7a0]/30 flex items-center justify-center text-2xl shadow-inner">
+                🐙
+              </div>
+              <div className="space-y-1">
+                <h3 className="font-bold text-white text-sm">
+                  Pulpo Volt Memoji 3D
+                </h3>
+                <p className="text-[11px] text-white/60 max-w-[240px]">
+                  Presioná para activar tu cámara y mover la cabeza y gestos de
+                  Volt.
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  hapticoDial();
+                  setTrackingIniciado(true);
+                }}
+                className="mt-1 px-5 py-2.5 rounded-full bg-[#10e7a0] hover:bg-[#10e7a0]/90 active:scale-95 text-black font-bold text-xs shadow-lg shadow-[#10e7a0]/40 transition flex items-center gap-2"
+              >
+                <span>📹</span> Activar cámara y tracking
+              </button>
+            </div>
+          )}
+
           {/* Badge del Modelo GLB Rigged */}
-          <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-[#10e7a0]/30 text-[11px] text-[#10e7a0] flex items-center gap-1.5 font-medium shadow-sm">
+          <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-[#10e7a0]/30 text-[11px] text-[#10e7a0] flex items-center gap-1.5 font-medium shadow-sm z-10">
             <span className="w-1.5 h-1.5 rounded-full bg-[#10e7a0] animate-ping" />
             🐙 Pulpo Volt (Rigged GLB)
           </div>
