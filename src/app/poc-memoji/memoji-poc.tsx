@@ -45,6 +45,7 @@ export type FacialState = {
   browDownRight: number;
   browUpLeft: number;
   browUpRight: number;
+  browInnerUp: number;
   lookX: number; // -1 (izq) .. 1 (der), combinado ambos ojos
   lookY: number; // -1 (abajo) .. 1 (arriba)
 };
@@ -97,13 +98,20 @@ export interface EyeAssembly {
   lowerLidPivot: THREE.Group;   // Pivote para rotación del párpado inferior
 }
 
+export interface MouthAssembly {
+  group: THREE.Group;
+  upperLip: THREE.Mesh;
+  lowerLip: THREE.Mesh;
+  cavity: THREE.Mesh;
+}
+
 export interface FaceRigElements {
   group: THREE.Group;
   leftEye: EyeAssembly;
   rightEye: EyeAssembly;
   leftBrow: THREE.Mesh;
   rightBrow: THREE.Mesh;
-  mouth: THREE.Mesh;
+  mouth: MouthAssembly;
   axesHelper: THREE.AxesHelper;
 }
 
@@ -231,6 +239,127 @@ function createEyeAssembly(name: string, config: LiveCoords): EyeAssembly {
   };
 }
 
+function buildLipCurve(
+  isUpper: boolean,
+  jawOpen: number,
+  smileLeft: number,
+  smileRight: number
+): THREE.CatmullRomCurve3 {
+  // P0 Fix: Amortiguar suavemente la elevación de comisuras cuando jawOpen es alto
+  // para evitar exposición de la arista superior de la cavidad (flared edge)
+  const smileDamp = 1.0 - jawOpen * 0.25;
+  const smileLiftL = smileLeft * 0.0140 * smileDamp;
+  const smileLiftR = smileRight * 0.0140 * smileDamp;
+
+  // Ancho lateral (Z): las comisuras se desplazan hacia los lados independientemente
+  const baseHalfWidth = 0.046;
+  const leftZ  = -baseHalfWidth * (1.0 - jawOpen * 0.04 + smileLeft * 0.14);
+  const rightZ =  baseHalfWidth * (1.0 - jawOpen * 0.04 + smileRight * 0.14);
+
+  // Retracción en -X (profundidad) para seguir la curvatura facial de Volt
+  const leftX  = -0.0060 - smileLeft * 0.0050;
+  const rightX = -0.0060 - smileRight * 0.0050;
+  const midX   = 0.0008;
+
+  const midZ_L = leftZ * 0.5;
+  const midZ_R = rightZ * 0.5;
+
+  if (isUpper) {
+    // Elevación de comisuras superiores (Y) independizada por lado con amortiguación P0
+    const leftY  =  0.0024 - jawOpen * 0.0015 + smileLiftL;
+    const rightY =  0.0024 - jawOpen * 0.0015 + smileLiftR;
+
+    // P1 Fix: Centro geométrico (Z=0) perfectamente estable en smirk asimétrico
+    // Se usa producto (smileLeft * smileRight) para elevar centro únicamente en sonrisa simétrica
+    const symSmile = smileLeft * smileRight;
+    const centerY = 0.0024 + jawOpen * 0.0020 + symSmile * 0.0030;
+    const centerX = 0.0025;
+
+    // Asimetría concentrada progresivamente hacia la comisura afectada
+    const midY_L = (leftY + centerY) * 0.5 + 0.0004 + smileLeft * 0.0025;
+    const midY_R = (rightY + centerY) * 0.5 + 0.0004 + smileRight * 0.0025;
+
+    return new THREE.CatmullRomCurve3([
+      new THREE.Vector3(leftX,  leftY,  leftZ),
+      new THREE.Vector3(midX,   midY_L, midZ_L),
+      new THREE.Vector3(centerX, centerY, 0),
+      new THREE.Vector3(midX,   midY_R, midZ_R),
+      new THREE.Vector3(rightX, rightY, rightZ),
+    ]);
+  } else {
+    // Elevación de comisuras inferiores (Y) alineadas con las superiores
+    const leftY  = -0.0024 - jawOpen * 0.0015 + smileLiftL;
+    const rightY = -0.0024 - jawOpen * 0.0015 + smileLiftR;
+
+    // P1 Fix: Centro inferior estable en smirk asimétrico
+    const symSmile = smileLeft * smileRight;
+    const centerY = -0.0024 - jawOpen * 0.0180 + symSmile * 0.0020;
+    const centerX = 0.0020;
+
+    // Puntos intermedios para labio inferior
+    const midY_L = leftY * 0.35 + centerY * 0.65 + smileLeft * 0.0020;
+    const midY_R = rightY * 0.35 + centerY * 0.65 + smileRight * 0.0020;
+
+    return new THREE.CatmullRomCurve3([
+      new THREE.Vector3(leftX,  leftY,  leftZ),
+      new THREE.Vector3(midX,   midY_L, midZ_L),
+      new THREE.Vector3(centerX, centerY, 0),
+      new THREE.Vector3(midX,   midY_R, midZ_R),
+      new THREE.Vector3(rightX, rightY, rightZ),
+    ]);
+  }
+}
+
+function createMouthAssembly(name: string, config: LiveCoords): MouthAssembly {
+  const group = new THREE.Group();
+  group.name = name;
+  group.position.fromArray(config.position);
+  group.rotation.fromArray(config.rotation as [number, number, number]);
+  group.scale.fromArray(config.scale);
+
+  // P2: Cavidad bucal oscura de fondo
+  const cavityGeo = new THREE.CircleGeometry(0.040, 24);
+  const cavityMat = new THREE.MeshBasicMaterial({
+    color: 0x020202,
+    depthTest: true,
+    depthWrite: true,
+    side: THREE.DoubleSide,
+  });
+  const cavity = new THREE.Mesh(cavityGeo, cavityMat);
+  cavity.name = `${name}_Cavity`;
+  cavity.position.set(-0.003, -0.004, 0);
+  cavity.rotation.y = Math.PI / 2;
+  cavity.scale.set(1.0, 0.2, 0.95);
+  group.add(cavity);
+
+  const lipMat = new THREE.MeshStandardMaterial({
+    color: 0x080808,
+    roughness: 0.35,
+    metalness: 0.0,
+    depthTest: true,
+    depthWrite: true,
+  });
+
+  const upperCurve = buildLipCurve(true, 0, 0, 0);
+  const upperGeo = new THREE.TubeGeometry(upperCurve, 16, 0.0024, 8, false);
+  const upperLip = new THREE.Mesh(upperGeo, lipMat);
+  upperLip.name = `${name}_UpperLip`;
+  group.add(upperLip);
+
+  const lowerCurve = buildLipCurve(false, 0, 0, 0);
+  const lowerGeo = new THREE.TubeGeometry(lowerCurve, 16, 0.0024, 8, false);
+  const lowerLip = new THREE.Mesh(lowerGeo, lipMat);
+  lowerLip.name = `${name}_LowerLip`;
+  group.add(lowerLip);
+
+  return {
+    group,
+    upperLip,
+    lowerLip,
+    cavity,
+  };
+}
+
 function createFaceRig(): FaceRigElements {
   const group = new THREE.Group();
   group.name = "FaceRig";
@@ -241,7 +370,7 @@ function createFaceRig(): FaceRigElements {
   const leftEye = createEyeAssembly("LeftEye", FACE_CONFIG.leftEye as LiveCoords);
   const rightEye = createEyeAssembly("RightEye", FACE_CONFIG.rightEye as LiveCoords);
 
-  // Material para cejas y boca (sin cambios por ahora - Fase 6)
+  // Material para cejas y boca
   const mat = new THREE.MeshStandardMaterial({
     color: 0x080808,
     roughness: 0.25,
@@ -250,7 +379,9 @@ function createFaceRig(): FaceRigElements {
     depthWrite: true,
   });
 
-  const browGeo = new THREE.BoxGeometry(0.008, 0.020, 0.09);
+  // P1 Fix: Geometría afinada (depth 0.0035m, height 0.016m) para amoldarse a la curvatura frontal
+  // y eliminar el canto plano protuberante en ángulos >45°
+  const browGeo = new THREE.BoxGeometry(0.0035, 0.016, 0.09);
 
   const leftBrow = new THREE.Mesh(browGeo, mat);
   leftBrow.name = "LeftBrow";
@@ -264,13 +395,7 @@ function createFaceRig(): FaceRigElements {
   rightBrow.rotation.fromArray(FACE_CONFIG.rightBrow.rotation as [number,number,number]);
   rightBrow.scale.fromArray(FACE_CONFIG.rightBrow.scale);
 
-  const mouthGeo = new THREE.BoxGeometry(0.008, 0.030, 0.13);
-
-  const mouth = new THREE.Mesh(mouthGeo, mat);
-  mouth.name = "Mouth";
-  mouth.position.fromArray(FACE_CONFIG.mouth.position);
-  mouth.rotation.fromArray(FACE_CONFIG.mouth.rotation as [number,number,number]);
-  mouth.scale.fromArray(FACE_CONFIG.mouth.scale);
+  const mouth = createMouthAssembly("Mouth", FACE_CONFIG.mouth as LiveCoords);
 
   // Markers
   const mkMat = (color: number) => new THREE.MeshBasicMaterial({ color, depthTest: false });
@@ -282,13 +407,13 @@ function createFaceRig(): FaceRigElements {
   const axesHelper = new THREE.AxesHelper(0.22);
   axesHelper.visible = false;
 
-  group.add(leftEye.group, rightEye.group, leftBrow, rightBrow, mouth);
+  group.add(leftEye.group, rightEye.group, leftBrow, rightBrow, mouth.group);
   group.add(markerX, markerY, markerZ);
   group.add(axesHelper);
 
   if (!_faceRigLogged) {
     _faceRigLogged = true;
-    console.log("[FaceRig] FaceRig elements calibrated and created with eyelid assembly.");
+    console.log("[FaceRig] FaceRig elements calibrated and created with eyelid assembly and Memoji mouth.");
   }
 
   return { group, leftEye, rightEye, leftBrow, rightBrow, mouth, axesHelper };
@@ -506,6 +631,7 @@ function updateFaceRig(
   currentState.browDownRight = THREE.MathUtils.lerp(currentState.browDownRight, targetState.browDownRight, LERP_FACTOR);
   currentState.browUpLeft = THREE.MathUtils.lerp(currentState.browUpLeft, targetState.browUpLeft, LERP_FACTOR);
   currentState.browUpRight = THREE.MathUtils.lerp(currentState.browUpRight, targetState.browUpRight, LERP_FACTOR);
+  currentState.browInnerUp = THREE.MathUtils.lerp(currentState.browInnerUp, targetState.browInnerUp || 0, LERP_FACTOR);
 
   // ─────────────────────────────────────────────
   // BLEND MIRADA: MediaPipe vs Idle Saccades (Fase 3C)
@@ -559,26 +685,44 @@ function updateFaceRig(
   applyEyeClosure(elements.rightEye, closureRight);
 
   // ─────────────────────────────────────────────
-  // 2. BOCA Y SONRISA (sin cambios - Fase 4 y 5)
+  // 2. BOCA Y SONRISA MEMOJI-LIKE (Fase 4A.1)
   // ─────────────────────────────────────────────
   const smileAvg = (currentState.smileLeft + currentState.smileRight) / 2;
-  const mouthScaleY = THREE.MathUtils.lerp(FACE_CONFIG.mouth.scale[1], FACE_CONFIG.mouth.scale[1] * 4.0, currentState.jawOpen);
-  const mouthScaleZ = THREE.MathUtils.lerp(FACE_CONFIG.mouth.scale[2], FACE_CONFIG.mouth.scale[2] * 1.5, smileAvg);
-  const mouthPosY = FACE_CONFIG.mouth.position[1] - currentState.jawOpen * 0.018 + smileAvg * 0.008;
+  const upperCurve = buildLipCurve(true, currentState.jawOpen, currentState.smileLeft, currentState.smileRight);
+  const lowerCurve = buildLipCurve(false, currentState.jawOpen, currentState.smileLeft, currentState.smileRight);
 
-  elements.mouth.scale.set(FACE_CONFIG.mouth.scale[0], mouthScaleY, mouthScaleZ);
-  elements.mouth.position.y = mouthPosY;
+  elements.mouth.upperLip.geometry.dispose();
+  elements.mouth.upperLip.geometry = new THREE.TubeGeometry(upperCurve, 16, 0.0024, 8, false);
+
+  elements.mouth.lowerLip.geometry.dispose();
+  elements.mouth.lowerLip.geometry = new THREE.TubeGeometry(lowerCurve, 16, 0.0024, 8, false);
+
+  // P2: Cavidad bucal oscura de fondo
+  const cavityScaleY = 0.2 + currentState.jawOpen * 1.6;
+  const cavityScaleZ = 0.95 + smileAvg * 0.15;
+  elements.mouth.cavity.scale.set(1.0, cavityScaleY, cavityScaleZ);
+  elements.mouth.cavity.position.y = -0.004 - currentState.jawOpen * 0.008;
 
   // ─────────────────────────────────────────────
-  // 3. CEJAS (sin cambios - Fase 6)
+  // 3. CEJAS MEMOJI-LIKE (Fase 4C)
   // ─────────────────────────────────────────────
-  const leftBrowYOffset  = currentState.browUpLeft  * 0.03 - currentState.browDownLeft  * 0.02;
-  const rightBrowYOffset = currentState.browUpRight * 0.03 - currentState.browDownRight * 0.02;
+  // P0 Fix: Prioridad de browDown sobre browInnerUp al recibir señales antagónicas
+  const effectiveInnerUpL = currentState.browInnerUp * (1.0 - currentState.browDownLeft);
+  const effectiveInnerUpR = currentState.browInnerUp * (1.0 - currentState.browDownRight);
 
-  const leftBrowRotZ  =  currentState.browDownLeft  * 0.25 - currentState.browUpLeft  * 0.10;
-  const rightBrowRotZ = -currentState.browDownRight * 0.25 + currentState.browUpRight * 0.10;
+  const leftBrowYOffset  = currentState.browUpLeft * 0.014 + effectiveInnerUpL * 0.008 - currentState.browDownLeft * 0.010;
+  const rightBrowYOffset = currentState.browUpRight * 0.014 + effectiveInnerUpR * 0.008 - currentState.browDownRight * 0.010;
 
+  const leftBrowXOffset  = currentState.browDownLeft * 0.003;
+  const rightBrowXOffset = -currentState.browDownRight * 0.003;
+
+  const leftBrowRotZ  =  currentState.browDownLeft * 0.18 - effectiveInnerUpL * 0.18 - currentState.browUpLeft * 0.06;
+  const rightBrowRotZ = -currentState.browDownRight * 0.18 + effectiveInnerUpR * 0.18 + currentState.browUpRight * 0.06;
+
+  elements.leftBrow.position.x  = FACE_CONFIG.leftBrow.position[0] + leftBrowXOffset;
   elements.leftBrow.position.y  = FACE_CONFIG.leftBrow.position[1] + leftBrowYOffset;
+
+  elements.rightBrow.position.x = FACE_CONFIG.rightBrow.position[0] + rightBrowXOffset;
   elements.rightBrow.position.y = FACE_CONFIG.rightBrow.position[1] + rightBrowYOffset;
   
   elements.leftBrow.rotation.z  = FACE_CONFIG.leftBrow.rotation[2] + leftBrowRotZ;
@@ -605,6 +749,7 @@ function usarFaceTracking(
       browDownRight: 0,
       browUpLeft: 0,
       browUpRight: 0,
+      browInnerUp: 0,
       lookX: 0,
       lookY: 0,
     },
@@ -743,14 +888,13 @@ function usarFaceTracking(
               fs.browDownRight = shapes["browDownRight"] ?? 0;
               fs.browUpLeft =
                 shapes["browUpLeft"] ??
-                shapes["browInnerUp"] ??
                 shapes["browOuterUpLeft"] ??
                 0;
               fs.browUpRight =
                 shapes["browUpRight"] ??
-                shapes["browInnerUp"] ??
                 shapes["browOuterUpRight"] ??
                 0;
+              fs.browInnerUp = shapes["browInnerUp"] ?? 0;
 
               // Extracción de blendshapes de mirada (Fase 3B)
               const lookInL   = shapes["eyeLookInLeft"]    ?? 0;
@@ -843,6 +987,9 @@ function getRigObject(rig: FaceRigElements, key: ElementKey): THREE.Object3D {
   if (!el) return new THREE.Object3D();
   if (key === 'leftEye' || key === 'rightEye') {
     return (el as EyeAssembly).group || (el as unknown as THREE.Object3D);
+  }
+  if (key === 'mouth') {
+    return (el as MouthAssembly).group || (el as unknown as THREE.Object3D);
   }
   return el as THREE.Mesh;
 }
@@ -1020,6 +1167,7 @@ function PulpoModelo({
     squintLeft: 0, squintRight: 0,
     browDownLeft: 0, browDownRight: 0,
     browUpLeft: 0, browUpRight: 0,
+    browInnerUp: 0,
     lookX: 0, lookY: 0,
   });
 
