@@ -33,7 +33,11 @@ const PUBLIC_PATHS = [
   "/icon-",
   "/badge-",
   "/images",
+  "/lanyard",
+  "/models",
   "/promo-video",
+  // PoC de memoji con cámara — sin auth mientras se prueba viabilidad.
+  "/poc-memoji",
 ];
 
 export async function middleware(request: NextRequest) {
