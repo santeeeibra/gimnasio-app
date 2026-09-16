@@ -134,3 +134,4 @@
 - Fix eje X local como frente en FaceRig y agregado Face Rig Calibrator interactivo en memoji-poc.tsx
 - Aplicado FACE_CONFIG calibrado y mejorado el FaceRig Calibrator con OrbitControls y ajuste fino XYZ (posición, rotación, escala).
 - 2026-09-16: Actualizado PROMPT_ANTIGRAVITY_MEMOJI_EYES.md con la jerarquía estricta de QA (P0-P5: oclusión -> timing 80-100ms/150-180ms -> integración -> expresión -> material -> microdetalle), modos QA e Implementación, y directivas de transición Track A -> Track B para Blender/glTF.
+- 2026-09-16: PoC Memoji: Cambiado el color del material de los párpados de `0x9b59b6` (púrpura) a `0x10e7a0` (Verde Pulpo Volt) en `src/app/poc-memoji/memoji-poc.tsx` (P2 Integración).

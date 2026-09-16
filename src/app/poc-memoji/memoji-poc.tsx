@@ -137,7 +137,7 @@ function createEyeAssembly(name: string, config: LiveCoords): EyeAssembly {
 
   // Material de los párpados (color piel del pulpo)
   const lidMat = new THREE.MeshStandardMaterial({
-    color: 0x9b59b6, // Púrpura del pulpo - ajustar según el modelo
+    color: 0x10e7a0, // Verde Pulpo Volt — integra el párpado con la piel
     roughness: 0.6,
     metalness: 0.0,
     depthTest: true,
