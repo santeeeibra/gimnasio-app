@@ -263,10 +263,6 @@ function PulpoPlaceholder({ estado }: { estado: React.RefObject<TrackState> }) {
   );
 }
 
-// Plano de corte para modo avatar: oculta todo lo que queda por debajo de los hombros
-// Se aplica como clippingPlane en Three.js con localClippingEnabled=true en el renderer
-const AVATAR_CLIP_Y = -0.18; // en unidades de escena (ajustado para modelo normalizado a escala ~2.4)
-
 function PulpoModelo({
   estado,
   rotacionY = -Math.PI / 2,
@@ -283,15 +279,10 @@ function PulpoModelo({
   const grupo = useRef<THREE.Group>(null);
   const gltf = useGLTF(MODEL_PATH);
 
-  // Plano de corte: elimina todo lo que esté por debajo de AVATAR_CLIP_Y en espacio de escena
-  // El plano tiene normal apuntando hacia +Y, así que corta todo con Y < -AVATAR_CLIP_Y
-  const clipPlane = useMemo(
-    () => new THREE.Plane(new THREE.Vector3(0, 1, 0), -AVATAR_CLIP_Y),
-    []
-  );
-
-  // Escala mayor para llenar el visor con cabeza+hombros
+  // Encuadre Avatar Memoji (Cabeza + Hombros):
+  // Escalamos adecuadamente y desplazamos verticalmente para centrar la cabeza y hombros.
   const ESCALA_AVATAR = 2.4;
+
   const modeloCentrado = useMemo(() => {
     const scene = SkeletonUtils.clone(gltf.scene);
     const box = new THREE.Box3().setFromObject(scene);
@@ -300,37 +291,21 @@ function PulpoModelo({
     const maxDim = Math.max(size.x, size.y, size.z);
     const factorEscala = ESCALA_AVATAR / (maxDim || 1);
 
-    // Centrar en X y Z; en Y subimos para que la cabeza quede en el centro-alto del visor
+    // Centrar en el centro geométrico base y desplazar Y para traer la cabeza al foco principal
     scene.position.x = -center.x * factorEscala;
+    scene.position.y = (-center.y - size.y * 0.18) * factorEscala;
     scene.position.z = -center.z * factorEscala;
-    // Subir el modelo: la cabeza debe quedar ~en Y=0.4..0.6 del visor
-    scene.position.y = (-center.y + size.y * 0.28) * factorEscala;
     scene.scale.setScalar(factorEscala);
 
     scene.traverse((child) => {
-      const mesh = child as THREE.Mesh;
-      if (mesh.isMesh) {
-        mesh.castShadow = true;
-        mesh.receiveShadow = true;
-        // Aplicar el plano de corte a cada material del modelo
-        if (Array.isArray(mesh.material)) {
-          mesh.material = mesh.material.map((m) => {
-            const mat = m.clone();
-            mat.clippingPlanes = [clipPlane];
-            mat.clipShadows = true;
-            return mat;
-          });
-        } else if (mesh.material) {
-          const mat = (mesh.material as THREE.Material).clone();
-          (mat as THREE.MeshStandardMaterial).clippingPlanes = [clipPlane];
-          (mat as THREE.MeshStandardMaterial).clipShadows = true;
-          mesh.material = mat;
-        }
+      if ((child as THREE.Mesh).isMesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
       }
     });
 
     return scene;
-  }, [gltf.scene, clipPlane]);
+  }, [gltf.scene]);
 
   useFrame((_, delta) => {
     if (!grupo.current) return;
@@ -569,8 +544,8 @@ export default function MemojiPoc() {
         {/* Visor 3D Principal */}
         <div className="relative w-full max-w-[420px] aspect-square sm:aspect-[4/4.5] rounded-[24px] overflow-hidden bg-gradient-to-b from-[#0e1613] to-[#080d0b] border border-white/10 shadow-2xl flex items-center justify-center">
           <Canvas
-            camera={{ position: [0, 0.1, 1.4], fov: 36 }}
-            gl={{ antialias: true, alpha: true, localClippingEnabled: true }}
+            camera={{ position: [0, 0, 2.0], fov: 40 }}
+            gl={{ antialias: true, alpha: true }}
             className="w-full h-full"
           >
             {/* Iluminación de estudio 3 puntos */}
