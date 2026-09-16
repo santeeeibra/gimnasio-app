@@ -88,10 +88,19 @@ const FACE_CONFIG = {
   },
 };
 
+export interface EyeAssembly {
+  group: THREE.Group;
+  sclera: THREE.Mesh;           // Esclera (blanco del ojo)
+  upperLid: THREE.Mesh;         // Párpado superior
+  lowerLid: THREE.Mesh;         // Párpado inferior
+  upperLidPivot: THREE.Group;   // Pivote para rotación del párpado superior
+  lowerLidPivot: THREE.Group;   // Pivote para rotación del párpado inferior
+}
+
 export interface FaceRigElements {
   group: THREE.Group;
-  leftEye: THREE.Mesh;
-  rightEye: THREE.Mesh;
+  leftEye: EyeAssembly;
+  rightEye: EyeAssembly;
   leftBrow: THREE.Mesh;
   rightBrow: THREE.Mesh;
   mouth: THREE.Mesh;
@@ -100,12 +109,106 @@ export interface FaceRigElements {
 
 let _faceRigLogged = false;
 
+/**
+ * Crea un ensamble de ojo con esclera + párpados como casquetes esféricos.
+ * Los párpados rotan sobre pivotes para cerrar (no escalan).
+ */
+function createEyeAssembly(name: string, config: LiveCoords): EyeAssembly {
+  const group = new THREE.Group();
+  group.name = name;
+  group.position.fromArray(config.position);
+  group.rotation.fromArray(config.rotation.map(r => r * Math.PI / 180) as [number, number, number]);
+  group.scale.fromArray(config.scale);
+
+  const eyeRadius = 0.038;
+
+  // Esclera (blanco del ojo)
+  const scleraGeo = new THREE.SphereGeometry(eyeRadius, 16, 12);
+  const scleraMat = new THREE.MeshStandardMaterial({
+    color: 0xf5f5f5,
+    roughness: 0.4,
+    metalness: 0.0,
+    depthTest: true,
+    depthWrite: true,
+  });
+  const sclera = new THREE.Mesh(scleraGeo, scleraMat);
+  sclera.name = `${name}_Sclera`;
+  group.add(sclera);
+
+  // Material de los párpados (color piel del pulpo)
+  const lidMat = new THREE.MeshStandardMaterial({
+    color: 0x9b59b6, // Púrpura del pulpo - ajustar según el modelo
+    roughness: 0.6,
+    metalness: 0.0,
+    depthTest: true,
+    depthWrite: true,
+    side: THREE.DoubleSide,
+  });
+
+  // Párpado SUPERIOR - casquete esférico
+  // Radio ligeramente mayor para que cubra la esclera
+  const lidRadius = eyeRadius * 1.02;
+  
+  // Casquete superior: de 0° a ~100° (cubre más de media esfera)
+  const upperLidGeo = new THREE.SphereGeometry(
+    lidRadius,
+    16,
+    12,
+    0,           // phiStart
+    Math.PI * 2, // phiLength (360°)
+    0,           // thetaStart (desde el polo norte)
+    Math.PI * 0.55 // thetaLength (cubre ~55% = más de la mitad)
+  );
+  const upperLid = new THREE.Mesh(upperLidGeo, lidMat);
+  upperLid.name = `${name}_UpperLid`;
+
+  // Pivote del párpado superior - rota sobre el eje X para cerrar hacia abajo
+  const upperLidPivot = new THREE.Group();
+  upperLidPivot.name = `${name}_UpperLidPivot`;
+  upperLidPivot.add(upperLid);
+  group.add(upperLidPivot);
+
+  // Párpado INFERIOR - casquete esférico pequeño
+  // Cubre solo ~20% inferior
+  const lowerLidGeo = new THREE.SphereGeometry(
+    lidRadius,
+    16,
+    12,
+    0,              // phiStart
+    Math.PI * 2,    // phiLength (360°)
+    Math.PI * 0.80, // thetaStart (comienza en ~80% desde arriba)
+    Math.PI * 0.20  // thetaLength (cubre ~20% inferior)
+  );
+  const lowerLid = new THREE.Mesh(lowerLidGeo, lidMat);
+  lowerLid.name = `${name}_LowerLid`;
+
+  // Pivote del párpado inferior - rota sobre el eje X para cerrar hacia arriba
+  const lowerLidPivot = new THREE.Group();
+  lowerLidPivot.name = `${name}_LowerLidPivot`;
+  lowerLidPivot.add(lowerLid);
+  group.add(lowerLidPivot);
+
+  return {
+    group,
+    sclera,
+    upperLid,
+    lowerLid,
+    upperLidPivot,
+    lowerLidPivot,
+  };
+}
+
 function createFaceRig(): FaceRigElements {
   const group = new THREE.Group();
   group.name = "FaceRig";
   group.position.set(0, 0, 0);
   group.rotation.set(0, 0, 0);
 
+  // Crear ensambles de ojos con la nueva arquitectura
+  const leftEye = createEyeAssembly("LeftEye", FACE_CONFIG.leftEye as LiveCoords);
+  const rightEye = createEyeAssembly("RightEye", FACE_CONFIG.rightEye as LiveCoords);
+
+  // Material para cejas y boca (sin cambios por ahora - Fase 6)
   const mat = new THREE.MeshStandardMaterial({
     color: 0x080808,
     roughness: 0.25,
@@ -113,20 +216,6 @@ function createFaceRig(): FaceRigElements {
     depthTest: true,
     depthWrite: true,
   });
-
-  const eyeGeo = new THREE.SphereGeometry(0.038, 16, 12);
-  
-  const leftEye = new THREE.Mesh(eyeGeo, mat);
-  leftEye.name = "LeftEye";
-  leftEye.position.fromArray(FACE_CONFIG.leftEye.position);
-  leftEye.rotation.fromArray(FACE_CONFIG.leftEye.rotation as [number,number,number]);
-  leftEye.scale.fromArray(FACE_CONFIG.leftEye.scale);
-
-  const rightEye = new THREE.Mesh(eyeGeo, mat);
-  rightEye.name = "RightEye";
-  rightEye.position.fromArray(FACE_CONFIG.rightEye.position);
-  rightEye.rotation.fromArray(FACE_CONFIG.rightEye.rotation as [number,number,number]);
-  rightEye.scale.fromArray(FACE_CONFIG.rightEye.scale);
 
   const browGeo = new THREE.BoxGeometry(0.008, 0.020, 0.09);
 
@@ -160,16 +249,117 @@ function createFaceRig(): FaceRigElements {
   const axesHelper = new THREE.AxesHelper(0.22);
   axesHelper.visible = false;
 
-  group.add(leftEye, rightEye, leftBrow, rightBrow, mouth);
+  group.add(leftEye.group, rightEye.group, leftBrow, rightBrow, mouth);
   group.add(markerX, markerY, markerZ);
   group.add(axesHelper);
 
   if (!_faceRigLogged) {
     _faceRigLogged = true;
-    console.log("[FaceRig] FaceRig elements calibrated and created.");
+    console.log("[FaceRig] FaceRig elements calibrated and created with eyelid assembly.");
   }
 
   return { group, leftEye, rightEye, leftBrow, rightBrow, mouth, axesHelper };
+}
+
+// ─────────────────────────────────────────────
+//  MOTOR DE AUTO-BLINK (Fase 0)
+// ─────────────────────────────────────────────
+interface BlinkState {
+  phase: 'idle' | 'closing' | 'paused' | 'opening';
+  progress: number;
+  nextBlinkTime: number;
+  isDoubleBlink: boolean;
+  doubleBlinkCount: number;
+}
+
+const autoBlinkState = {
+  left: {
+    phase: 'idle' as const,
+    progress: 0,
+    nextBlinkTime: performance.now() + 3000 + Math.random() * 2000,
+    isDoubleBlink: false,
+    doubleBlinkCount: 0,
+  },
+  right: {
+    phase: 'idle' as const,
+    progress: 0,
+    nextBlinkTime: performance.now() + 3000 + Math.random() * 2000,
+    isDoubleBlink: false,
+    doubleBlinkCount: 0,
+  },
+};
+
+// Timings en ms según la spec
+const BLINK_TIMING = {
+  close: 80 + Math.random() * 20,    // 80-100ms
+  pause: 10 + Math.random() * 20,    // 10-30ms
+  open: 150 + Math.random() * 30,    // 150-180ms
+  jitterMin: 3000,                   // 3s
+  jitterMax: 5000,                   // 5s
+  doubleChance: 0.08,                // 8%
+};
+
+function easeInQuad(t: number): number {
+  return t * t;
+}
+
+function easeOutQuad(t: number): number {
+  return t * (2 - t);
+}
+
+/**
+ * Actualiza el auto-blink de un ojo (independiente por ojo)
+ */
+function updateAutoBlink(state: BlinkState, now: number): number {
+  switch (state.phase) {
+    case 'idle':
+      if (now >= state.nextBlinkTime) {
+        // Decidir si es doble parpadeo
+        state.isDoubleBlink = Math.random() < BLINK_TIMING.doubleChance;
+        state.doubleBlinkCount = state.isDoubleBlink ? 2 : 1;
+        state.phase = 'closing';
+        state.progress = 0;
+      }
+      return 0;
+
+    case 'closing':
+      state.progress += (1000 / 60) / BLINK_TIMING.close;
+      if (state.progress >= 1) {
+        state.progress = 0;
+        state.phase = 'paused';
+      }
+      return easeInQuad(Math.min(state.progress, 1));
+
+    case 'paused':
+      state.progress += (1000 / 60) / BLINK_TIMING.pause;
+      if (state.progress >= 1) {
+        state.progress = 0;
+        state.phase = 'opening';
+      }
+      return 1;
+
+    case 'opening':
+      state.progress += (1000 / 60) / BLINK_TIMING.open;
+      if (state.progress >= 1) {
+        state.doubleBlinkCount--;
+        if (state.doubleBlinkCount > 0) {
+          // Segundo parpadeo del doble blink
+          state.phase = 'closing';
+          state.progress = 0;
+        } else {
+          // Fin del ciclo
+          state.phase = 'idle';
+          state.progress = 0;
+          state.nextBlinkTime = now + BLINK_TIMING.jitterMin + 
+                                Math.random() * (BLINK_TIMING.jitterMax - BLINK_TIMING.jitterMin);
+        }
+        return 0;
+      }
+      return 1 - easeOutQuad(Math.min(state.progress, 1));
+
+    default:
+      return 0;
+  }
 }
 
 function updateFaceRig(
@@ -190,11 +380,36 @@ function updateFaceRig(
   currentState.browUpLeft = THREE.MathUtils.lerp(currentState.browUpLeft, targetState.browUpLeft, LERP_FACTOR);
   currentState.browUpRight = THREE.MathUtils.lerp(currentState.browUpRight, targetState.browUpRight, LERP_FACTOR);
 
-  // 1. PARPADEO
-  elements.leftEye.scale.y = THREE.MathUtils.lerp(FACE_CONFIG.leftEye.scale[1], FACE_CONFIG.leftEye.scale[1] * 0.08, currentState.blinkLeft);
-  elements.rightEye.scale.y = THREE.MathUtils.lerp(FACE_CONFIG.rightEye.scale[1], FACE_CONFIG.rightEye.scale[1] * 0.08, currentState.blinkRight);
+  // ─────────────────────────────────────────────
+  // 1. PARPADEO CON PÁRPADOS QUE ROTAN (Fase 0+1)
+  // ─────────────────────────────────────────────
+  const now = performance.now();
+  
+  // Auto-blink independiente por ojo
+  const autoBlinkLeft = updateAutoBlink(autoBlinkState.left, now);
+  const autoBlinkRight = updateAutoBlink(autoBlinkState.right, now);
+  
+  // Blend: max(auto, tracked)
+  const finalBlinkLeft = Math.max(autoBlinkLeft, currentState.blinkLeft);
+  const finalBlinkRight = Math.max(autoBlinkRight, currentState.blinkRight);
+  
+  // Aplicar rotación a los párpados
+  // Párpado superior: 80-90% del cierre (rotación hacia abajo)
+  // Párpado inferior: 10-20% del cierre (rotación hacia arriba)
+  const upperLidRotationMax = Math.PI * 0.85; // ~85% del cierre
+  const lowerLidRotationMax = Math.PI * 0.15; // ~15% del cierre
+  
+  // Ojo izquierdo
+  elements.leftEye.upperLidPivot.rotation.x = finalBlinkLeft * upperLidRotationMax;
+  elements.leftEye.lowerLidPivot.rotation.x = -finalBlinkLeft * lowerLidRotationMax;
+  
+  // Ojo derecho
+  elements.rightEye.upperLidPivot.rotation.x = finalBlinkRight * upperLidRotationMax;
+  elements.rightEye.lowerLidPivot.rotation.x = -finalBlinkRight * lowerLidRotationMax;
 
-  // 2. BOCA Y SONRISA
+  // ─────────────────────────────────────────────
+  // 2. BOCA Y SONRISA (sin cambios - Fase 4 y 5)
+  // ─────────────────────────────────────────────
   const smileAvg = (currentState.smileLeft + currentState.smileRight) / 2;
   const mouthScaleY = THREE.MathUtils.lerp(FACE_CONFIG.mouth.scale[1], FACE_CONFIG.mouth.scale[1] * 4.0, currentState.jawOpen);
   const mouthScaleZ = THREE.MathUtils.lerp(FACE_CONFIG.mouth.scale[2], FACE_CONFIG.mouth.scale[2] * 1.5, smileAvg);
@@ -203,7 +418,9 @@ function updateFaceRig(
   elements.mouth.scale.set(FACE_CONFIG.mouth.scale[0], mouthScaleY, mouthScaleZ);
   elements.mouth.position.y = mouthPosY;
 
-  // 3. CEJAS
+  // ─────────────────────────────────────────────
+  // 3. CEJAS (sin cambios - Fase 6)
+  // ─────────────────────────────────────────────
   const leftBrowYOffset  = currentState.browUpLeft  * 0.03 - currentState.browDownLeft  * 0.02;
   const rightBrowYOffset = currentState.browUpRight * 0.03 - currentState.browDownRight * 0.02;
 

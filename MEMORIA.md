@@ -125,6 +125,7 @@
 
 - 2026-09-16: PoC Memoji: fix error al cargar modelo 3D inexistente (/models/pulpo-volt.glb devolvía HTML 404/redirect provocando crash en Three.js). Se validó Content-Type en HEAD y se agregaron /models y /lanyard a PUBLIC_PATHS en middleware. Integrado modelo 3D real de Pulpo Volt (/models/pulpo-volt.glb) con auto-centrado de Box3, iluminación PBR estudio 3 puntos con rim-light neón #10e7a0, squash-and-stretch reactivo a mandíbula y controles flotantes. Corregida orientación con rotación base -90° (frente), modo espejo Euler YXZ, botones de inversión y calibración de centro neutral. Sumado modelo simplificado FBX ultraliviano (195 KB) con toggle de selección instantánea. Descargado nuevo modelo rigged FBX y convertido a GLB binario optimizado (/models/pulpo-volt.glb, 3.7 MB).
 - PoC Memoji 3D Pulpo Volt: Migrado 100% a GLB rigged con SkeletonUtils.clone, tracking con dead-zone, clamping, rotación frontal calibrada y telemetría de blendshapes faciales.
+- PoC Memoji 3D Pulpo Volt: Migrado 100% a GLB rigged con SkeletonUtils.clone, tracking con dead-zone, clamping, rotación frontal calibrada y telemetría de blendshapes faciales.
 - PoC Memoji 3D: Solucionado congelamiento y error de cámara. FaceLandmarker singleton con GPU delegate, throttle de inferencia a 30 FPS y fallback universal en getUserMedia.
 - PoC Memoji: Redirigida la raíz '/' a '/poc-memoji' para que el botón Preview no mande al login, y agregado arranque bajo demanda con botón 'Activar cámara' para carga instantánea y fluida sin congelamientos.
 
@@ -132,3 +133,4 @@
 
 - Fix eje X local como frente en FaceRig y agregado Face Rig Calibrator interactivo en memoji-poc.tsx
 - Aplicado FACE_CONFIG calibrado y mejorado el FaceRig Calibrator con OrbitControls y ajuste fino XYZ (posición, rotación, escala).
+- 2026-09-16: Actualizado PROMPT_ANTIGRAVITY_MEMOJI_EYES.md con la jerarquía estricta de QA (P0-P5: oclusión -> timing 80-100ms/150-180ms -> integración -> expresión -> material -> microdetalle), modos QA e Implementación, y directivas de transición Track A -> Track B para Blender/glTF.
