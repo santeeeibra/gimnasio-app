@@ -264,6 +264,18 @@ function updateTubeGeometryInPlace(
   tempGeo.dispose();
 }
 
+function buildBrowCurve(): THREE.CatmullRomCurve3 {
+  // Arco fino siguiendo forma de ceja real (arranca bajo cerca de la nariz,
+  // sube a un pico y baja hacia la sien) en vez de una caja recta plana.
+  return new THREE.CatmullRomCurve3([
+    new THREE.Vector3(0.0000, -0.0020,  0.0450), // sien (extremo exterior)
+    new THREE.Vector3(0.0012,  0.0030,  0.0220),
+    new THREE.Vector3(0.0018,  0.0075,  0.0020), // pico del arco
+    new THREE.Vector3(0.0010,  0.0040, -0.0180),
+    new THREE.Vector3(0.0000, -0.0010, -0.0400), // nariz (extremo interior)
+  ]);
+}
+
 function buildLipCurve(
   isUpper: boolean,
   jawOpen: number,
@@ -404,9 +416,10 @@ function createFaceRig(): FaceRigElements {
     depthWrite: true,
   });
 
-  // P1 Fix: Geometría afinada (depth 0.0035m, height 0.016m) para amoldarse a la curvatura frontal
-  // y eliminar el canto plano protuberante en ángulos >45°
-  const browGeo = new THREE.BoxGeometry(0.0035, 0.016, 0.09);
+  // Arco curvo (TubeGeometry sobre CatmullRomCurve3), no una caja recta:
+  // una caja vista de frente se lee como una barra solida negra, sin forma
+  // de ceja. Mismo enfoque que ya usan los labios (buildLipCurve).
+  const browGeo = new THREE.TubeGeometry(buildBrowCurve(), 12, 0.0022, 8, false);
 
   const leftBrow = new THREE.Mesh(browGeo, mat);
   leftBrow.name = "LeftBrow";
@@ -414,7 +427,7 @@ function createFaceRig(): FaceRigElements {
   leftBrow.rotation.fromArray(FACE_CONFIG.leftBrow.rotation as [number,number,number]);
   leftBrow.scale.fromArray(FACE_CONFIG.leftBrow.scale);
 
-  const rightBrow = new THREE.Mesh(browGeo, mat);
+  const rightBrow = new THREE.Mesh(browGeo.clone(), mat);
   rightBrow.name = "RightBrow";
   rightBrow.position.fromArray(FACE_CONFIG.rightBrow.position);
   rightBrow.rotation.fromArray(FACE_CONFIG.rightBrow.rotation as [number,number,number]);
