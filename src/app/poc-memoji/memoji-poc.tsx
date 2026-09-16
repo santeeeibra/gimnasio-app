@@ -48,6 +48,12 @@ export type FacialState = {
   browInnerUp: number;
   lookX: number; // -1 (izq) .. 1 (der), combinado ambos ojos
   lookY: number; // -1 (abajo) .. 1 (arriba)
+  // F4D: Estado coordinado procedural (micro-delays sutiles)
+  smileDelayedLeft?: number;
+  smileDelayedRight?: number;
+  browUpDelayedLeft?: number;
+  browUpDelayedRight?: number;
+  jawOpenDelayed?: number;
 };
 
 type TrackState = {
@@ -619,7 +625,9 @@ function updateFaceRig(
   faceDetected: boolean
 ) {
   const LERP_FACTOR = 0.25;
+  const COORD_LERP = 0.14; // Smoothing sutil con micro-delay de ~40-60ms para acoplamiento secundario
 
+  // 1. Smoothing primario de blendshapes tracked
   currentState.jawOpen = THREE.MathUtils.lerp(currentState.jawOpen, targetState.jawOpen, LERP_FACTOR);
   currentState.smileLeft = THREE.MathUtils.lerp(currentState.smileLeft, targetState.smileLeft, LERP_FACTOR);
   currentState.smileRight = THREE.MathUtils.lerp(currentState.smileRight, targetState.smileRight, LERP_FACTOR);
@@ -633,32 +641,51 @@ function updateFaceRig(
   currentState.browUpRight = THREE.MathUtils.lerp(currentState.browUpRight, targetState.browUpRight, LERP_FACTOR);
   currentState.browInnerUp = THREE.MathUtils.lerp(currentState.browInnerUp, targetState.browInnerUp || 0, LERP_FACTOR);
 
-  // ─────────────────────────────────────────────
-  // BLEND MIRADA: MediaPipe vs Idle Saccades (Fase 3C)
-  // ─────────────────────────────────────────────
-  // Nota: usamos 'now' que se define más abajo para blink
-  // Movemos la actualización de saccades después de definir 'now'
+  // 2. FASE F4D — Micro-delays sutiles (30-80ms offset) para acoplamiento coordinado
+  currentState.smileDelayedLeft = THREE.MathUtils.lerp(currentState.smileDelayedLeft || 0, currentState.smileLeft, COORD_LERP);
+  currentState.smileDelayedRight = THREE.MathUtils.lerp(currentState.smileDelayedRight || 0, currentState.smileRight, COORD_LERP);
+  currentState.browUpDelayedLeft = THREE.MathUtils.lerp(currentState.browUpDelayedLeft || 0, currentState.browUpLeft, COORD_LERP);
+  currentState.browUpDelayedRight = THREE.MathUtils.lerp(currentState.browUpDelayedRight || 0, currentState.browUpRight, COORD_LERP);
+  currentState.jawOpenDelayed = THREE.MathUtils.lerp(currentState.jawOpenDelayed || 0, currentState.jawOpen, COORD_LERP);
+
+  // Aportes procedimentales coordinados conservadores (Estilo Memoji, conservando L/R):
+  // a) Smile -> Eye Squint (Duchenne) & Brow Lift sutil por lado
+  const smileCoordinatedSquintL = currentState.smileDelayedLeft * 0.22;
+  const smileCoordinatedSquintR = currentState.smileDelayedRight * 0.22;
+  const smileCoordinatedBrowLiftL = currentState.smileDelayedLeft * 0.005;
+  const smileCoordinatedBrowLiftR = currentState.smileDelayedRight * 0.005;
+
+  // b) Surprise -> Eye Widen (apertura extra de párpados), Jaw Open support & Gaze pitch boost
+  const avgSurpriseBrowDelayed = (currentState.browUpDelayedLeft + currentState.browUpDelayedRight) / 2;
+  const surpriseCoordinatedWidenL = currentState.browUpDelayedLeft * 0.14 + currentState.jawOpenDelayed * 0.08;
+  const surpriseCoordinatedWidenR = currentState.browUpDelayedRight * 0.14 + currentState.jawOpenDelayed * 0.08;
+  const surpriseGazeYOffset = avgSurpriseBrowDelayed * 0.12 * (currentState.jawOpenDelayed * 0.5 + 0.5);
+  const surpriseJawBoost = avgSurpriseBrowDelayed * 0.10;
+
+  // c) BrowDown (Fruncido) -> Eye Squint sutil
+  const frownCoordinatedSquintL = currentState.browDownLeft * 0.12;
+  const frownCoordinatedSquintR = currentState.browDownRight * 0.12;
+
+  // Total de Squint (independiente L/R)
+  const totalSquintL = THREE.MathUtils.clamp(currentState.squintLeft + smileCoordinatedSquintL + frownCoordinatedSquintL, 0, 1);
+  const totalSquintR = THREE.MathUtils.clamp(currentState.squintRight + smileCoordinatedSquintR + frownCoordinatedSquintR, 0, 1);
+
+  // Apertura de boca coordinada (JawOpen + boost por sorpresa)
+  const effectiveJawOpen = THREE.MathUtils.clamp(currentState.jawOpen + surpriseJawBoost, 0, 1);
 
   // ─────────────────────────────────────────────
-  // 1. MIRADA E IRIS (Fase 3B)
+  // 1. MIRADA E IRIS CON COORDINACIÓN GAZE (Fase 3B + F4D)
   // ─────────────────────────────────────────────
   const MAX_LOOK_Y = 0.010; // Límite vertical conservador (metros)
   const MAX_LOOK_Z = 0.010; // Límite horizontal conservador (metros)
   const EYE_RADIUS = 0.038;
 
-  // ─────────────────────────────────────────────
-  // 1. PARPADEO CON PÁRPADOS QUE ROTAN (Fase 0+1) + SQUINT (Fase 2)
-  // ─────────────────────────────────────────────
   const now = performance.now();
-
-  // Actualizar idle saccades (Fase 3C)
   const saccadeIdle = updateSaccadeIdle(saccadeIdleState, now);
 
-  // MediaPipe tiene prioridad absoluta cuando faceDetected=true
-  // Sin rostro, usamos idle saccades
-  // La transición es suave gracias al smoothing 0.20 existente
   const effectiveTargetX = faceDetected ? targetState.lookX : saccadeIdle.x;
-  const effectiveTargetY = faceDetected ? targetState.lookY : saccadeIdle.y;
+  const rawTargetY = faceDetected ? targetState.lookY : saccadeIdle.y;
+  const effectiveTargetY = THREE.MathUtils.clamp(rawTargetY + surpriseGazeYOffset, -1, 1);
 
   currentState.lookX = THREE.MathUtils.lerp(currentState.lookX, effectiveTargetX, 0.20);
   currentState.lookY = THREE.MathUtils.lerp(currentState.lookY, effectiveTargetY, 0.20);
@@ -673,23 +700,25 @@ function updateFaceRig(
     eye.highlight.position.set(dX + 0.00019, dY + 0.007, dZ + 0.006);
   }
 
-  // Auto-blink bilateral (sincronizado)
+  // Auto-blink bilateral + Párpados (Fase 0+1+2 + F4D Eye Widen)
   const autoBlink = updateAutoBlink(autoBlinkState, now);
 
-  // Blend: max(auto, tracked) + Squint (fase 2)
-  const closureLeft = computeEyeClosure(autoBlink, currentState.blinkLeft, currentState.squintLeft);
-  const closureRight = computeEyeClosure(autoBlink, currentState.blinkRight, currentState.squintRight);
+  const baseClosureLeft = computeEyeClosure(autoBlink, currentState.blinkLeft, totalSquintL);
+  const baseClosureRight = computeEyeClosure(autoBlink, currentState.blinkRight, totalSquintR);
 
-  // Aplicar rotación a los párpados
+  // Si hay parpadeo explícito/autoblink (>0.5), respeta el cierre. Si no, aplica apertura sorpresa
+  const closureLeft = baseClosureLeft > 0.5 ? baseClosureLeft : (baseClosureLeft - surpriseCoordinatedWidenL);
+  const closureRight = baseClosureRight > 0.5 ? baseClosureRight : (baseClosureRight - surpriseCoordinatedWidenR);
+
   applyEyeClosure(elements.leftEye, closureLeft);
   applyEyeClosure(elements.rightEye, closureRight);
 
   // ─────────────────────────────────────────────
-  // 2. BOCA Y SONRISA MEMOJI-LIKE (Fase 4A.1)
+  // 2. BOCA Y SONRISA MEMOJI-LIKE (Fase 4A.1 + F4D)
   // ─────────────────────────────────────────────
   const smileAvg = (currentState.smileLeft + currentState.smileRight) / 2;
-  const upperCurve = buildLipCurve(true, currentState.jawOpen, currentState.smileLeft, currentState.smileRight);
-  const lowerCurve = buildLipCurve(false, currentState.jawOpen, currentState.smileLeft, currentState.smileRight);
+  const upperCurve = buildLipCurve(true, effectiveJawOpen, currentState.smileLeft, currentState.smileRight);
+  const lowerCurve = buildLipCurve(false, effectiveJawOpen, currentState.smileLeft, currentState.smileRight);
 
   elements.mouth.upperLip.geometry.dispose();
   elements.mouth.upperLip.geometry = new THREE.TubeGeometry(upperCurve, 16, 0.0024, 8, false);
@@ -697,21 +726,19 @@ function updateFaceRig(
   elements.mouth.lowerLip.geometry.dispose();
   elements.mouth.lowerLip.geometry = new THREE.TubeGeometry(lowerCurve, 16, 0.0024, 8, false);
 
-  // P2: Cavidad bucal oscura de fondo
-  const cavityScaleY = 0.2 + currentState.jawOpen * 1.6;
+  const cavityScaleY = 0.2 + effectiveJawOpen * 1.6;
   const cavityScaleZ = 0.95 + smileAvg * 0.15;
   elements.mouth.cavity.scale.set(1.0, cavityScaleY, cavityScaleZ);
-  elements.mouth.cavity.position.y = -0.004 - currentState.jawOpen * 0.008;
+  elements.mouth.cavity.position.y = -0.004 - effectiveJawOpen * 0.008;
 
   // ─────────────────────────────────────────────
-  // 3. CEJAS MEMOJI-LIKE (Fase 4C)
+  // 3. CEJAS MEMOJI-LIKE CON APORTE SONRISA (Fase 4C + F4D)
   // ─────────────────────────────────────────────
-  // P0 Fix: Prioridad de browDown sobre browInnerUp al recibir señales antagónicas
   const effectiveInnerUpL = currentState.browInnerUp * (1.0 - currentState.browDownLeft);
   const effectiveInnerUpR = currentState.browInnerUp * (1.0 - currentState.browDownRight);
 
-  const leftBrowYOffset  = currentState.browUpLeft * 0.014 + effectiveInnerUpL * 0.008 - currentState.browDownLeft * 0.010;
-  const rightBrowYOffset = currentState.browUpRight * 0.014 + effectiveInnerUpR * 0.008 - currentState.browDownRight * 0.010;
+  const leftBrowYOffset  = currentState.browUpLeft * 0.014 + effectiveInnerUpL * 0.008 - currentState.browDownLeft * 0.010 + smileCoordinatedBrowLiftL;
+  const rightBrowYOffset = currentState.browUpRight * 0.014 + effectiveInnerUpR * 0.008 - currentState.browDownRight * 0.010 + smileCoordinatedBrowLiftR;
 
   const leftBrowXOffset  = currentState.browDownLeft * 0.003;
   const rightBrowXOffset = -currentState.browDownRight * 0.003;
