@@ -1285,6 +1285,23 @@ function PulpoModelo({
     if (!grupo.current) return;
     const e = estado.current;
 
+    // Actualizar los Morph Targets inyectados en la malla 3D de Volt
+    if (modeloCentrado && e.facialState) {
+      modeloCentrado.traverse((child) => {
+        const mesh = child as THREE.Mesh;
+        if (mesh.isMesh && mesh.morphTargetDictionary && mesh.morphTargetInfluences) {
+          const dict = mesh.morphTargetDictionary;
+          const inf = mesh.morphTargetInfluences;
+          const fs = e.facialState;
+          if ('jawOpen' in dict) inf[dict['jawOpen']] = fs.jawOpen || 0;
+          if ('smileLeft' in dict) inf[dict['smileLeft']] = fs.smileLeft || 0;
+          if ('smileRight' in dict) inf[dict['smileRight']] = fs.smileRight || 0;
+          if ('blinkLeft' in dict) inf[dict['blinkLeft']] = fs.blinkLeft || 0;
+          if ('blinkRight' in dict) inf[dict['blinkRight']] = fs.blinkRight || 0;
+        }
+      });
+    }
+
     if (faceRigElements && e.facialState && !calibMode) {
       updateFaceRig(faceRigElements, e.facialState, currentFacialState.current, debugFaceRig, e.ready);
     } else if (faceRigElements) {
