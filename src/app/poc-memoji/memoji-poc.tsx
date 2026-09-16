@@ -279,8 +279,8 @@ function PulpoModelo({
   const grupo = useRef<THREE.Group>(null);
   const gltf = useGLTF(MODEL_PATH);
 
-  // Escala para avatar (cabeza + hombros ocupan el 70% del viewport)
-  const ESCALA_AVATAR = 3.2;
+  // Escala para avatar Memoji (cabeza completa + hombros ocupando el ~75% de la altura visible)
+  const ESCALA_AVATAR = 1.75;
 
   const { modeloCentrado, headEncontrado, posHeadLocal } = useMemo(() => {
     const scene = SkeletonUtils.clone(gltf.scene);
@@ -326,10 +326,10 @@ function PulpoModelo({
         name: headBone.name,
       });
 
-      // Mover la escena para que la cabeza (Head bone) quede exactamente en Y ~ 0.1 (ligeramente arriba del centro)
-      // y centrada en X y Z.
+      // Mover la escena para que la cabeza (Head bone) quede en el tercio superior del visor
+      // de modo que la frente/ojos quepan completos y abajo se vean los hombros/pecho.
       scene.position.x = -headPosWorld.x;
-      scene.position.y = -headPosWorld.y + 0.12; // Un ligero offset para ver los hombros abajo
+      scene.position.y = -headPosWorld.y - 0.22;
       scene.position.z = -headPosWorld.z;
     } else {
       console.warn(
