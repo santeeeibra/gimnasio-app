@@ -116,6 +116,7 @@ export function CredencialQRModal({
                     position={[0, 0, 20]}
                     gravity={[0, -40, 0]}
                     frontImage={qrUrl || undefined}
+                    imageFit="contain"
                   />
                 </div>
 
