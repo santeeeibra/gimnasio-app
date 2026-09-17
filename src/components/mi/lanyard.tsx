@@ -217,17 +217,27 @@ function Band({ maxSpeed = 50, minSpeed = 0, frontImage, backImage, imageFit = "
         z: vec.z - (dragged as THREE.Vector3).z,
       });
     }
-    if (fixed.current) {
-      [j1, j2].forEach((ref) => {
-        if (!ref.current.lerped) ref.current.lerped = new THREE.Vector3().copy(ref.current.translation());
-        const clampedDistance = Math.max(0.1, Math.min(1, ref.current.lerped.distanceTo(ref.current.translation())));
-        ref.current.lerped.lerp(ref.current.translation(), delta * (minSpeed + clampedDistance * (maxSpeed - minSpeed)));
+    if (fixed.current && j1.current && j2.current && j3.current && card.current) {
+      [j1, j2, j3].forEach((ref) => {
+        if (ref.current) {
+          const trans = ref.current.translation();
+          if (!ref.current.lerped) {
+            if (trans.x !== 0 || trans.y !== 0 || trans.z !== 0) {
+              ref.current.lerped = new THREE.Vector3(trans.x, trans.y, trans.z);
+            }
+          } else {
+            const clampedDistance = Math.max(0.1, Math.min(1, ref.current.lerped.distanceTo(trans)));
+            ref.current.lerped.lerp(trans, delta * (minSpeed + clampedDistance * (maxSpeed - minSpeed)));
+          }
+        }
       });
-      curve.points[0].copy(j3.current.translation());
-      curve.points[1].copy(j2.current.lerped);
-      curve.points[2].copy(j1.current.lerped);
+      curve.points[0].copy(j3.current.lerped ?? j3.current.translation());
+      curve.points[1].copy(j2.current.lerped ?? j2.current.translation());
+      curve.points[2].copy(j1.current.lerped ?? j1.current.translation());
       curve.points[3].copy(fixed.current.translation());
-      (band.current as any).geometry.setPoints(curve.getPoints(32));
+      if ((band.current as any)?.geometry?.setPoints) {
+        (band.current as any).geometry.setPoints(curve.getPoints(32));
+      }
       ang.copy(card.current.angvel());
       rot.copy(card.current.rotation());
       card.current.setAngvel({ x: ang.x, y: ang.y - rot.y * 0.25, z: ang.z });
