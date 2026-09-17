@@ -44,8 +44,8 @@ export function ActualizadorApp() {
     // Verificación inicial
     verificar();
 
-    // Verificación periódica cada 45 segundos
-    const intervalo = setInterval(verificar, 45000);
+    // Verificación periódica cada 25 segundos
+    const intervalo = setInterval(verificar, 25000);
 
     // Verificación instantánea cuando el usuario vuelve a abrir la app o cambia de pestaña
     function alVolver() {

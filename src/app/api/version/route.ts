@@ -3,24 +3,26 @@ import { execSync } from "child_process";
 
 export const dynamic = "force-dynamic";
 
-let cachedGitCommit: string | null = null;
-
 function getCommit(): string {
+  // 1. Vercel Deployment ID (Único por cada deploy de producción o preview)
+  if (process.env.VERCEL_DEPLOYMENT_ID) {
+    return process.env.VERCEL_DEPLOYMENT_ID;
+  }
+  // 2. Vercel Git Commit SHA (Hash del commit de Git)
   if (process.env.VERCEL_GIT_COMMIT_SHA) {
     return process.env.VERCEL_GIT_COMMIT_SHA.substring(0, 7);
   }
   if (process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA) {
     return process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA.substring(0, 7);
   }
-  if (cachedGitCommit) return cachedGitCommit;
+  // 3. Fallback Git local (Desarrollo local)
   try {
-    cachedGitCommit = execSync("git rev-parse --short HEAD", {
+    return execSync("git rev-parse --short HEAD", {
       encoding: "utf8",
       timeout: 1500,
     }).trim();
-    return cachedGitCommit;
   } catch {
-    return process.env.NODE_ENV === "production" ? "prod-build" : "dev";
+    return process.env.NODE_ENV === "production" ? "prod-dynamic" : "dev";
   }
 }
 
