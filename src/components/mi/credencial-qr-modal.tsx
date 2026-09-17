@@ -111,9 +111,9 @@ export function CredencialQRModal({
 
               {/* Tarjeta contenedora con la Credencial 3D interactiva */}
               <div className="my-4 flex flex-col items-center justify-center rounded-[16px] border border-rule bg-paper p-5 text-center shadow-inner overflow-hidden">
-                <div className="relative w-full h-64 -mt-2 -mb-2">
+                <div className="relative w-full h-72 -mt-2 -mb-2">
                   <Lanyard
-                    position={[0, 0, 13]}
+                    position={[0, 0, 20]}
                     gravity={[0, -40, 0]}
                     frontImage={qrUrl || undefined}
                   />

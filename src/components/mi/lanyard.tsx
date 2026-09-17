@@ -236,10 +236,8 @@ function Band({ maxSpeed = 50, minSpeed = 0, frontImage, backImage, imageFit = "
 
   curve.curveType = "chordal";
 
-  const cardWidth = lanyardWidth ?? 1.6;
-  const cardHeight = cardWidth * 1.125;
-
   const resolvedFrontMap = frontMap ?? materials.base.map;
+  const bandLineWidth = lanyardWidth ?? 1;
 
   return (
     <>
@@ -262,7 +260,7 @@ function Band({ maxSpeed = 50, minSpeed = 0, frontImage, backImage, imageFit = "
         >
           <CuboidCollider args={[0.8, 1.125, 0.01]} />
           <group
-            scale={2.25 * (cardWidth / 1.6)}
+            scale={2.25}
             position={[0, -1.2, -0.05]}
             onPointerOver={() => hover(true)}
             onPointerOut={() => hover(false)}
@@ -292,7 +290,7 @@ function Band({ maxSpeed = 50, minSpeed = 0, frontImage, backImage, imageFit = "
       </group>
       <mesh ref={band}>
         <meshLineGeometry />
-        <meshLineMaterial color="#10e7a0" depthTest={false} resolution={[1000, 1000]} lineWidth={1} />
+        <meshLineMaterial color="#10e7a0" depthTest={false} resolution={[1000, 1000]} lineWidth={bandLineWidth} />
       </mesh>
     </>
   );

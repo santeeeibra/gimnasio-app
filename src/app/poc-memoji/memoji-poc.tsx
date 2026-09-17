@@ -1240,6 +1240,7 @@ function PulpoModelo({
   });
 
   const ESCALA_AVATAR = 2.15;
+  const eyeBonesRef = useRef<{ left: THREE.Bone | null; right: THREE.Bone | null }>({ left: null, right: null });
 
   const { modeloCentrado, faceRigElements } = useMemo(() => {
     const scene = SkeletonUtils.clone(gltf.scene);
@@ -1259,6 +1260,10 @@ function PulpoModelo({
     const headBone = todosLosBones.find(
       (b) => b.name === "Head" || b.name.toLowerCase().includes("head")
     );
+    const eyeBoneL = todosLosBones.find((b) => b.name === "Eye_L");
+    const eyeBoneR = todosLosBones.find((b) => b.name === "Eye_R");
+    if (eyeBoneL) eyeBonesRef.current.left = eyeBoneL;
+    if (eyeBoneR) eyeBonesRef.current.right = eyeBoneR;
 
     let elements: FaceRigElements | null = null;
     const headPosWorld = new THREE.Vector3();
@@ -1281,7 +1286,11 @@ function PulpoModelo({
       loadCalibFromLS(elements);
 
       headBone.add(elements.group);
-      console.log("[PulpoVolt FaceRig] FaceRig creado");
+      // El GLB ya trae el face rig real (shape keys + Eye_L/Eye_R): el rig
+      // procedural queda montado (debug/calibración lo siguen usando) pero
+      // oculto para no duplicar cejas/boca sobre la cara real.
+      elements.group.visible = false;
+      console.log("[PulpoVolt FaceRig] FaceRig creado (oculto, usando morphs reales)");
 
       scene.updateMatrixWorld(true);
       headBone.getWorldPosition(headPosWorld);
@@ -1306,13 +1315,10 @@ function PulpoModelo({
     if (!grupo.current) return;
     const e = estado.current;
 
-    // Morph Targets del GLB (Blender face rig): DESACTIVADOS por ahora.
-    // El FaceRig procedural de abajo (leftEye/rightEye/leftBrow/rightBrow/mouth)
-    // ya cubre ojos/cejas/boca con geometria propia (incluye iris+gaze, Fase 3).
-    // Ambos sistemas moviendose a la vez sobre la misma cara se pisan y rompen
-    // el render (cejas/boca duplicadas, z-fighting). Reactivar esto requiere
-    // primero ocultar el FaceRig procedural equivalente, no antes.
-    if (modeloCentrado && e.facialState && false) {
+    // Morph Targets del GLB (Blender face rig real, 20 shape keys incluyendo
+    // wink/surprised). El FaceRig procedural queda oculto (ver useMemo arriba)
+    // para no duplicar cejas/boca sobre la cara real.
+    if (modeloCentrado && e.facialState) {
       modeloCentrado.traverse((child) => {
         const mesh = child as THREE.Mesh;
         if (mesh.isMesh && mesh.morphTargetDictionary && mesh.morphTargetInfluences) {
@@ -1332,7 +1338,31 @@ function PulpoModelo({
           if ('browDownRight' in dict) inf[dict['browDownRight']] = fs.browDownRight || 0;
           if ('browInnerUp' in dict) inf[dict['browInnerUp']] = fs.browInnerUp || 0;
         }
+        // Los eyeballs postizos (Sclera+Pupil) son rigidos y no se deforman
+        // junto con el parpado/socket: apenas el parpado empieza a cerrar (o
+        // el squint aprieta el ojo) hay que esconderlos, si no el iris queda
+        // flotando fuera del hueco. Umbral bajo (0.25) para que se oculten
+        // bien antes de que la deformacion real se note.
+        const HIDE_START = 0.25;
+        const closureL = Math.max(e.facialState.blinkLeft || 0, (e.facialState.squintLeft || 0) * 0.7);
+        const closureR = Math.max(e.facialState.blinkRight || 0, (e.facialState.squintRight || 0) * 0.7);
+        if (child.name.startsWith("Eyeball_L")) {
+          const t = THREE.MathUtils.clamp((closureL - HIDE_START) / (1 - HIDE_START), 0, 1);
+          child.scale.setScalar(THREE.MathUtils.lerp(1, 0.02, t));
+        } else if (child.name.startsWith("Eyeball_R")) {
+          const t = THREE.MathUtils.clamp((closureR - HIDE_START) / (1 - HIDE_START), 0, 1);
+          child.scale.setScalar(THREE.MathUtils.lerp(1, 0.02, t));
+        }
       });
+
+      // Gaze real: rotar los bones Eye_L/Eye_R segun lookX/lookY.
+      const MAX_EYE_YAW = 0.35;
+      const MAX_EYE_PITCH = 0.22;
+      const gazeYaw = THREE.MathUtils.clamp(e.facialState.lookX || 0, -1, 1) * MAX_EYE_YAW;
+      const gazePitch = THREE.MathUtils.clamp(e.facialState.lookY || 0, -1, 1) * MAX_EYE_PITCH;
+      const { left: eyeL, right: eyeR } = eyeBonesRef.current;
+      if (eyeL) { eyeL.rotation.y = gazeYaw; eyeL.rotation.x = gazePitch; }
+      if (eyeR) { eyeR.rotation.y = gazeYaw; eyeR.rotation.x = gazePitch; }
     }
 
     if (faceRigElements && e.facialState && !calibMode) {
