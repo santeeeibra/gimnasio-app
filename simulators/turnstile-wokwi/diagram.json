@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "author": "SysGym",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": 0, "left": 0, "attrs": {} },
+    { "type": "wokwi-led", "id": "ledGreen", "top": -80, "left": 180, "attrs": { "color": "green", "label": "AUTORIZADO" } },
+    { "type": "wokwi-led", "id": "ledRed", "top": -80, "left": 240, "attrs": { "color": "red", "label": "RECHAZADO" } },
+    { "type": "wokwi-led", "id": "ledEntry", "top": -80, "left": 300, "attrs": { "color": "blue", "label": "OUT ENTRADA" } },
+    { "type": "wokwi-led", "id": "ledExit", "top": -80, "left": 360, "attrs": { "color": "yellow", "label": "OUT SALIDA" } },
+    { "type": "wokwi-resistor", "id": "r1", "top": 40, "left": 170, "rotate": 90, "attrs": { "value": "220" } },
+    { "type": "wokwi-resistor", "id": "r2", "top": 40, "left": 230, "rotate": 90, "attrs": { "value": "220" } },
+    { "type": "wokwi-resistor", "id": "r3", "top": 40, "left": 290, "rotate": 90, "attrs": { "value": "220" } },
+    { "type": "wokwi-resistor", "id": "r4", "top": 40, "left": 350, "rotate": 90, "attrs": { "value": "220" } },
+    { "type": "wokwi-pushbutton", "id": "btnEntry", "top": 180, "left": 180, "attrs": { "color": "blue", "label": "GIRO ENTRADA" } },
+    { "type": "wokwi-pushbutton", "id": "btnExit", "top": 180, "left": 300, "attrs": { "color": "yellow", "label": "GIRO SALIDA" } }
+  ],
+  "connections": [
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+    [ "esp:26", "r1:1", "green", [] ],
+    [ "r1:2", "ledGreen:A", "green", [] ],
+    [ "ledGreen:C", "esp:GND.2", "black", [] ],
+    [ "esp:27", "r2:1", "red", [] ],
+    [ "r2:2", "ledRed:A", "red", [] ],
+    [ "ledRed:C", "esp:GND.2", "black", [] ],
+    [ "esp:25", "r3:1", "blue", [] ],
+    [ "r3:2", "ledEntry:A", "blue", [] ],
+    [ "ledEntry:C", "esp:GND.2", "black", [] ],
+    [ "esp:33", "r4:1", "gold", [] ],
+    [ "r4:2", "ledExit:A", "gold", [] ],
+    [ "ledExit:C", "esp:GND.2", "black", [] ],
+    [ "esp:18", "btnEntry:1.l", "blue", [] ],
+    [ "btnEntry:2.l", "esp:GND.1", "black", [] ],
+    [ "esp:19", "btnExit:1.l", "gold", [] ],
+    [ "btnExit:2.l", "esp:GND.1", "black", [] ]
+  ],
+  "serialMonitor": { "display": "terminal", "newline": "lf", "convertEol": true },
+  "dependencies": {}
+}
