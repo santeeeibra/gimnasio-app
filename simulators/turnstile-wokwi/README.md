@@ -28,7 +28,7 @@ No hace falta ninguna librería externa (no hay `libraries.txt`).
 2. En la pestaña `sketch.ino`, reemplazá todo por el contenido de [`sketch.ino`](sketch.ino).
 3. En la pestaña `diagram.json`, reemplazá todo por el contenido de [`diagram.json`](diagram.json).
 4. Tocá ▶ (Start the simulation). Al arrancar aparece `{"event":"boot","state":"locked"}`.
-5. Escribí los comandos en el monitor serie (abajo del circuito) y presioná Enter.
+5. Escribí los comandos en el campo de entrada del monitor serie (abajo del circuito) y presioná Enter.
 
 Alternativa con VS Code: extensión *Wokwi for VS Code* + compilar con `arduino-cli` (placa `esp32:esp32:esp32`) y agregar un `wokwi.toml` apuntando al `.bin`/`.elf` generado.
 
@@ -68,3 +68,17 @@ No distingue mayúsculas. Un comando desconocido devuelve `{"event":"error",...}
 ## Próximos pasos (fuera de alcance de este PR)
 
 Conectividad (Wi-Fi/MQTT/HTTP), integración con el check-in y el aforo de SysGym.
+
+## Resultados de las pruebas (Wokwi, 2026-09-21)
+
+Firmware compilado localmente (`arduino-cli`, `esp32:esp32:esp32`, core 3.3.12) y cargado en Wokwi web con "Upload Firmware and Start Simulation".
+
+| # | Prueba | Resultado |
+|---|---|---|
+| 1 | Autorizar entrada | ✅ Pasó |
+| 2 | Autorizar salida | ✅ Pasó |
+| 3 | Rechazar ingreso | ✅ Pasó |
+| 4 | Autorizar pero no girar | ✅ Pasó |
+| 5 | Doble pulsación del sensor sin duplicar el paso | ✅ Pasó |
+
+Nota: el monitor serie usa `"display": "always"`; con `"terminal"` no se podían ingresar los comandos correctamente.

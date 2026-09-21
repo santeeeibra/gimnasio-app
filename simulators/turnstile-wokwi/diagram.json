@@ -35,6 +35,6 @@
     [ "esp:19", "btnExit:1.l", "gold", [] ],
     [ "btnExit:2.l", "esp:GND.1", "black", [] ]
   ],
-  "serialMonitor": { "display": "terminal", "newline": "lf", "convertEol": true },
+  "serialMonitor": { "display": "always", "newline": "lf", "convertEol": true },
   "dependencies": {}
 }
