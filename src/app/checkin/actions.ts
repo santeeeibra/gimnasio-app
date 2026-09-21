@@ -9,6 +9,7 @@ import { registrarError } from "@/lib/admin/errores";
 import { verificarPlanGimnasio } from "@/lib/plataforma/plan-gate";
 import { puedeImpersonar } from "@/lib/impersonation";
 import { decidirAcceso } from "@/lib/acceso/decision";
+import { emitirComandoTorniquete } from "@/lib/torniquete/emitir";
 
 export type CheckinState = {
   estado?: "ok" | "prueba_vencida" | "cuota_vencida" | "no_encontrado";
@@ -98,7 +99,11 @@ async function marcarIngresoInterno(
     .eq("dni", dni)
     .maybeSingle();
 
-  if (!perfil) return { estado: "no_encontrado" };
+  if (!perfil) {
+    // DNI inexistente: el torniquete también debe negar, no sólo el kiosko.
+    await emitirComandoTorniquete(dueno.gimnasio_id, "DENY", "no_encontrado");
+    return { estado: "no_encontrado" };
+  }
 
   const { data: cliente } = await supabase
     .from("clientes")
@@ -106,7 +111,10 @@ async function marcarIngresoInterno(
     .eq("profile_id", perfil.id)
     .maybeSingle();
 
-  if (!cliente) return { estado: "no_encontrado" };
+  if (!cliente) {
+    await emitirComandoTorniquete(dueno.gimnasio_id, "DENY", "no_encontrado");
+    return { estado: "no_encontrado" };
+  }
 
   const { count: previos } = await supabase
     .from("registros_entrada")
@@ -124,6 +132,13 @@ async function marcarIngresoInterno(
     pruebaVencida: cliente.en_prueba && !esPrimerIngreso,
     estadoCuota: cliente.estado_cuota,
   });
+
+  // Best-effort: nunca condiciona lo que sigue (ver comentario en emitir.ts).
+  await emitirComandoTorniquete(
+    dueno.gimnasio_id,
+    decision.habilitado ? "OPEN_ENTRY" : "DENY",
+    decision.motivo,
+  );
 
   if (decision.registrarAsistencia) {
     if (clientRef) {
