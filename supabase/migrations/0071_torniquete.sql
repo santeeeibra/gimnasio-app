@@ -43,18 +43,12 @@ create table if not exists comandos_torniquete (
   cerrado boolean
 );
 
--- Índice que soporta la selección atómica: "el pendiente más viejo, no
--- vencido, de este gimnasio".
 create index if not exists comandos_torniquete_pendientes_idx
   on comandos_torniquete (gimnasio_id, estado, creado_en);
 
 alter table dispositivos_torniquete enable row level security;
 alter table comandos_torniquete enable row level security;
 
--- Sólo lectura desde el panel (dueño/staff del gimnasio). El endpoint del
--- ESP32 y el check-in escriben con el cliente admin (service_role), que
--- ignora RLS: la autenticación del dispositivo se valida en código de app
--- contra token_hash, no con una policy de RLS basada en su token.
 drop policy if exists "dispositivos_torniquete_select" on dispositivos_torniquete;
 create policy "dispositivos_torniquete_select" on dispositivos_torniquete
   for select to public
@@ -65,18 +59,6 @@ create policy "comandos_torniquete_select" on comandos_torniquete
   for select to public
   using (gimnasio_id = current_gimnasio_id() and is_staff_o_dueno());
 
--- Entrega atómica de un comando: un mismo comando no puede ser recogido por
--- dos polls concurrentes. El UPDATE con subquery + FOR UPDATE SKIP LOCKED es
--- una única sentencia: sólo un llamador gana la fila, el resto no ve nada
--- (SKIP LOCKED) o ya la encuentra en estado != 'pendiente'.
---
--- Es security definer y sólo la puede ejecutar service_role (ver revoke/grant
--- al final): p_dispositivo_id y p_gimnasio_id no se toman como verdad porque
--- vengan de un caller de confianza, se validan acá adentro contra la tabla
--- de dispositivos (existe, pertenece a ese gimnasio, no está revocado) antes
--- de tocar un solo comando — así una llamada con un par
--- dispositivo/gimnasio que no matchean, o un dispositivo ya revocado, no
--- entrega nada, aunque alguien logre invocar la función directamente.
 create or replace function torniquete_entregar_comando(
   p_dispositivo_id uuid,
   p_gimnasio_id uuid
@@ -97,8 +79,6 @@ begin
     return;
   end if;
 
-  -- Housekeeping oportunista: marcar vencidos antes de elegir, para que no
-  -- queden eternamente en 'pendiente' en un dashboard futuro.
   update comandos_torniquete
   set estado = 'expirado'
   where gimnasio_id = p_gimnasio_id
@@ -124,5 +104,10 @@ begin
 end;
 $$;
 
+-- PostgreSQL concede EXECUTE a PUBLIC por defecto al crear funciones. Revocar
+-- PUBLIC no siempre elimina grants explícitos heredados por roles de API, así
+-- que endurecemos también anon/authenticated: sólo service_role puede llamarla.
 revoke execute on function torniquete_entregar_comando(uuid, uuid) from public;
+revoke execute on function torniquete_entregar_comando(uuid, uuid) from anon;
+revoke execute on function torniquete_entregar_comando(uuid, uuid) from authenticated;
 grant execute on function torniquete_entregar_comando(uuid, uuid) to service_role;
