@@ -1,6 +1,6 @@
 // scripts/test-acceso-turnstile.ts
 // Pruebas de la lógica pura de decisión de acceso (torniquete / check-in).
-// Cero red, cero DB: valida los 4 casos pedidos para feat/turnstile-access-decisions.
+// Cero red, cero DB: valida los 5 casos pedidos para feat/turnstile-access-decisions.
 
 import { decidirAcceso } from "../src/lib/acceso/decision";
 
@@ -37,7 +37,20 @@ console.log(`\n${CIAN}=== TEST: decisiones de acceso (torniquete) ===${RESET}\n`
   assert(r.registrarAsistencia === true, "socio con cuota al día: registra asistencia");
 }
 
-// 2. Cuota vencida -> bloquear, sin registrar asistencia
+// 2. Primer ingreso en día de prueba -> abrir y registrar asistencia
+{
+  const r = decidirAcceso({
+    socioEncontrado: true,
+    enPrueba: true,
+    pruebaVencida: false, // primer uso del día de prueba: todavía no está vencida
+    estadoCuota: null,
+  });
+  assert(r.habilitado === true, "primer ingreso en prueba: habilitado");
+  assert(r.motivo === "ok", "primer ingreso en prueba: motivo ok");
+  assert(r.registrarAsistencia === true, "primer ingreso en prueba: registra asistencia");
+}
+
+// 3. Cuota vencida -> bloquear, sin registrar asistencia
 {
   const r = decidirAcceso({
     socioEncontrado: true,
@@ -50,7 +63,7 @@ console.log(`\n${CIAN}=== TEST: decisiones de acceso (torniquete) ===${RESET}\n`
   assert(r.registrarAsistencia === false, "cuota vencida: NO registra asistencia");
 }
 
-// 3. Prueba vencida -> bloquear, sin registrar asistencia
+// 4. Prueba vencida -> bloquear, sin registrar asistencia
 {
   const r = decidirAcceso({
     socioEncontrado: true,
@@ -63,7 +76,7 @@ console.log(`\n${CIAN}=== TEST: decisiones de acceso (torniquete) ===${RESET}\n`
   assert(r.registrarAsistencia === false, "prueba vencida: NO registra asistencia");
 }
 
-// 4. DNI inexistente -> bloquear, sin registrar asistencia
+// 5. DNI inexistente -> bloquear, sin registrar asistencia
 {
   const r = decidirAcceso({
     socioEncontrado: false,

@@ -176,8 +176,8 @@ async function marcarIngresoInterno(
 
   if (decision.motivo === "prueba_vencida") {
     await enviarPush([dueno.id], {
-      title: "Prueba vencida — falta cobrar",
-      body: `${perfil.nombre} volvió a entrar y sigue en día de prueba.`,
+      title: "Intento bloqueado por prueba vencida",
+      body: `${perfil.nombre} intentó entrar de nuevo y sigue en día de prueba.`,
       url: `/panel/clientes/${cliente.id}`,
       tag: `prueba-vencida-${cliente.id}`,
     });
@@ -185,8 +185,8 @@ async function marcarIngresoInterno(
   }
 
   await enviarPush([dueno.id], {
-    title: "Ingreso con cuota vencida",
-    body: `${perfil.nombre} ingresó al gimnasio con la cuota vencida.`,
+    title: "Intento de ingreso bloqueado por cuota vencida",
+    body: `${perfil.nombre} intentó entrar con la cuota vencida.`,
     url: `/panel/clientes/${cliente.id}`,
     tag: `cuota-vencida-${cliente.id}`,
   });
