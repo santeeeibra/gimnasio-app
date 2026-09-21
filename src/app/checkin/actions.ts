@@ -8,6 +8,7 @@ import { enviarPush } from "@/lib/push/enviar";
 import { registrarError } from "@/lib/admin/errores";
 import { verificarPlanGimnasio } from "@/lib/plataforma/plan-gate";
 import { puedeImpersonar } from "@/lib/impersonation";
+import { decidirAcceso } from "@/lib/acceso/decision";
 
 export type CheckinState = {
   estado?: "ok" | "prueba_vencida" | "cuota_vencida" | "no_encontrado";
@@ -112,74 +113,84 @@ async function marcarIngresoInterno(
     .select("id", { count: "exact", head: true })
     .eq("cliente_id", cliente.id);
 
-  if (clientRef) {
-    // Viene de la cola offline: el `clientRef` es el id que el navegador le
-    // puso al encolarlo, así que reintentar el mismo ítem (reconexión, doble
-    // sincronización) es un no-op gracias al índice único
-    // registros_entrada(cliente_id, client_ref) — no una fila duplicada.
-    await supabase
-      .from("registros_entrada")
-      .upsert(
-        { gimnasio_id: dueno.gimnasio_id, cliente_id: cliente.id, client_ref: clientRef },
-        { onConflict: "cliente_id,client_ref", ignoreDuplicates: true },
-      );
-  } else {
-    // Check-in en vivo, sin clientRef: un doble tap/escaneo repetido en la
-    // misma sesión no tiene id de dedup propio, así que nos apoyamos en la
-    // ventana de tiempo como antes.
-    const { data: ultimoIngreso } = await supabase
-      .from("registros_entrada")
-      .select("creado_en")
-      .eq("cliente_id", cliente.id)
-      .order("creado_en", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    const yaMarcoRecien =
-      !!ultimoIngreso &&
-      Date.now() - new Date(ultimoIngreso.creado_en).getTime() < 2 * 60 * 1000;
-
-    if (!yaMarcoRecien) {
-      await supabase.from("registros_entrada").insert({
-        gimnasio_id: dueno.gimnasio_id,
-        cliente_id: cliente.id,
-      });
-    }
-  }
-
-  revalidatePath("/panel/asistencia");
-  revalidatePath("/panel");
-
   const esPrimerIngreso = (previos ?? 0) === 0;
 
-  if (cliente.en_prueba && esPrimerIngreso && !cliente.prueba_iniciada_en) {
-    await supabase
-      .from("clientes")
-      .update({ prueba_iniciada_en: new Date().toISOString().slice(0, 10) })
-      .eq("id", cliente.id);
+  // Decisión pura (misma regla que va a usar el torniquete): un acceso
+  // bloqueado (cuota vencida, prueba vencida o DNI inexistente) nunca debe
+  // generar un registro de asistencia.
+  const decision = decidirAcceso({
+    socioEncontrado: true,
+    enPrueba: cliente.en_prueba,
+    pruebaVencida: cliente.en_prueba && !esPrimerIngreso,
+    estadoCuota: cliente.estado_cuota,
+  });
+
+  if (decision.registrarAsistencia) {
+    if (clientRef) {
+      // Viene de la cola offline: el `clientRef` es el id que el navegador le
+      // puso al encolarlo, así que reintentar el mismo ítem (reconexión, doble
+      // sincronización) es un no-op gracias al índice único
+      // registros_entrada(cliente_id, client_ref) — no una fila duplicada.
+      await supabase
+        .from("registros_entrada")
+        .upsert(
+          { gimnasio_id: dueno.gimnasio_id, cliente_id: cliente.id, client_ref: clientRef },
+          { onConflict: "cliente_id,client_ref", ignoreDuplicates: true },
+        );
+    } else {
+      // Check-in en vivo, sin clientRef: un doble tap/escaneo repetido en la
+      // misma sesión no tiene id de dedup propio, así que nos apoyamos en la
+      // ventana de tiempo como antes.
+      const { data: ultimoIngreso } = await supabase
+        .from("registros_entrada")
+        .select("creado_en")
+        .eq("cliente_id", cliente.id)
+        .order("creado_en", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const yaMarcoRecien =
+        !!ultimoIngreso &&
+        Date.now() - new Date(ultimoIngreso.creado_en).getTime() < 2 * 60 * 1000;
+
+      if (!yaMarcoRecien) {
+        await supabase.from("registros_entrada").insert({
+          gimnasio_id: dueno.gimnasio_id,
+          cliente_id: cliente.id,
+        });
+      }
+    }
+
+    revalidatePath("/panel/asistencia");
+    revalidatePath("/panel");
+
+    if (cliente.en_prueba && esPrimerIngreso && !cliente.prueba_iniciada_en) {
+      await supabase
+        .from("clientes")
+        .update({ prueba_iniciada_en: new Date().toISOString().slice(0, 10) })
+        .eq("id", cliente.id);
+    }
+
+    return { estado: "ok", nombre: perfil.nombre };
   }
 
-  if (cliente.en_prueba && !esPrimerIngreso) {
+  if (decision.motivo === "prueba_vencida") {
     await enviarPush([dueno.id], {
-      title: "Prueba vencida — falta cobrar",
-      body: `${perfil.nombre} volvió a entrar y sigue en día de prueba.`,
+      title: "Intento bloqueado por prueba vencida",
+      body: `${perfil.nombre} intentó entrar de nuevo y sigue en día de prueba.`,
       url: `/panel/clientes/${cliente.id}`,
       tag: `prueba-vencida-${cliente.id}`,
     });
     return { estado: "prueba_vencida", nombre: perfil.nombre };
   }
 
-  if (cliente.estado_cuota === "vencido") {
-    await enviarPush([dueno.id], {
-      title: "Ingreso con cuota vencida",
-      body: `${perfil.nombre} ingresó al gimnasio con la cuota vencida.`,
-      url: `/panel/clientes/${cliente.id}`,
-      tag: `cuota-vencida-${cliente.id}`,
-    });
-    return { estado: "cuota_vencida", nombre: perfil.nombre };
-  }
-
-  return { estado: "ok", nombre: perfil.nombre };
+  await enviarPush([dueno.id], {
+    title: "Intento de ingreso bloqueado por cuota vencida",
+    body: `${perfil.nombre} intentó entrar con la cuota vencida.`,
+    url: `/panel/clientes/${cliente.id}`,
+    tag: `cuota-vencida-${cliente.id}`,
+  });
+  return { estado: "cuota_vencida", nombre: perfil.nombre };
 }
 
 /**
