@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { Comando } from "@/lib/torniquete/decision";
+import { debeEncolarComando, type Comando } from "@/lib/torniquete/decision";
 
 /**
  * Deja un comando OPEN_ENTRY/DENY para que lo levante el ESP32. Best-effort
@@ -16,6 +16,17 @@ export async function emitirComandoTorniquete(
 ): Promise<void> {
   try {
     const admin = createAdminClient();
+
+    const { data: dispositivo } = await admin
+      .from("dispositivos_torniquete")
+      .select("id")
+      .eq("gimnasio_id", gimnasioId)
+      .is("revocado_en", null)
+      .limit(1)
+      .maybeSingle();
+
+    if (!debeEncolarComando(!!dispositivo)) return;
+
     await admin.from("comandos_torniquete").insert({ gimnasio_id: gimnasioId, comando, motivo });
   } catch {
     // Silencioso a propósito — ver comentario arriba.

@@ -58,6 +58,27 @@ export function verificarAutenticacionDispositivo(
   return { autenticado: true };
 }
 
+export type OrigenCheckin = "vivo" | "sincronizacion_offline";
+
+/**
+ * Sólo el check-in en vivo puede empujar un comando real al molinete. Los
+ * ítems de `marcarIngresosLote` (checkin/actions.ts) ya ocurrieron minutos u
+ * horas atrás mientras el kiosko estaba offline: abrir/negar un molinete
+ * recién ahora, para un evento pasado, no tiene sentido físico.
+ */
+export function debeEmitirTorniquete(origen: OrigenCheckin): boolean {
+  return origen === "vivo";
+}
+
+/**
+ * Sin un dispositivo dado de alta y no revocado para el gimnasio, nadie va a
+ * levantar el comando: no tiene sentido encolarlo (ver `emitir.ts`), sólo
+ * ensuciaría `comandos_torniquete` con filas que van a expirar solas.
+ */
+export function debeEncolarComando(hayDispositivoActivo: boolean): boolean {
+  return hayDispositivoActivo;
+}
+
 export type EstadoComando = "pendiente" | "entregado" | "confirmado" | "expirado";
 
 export type ComandoPendiente = {
@@ -113,4 +134,29 @@ export function puedeConfirmar(
     return { ok: false, motivo: "dispositivo_incorrecto" };
   }
   return { ok: true };
+}
+
+export type PayloadConfirmacion = { giroDetectado: boolean; cerrado: boolean };
+
+export type ResolucionConfirmacion =
+  | { ok: true; actualizar: true; valores: PayloadConfirmacion }
+  | { ok: true; actualizar: false }
+  | { ok: false; motivo: "no_entregado" | "dispositivo_incorrecto" };
+
+/**
+ * Decide qué hacer con un POST de confirmación, payload incluido. Si el
+ * comando ya estaba 'confirmado' (reintento), `actualizar` da false y el
+ * caller no debe tocar la fila — así giro_detectado/cerrado/confirmado_en
+ * quedan tal cual quedaron en la PRIMERA confirmación, sin importar qué
+ * mande el reintento (aunque venga con valores distintos).
+ */
+export function resolverConfirmacion(
+  comando: ComandoEntregado,
+  dispositivoId: string,
+  payload: PayloadConfirmacion,
+): ResolucionConfirmacion {
+  const resultado = puedeConfirmar(comando, dispositivoId);
+  if (!resultado.ok) return resultado;
+  if (comando.estado === "confirmado") return { ok: true, actualizar: false };
+  return { ok: true, actualizar: true, valores: payload };
 }

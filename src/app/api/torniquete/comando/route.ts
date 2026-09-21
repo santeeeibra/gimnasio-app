@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   hashearToken,
-  puedeConfirmar,
+  resolverConfirmacion,
   verificarAutenticacionDispositivo,
   type ComandoEntregado,
 } from "@/lib/torniquete/decision";
@@ -130,25 +130,29 @@ export async function POST(req: NextRequest) {
     estado: comando.estado,
     entregadoA: comando.entregado_a,
   };
-  const resultado = puedeConfirmar(entregado, dispositivo.id);
-  if (!resultado.ok) {
-    return NextResponse.json({ error: resultado.motivo }, { status: 409 });
+  const resolucion = resolverConfirmacion(entregado, dispositivo.id, { giroDetectado, cerrado });
+  if (!resolucion.ok) {
+    return NextResponse.json({ error: resolucion.motivo }, { status: 409 });
   }
 
-  // Confirmación idempotente: si ya estaba confirmado (reintento del mismo
-  // POST) no se pisa confirmado_en, sólo se refrescan giro/cierre con el
-  // mismo valor que ya tenía — un reintento nunca es un error.
+  // Ya estaba confirmado (reintento del mismo POST): ok sin tocar nada.
+  // giro_detectado/cerrado/confirmado_en quedan con el valor de la PRIMERA
+  // confirmación, aunque el reintento traiga un payload distinto.
+  if (!resolucion.actualizar) {
+    return NextResponse.json({ ok: true });
+  }
+
   const { error } = await admin
     .from("comandos_torniquete")
     .update({
       estado: "confirmado",
-      ...(comando.estado === "entregado" ? { confirmado_en: new Date().toISOString() } : {}),
-      giro_detectado: giroDetectado,
-      cerrado,
+      confirmado_en: new Date().toISOString(),
+      giro_detectado: resolucion.valores.giroDetectado,
+      cerrado: resolucion.valores.cerrado,
     })
     .eq("id", comandoId)
     .eq("entregado_a", dispositivo.id)
-    .in("estado", ["entregado", "confirmado"]);
+    .eq("estado", "entregado");
 
   if (error) {
     return NextResponse.json({ error: "No se pudo confirmar" }, { status: 500 });

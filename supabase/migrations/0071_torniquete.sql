@@ -69,6 +69,14 @@ create policy "comandos_torniquete_select" on comandos_torniquete
 -- dos polls concurrentes. El UPDATE con subquery + FOR UPDATE SKIP LOCKED es
 -- una única sentencia: sólo un llamador gana la fila, el resto no ve nada
 -- (SKIP LOCKED) o ya la encuentra en estado != 'pendiente'.
+--
+-- Es security definer y sólo la puede ejecutar service_role (ver revoke/grant
+-- al final): p_dispositivo_id y p_gimnasio_id no se toman como verdad porque
+-- vengan de un caller de confianza, se validan acá adentro contra la tabla
+-- de dispositivos (existe, pertenece a ese gimnasio, no está revocado) antes
+-- de tocar un solo comando — así una llamada con un par
+-- dispositivo/gimnasio que no matchean, o un dispositivo ya revocado, no
+-- entrega nada, aunque alguien logre invocar la función directamente.
 create or replace function torniquete_entregar_comando(
   p_dispositivo_id uuid,
   p_gimnasio_id uuid
@@ -79,6 +87,16 @@ security definer
 set search_path = public
 as $$
 begin
+  if not exists (
+    select 1
+    from dispositivos_torniquete
+    where id = p_dispositivo_id
+      and gimnasio_id = p_gimnasio_id
+      and revocado_en is null
+  ) then
+    return;
+  end if;
+
   -- Housekeeping oportunista: marcar vencidos antes de elegir, para que no
   -- queden eternamente en 'pendiente' en un dashboard futuro.
   update comandos_torniquete
@@ -105,3 +123,6 @@ begin
   returning c.*;
 end;
 $$;
+
+revoke execute on function torniquete_entregar_comando(uuid, uuid) from public;
+grant execute on function torniquete_entregar_comando(uuid, uuid) to service_role;

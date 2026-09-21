@@ -1,3 +1,5 @@
+import "server-only";
+
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generarTokenDispositivo, hashearToken } from "@/lib/torniquete/decision";
 
@@ -25,13 +27,22 @@ export async function crearDispositivoTorniquete(gimnasioId: string, nombre: str
  * Revoca un dispositivo: deja de autenticar en el endpoint del torniquete
  * de inmediato (verificarAutenticacionDispositivo corta apenas ve
  * revocado_en), sin borrar el historial de comandos_torniquete.
+ *
+ * Exige gimnasioId y lo suma al `.eq()` para que un dueño/staff nunca pueda
+ * revocar el dispositivo de otro gimnasio pasando un id ajeno — el llamador
+ * (una futura acción de panel) ya conoce el gimnasio de su propia sesión.
  */
-export async function revocarDispositivoTorniquete(dispositivoId: string) {
+export async function revocarDispositivoTorniquete(gimnasioId: string, dispositivoId: string) {
   const admin = createAdminClient();
-  const { error } = await admin
+  const { data, error } = await admin
     .from("dispositivos_torniquete")
     .update({ revocado_en: new Date().toISOString() })
-    .eq("id", dispositivoId);
+    .eq("id", dispositivoId)
+    .eq("gimnasio_id", gimnasioId)
+    .select("id");
 
   if (error) throw error;
+  if (!data || data.length === 0) {
+    throw new Error("Dispositivo no encontrado para este gimnasio.");
+  }
 }

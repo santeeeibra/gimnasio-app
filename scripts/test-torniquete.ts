@@ -5,10 +5,13 @@
 
 import {
   comandoVencido,
+  debeEmitirTorniquete,
+  debeEncolarComando,
   elegirComandoAEntregar,
   generarTokenDispositivo,
   hashearToken,
   puedeConfirmar,
+  resolverConfirmacion,
   tokenCoincide,
   verificarAutenticacionDispositivo,
   type ComandoPendiente,
@@ -152,6 +155,55 @@ console.log(`\n${CIAN}=== TEST: backend del torniquete ===${RESET}\n`);
   assert(
     !confirmacionSinEntrega.ok && confirmacionSinEntrega.motivo === "no_entregado",
     "confirmar un comando que nunca se entregó: rechazada",
+  );
+}
+
+// 7. Sincronización offline: marcarIngresosLote nunca debe emitir al torniquete
+{
+  assert(debeEmitirTorniquete("vivo") === true, "check-in en vivo: sí emite comando al torniquete");
+  assert(
+    debeEmitirTorniquete("sincronizacion_offline") === false,
+    "sincronización offline (marcarIngresosLote): NUNCA emite comando al torniquete",
+  );
+}
+
+// 8. Gimnasio sin dispositivo activo: no se debe encolar el comando
+{
+  assert(
+    debeEncolarComando(true) === true,
+    "gimnasio con dispositivo activo y no revocado: sí encola el comando",
+  );
+  assert(
+    debeEncolarComando(false) === false,
+    "gimnasio sin dispositivo activo (ninguno dado de alta, o todos revocados): NO encola el comando",
+  );
+}
+
+// 9. Confirmación repetida con valores distintos: no debe pisar lo ya registrado
+{
+  const dispositivoId = "disp-1";
+  const entregado = { estado: "entregado" as const, entregadoA: dispositivoId };
+
+  const primera = resolverConfirmacion(entregado, dispositivoId, {
+    giroDetectado: true,
+    cerrado: true,
+  });
+  assert(
+    primera.ok === true && primera.actualizar === true && primera.valores.giroDetectado === true,
+    "primera confirmación (giro=true, cerrado=true): se debe escribir con esos valores",
+  );
+
+  // El comando ya quedó 'confirmado' tras la primera. El reintento llega con
+  // valores DISTINTOS (p.ej. una lectura de sensor con ruido) — no debe
+  // poder pisar el resultado real ya guardado.
+  const confirmado = { estado: "confirmado" as const, entregadoA: dispositivoId };
+  const reintentoConValoresDistintos = resolverConfirmacion(confirmado, dispositivoId, {
+    giroDetectado: false,
+    cerrado: false,
+  });
+  assert(
+    reintentoConValoresDistintos.ok === true && reintentoConValoresDistintos.actualizar === false,
+    "reintento con giro=false, cerrado=false sobre un comando ya confirmado: ok, pero SIN actualizar nada",
   );
 }
 
