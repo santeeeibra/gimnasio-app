@@ -9,6 +9,8 @@ import { registrarError } from "@/lib/admin/errores";
 import { verificarPlanGimnasio } from "@/lib/plataforma/plan-gate";
 import { puedeImpersonar } from "@/lib/impersonation";
 import { decidirAcceso } from "@/lib/acceso/decision";
+import { emitirComandoTorniquete } from "@/lib/torniquete/emitir";
+import { debeEmitirTorniquete, type OrigenCheckin } from "@/lib/torniquete/decision";
 
 export type CheckinState = {
   estado?: "ok" | "prueba_vencida" | "cuota_vencida" | "no_encontrado";
@@ -40,7 +42,7 @@ export async function marcarIngreso(
   if (!dni) return { error: "Escribí un DNI." };
 
   try {
-    return await marcarIngresoInterno(dueno, dni, clientRef);
+    return await marcarIngresoInterno(dueno, dni, clientRef, { origen: "vivo" });
   } catch (err) {
     // Log para el semáforo de /admin; el flujo sigue igual (se propaga).
     await registrarError(dueno.gimnasio_id, "checkin", err);
@@ -57,6 +59,11 @@ export async function marcarIngreso(
  * sincronización) y el índice único en `registros_entrada(cliente_id,
  * client_ref)` hace que reinsertarlo sea un no-op en vez de una fila
  * repetida. Se procesan en paralelo porque cada ítem es independiente.
+ *
+ * Nunca emite comandos al torniquete: estos check-ins ya ocurrieron minutos
+ * (u horas) atrás mientras el kiosko estaba offline, así que abrir/negar un
+ * molinete ahora no tiene sentido físico — sólo lo hace el check-in en vivo
+ * (`marcarIngreso`).
  */
 export async function marcarIngresosLote(
   items: CheckinLoteItem[],
@@ -68,7 +75,9 @@ export async function marcarIngresosLote(
       const dniLimpio = dni.replace(/\D/g, "").trim();
       if (!dniLimpio) return { clientRef, error: "DNI vacío." };
       try {
-        const resultado = await marcarIngresoInterno(dueno, dniLimpio, clientRef);
+        const resultado = await marcarIngresoInterno(dueno, dniLimpio, clientRef, {
+          origen: "sincronizacion_offline",
+        });
         return { ...resultado, clientRef };
       } catch (err) {
         await registrarError(dueno.gimnasio_id, "checkin", err);
@@ -82,8 +91,14 @@ async function marcarIngresoInterno(
   dueno: Awaited<ReturnType<typeof requireStaffODueno>>,
   dni: string,
   clientRef: string | null = null,
+  { origen }: { origen: OrigenCheckin },
 ): Promise<CheckinState> {
   const supabase = await createClient();
+
+  const torniquete = (comando: Parameters<typeof emitirComandoTorniquete>[1], motivo: string) =>
+    debeEmitirTorniquete(origen)
+      ? emitirComandoTorniquete(dueno.gimnasio_id, comando, motivo)
+      : Promise.resolve();
 
   const infoPlan = await verificarPlanGimnasio(supabase, dueno.gimnasio_id);
   if (!infoPlan.permiteCheckin) {
@@ -98,7 +113,11 @@ async function marcarIngresoInterno(
     .eq("dni", dni)
     .maybeSingle();
 
-  if (!perfil) return { estado: "no_encontrado" };
+  if (!perfil) {
+    // DNI inexistente: el torniquete también debe negar, no sólo el kiosko.
+    await torniquete("DENY", "no_encontrado");
+    return { estado: "no_encontrado" };
+  }
 
   const { data: cliente } = await supabase
     .from("clientes")
@@ -106,7 +125,10 @@ async function marcarIngresoInterno(
     .eq("profile_id", perfil.id)
     .maybeSingle();
 
-  if (!cliente) return { estado: "no_encontrado" };
+  if (!cliente) {
+    await torniquete("DENY", "no_encontrado");
+    return { estado: "no_encontrado" };
+  }
 
   const { count: previos } = await supabase
     .from("registros_entrada")
@@ -124,6 +146,10 @@ async function marcarIngresoInterno(
     pruebaVencida: cliente.en_prueba && !esPrimerIngreso,
     estadoCuota: cliente.estado_cuota,
   });
+
+  // Best-effort: nunca condiciona lo que sigue (ver comentario en emitir.ts).
+  // Sólo para check-in en vivo — la cola offline pasa emitirTorniquete: false.
+  await torniquete(decision.habilitado ? "OPEN_ENTRY" : "DENY", decision.motivo);
 
   if (decision.registrarAsistencia) {
     if (clientRef) {
