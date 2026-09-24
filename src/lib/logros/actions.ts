@@ -2,6 +2,7 @@
 
 import { requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { detectarRecord, calcularRacha } from "./deteccion";
 import type { ResultadoRecord, ResultadoRacha, TipoLogro } from "./tipos";
 
@@ -302,40 +303,54 @@ export async function obtenerRankingAsistencia(): Promise<{
 }> {
   const res = await resolverCliente();
   if (!res) return { ranking: [], miPosicion: null };
-  const { supabase, clienteId, gimnasioId } = res;
+  const { clienteId, gimnasioId } = res;
+  // service_role: la RLS de registros_entrada sólo deja al socio ver sus
+  // propias entradas. gimnasioId sale de la sesión (resolverCliente).
+  const admin = createAdminClient();
 
   const inicioMes = new Date();
   inicioMes.setDate(1);
   inicioMes.setHours(0, 0, 0, 0);
 
-  const { data } = await supabase
+  const { data } = await admin
     .from("registros_entrada")
-    .select("cliente_id, clientes(nombre)")
+    .select("cliente_id")
     .eq("gimnasio_id", gimnasioId)
     .gte("creado_en", inicioMes.toISOString());
 
   if (!data || data.length === 0) return { ranking: [], miPosicion: null };
 
-  const conteoMap: Record<string, { nombre: string; count: number }> = {};
-
-  for (const reg of data as any[]) {
-    const cid = reg.cliente_id;
-    if (!cid) continue;
-    const nombreRaw = Array.isArray(reg.clientes) ? reg.clientes[0] : reg.clientes;
-    const nombre = nombreRaw?.nombre ?? "Socio";
-    if (!conteoMap[cid]) {
-      conteoMap[cid] = { nombre, count: 0 };
-    }
-    conteoMap[cid].count += 1;
+  const conteos: Record<string, number> = {};
+  for (const reg of data as { cliente_id: string | null }[]) {
+    if (!reg.cliente_id) continue;
+    conteos[reg.cliente_id] = (conteos[reg.cliente_id] ?? 0) + 1;
   }
 
-  const ordenados = Object.entries(conteoMap)
-    .map(([cid, info]) => ({
-      clienteId: cid,
-      nombre: info.nombre,
-      asistencias: info.count,
-    }))
-    .sort((a, b) => b.asistencias - a.asistencias);
+  const porConteo = Object.entries(conteos).sort((a, b) => b[1] - a[1]);
+  const idxPropio = porConteo.findIndex(([cid]) => cid === clienteId);
+  const idsVisibles = [
+    ...porConteo.slice(0, 5).map(([cid]) => cid),
+    ...(idxPropio >= 5 ? [clienteId] : []),
+  ];
+
+  // El nombre vive en profiles; se muestra "Nombre I." para no exponer el
+  // apellido completo de otros socios.
+  const { data: clientes } = await admin
+    .from("clientes")
+    .select("id, profile:profiles(nombre)")
+    .in("id", idsVisibles);
+  const nombres: Record<string, string> = {};
+  for (const c of (clientes ?? []) as any[]) {
+    const prof = Array.isArray(c.profile) ? c.profile[0] : c.profile;
+    const [nombre, apellido] = String(prof?.nombre ?? "Socio").trim().split(/\s+/);
+    nombres[c.id] = apellido ? `${nombre} ${apellido[0]}.` : nombre;
+  }
+
+  const ordenados = porConteo.map(([cid, count]) => ({
+    clienteId: cid,
+    nombre: nombres[cid] ?? "Socio",
+    asistencias: count,
+  }));
 
   const ranking = ordenados.slice(0, 5).map((item, index) => ({
     ...item,
@@ -359,7 +374,9 @@ export async function obtenerRankingAsistencia(): Promise<{
 export async function obtenerDesafioMensual(): Promise<DesafioMensual | null> {
   const res = await resolverCliente();
   if (!res) return null;
-  const { supabase, clienteId, gimnasioId } = res;
+  const { clienteId, gimnasioId } = res;
+  // service_role por la RLS de registros_entrada (ver obtenerRankingAsistencia).
+  const supabase = createAdminClient();
 
   const hoy = new Date();
   const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString();
