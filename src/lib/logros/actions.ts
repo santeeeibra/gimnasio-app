@@ -230,6 +230,24 @@ export type LogroFeedItem = {
 };
 
 /** Últimos logros del gimnasio del cliente logueado, con conteo de reacciones. */
+// El nombre vive en profiles; se devuelve "Nombre I." para no exponer el
+// apellido completo de otros socios. Los ids deben venir ya filtrados al
+// gimnasio de la sesión.
+async function nombresCortos(ids: string[]): Promise<Record<string, string>> {
+  if (ids.length === 0) return {};
+  const { data: clientes } = await createAdminClient()
+    .from("clientes")
+    .select("id, profile:profiles(nombre)")
+    .in("id", ids);
+  const nombres: Record<string, string> = {};
+  for (const c of (clientes ?? []) as any[]) {
+    const prof = Array.isArray(c.profile) ? c.profile[0] : c.profile;
+    const [nombre, apellido] = String(prof?.nombre ?? "Socio").trim().split(/\s+/);
+    nombres[c.id] = apellido ? `${nombre} ${apellido[0]}.` : nombre;
+  }
+  return nombres;
+}
+
 export async function obtenerFeedLogrosGimnasio(
   limite = 20,
 ): Promise<LogroFeedItem[]> {
@@ -239,11 +257,15 @@ export async function obtenerFeedLogrosGimnasio(
 
   const { data: logros } = await supabase
     .from("logros_gimnasio")
-    .select("id, cliente_id, tipo_logro, clave_logro, titulo, creado_en, clientes(nombre)")
+    .select("id, cliente_id, tipo_logro, clave_logro, titulo, creado_en")
     .order("creado_en", { ascending: false })
     .limit(limite);
 
   if (!logros || logros.length === 0) return [];
+
+  // RLS ya limita los logros al gimnasio de la sesión; los nombres de otros
+  // socios viven en profiles, que el socio no puede leer.
+  const nombres = await nombresCortos([...new Set(logros.map((l) => l.cliente_id))]);
 
   const { data: reacciones } = await supabase
     .from("reacciones_logro")
@@ -256,7 +278,6 @@ export async function obtenerFeedLogrosGimnasio(
     clave_logro: string;
     titulo: string;
     creado_en: string;
-    clientes: { nombre: string } | { nombre: string }[] | null;
   }>).map((l) => {
     const relacionadas = (reacciones ?? []).filter(
       (r) =>
@@ -264,11 +285,10 @@ export async function obtenerFeedLogrosGimnasio(
         r.tipo_logro === l.tipo_logro &&
         r.clave_logro === l.clave_logro,
     );
-    const nombreRaw = Array.isArray(l.clientes) ? l.clientes[0] : l.clientes;
     return {
       id: l.id,
       clienteId: l.cliente_id,
-      clienteNombre: nombreRaw?.nombre ?? "Un compañero",
+      clienteNombre: nombres[l.cliente_id] ?? "Un compañero",
       tipoLogro: l.tipo_logro,
       claveLogro: l.clave_logro,
       titulo: l.titulo,
@@ -333,18 +353,7 @@ export async function obtenerRankingAsistencia(): Promise<{
     ...(idxPropio >= 5 ? [clienteId] : []),
   ];
 
-  // El nombre vive en profiles; se muestra "Nombre I." para no exponer el
-  // apellido completo de otros socios.
-  const { data: clientes } = await admin
-    .from("clientes")
-    .select("id, profile:profiles(nombre)")
-    .in("id", idsVisibles);
-  const nombres: Record<string, string> = {};
-  for (const c of (clientes ?? []) as any[]) {
-    const prof = Array.isArray(c.profile) ? c.profile[0] : c.profile;
-    const [nombre, apellido] = String(prof?.nombre ?? "Socio").trim().split(/\s+/);
-    nombres[c.id] = apellido ? `${nombre} ${apellido[0]}.` : nombre;
-  }
+  const nombres = await nombresCortos(idsVisibles);
 
   const ordenados = porConteo.map(([cid, count]) => ({
     clienteId: cid,
