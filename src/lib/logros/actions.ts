@@ -2,6 +2,7 @@
 
 import { requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { detectarRecord, calcularRacha } from "./deteccion";
 import type { ResultadoRecord, ResultadoRacha, TipoLogro } from "./tipos";
 
@@ -229,6 +230,24 @@ export type LogroFeedItem = {
 };
 
 /** Últimos logros del gimnasio del cliente logueado, con conteo de reacciones. */
+// El nombre vive en profiles; se devuelve "Nombre I." para no exponer el
+// apellido completo de otros socios. Los ids deben venir ya filtrados al
+// gimnasio de la sesión.
+async function nombresCortos(ids: string[]): Promise<Record<string, string>> {
+  if (ids.length === 0) return {};
+  const { data: clientes } = await createAdminClient()
+    .from("clientes")
+    .select("id, profile:profiles(nombre)")
+    .in("id", ids);
+  const nombres: Record<string, string> = {};
+  for (const c of (clientes ?? []) as any[]) {
+    const prof = Array.isArray(c.profile) ? c.profile[0] : c.profile;
+    const [nombre, apellido] = String(prof?.nombre ?? "Socio").trim().split(/\s+/);
+    nombres[c.id] = apellido ? `${nombre} ${apellido[0]}.` : nombre;
+  }
+  return nombres;
+}
+
 export async function obtenerFeedLogrosGimnasio(
   limite = 20,
 ): Promise<LogroFeedItem[]> {
@@ -238,11 +257,15 @@ export async function obtenerFeedLogrosGimnasio(
 
   const { data: logros } = await supabase
     .from("logros_gimnasio")
-    .select("id, cliente_id, tipo_logro, clave_logro, titulo, creado_en, clientes(nombre)")
+    .select("id, cliente_id, tipo_logro, clave_logro, titulo, creado_en")
     .order("creado_en", { ascending: false })
     .limit(limite);
 
   if (!logros || logros.length === 0) return [];
+
+  // RLS ya limita los logros al gimnasio de la sesión; los nombres de otros
+  // socios viven en profiles, que el socio no puede leer.
+  const nombres = await nombresCortos([...new Set(logros.map((l) => l.cliente_id))]);
 
   const { data: reacciones } = await supabase
     .from("reacciones_logro")
@@ -255,7 +278,6 @@ export async function obtenerFeedLogrosGimnasio(
     clave_logro: string;
     titulo: string;
     creado_en: string;
-    clientes: { nombre: string } | { nombre: string }[] | null;
   }>).map((l) => {
     const relacionadas = (reacciones ?? []).filter(
       (r) =>
@@ -263,11 +285,10 @@ export async function obtenerFeedLogrosGimnasio(
         r.tipo_logro === l.tipo_logro &&
         r.clave_logro === l.clave_logro,
     );
-    const nombreRaw = Array.isArray(l.clientes) ? l.clientes[0] : l.clientes;
     return {
       id: l.id,
       clienteId: l.cliente_id,
-      clienteNombre: nombreRaw?.nombre ?? "Un compañero",
+      clienteNombre: nombres[l.cliente_id] ?? "Un compañero",
       tipoLogro: l.tipo_logro,
       claveLogro: l.clave_logro,
       titulo: l.titulo,
@@ -302,40 +323,43 @@ export async function obtenerRankingAsistencia(): Promise<{
 }> {
   const res = await resolverCliente();
   if (!res) return { ranking: [], miPosicion: null };
-  const { supabase, clienteId, gimnasioId } = res;
+  const { clienteId, gimnasioId } = res;
+  // service_role: la RLS de registros_entrada sólo deja al socio ver sus
+  // propias entradas. gimnasioId sale de la sesión (resolverCliente).
+  const admin = createAdminClient();
 
   const inicioMes = new Date();
   inicioMes.setDate(1);
   inicioMes.setHours(0, 0, 0, 0);
 
-  const { data } = await supabase
+  const { data } = await admin
     .from("registros_entrada")
-    .select("cliente_id, clientes(nombre)")
+    .select("cliente_id")
     .eq("gimnasio_id", gimnasioId)
     .gte("creado_en", inicioMes.toISOString());
 
   if (!data || data.length === 0) return { ranking: [], miPosicion: null };
 
-  const conteoMap: Record<string, { nombre: string; count: number }> = {};
-
-  for (const reg of data as any[]) {
-    const cid = reg.cliente_id;
-    if (!cid) continue;
-    const nombreRaw = Array.isArray(reg.clientes) ? reg.clientes[0] : reg.clientes;
-    const nombre = nombreRaw?.nombre ?? "Socio";
-    if (!conteoMap[cid]) {
-      conteoMap[cid] = { nombre, count: 0 };
-    }
-    conteoMap[cid].count += 1;
+  const conteos: Record<string, number> = {};
+  for (const reg of data as { cliente_id: string | null }[]) {
+    if (!reg.cliente_id) continue;
+    conteos[reg.cliente_id] = (conteos[reg.cliente_id] ?? 0) + 1;
   }
 
-  const ordenados = Object.entries(conteoMap)
-    .map(([cid, info]) => ({
-      clienteId: cid,
-      nombre: info.nombre,
-      asistencias: info.count,
-    }))
-    .sort((a, b) => b.asistencias - a.asistencias);
+  const porConteo = Object.entries(conteos).sort((a, b) => b[1] - a[1]);
+  const idxPropio = porConteo.findIndex(([cid]) => cid === clienteId);
+  const idsVisibles = [
+    ...porConteo.slice(0, 5).map(([cid]) => cid),
+    ...(idxPropio >= 5 ? [clienteId] : []),
+  ];
+
+  const nombres = await nombresCortos(idsVisibles);
+
+  const ordenados = porConteo.map(([cid, count]) => ({
+    clienteId: cid,
+    nombre: nombres[cid] ?? "Socio",
+    asistencias: count,
+  }));
 
   const ranking = ordenados.slice(0, 5).map((item, index) => ({
     ...item,
@@ -359,7 +383,9 @@ export async function obtenerRankingAsistencia(): Promise<{
 export async function obtenerDesafioMensual(): Promise<DesafioMensual | null> {
   const res = await resolverCliente();
   if (!res) return null;
-  const { supabase, clienteId, gimnasioId } = res;
+  const { clienteId, gimnasioId } = res;
+  // service_role por la RLS de registros_entrada (ver obtenerRankingAsistencia).
+  const supabase = createAdminClient();
 
   const hoy = new Date();
   const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString();
