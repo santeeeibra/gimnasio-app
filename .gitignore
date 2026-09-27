@@ -10,3 +10,9 @@ credenciales-locales.md
 build-output.txt
 .cache/
 backups/
+
+# Archivos fuente 3D pesados (Blender/FBX): no son assets que la app
+# cargue en runtime (eso es el .glb) — quedan en local, no en el repo.
+*.blend
+*.blend1
+*.fbx
