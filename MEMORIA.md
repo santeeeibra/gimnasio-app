@@ -158,3 +158,4 @@
 
 
 
+- [2026-09-27] Rol entrenador (paso 3a): migración supabase/migrations/0072_rol_entrenador.sql (rol 'entrenador', clientes.entrenador_id + trigger que valida mismo gym, helpers is_entrenador/es_alumno_mio/es_profile_de_alumno_mio/mi_entrenador_id, RLS: entrenador lee sus alumnos + CRUD de sus rutinas + lee progreso/peso/asistencia; socio ve a su entrenador). Probada en Postgres 16 local con 17 casos. NO aplicada en Supabase todavía. Falta 3b (alta entrenador + asignar desde ficha, con chequeos en código porque muchas actions usan service_role).
