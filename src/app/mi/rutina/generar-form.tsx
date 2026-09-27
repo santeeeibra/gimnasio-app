@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { createPortal } from "react-dom";
 import { Button, Select, linkClasses } from "@/components/ui";
 import { hapticoSeleccion } from "@/lib/ui/hapticos";
 import {
@@ -15,6 +16,7 @@ import {
   Layers,
   Activity,
   X,
+  Check,
   SlidersHorizontal,
 } from "lucide-react";
 import {
@@ -53,6 +55,7 @@ import {
   type Sexo,
 } from "@/lib/rutina/tipos";
 import { TEORIA, type ClaveTeoria } from "@/lib/rutina/teoria";
+import { CuerpoSelector } from "@/components/rutina/cuerpo-selector";
 
 type S = { error?: string; ok?: string };
 
@@ -510,6 +513,9 @@ export function GenerarRutinaForm({
     defaults?.zonasDolor ?? [],
   );
   const [modalOpcionesOpen, setModalOpcionesOpen] = useState(false);
+  const [pasoOpciones, setPasoOpciones] = useState<
+    "entrenar" | "cuidar" | "equipo"
+  >("entrenar");
   const [preferenciaEquipo, setPreferenciaEquipo] = useState<string>(
     defaults?.preferencia ?? PREFS[0],
   );
@@ -644,56 +650,72 @@ export function GenerarRutinaForm({
       {/* INPUTS OCULTOS PARA EL SUBMIT DE NAVEGADOR */}
       <input type="hidden" name="preferencia" value={preferenciaEquipo} />
 
+      {/* Los valores viven en el estado y se envían desde acá: el modal se
+          desmonta al cerrarse, así que sus inputs no llegarían al submit. */}
+      {enfasis.map((e) => (
+        <input key={e} type="hidden" name="enfasis" value={e} />
+      ))}
+      {zonasDolor.map((m) => (
+        <input key={m} type="hidden" name="zonasDolor" value={m} />
+      ))}
+
       <div className="sm:col-span-2">
         <button
           type="button"
           onClick={() => {
             hapticoSeleccion();
+            setPasoOpciones("entrenar");
             setModalOpcionesOpen(true);
           }}
-          className="w-full flex items-center justify-between p-3.5 rounded-[12px] border border-rule bg-paper-2 hover:bg-paper-3 active:scale-[0.99] transition-all text-xs text-ink font-medium"
+          className="w-full flex items-center justify-between gap-3 p-3.5 rounded-[12px] border border-rule bg-paper-2 hover:bg-paper-3 active:scale-[0.99] transition-all text-xs text-ink font-medium"
         >
-          <div className="flex items-center gap-2.5">
-            <SlidersHorizontal className="size-4 text-accent" />
-            <span>Opciones opcionales: Enfoque, molestias y equipamiento</span>
+          <div className="flex min-w-0 items-center gap-2.5">
+            <SlidersHorizontal className="size-4 shrink-0 text-accent" />
+            <span className="truncate">Qué entrenar, zonas a cuidar y equipo</span>
           </div>
-          <div className="flex items-center gap-2">
-            {enfasis.length + zonasDolor.length > 0 ? (
+          <div className="flex shrink-0 items-center gap-1.5">
+            {enfasis.length > 0 ? (
               <span className="px-2 py-0.5 rounded-full bg-accent text-accent-contrast font-bold text-[10px]">
-                {enfasis.length + zonasDolor.length} activos
+                {enfasis.length} a entrenar
               </span>
-            ) : (
+            ) : null}
+            {zonasDolor.length > 0 ? (
+              <span className="px-2 py-0.5 rounded-full border border-warn/50 bg-[color:color-mix(in_srgb,var(--warn)_15%,transparent)] text-ink font-bold text-[10px]">
+                {zonasDolor.length} a cuidar
+              </span>
+            ) : null}
+            {enfasis.length + zonasDolor.length === 0 ? (
               <span className="text-ink-soft text-[11px]">Personalizar</span>
-            )}
+            ) : null}
           </div>
         </button>
       </div>
 
-      {/* MODAL SUPERPUESTO DE OPCIONES */}
-      {modalOpcionesOpen ? (
+      {/* MODAL DE PREFERENCIAS: tres pasos separados (entrenar / cuidar / equipo) */}
+      {modalOpcionesOpen && typeof document !== "undefined" ? createPortal(
         <div
           role="dialog"
           aria-modal="true"
-          aria-label="Opciones opcionales"
+          aria-label="Preferencias de la rutina"
           onClick={() => setModalOpcionesOpen(false)}
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-[color:var(--scrim)] p-3 sm:p-4 backdrop-blur-sm animate-fade-in"
+          className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-[color:var(--scrim)] sm:p-4 backdrop-blur-sm animate-fade-in"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-lg rounded-[22px] border border-rule bg-paper p-5 sm:p-6 shadow-2xl flex flex-col gap-5 max-h-[85vh] overflow-y-auto"
+            className="flex w-full max-w-lg max-h-[92dvh] flex-col overflow-hidden rounded-t-[22px] sm:rounded-[22px] border border-rule bg-paper shadow-2xl animate-slide-up"
           >
-            <div className="flex items-start justify-between gap-3 border-b border-rule pb-3">
+            <div className="flex items-start justify-between gap-3 px-5 pt-4">
               <div>
                 <h2 className="text-lg font-bold text-ink leading-tight">
-                  Preferencias opcionales
+                  Personalizá tu rutina
                 </h2>
                 <p className="text-xs text-ink-soft mt-0.5">
-                  Ajustá la zona a enfocar, molestias articulares y equipo disponible.
+                  Todo es opcional. Podés cambiarlo cuando quieras.
                 </p>
               </div>
-
               <button
                 type="button"
+                aria-label="Cerrar"
                 onClick={() => setModalOpcionesOpen(false)}
                 className="size-9 shrink-0 inline-flex items-center justify-center rounded-[10px] border border-rule bg-paper-2 text-ink-soft hover:text-ink hover:bg-paper active:scale-90 transition-all"
               >
@@ -701,101 +723,223 @@ export function GenerarRutinaForm({
               </button>
             </div>
 
-            <fieldset className="space-y-2">
-              <legend className="text-[13px] font-semibold text-ink mb-1.5">
-                Zona a enfocar{" "}
-                <span className="font-normal text-ink-soft/70 text-xs">
-                  (hasta {MAX_ENFASIS})
-                </span>
-              </legend>
-              <div className="flex flex-wrap gap-2">
-                {ENFASIS.map((e) => {
-                  const on = enfasis.includes(e);
-                  return (
-                    <label key={e} className="cursor-pointer touch-manipulation">
-                      <input
-                        type="checkbox"
-                        name="enfasis"
-                        value={e}
-                        checked={on}
-                        onChange={() => toggleEnfasis(e)}
-                        className="peer sr-only"
-                      />
-                      <span className="inline-flex h-10 items-center rounded-[8px] border border-rule px-3 text-xs font-medium transition-colors peer-checked:border-accent peer-checked:bg-accent peer-checked:text-accent-contrast">
-                        {ENFASIS_LABEL[e]}
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
-              <p className="text-xs text-ink-soft">
-                Se agregan series extra para esa zona muscular.
-              </p>
-            </fieldset>
-
-            <fieldset className="space-y-2">
-              <legend className="text-[13px] font-semibold text-ink mb-1.5">
-                Evitar dolor en{" "}
-                <span className="font-normal text-ink-soft/70 text-xs">
-                  (molestias articulares)
-                </span>
-              </legend>
-              <div className="flex flex-wrap gap-2">
-                {MOLESTIAS.map((m) => {
-                  const on = zonasDolor.includes(m);
-                  return (
-                    <label key={m} className="cursor-pointer touch-manipulation">
-                      <input
-                        type="checkbox"
-                        name="zonasDolor"
-                        value={m}
-                        checked={on}
-                        onChange={() => toggleDolor(m)}
-                        className="peer sr-only"
-                      />
-                      <span className="inline-flex h-10 items-center rounded-[8px] border border-rule px-3 text-xs font-medium transition-colors peer-checked:border-danger peer-checked:bg-[color:var(--danger-weak)] peer-checked:text-ink">
-                        {MOLESTIA_LABEL[m]}
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
-              <p className="text-xs text-ink-soft">
-                Sacamos del plan los ejercicios que cargan esa articulación.
-              </p>
-            </fieldset>
-
-            <fieldset className="space-y-2">
-              <legend className="text-[13px] font-semibold text-ink mb-1.5">
-                Equipamiento disponible
-              </legend>
-              <div className="flex flex-wrap gap-2">
-                {PREFS.map((p) => (
+            {/* Pasos */}
+            <div
+              role="tablist"
+              aria-label="Secciones"
+              className="mx-5 mt-3 grid grid-cols-3 gap-1 rounded-[12px] border border-rule bg-paper-2 p-1"
+            >
+              {(
+                [
+                  ["entrenar", "1 · Entrenar", enfasis.length],
+                  ["cuidar", "2 · Cuidar", zonasDolor.length],
+                  ["equipo", "3 · Equipo", 0],
+                ] as const
+              ).map(([id, label, n]) => {
+                const on = pasoOpciones === id;
+                return (
                   <button
-                    key={p}
+                    key={id}
                     type="button"
-                    onClick={() => setPreferenciaEquipo(p)}
-                    className={`inline-flex h-10 items-center rounded-[8px] border px-3 text-xs font-medium transition-all ${
-                      preferenciaEquipo === p
-                        ? "border-ink bg-ink text-paper"
-                        : "border-rule bg-paper-2 text-ink hover:bg-paper-3"
+                    role="tab"
+                    aria-selected={on}
+                    onClick={() => {
+                      hapticoSeleccion();
+                      setPasoOpciones(id);
+                    }}
+                    className={`relative inline-flex h-9 items-center justify-center gap-1 rounded-[9px] text-[12px] font-semibold transition-[background-color,color,transform] duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] ${
+                      on ? "bg-paper text-ink shadow-sm" : "text-ink-soft"
                     }`}
                   >
-                    {PREFERENCIA_EQUIPO_LABEL[p]}
+                    {label}
+                    {n > 0 ? (
+                      <span
+                        className={`grid size-4 place-items-center rounded-full text-[9px] font-bold ${
+                          id === "cuidar"
+                            ? "bg-warn text-paper"
+                            : "bg-accent text-accent-contrast"
+                        }`}
+                      >
+                        {n}
+                      </span>
+                    ) : null}
                   </button>
-                ))}
-              </div>
-            </fieldset>
+                );
+              })}
+            </div>
 
-            <button
-              type="button"
-              onClick={() => setModalOpcionesOpen(false)}
-              className="w-full h-11 rounded-[12px] bg-accent text-accent-contrast text-sm font-semibold hover:opacity-95 transition-opacity mt-2"
-            >
-              Listo
-            </button>
+            <div className="flex-1 overflow-y-auto overscroll-contain px-5 pb-4 pt-4">
+              {pasoOpciones === "entrenar" ? (
+                <section key="entrenar" className="space-y-3 animate-fade-in">
+                  <div>
+                    <h3 className="text-[15px] font-semibold text-ink">
+                      ¿Qué querés entrenar más?
+                    </h3>
+                    <p className="text-xs text-ink-soft">
+                      Elegí hasta {MAX_ENFASIS} grupos musculares ({enfasis.length}/{MAX_ENFASIS}).
+                      Les sumamos series extra.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {ENFASIS.map((e) => {
+                      const on = enfasis.includes(e);
+                      const lleno = !on && enfasis.length >= MAX_ENFASIS;
+                      return (
+                        <button
+                          key={e}
+                          type="button"
+                          aria-pressed={on}
+                          disabled={lleno}
+                          onClick={() => {
+                            hapticoSeleccion();
+                            toggleEnfasis(e);
+                          }}
+                          className={`inline-flex h-10 items-center gap-1.5 rounded-[10px] border px-3.5 text-xs font-semibold transition-[background-color,border-color,color,opacity,transform] duration-150 active:scale-[0.97] disabled:opacity-40 ${
+                            on
+                              ? "border-accent bg-accent text-accent-contrast"
+                              : "border-rule bg-paper-2 text-ink"
+                          }`}
+                        >
+                          {on ? <Check aria-hidden className="size-3.5" /> : null}
+                          {ENFASIS_LABEL[e]}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </section>
+              ) : null}
+
+              {pasoOpciones === "cuidar" ? (
+                <section key="cuidar" className="space-y-3 animate-fade-in">
+                  <div>
+                    <h3 className="text-[15px] font-semibold text-ink">
+                      Zonas sensibles o con molestias
+                    </h3>
+                    <p className="text-xs text-ink-soft">
+                      Tocá los puntos del cuerpo o elegí una zona de la lista.
+                    </p>
+                  </div>
+
+                  <div className="rounded-[16px] border border-rule bg-paper-2/60 px-1 py-2">
+                    <CuerpoSelector
+                      modo="dolor"
+                      seleccion={zonasDolor}
+                      onToggle={toggleDolor}
+                    />
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {MOLESTIAS.map((m) => {
+                      const on = zonasDolor.includes(m);
+                      return (
+                        <button
+                          key={m}
+                          type="button"
+                          aria-pressed={on}
+                          onClick={() => {
+                            hapticoSeleccion();
+                            toggleDolor(m);
+                          }}
+                          className={`inline-flex h-10 items-center gap-1.5 rounded-[10px] border px-3 text-xs font-semibold transition-[background-color,border-color,transform] duration-150 active:scale-[0.97] ${
+                            on
+                              ? "border-warn bg-[color:color-mix(in_srgb,var(--warn)_16%,transparent)] text-ink"
+                              : "border-rule bg-paper-2 text-ink"
+                          }`}
+                        >
+                          {on ? <Check aria-hidden className="size-3.5 text-warn" /> : null}
+                          {MOLESTIA_LABEL[m]}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <p className="rounded-[12px] border border-rule bg-paper-2 px-3 py-2.5 text-xs leading-snug text-ink-soft">
+                    Vamos a priorizar alternativas y reducir los ejercicios que
+                    puedan cargar estas zonas.{" "}
+                    <strong className="text-ink">Si algo te molesta, no lo hagas</strong>{" "}
+                    y consultá con tu profe o un profesional de la salud.
+                  </p>
+                </section>
+              ) : null}
+
+              {pasoOpciones === "equipo" ? (
+                <section key="equipo" className="space-y-3 animate-fade-in">
+                  <div>
+                    <h3 className="text-[15px] font-semibold text-ink">
+                      ¿Con qué equipo contás?
+                    </h3>
+                    <p className="text-xs text-ink-soft">
+                      Priorizamos ejercicios con ese equipamiento.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {PREFS.map((p) => (
+                      <button
+                        key={p}
+                        type="button"
+                        aria-pressed={preferenciaEquipo === p}
+                        onClick={() => {
+                          hapticoSeleccion();
+                          setPreferenciaEquipo(p);
+                        }}
+                        className={`inline-flex h-10 items-center rounded-[10px] border px-3.5 text-xs font-semibold transition-[background-color,border-color,color,transform] duration-150 active:scale-[0.97] ${
+                          preferenciaEquipo === p
+                            ? "border-ink bg-ink text-paper"
+                            : "border-rule bg-paper-2 text-ink"
+                        }`}
+                      >
+                        {PREFERENCIA_EQUIPO_LABEL[p]}
+                      </button>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
+            </div>
+
+            {/* Lo seleccionado como etiquetas que se quitan + acción fija abajo */}
+            <div className="border-t border-rule bg-paper px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
+              {enfasis.length + zonasDolor.length > 0 ? (
+                <div className="mb-2.5 flex flex-wrap gap-1.5" aria-label="Seleccionado">
+                  {enfasis.map((e) => (
+                    <button
+                      key={e}
+                      type="button"
+                      onClick={() => toggleEnfasis(e)}
+                      aria-label={`Quitar ${ENFASIS_LABEL[e]}`}
+                      className="inline-flex h-7 items-center gap-1 rounded-full bg-accent px-2.5 text-[11px] font-semibold text-accent-contrast transition-transform active:scale-[0.96]"
+                    >
+                      {ENFASIS_LABEL[e]} <X aria-hidden className="size-3" />
+                    </button>
+                  ))}
+                  {zonasDolor.map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => toggleDolor(m)}
+                      aria-label={`Quitar ${MOLESTIA_LABEL[m]}`}
+                      className="inline-flex h-7 items-center gap-1 rounded-full border border-warn/60 bg-[color:color-mix(in_srgb,var(--warn)_16%,transparent)] px-2.5 text-[11px] font-semibold text-ink transition-transform active:scale-[0.96]"
+                    >
+                      {MOLESTIA_LABEL[m]} <X aria-hidden className="size-3" />
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+              <button
+                type="button"
+                onClick={() => {
+                  hapticoSeleccion();
+                  if (pasoOpciones === "entrenar") setPasoOpciones("cuidar");
+                  else if (pasoOpciones === "cuidar") setPasoOpciones("equipo");
+                  else setModalOpcionesOpen(false);
+                }}
+                className="h-12 w-full rounded-[12px] bg-accent text-sm font-semibold text-accent-contrast transition-transform active:scale-[0.99]"
+              >
+                {pasoOpciones === "equipo" ? "Guardar cambios" : "Continuar"}
+              </button>
+            </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       ) : null}
 
       {mostrarAvanzado ? (

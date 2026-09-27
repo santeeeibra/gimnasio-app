@@ -27,6 +27,7 @@ import { WarmupGeneralCard } from "@/components/rutinas/warmup-general-card";
 const campoCls =
   "h-11 rounded-[10px] border border-rule bg-paper text-[16px] outline-none transition-[border-color] duration-150 [transition-timing-function:var(--ease-out)] focus:border-ink";
 import { editarItem, editarTecnica, sustituirEjercicio } from "./actions";
+import { ExplorarPorMusculo } from "@/components/rutina/explorar-por-musculo";
 import { obtenerTipsTecnica } from "./asistente-actions";
 import { StickyProgresoDia } from "@/components/rutinas/sticky-progreso-dia";
 import { LogroDiaCompletado } from "@/components/rutinas/logro-dia-completado";
@@ -559,6 +560,19 @@ export function RutinaEditor({
         ) : (
           <span />
         )}
+        <div className="flex shrink-0 items-center gap-2">
+        {creadoPor === "cliente" && !zenMode && diaActivo ? (
+          <ExplorarPorMusculo
+            ejercicios={ejercicios}
+            dia={{
+              numero: diaActivo.numero,
+              titulo: diaActivo.titulo,
+              ejercicioIds: diaActivo.items
+                .map((it) => it.ejercicio?.id)
+                .filter((x): x is string => Boolean(x)),
+            }}
+          />
+        ) : null}
         <button
           type="button"
           onClick={toggleZenMode}
@@ -573,6 +587,7 @@ export function RutinaEditor({
           {zenMode ? <Sun className="size-4 animate-spin-slow" /> : <Focus className="size-4" />}
           <span>{zenMode ? "☀️ Foco Gym Activo" : "Modo Foco Gym"}</span>
         </button>
+        </div>
       </div>
       {zenMode ? (
         <div className="-mt-2 flex items-center gap-2 rounded-xl border border-accent/40 bg-accent/10 px-3.5 py-2 text-xs font-medium text-ink shadow-[0_0_12px_rgba(16,231,160,0.1)]">

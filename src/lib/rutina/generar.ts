@@ -8,7 +8,41 @@ import { explicarGeneral, explicarPlan } from "./explicar";
 import type { Ejercicio, EntradaMotor } from "./tipos";
 import { registrarError } from "@/lib/admin/errores";
 
-type Resultado = { error?: string; ok?: string; rutinaId?: string };
+type Resultado = {
+  error?: string;
+  ok?: string;
+  rutinaId?: string;
+  /** Ejercicios que cambiaron por las zonas sensibles marcadas. */
+  ajustadosPorMolestias?: number;
+};
+
+// Cuenta cuántos ejercicios difieren respecto del mismo plan (misma seed) sin
+// molestias. El motor es puro y determinista, así que la comparación es exacta.
+function contarAjustesPorMolestias(
+  entrada: EntradaMotor,
+  ejercicios: Ejercicio[],
+  plan: ReturnType<typeof generarPlan>,
+): number {
+  const hayMolestias =
+    (entrada.zonasDolor?.length ?? 0) > 0 ||
+    (entrada.avanzado?.evitar?.length ?? 0) > 0;
+  if (!hayMolestias) return 0;
+  const base = generarPlan(
+    {
+      ...entrada,
+      zonasDolor: [],
+      avanzado: entrada.avanzado ? { ...entrada.avanzado, evitar: [] } : entrada.avanzado,
+    },
+    ejercicios,
+  );
+  let cambios = 0;
+  plan.dias.forEach((dia, di) => {
+    dia.items.forEach((it, oi) => {
+      if (base.dias[di]?.items[oi]?.ejercicio_slug !== it.ejercicio_slug) cambios++;
+    });
+  });
+  return cambios;
+}
 
 export async function generarYGuardar(
   supabase: SupabaseClient,
@@ -44,6 +78,7 @@ async function generarYGuardarInterno(
   }
 
   const plan = generarPlan(entrada, ejercicios);
+  const ajustadosPorMolestias = contarAjustesPorMolestias(entrada, ejercicios, plan);
   const explicacion = explicarPlan(plan, plan.entrada, ejercicios);
   const explicacionGeneral = explicarGeneral(plan.entrada);
   const porSlug = new Map(ejercicios.filter((e) => e.slug).map((e) => [e.slug!, e.id]));
@@ -143,5 +178,5 @@ async function generarYGuardarInterno(
     }
   }
 
-  return { ok: "Rutina generada.", rutinaId };
+  return { ok: "Rutina generada.", rutinaId, ajustadosPorMolestias };
 }

@@ -165,7 +165,13 @@ async function generarComun(
 
   revalidatePath("/mi/rutina");
   revalidatePath("/mi");
-  return { ok: "Rutina lista." };
+  const n = res.ajustadosPorMolestias ?? 0;
+  return {
+    ok:
+      n > 0
+        ? `Rutina lista. Se ${n === 1 ? "ajustó 1 ejercicio" : `ajustaron ${n} ejercicios`} por las zonas que marcaste.`
+        : "Rutina lista.",
+  };
 }
 
 export async function generarMiRutina(
@@ -413,6 +419,68 @@ export async function sustituirEjercicio(
 
   revalidatePath("/mi/rutina");
   return { ok: "Ejercicio cambiado." };
+}
+
+// Selector por músculo: suma un ejercicio al final de un día de la rutina
+// actual, con series/reps estándar (3 × 8–12) que el socio ajusta después.
+export async function agregarEjercicioADia(
+  dia: number,
+  ejercicioId: string,
+): Promise<RutinaState> {
+  const { supabase, cliente } = await clienteActual();
+  if (!cliente) return { error: "No encontramos tu ficha de cliente." };
+
+  const { data: rutina } = await supabase
+    .from("rutinas")
+    .select("id, dias_por_semana")
+    .eq("cliente_id", cliente.id)
+    .maybeSingle();
+  if (!rutina) return { error: "Primero generá tu rutina." };
+
+  const maxDia = (rutina.dias_por_semana as number | null) ?? MAX_DIAS_MANUAL;
+  if (!Number.isInteger(dia) || dia < 1 || dia > maxDia) {
+    return { error: "Día inválido." };
+  }
+
+  const { data: ej } = await supabase
+    .from("ejercicios")
+    .select("id")
+    .eq("id", ejercicioId)
+    .maybeSingle();
+  if (!ej) return { error: "Ese ejercicio no existe." };
+
+  const { data: items, error: itemsErr } = await supabase
+    .from("rutina_items")
+    .select("orden, ejercicio_id")
+    .eq("rutina_id", rutina.id)
+    .eq("dia", dia);
+  if (itemsErr) return { error: "No se pudo leer el día." };
+
+  const actuales = items ?? [];
+  if (actuales.some((i) => i.ejercicio_id === ejercicioId)) {
+    return { error: "Ese ejercicio ya está en este día." };
+  }
+  if (actuales.length >= MAX_EJERCICIOS_DIA) {
+    return { error: `Máximo ${MAX_EJERCICIOS_DIA} ejercicios por día.` };
+  }
+
+  const orden =
+    actuales.reduce((m, i) => Math.max(m, Number(i.orden) || 0), -1) + 1;
+
+  const { error } = await supabase.from("rutina_items").insert({
+    rutina_id: rutina.id,
+    ejercicio_id: ejercicioId,
+    dia,
+    orden,
+    series: 3,
+    repeticiones: "8–12",
+    nota: "",
+    tecnica: null,
+  });
+  if (error) return { error: "No se pudo agregar el ejercicio." };
+
+  revalidatePath("/mi/rutina");
+  return { ok: "Agregado." };
 }
 
 export async function aceptarRutinaExpressRetencion(avisoId: string): Promise<{ error?: string; ok?: string }> {
