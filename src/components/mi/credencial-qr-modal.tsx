@@ -7,7 +7,11 @@ import QRCode from "qrcode";
 import { QrCode, X, ShieldCheck, Dumbbell, Sparkles } from "lucide-react";
 import { hapticoExito, hapticoModalAbrir, hapticoModalCerrar } from "@/lib/ui/hapticos";
 
-const Lanyard = dynamic(() => import("./lanyard"), { ssr: false });
+// El import dispara también la precarga del GLB, la textura y el WASM de
+// física (ver lanyard.tsx). Se llama en idle y al apoyar el dedo en el botón,
+// para que al abrir el modal la animación arranque sin esperar descargas.
+const cargarLanyard = () => import("./lanyard");
+const Lanyard = dynamic(cargarLanyard, { ssr: false });
 
 type CredencialQRModalProps = {
   nombre: string;
@@ -31,9 +35,19 @@ export function CredencialQRModal({
   const [abierto, setAbierto] = useState(false);
   const [qrUrl, setQrUrl] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  // Hasta el primer frame del 3D se muestra la credencial estática, así el
+  // modal nunca aparece vacío mientras se crea el contexto WebGL.
+  const [listo3d, setListo3d] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+    const precargar = () => void cargarLanyard().catch(() => {});
+    if ("requestIdleCallback" in window) {
+      const id = window.requestIdleCallback(precargar, { timeout: 4000 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const t = setTimeout(precargar, 2000);
+    return () => clearTimeout(t);
   }, []);
 
   useEffect(() => {
@@ -54,6 +68,7 @@ export function CredencialQRModal({
 
   const toggleModal = () => {
     if (!abierto) {
+      setListo3d(false);
       hapticoModalAbrir();
       hapticoExito();
     } else {
@@ -75,6 +90,7 @@ export function CredencialQRModal({
       <button
         type="button"
         onClick={toggleModal}
+        onPointerDown={() => void cargarLanyard().catch(() => {})}
         aria-label="Abrir mi QR de Ingreso al gimnasio"
         title="Mi QR de Ingreso"
         className={`${defaultClasses} ${className}`}
@@ -112,12 +128,31 @@ export function CredencialQRModal({
               {/* Tarjeta contenedora con la Credencial 3D interactiva */}
               <div className="my-4 flex flex-col items-center justify-center rounded-[16px] border border-rule bg-paper p-5 text-center shadow-inner overflow-hidden">
                 <div className="relative w-full h-72 -mt-2 -mb-2">
-                  <Lanyard
-                    position={[0, 0, 20]}
-                    gravity={[0, -40, 0]}
-                    frontImage={qrUrl || undefined}
-                    imageFit="contain"
-                  />
+                  <div
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0 flex flex-col items-center transition-opacity duration-300 [transition-timing-function:var(--ease-out)]"
+                    style={{ opacity: listo3d ? 0 : 1 }}
+                  >
+                    <div className="h-28 w-2 rounded-b-sm bg-ink" />
+                    <div className="-mt-1 grid size-24 place-items-center rounded-[6px] border border-rule bg-white p-2 shadow-md">
+                      {qrUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={qrUrl} alt="" className="size-full" />
+                      ) : null}
+                    </div>
+                  </div>
+                  <div
+                    className="absolute inset-0 transition-opacity duration-300 [transition-timing-function:var(--ease-out)]"
+                    style={{ opacity: listo3d ? 1 : 0 }}
+                  >
+                    <Lanyard
+                      position={[0, 0, 20]}
+                      gravity={[0, -40, 0]}
+                      frontImage={qrUrl || undefined}
+                      imageFit="contain"
+                      onListo={() => setListo3d(true)}
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-1 mt-2">

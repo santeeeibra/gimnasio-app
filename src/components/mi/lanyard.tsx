@@ -42,6 +42,8 @@ type LanyardProps = {
   imageFit?: "cover" | "contain";
   lanyardImage?: string | null;
   lanyardWidth?: number;
+  /** Se llama en el primer frame con física y texturas listas. */
+  onListo?: () => void;
 };
 
 export default function Lanyard({
@@ -54,6 +56,7 @@ export default function Lanyard({
   imageFit = "cover",
   lanyardImage = null,
   lanyardWidth = 1,
+  onListo,
 }: LanyardProps) {
   const [isMobile, setIsMobile] = useState(() => typeof window !== "undefined" && window.innerWidth < 768);
 
@@ -80,6 +83,7 @@ export default function Lanyard({
             imageFit={imageFit}
             lanyardImage={lanyardImage}
             lanyardWidth={lanyardWidth}
+            onListo={onListo}
           />
         </Physics>
         <Environment blur={0.75}>
@@ -126,6 +130,7 @@ type BandProps = {
   imageFit?: "cover" | "contain";
   lanyardImage?: string | null;
   lanyardWidth?: number;
+  onListo?: () => void;
 };
 
 function Band({
@@ -137,8 +142,10 @@ function Band({
   imageFit = "cover",
   lanyardImage = null,
   lanyardWidth = 1,
+  onListo,
 }: BandProps) {
   const band = useRef<THREE.Mesh>(null);
+  const avisado = useRef(false);
   const fixed = useRef<any>(null);
   const j1 = useRef<any>(null);
   const j2 = useRef<any>(null);
@@ -248,6 +255,10 @@ function Band({
   }, [hovered, dragged]);
 
   useFrame((state, delta) => {
+    if (!avisado.current) {
+      avisado.current = true;
+      onListo?.();
+    }
     if (dragged) {
       vec.set(state.pointer.x, state.pointer.y, 0.5).unproject(state.camera);
       dir.copy(vec).sub(state.camera.position).normalize();
@@ -350,3 +361,13 @@ function Band({
 }
 
 useGLTF.preload(CARD_GLB);
+useTexture.preload(LANYARD_TEXTURE);
+
+// Precalienta la física: <Physics> hace import + init() del WASM de rapier
+// recién al montarse, y eso retrasaba el arranque de la animación. init() es
+// idempotente, así que compilarlo acá (al importar este módulo) lo deja listo.
+if (typeof window !== "undefined") {
+  void import("@dimforge/rapier3d-compat")
+    .then((r) => r.init())
+    .catch(() => {});
+}
