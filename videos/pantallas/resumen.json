@@ -1,0 +1,22 @@
+[
+  {
+    "clip": "01-aforo.mp4",
+    "ok": true,
+    "nota": "6.5s, 334 frames"
+  },
+  {
+    "clip": "02-pago-cuota.mp4",
+    "ok": true,
+    "nota": "17.6s, 767 frames"
+  },
+  {
+    "clip": "04-push-cerrado.mp4",
+    "ok": true,
+    "nota": "7.3s, 179 frames"
+  },
+  {
+    "clip": "08-ranking.mp4",
+    "ok": true,
+    "nota": "9.4s, 568 frames"
+  }
+]

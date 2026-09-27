@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>Reels SysGym</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#07090d;--txt:#f2f5f7;--mut:#8b96a3;--v:#10e7a0;--red:#ff4d5e}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:transparent;font-family:"Inter Tight","Segoe UI",sans-serif;color:var(--txt)}
+section{width:1080px;position:relative;overflow:hidden;margin-bottom:40px}
+.full{height:1920px;background:var(--bg);padding:0 90px}
+.full::before{content:"";position:absolute;inset:0;background:
+ radial-gradient(1000px 800px at 85% -5%,rgba(16,231,160,.18),transparent 60%),
+ linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px) 0 0/54px 54px,
+ linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px) 0 0/54px 54px}
+.full>*{position:relative}
+.bezel{position:absolute;left:196px;top:366px;width:688px;height:1456px;border-radius:78px;background:#1b222c;box-shadow:0 0 0 2px #2c3642,0 50px 140px rgba(0,0,0,.7),0 0 160px rgba(16,231,160,.14)}
+.cap{height:366px;display:flex;align-items:center;justify-content:center;text-align:center;padding:0 70px}
+.cap h3{font-size:74px;line-height:1.02;font-weight:900;letter-spacing:-2.5px;text-shadow:0 6px 30px rgba(0,0,0,.6)}
+.v{color:var(--v)} .r{color:var(--red)}
+.tag{display:inline-block;font-size:30px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:var(--v);border:2px solid rgba(16,231,160,.35);background:rgba(16,231,160,.08);padding:12px 24px;border-radius:999px;margin-bottom:44px}
+.hook{padding-top:330px}
+.hook h1{font-size:136px;line-height:.95;font-weight:900;letter-spacing:-5px}
+.hook p{font-size:58px;font-weight:800;margin-top:44px;color:var(--mut)}
+.pulpo{position:absolute}
+.mask{width:660px;height:1428px;background:#000}
+.mask div{width:660px;height:1428px;border-radius:64px;background:#fff}
+.end{display:flex;flex-direction:column;align-items:center;text-align:center;padding-top:300px}
+.end img.ic{width:200px;border-radius:46px}
+.end h1{font-size:130px;font-weight:900;letter-spacing:-5px;margin-top:50px}
+.end p{font-size:60px;font-weight:700;color:var(--mut);margin-top:24px}
+.pill{background:var(--v);color:#04130d;font-size:54px;font-weight:900;padding:30px 60px;border-radius:999px;margin-top:60px}
+</style></head><body>
+
+<section class="full" id="bg"><div class="bezel"></div></section>
+<section id="mask" class="mask"><div></div></section>
+
+<section class="full hook" id="r2-hook">
+  <div class="tag">Dueños de gimnasio</div>
+  <h1>¿Seguís cobrando la cuota <span class="r">por WhatsApp?</span></h1>
+  <p>Mirá esto.</p>
+  <img class="pulpo" src="img/pulpo-oops.png" style="width:640px;right:-40px;top:1180px">
+</section>
+
+<section class="full hook" id="r4-hook">
+  <div class="tag">App del socio</div>
+  <h1>Tus socios <span class="v">no abandonan</span> si tienen esto.</h1>
+  <img class="pulpo" src="img/pulpo-saludo.png" style="width:720px;right:-60px;top:1080px">
+</section>
+
+<section class="full end" id="end">
+  <img class="ic" src="img/icono.png">
+  <h1>SysGym</h1>
+  <p>Probalo con tus socios.</p>
+  <div class="pill">Link en la bio</div>
+  <img class="pulpo" src="img/pulpo-festejo.png" style="width:620px;left:230px;top:1180px">
+</section>
+
+<section class="cap" id="r2-c1"><h3>Se le vence <span class="r">la cuota.</span></h3></section>
+<section class="cap" id="r2-c2"><h3>Transfiere y toca <span class="v">“Ya transferí”.</span></h3></section>
+<section class="cap" id="r2-c3"><h3>Vos confirmás. <span class="v">Queda al día.</span></h3></section>
+<section class="cap" id="r2-c4"><h3>Y entra con <span class="v">su QR.</span></h3></section>
+
+<section class="cap" id="r4-c1"><h3>Ve cuánta gente hay <span class="v">antes de ir.</span></h3></section>
+<section class="cap" id="r4-c2"><h3>¿Le molesta <span class="r">el hombro?</span></h3></section>
+<section class="cap" id="r4-c3"><h3>Rutina que <span class="v">lo cuida.</span></h3></section>
+<section class="cap" id="r4-c4"><h3>Ranking y <span class="v">retos del mes.</span></h3></section>
+</body></html>

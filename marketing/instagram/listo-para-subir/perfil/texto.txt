@@ -1,0 +1,32 @@
+FOTO DE PERFIL
+perfil-a.png  -> Volt con aro verde (recomendada: se reconoce a tamaño chico)
+perfil-c.png  -> ícono de la app (alternativa)
+
+NOMBRE (aparece en búsquedas)
+SysGym · App para gimnasios
+
+USUARIO (sugerencias, según disponibilidad)
+@sysgym.app  /  @sysgym.ar  /  @somossysgym
+
+CATEGORÍA
+Software
+
+BIO (opción 1, recomendada)
+Tu gimnasio cobra solo.
+Cuotas, socios, caja y rutinas en una sola app.
+Hecho en Bahía Blanca.
+Primer mes gratis ↓
+
+BIO (opción 2)
+Dejá de perseguir socios morosos por WhatsApp.
+La app que cobra, avisa y retiene por vos.
+Bahía Blanca · Primer mes gratis ↓
+
+ENLACE
+https://gimnasio-app-rose.vercel.app
+
+BOTÓN DE CONTACTO
+Enviar mensaje (o WhatsApp si lo conectás a la cuenta profesional)
+
+HISTORIAS DESTACADAS (portadas: Volt sobre fondo oscuro)
+Cómo funciona · Precios · Rutinas · App del socio · Contacto
