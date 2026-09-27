@@ -158,4 +158,21 @@
 
 
 
+- 2026-09-17: Face rig Volt - creado scripts/blender/face_rig_audit.py (FACE RIG PASSPORT con 12 criterios de aceptacion verificables por raycast/clearance). Hallazgo: el Basis de Eyelid_L/R NO es ojo abierto, el casquete tapa la pupila siempre; el shape key closed original era un escalado uniforme 1.65x que infla en vez de cerrar.
+- 2026-09-23: video promo SysGym (40s vertical) en marketing/sysgym-promo.mp4; fuente HTML+render Playwright en scratchpad de la sesion.
+
+- 2026-09-24: clips promo en videos/pantallas via scripts/grabar-pantallas.mjs + seed-demo-video.mjs (gym voltgym). Aforo de /mi da 0% al socio por RLS de registros_entrada.
+- 2026-09-24: fix aforo (src/lib/aforo/actions.ts cuenta con service_role validando gimnasio de la sesión); clip 01 regrabado.
+- 2026-09-24: fix ranking/reto de /mi (src/lib/logros/actions.ts: service_role + nombre desde profiles, "Nombre I."); clip 08-ranking grabado. Feed de logros sigue pidiendo clientes(nombre) inexistente.
+
+- 2026-09-24: PR #5 abierto (fix ranking/reto de /mi con service_role, rama fix/ranking-socios).
+- 2026-09-24: feed de logros arreglado (nombresCortos via profiles), sumado al PR #5.
+- 2026-09-24: guion de locución de la promo (hook + 8 clips + cierre) en videos/guion-locucion.md.
+- 2026-09-24: scripts/armar-promo.py arma la promo (guion + voces + tomas IA con pantalla verde) en videos/promo-borrador.mp4.
+- 2026-09-24: armados 5 posteos IG de presentación (intro, cobro solo, rutinas, app socio/Volt, pricing); copy en memoria pricing-copy-lanzamiento.
+- 2026-09-24: carruseles IG c1-c9 renderizados en marketing/instagram (fuente editable en fuente/, sin emojis).
+- 2026-09-24: reels IG (cobro cuota 23s, app socio 34s) en marketing/instagram/reels; se regeneran con fuente/build_reels.py (VO borrador ElevenLabs).
+- 2026-09-24: reels: fix QR (salta credencial vacía) + ícono racha pegado vía OpenCV (fuente/fix_racha.py → videos/pantallas-fix). Voz nueva: usuario genera MP3 en web ElevenLabs (free no permite library voices por API) → videos/voz/final.
 - [2026-09-27] Rol entrenador (paso 3a): migración supabase/migrations/0072_rol_entrenador.sql (rol 'entrenador', clientes.entrenador_id + trigger que valida mismo gym, helpers is_entrenador/es_alumno_mio/es_profile_de_alumno_mio/mi_entrenador_id, RLS: entrenador lee sus alumnos + CRUD de sus rutinas + lee progreso/peso/asistencia; socio ve a su entrenador). Probada en Postgres 16 local con 17 casos. NO aplicada en Supabase todavía. Falta 3b (alta entrenador + asignar desde ficha, con chequeos en código porque muchas actions usan service_role).
+- 2026-09-27: Selector por cuerpo (src/components/rutina/cuerpo-selector.tsx + explorar-por-musculo.tsx): modo explorar (grupo -> zoom con cada cabeza/porción tocable, agrega al día vía agregarEjercicioADia en mi/rutina/actions.ts) y modo dolor en generar-form (articulaciones). Typecheck + browser OK. Sin migración.
+- 2026-09-27: Modal preferencias rutina en 3 pasos (entrenar/cuidar/equipo) con portal + FIX enfasis/zonasDolor no se enviaban (inputs dentro del modal desmontado; ahora hidden fuera). generarYGuardar devuelve ajustadosPorMolestias. Credencial QR: precarga lanyard/GLB/rapier en idle + placeholder estático hasta primer frame 3D.
