@@ -1,4 +1,5 @@
 import { impersonacionActiva } from "@/lib/impersonation";
+import { validatedImpersonation } from "@/lib/impersonation-session";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ControlesFlotantes } from "./controles-flotantes";
 
@@ -24,7 +25,9 @@ export async function ImpersonationControls() {
 
   let duenoId: string | null = null;
   let socioId: string | null = null;
-  if (imp.gymSlug) {
+  // Navigation state may outlive the secondary access token. Then only the
+  // exit button is shown, without service_role lookup or profile switching.
+  if (imp.gymSlug && await validatedImpersonation()) {
     const db = createAdminClient();
     const { data: gym } = await db
       .from("gimnasios")

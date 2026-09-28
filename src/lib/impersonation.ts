@@ -7,18 +7,20 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { dniAEmail } from "@/lib/auth";
 import { registrarAccionAdmin } from "@/lib/admin/audit";
+import { mayRestoreImpersonation, restoreSuperadminWithAuth, type SuperadminStash } from "@/lib/impersonation-guard";
+import { SUPERADMIN_STASH_COOKIE, validatedImpersonation } from "@/lib/impersonation-session";
 
 // Impersonación para la consola de soporte: el superadmin abre una sesión REAL
 // como un dueño o un socio para probar los flujos end-to-end sin logout ni
 // tocar RLS. Se hace con un magiclink de service_role + verifyOtp, así todas
 // las policies (auth.uid()) ven al usuario objetivo de verdad.
 //
-// - STASH: refresh_token del superadmin, para volver. httpOnly. Solo lo pone
-//   este módulo, después de validar que la sesión es superadmin.
-// - FLAG: datos para el banner (nombre / rol / gym). Legible por el server
-//   component del banner; no es un token de auth.
+// - STASH: sesión secundaria del superadmin + id del usuario impersonado.
+//   Solo sirve como privilegio si Auth valida el access token Y la sesión
+//   principal actual corresponde al usuario impersonado. El refresh token
+//   se usa únicamente para restaurar la sesión y se verifica antes de volver.
+// - FLAG: señal de navegación heredada; no autoriza ni aporta datos al banner.
 
-const STASH = "sb-super-stash";
 const FLAG = "imp-activa";
 
 export type ImpFlag = {
@@ -40,30 +42,48 @@ const cookieBase = {
   maxAge: 60 * 60 * 24 * 7, // 7 días, igual de larga que una sesión normal
 };
 
-// Puede impersonar si la sesión actual es la del superadmin, o si ya hay una
-// impersonación en curso (el STASH solo lo pudo haber puesto el superadmin, así
-// que sirve como capacidad para los saltos anidados dueño -> socio).
+// El soporte puede saltar entre perfiles solo con una sesión superadmin
+// validada por Auth (actual o secundaria, ligada al perfil impersonado).
 export async function puedeImpersonar(): Promise<boolean> {
-  const jar = await cookies();
-  if (jar.get(STASH)?.value) return true;
-
   const supabase = await createClient();
   const {
-    data: { user },
+    data: { user }, error,
   } = await supabase.auth.getUser();
   const superId = process.env.SUPERADMIN_ID;
-  return !!user && !!superId && user.id === superId;
+  if (!error && user && superId && user.id === superId) return true;
+  return !!(await validatedImpersonation());
 }
 
 export async function impersonacionActiva(): Promise<ImpFlag | null> {
+  // Solo estado de navegación: mantiene visible "Volver a soporte" si el
+  // access token secundario expiró. NO usar esto para conceder privilegios.
   const jar = await cookies();
-  const raw = jar.get(FLAG)?.value;
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw) as ImpFlag;
-  } catch {
-    return null;
-  }
+  const supabase = await createClient();
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (user?.id === process.env.SUPERADMIN_ID) return null;
+  const stash = mayRestoreImpersonation(
+    jar.get(SUPERADMIN_STASH_COOKIE)?.value,
+    error ? undefined : user?.id,
+  );
+  if (!stash) return null;
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id, nombre, rol, gimnasio_id")
+    .eq("id", stash.impersonatedUserId)
+    .maybeSingle();
+  if (!profile) return null;
+  const { data: gym } = await supabase
+    .from("gimnasios")
+    .select("nombre, slug")
+    .eq("id", profile.gimnasio_id)
+    .maybeSingle();
+  if (!gym) return null;
+  return {
+    nombre: profile.nombre,
+    rol: profile.rol === "dueno" ? "dueno" : "cliente",
+    gym: gym.nombre,
+    gymSlug: gym.slug,
+  };
 }
 
 export async function entrarComo(profileId: string): Promise<void> {
@@ -87,11 +107,17 @@ export async function entrarComo(profileId: string): Promise<void> {
 
   const supabase = await createClient();
   const jar = await cookies();
-
-  const yaImp = !!jar.get(STASH)?.value;
+  const { data: { user: currentUser }, error: currentError } = await supabase.auth.getUser();
+  const superId = process.env.SUPERADMIN_ID;
+  if (currentError || !currentUser || !superId) redirect("/login");
+  const previous = currentUser.id === superId ? null : await validatedImpersonation();
+  if (currentUser.id !== superId && !previous) redirect("/login");
   const {
     data: { session: superSession },
   } = await supabase.auth.getSession();
+  if (!previous && (!superSession?.access_token || !superSession.refresh_token)) {
+    redirect("/login");
+  }
 
   const { data: link, error: linkErr } = await db.auth.admin.generateLink({
     type: "magiclink",
@@ -106,11 +132,15 @@ export async function entrarComo(profileId: string): Promise<void> {
   });
   if (otpErr) redirect("/admin/gimnasios");
 
-  // Sesión objetivo ya activa. Recién ahora guardamos la del superadmin (una
-  // sola vez: los saltos anidados no la pisan).
-  if (!yaImp && superSession?.refresh_token) {
-    jar.set(STASH, superSession.refresh_token, cookieBase);
-  }
+  // La sesión objetivo ya está activa. Guardamos los credenciales originales
+  // y ligamos el stash al nuevo perfil; un salto anidado conserva los del
+  // superadmin, jamás los del dueño/socio impersonado.
+  const stash: SuperadminStash = {
+    accessToken: previous?.accessToken ?? superSession!.access_token,
+    refreshToken: previous?.refreshToken ?? superSession!.refresh_token,
+    impersonatedUserId: perfil.id,
+  };
+  jar.set(SUPERADMIN_STASH_COOKIE, JSON.stringify(stash), cookieBase);
 
   const flag: ImpFlag = {
     nombre: perfil.nombre,
@@ -122,7 +152,6 @@ export async function entrarComo(profileId: string): Promise<void> {
 
   // El audit log + aviso push/email al superadmin no tienen que demorar la
   // entrada: se disparan después de que la respuesta (el redirect) ya salió.
-  const superId = process.env.SUPERADMIN_ID ?? perfil.id;
   after(() =>
     registrarAccionAdmin(superId, "entrar_como", perfil.gimnasio_id, {
       profile_id: profileId,
@@ -135,16 +164,22 @@ export async function entrarComo(profileId: string): Promise<void> {
 
 export async function salirImpersonacion(): Promise<void> {
   const jar = await cookies();
-  const refresh = jar.get(STASH)?.value;
   const supabase = await createClient();
-
-  let sesionRecuperada = false;
-  if (refresh) {
-    const { error } = await supabase.auth.refreshSession({
-      refresh_token: refresh,
-    });
-    sesionRecuperada = !error;
-  }
+  const { data: { user: currentUser }, error: currentError } = await supabase.auth.getUser();
+  const rawStash = jar.get(SUPERADMIN_STASH_COOKIE)?.value;
+  const sesionRecuperada = await restoreSuperadminWithAuth(
+    rawStash,
+    currentError ? undefined : currentUser?.id,
+    process.env.SUPERADMIN_ID,
+    async (token) => {
+      const { error } = await supabase.auth.refreshSession({ refresh_token: token });
+      return !error;
+    },
+    async () => {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      return error ? undefined : user?.id;
+    },
+  );
 
   // Token del superadmin ya vencido/rotado (rotación de refresh tokens de
   // Supabase: si la sesión del superadmin se refrescó en otra pestaña
@@ -154,11 +189,11 @@ export async function salirImpersonacion(): Promise<void> {
   // expiró la sesión de soporte.
   if (!sesionRecuperada) await supabase.auth.signOut();
 
-  jar.delete(STASH);
+  jar.delete(SUPERADMIN_STASH_COOKIE);
   jar.delete(FLAG);
 
   const superId = process.env.SUPERADMIN_ID;
-  if (superId) {
+  if (superId && sesionRecuperada) {
     after(() => registrarAccionAdmin(superId, "salir_impersonacion", null, {}));
   }
 
