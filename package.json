@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "test:fast": "node scripts/test-rapido.mjs",
+    "test:security": "node --experimental-strip-types --test tests/security/*.test.*",
     "test:fuzz": "node scripts/test-motor-fuzz.mjs",
     "test:invariantes": "node scripts/test-simulacion-claude.mjs",
     "test:motor": "npm run test:fuzz && npm run test:invariantes"
@@ -40,6 +41,7 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.8",
     "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4.0.0",
     "@types/node": "^22.7.5",

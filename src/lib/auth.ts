@@ -1,8 +1,8 @@
 import { cache } from "react";
 import { notFound, redirect } from "next/navigation";
-import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { validatedImpersonation } from "@/lib/impersonation-session";
 
 export type Profile = {
   id: string;
@@ -55,9 +55,9 @@ export async function requireProfile(): Promise<Profile> {
 
   // Gate de gimnasio suspendido: corta el acceso de dueño y socios (el login
   // ya lo bloquea al generar sesión; esto cubre las sesiones ya abiertas).
-  // El superadmin impersonando (cookie STASH) conserva el acceso para depurar.
-  const jar = await cookies();
-  if (!jar.get("sb-super-stash")?.value) {
+  // Solo una sesión secundaria validada del superadmin permite depurar
+  // gimnasios suspendidos mientras se impersona; una cookie fabricada no.
+  if (!(await validatedImpersonation())) {
     const db = createAdminClient();
     const { data: gym } = await db
       .from("gimnasios")
@@ -99,10 +99,9 @@ export async function requireSuperadmin(): Promise<Profile> {
     return profile;
   }
 
-  // Si hay impersonación activa (STASH cookie), el superadmin conserva acceso a /admin
-  const jar = await cookies();
-  const stash = jar.get("sb-super-stash")?.value;
-  if (stash) {
+  // La sesión original se valida en Supabase Auth y se liga al usuario
+  // impersonado actual antes de conceder acciones de soporte.
+  if (await validatedImpersonation()) {
     const db = createAdminClient();
     const { data: superProfile } = await db
       .from("profiles")
