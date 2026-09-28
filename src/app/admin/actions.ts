@@ -933,7 +933,7 @@ const BUCKET_LOGOS = "logos";
 // Borrado DEFINITIVO de un gimnasio: auth.users de todos sus profiles +
 // logo del bucket + la fila de gimnasios (cascada limpia todo lo que cuelga
 // de gimnasio_id: clientes, planes, pagos_plataforma, registros_entrada,
-// partner_commissions donde este gym fue el referido, etc.).
+// Las comisiones conservan su snapshot y quedan con gimnasio_id/pago_id null.
 // Irreversible. Superadmin, service_role, auditado ANTES de borrar (si se
 // audita después ya no queda gimnasio_id vivo para asociar el log).
 export async function eliminarGimnasioDefinitivamente(
@@ -966,27 +966,6 @@ export async function eliminarGimnasioDefinitivamente(
     .eq("gimnasio_id", gimnasioId);
   const profileIds = (profiles ?? []).map((p) => p.id as string);
 
-  // Salvavidas: si alguno de los dueños/socios de este gym es también un
-  // SysGym Partner (identidad global, independiente del gimnasio), borrar
-  // su auth.users se llevaría por cascada TODO su historial de comisiones
-  // y referidos de OTROS gimnasios. Se bloquea hasta resolver a mano.
-  if (profileIds.length > 0) {
-    const { data: partnersLigados } = await db
-      .from("partners")
-      .select("id, referral_code")
-      .in("user_id", profileIds);
-    if (partnersLigados && partnersLigados.length > 0) {
-      const codigos = partnersLigados.map((p) => p.referral_code).join(", ");
-      return {
-        ok: false,
-        msg:
-          `No se puede borrar: el dueño (u otro perfil) de este gimnasio es un SysGym Partner ` +
-          `activo (código ${codigos}) con historial de referidos propio. Reasigná o dale de baja ` +
-          `esa cuenta de Partner antes de borrar el gimnasio.`,
-      };
-    }
-  }
-
   // Auditar ANTES de borrar: después de este punto el gimnasio_id deja de
   // existir y el log quedaría huérfano (la FK de admin_audit_log es opcional
   // pero preferimos dejarlo asociado mientras se puede).
@@ -1005,7 +984,8 @@ export async function eliminarGimnasioDefinitivamente(
 
   // Borra cada cuenta de auth para que no quede un usuario huérfano ocupando
   // el email sintético (dni@slug.gym.local) ni el cupo de Auth de Supabase.
-  // Cascada: auth.users -> profiles -> clientes -> pagos/registro_progreso/...
+  // Auth -> profiles/clientes. Si la cuenta también era Partner, la FK nueva
+  // hace SET NULL en partners.user_id y preserva su historial comercial.
   const fallosAuth = await enTandas(profileIds, async (profileId) => {
     const { error } = await db.auth.admin.deleteUser(profileId);
     return error ? `${profileId}: ${error.message}` : null;
@@ -1014,7 +994,8 @@ export async function eliminarGimnasioDefinitivamente(
 
   // La fila de gimnasios: cascada lo que no dependía de un profile_id
   // (planes, pagos_plataforma, registros_entrada, partner_commissions del
-  // gym como referido, etc.) y cualquier profile/cliente residual.
+  // gym como referido, etc.) y cualquier profile/cliente residual. El ledger
+  // Partner queda preservado con sus FKs históricas en NULL.
   const { error: delErr } = await db.from("gimnasios").delete().eq("id", gimnasioId);
   if (delErr) {
     return {
@@ -1066,4 +1047,3 @@ export async function generarLinkPruebaAction(params: {
 
   return { ok: true, msg: `Link válido por ${horas}h generado.`, url };
 }
-

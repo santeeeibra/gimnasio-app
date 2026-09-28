@@ -455,7 +455,7 @@ export async function marcarPayoutAction(
 
   revalidatePath("/admin/partner");
   revalidatePath("/admin/payouts");
-  revalidatePath("/panel/partner");
+  revalidatePath("/partner");
 
   return {
     ok: true,
@@ -467,7 +467,7 @@ export async function marcarPayoutAction(
 }
 
 // Vos (superadmin) le mandás un mensaje puntual a un partner: queda en su
-// bandeja (/panel/partner) y le llega como push.
+// bandeja (/partner) y le llega como push.
 export async function enviarMensajeAdminAPartnerAction(
   partnerId: string,
   cuerpo: string,
@@ -494,7 +494,7 @@ export async function enviarMensajeAdminAPartnerAction(
   await enviarPushPartner([partnerId], {
     title: "SysGym",
     body: texto.slice(0, 120),
-    url: "/panel/partner",
+    url: "/partner",
     tag: "admin-mensaje",
   });
 
@@ -503,7 +503,7 @@ export async function enviarMensajeAdminAPartnerAction(
   });
 
   revalidatePath("/admin/partner");
-  revalidatePath("/panel/partner");
+  revalidatePath("/partner");
 
   return { ok: true, msg: `Mensaje enviado a ${partner.nombre}.` };
 }

@@ -36,8 +36,6 @@ import {
   Calculator,
   ChevronDown,
   Download,
-  Play,
-  ExternalLink,
 } from "lucide-react";
 import { PulpoCard } from "@/components/mascota/pulpo";
 import { useHapticos } from "@/lib/ui/hapticos";
@@ -85,7 +83,6 @@ export function PartnerDashboardClient({
   // vacío más abajo.
   const [simGyms, setSimGyms] = useState<number>(5);
   const [objecionAbierta, setObjecionAbierta] = useState<number | null>(0);
-  const [copiadoDemo, setCopiadoDemo] = useState(false);
   const [copiadoScriptId, setCopiadoScriptId] = useState<string | null>(null);
   const [notificaciones, setNotificaciones] = useState<PartnerNotification[]>(
     resumen.notificaciones ?? []
@@ -1373,69 +1370,8 @@ export function PartnerDashboardClient({
           </div>
         </div>
 
-        {/* Bloque 6: Enlace de Demostración en Vivo & Folleto Comercial */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-          {/* Tarjeta Demo en Vivo */}
-          <div className="rounded-[20px] border border-rule bg-paper p-5 flex flex-col justify-between gap-4">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <div className="size-8 rounded-xl bg-accent/15 text-accent flex items-center justify-center font-bold">
-                  <Play className="size-4" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-ink">
-                    Demostración en Vivo para Mostrarle al Dueño
-                  </h4>
-                  <p className="text-xs text-ink-soft">
-                    Mostrale la app funcionando desde tu propio teléfono o compartile el link.
-                  </p>
-                </div>
-              </div>
-              <p className="text-xs text-ink-soft bg-paper-2 p-3 rounded-[12px] border border-rule leading-relaxed">
-                Mostrale cómo el alumno registra una serie, cómo vibra el cronómetro háptico de descanso y cómo se genera el código QR para entrar al gimnasio.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-rule/60">
-              <Link
-                href="/mi"
-                target="_blank"
-                onClick={() => hapticos.medio()}
-                className="h-9 px-4 rounded-[10px] bg-accent text-accent-contrast font-bold text-xs inline-flex items-center gap-1.5 active:scale-95 transition-all shadow-xs"
-              >
-                <span>Abrir Demo de Alumno</span>
-                <ExternalLink className="size-3.5" />
-              </Link>
-              <button
-                type="button"
-                onClick={async () => {
-                  try {
-                    const demoUrl = `${window.location.origin}/mi`;
-                    await navigator.clipboard.writeText(demoUrl);
-                    setCopiadoDemo(true);
-                    hapticos.exito();
-                    setTimeout(() => setCopiadoDemo(false), 2000);
-                  } catch {
-                    hapticos.suave();
-                  }
-                }}
-                className="h-9 px-3.5 rounded-[10px] bg-paper-2 hover:bg-paper border border-rule text-ink font-semibold text-xs inline-flex items-center gap-1.5 active:scale-95 transition-all"
-              >
-                {copiadoDemo ? (
-                  <>
-                    <Check className="size-3.5 text-emerald-500" />
-                    <span className="text-emerald-500 font-bold">¡Copiado!</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="size-3.5 text-ink-soft" />
-                    <span>Copiar link de Demo</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-
+        {/* Material comercial existente. Las demos se implementarán en su fase propia. */}
+        <div className="pt-2">
           {/* Tarjeta Folleto Comercial / Ficha Rápida */}
           <div className="rounded-[20px] border border-rule bg-paper p-5 flex flex-col justify-between gap-4">
             <div className="space-y-2">

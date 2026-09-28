@@ -3,11 +3,12 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { validatedImpersonation } from "@/lib/impersonation-session";
+import { destinationForMemberships, type PartnerRowForAuth } from "@/lib/partners/identity";
 
 export type Profile = {
   id: string;
   gimnasio_id: string;
-  rol: "dueno" | "cliente" | "staff";
+  rol: "dueno" | "cliente" | "staff" | "entrenador" | "partner_legacy_disabled";
   dni: string;
   nombre: string;
   telefono: string | null;
@@ -40,6 +41,32 @@ export const getSessionProfile = cache(async (): Promise<Profile | null> => {
     .single();
 
   return (data as Profile) ?? null;
+});
+
+export const getSessionDestination = cache(async (): Promise<string | null> => {
+  const supabase = await createClient();
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error || !user) return null;
+
+  const [{ data: profile }, { data: partner }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("rol, activo, debe_cambiar_clave")
+      .eq("id", user.id)
+      .maybeSingle(),
+    supabase
+      .from("partners")
+      .select("id, user_id, estado")
+      .eq("user_id", user.id)
+      .maybeSingle(),
+  ]);
+
+  return destinationForMemberships({
+    userId: user.id,
+    superadminId: process.env.SUPERADMIN_ID,
+    profile: profile as { rol: string; activo?: boolean; debe_cambiar_clave?: boolean } | null,
+    partner: partner as PartnerRowForAuth | null,
+  });
 });
 
 export async function requireProfile(): Promise<Profile> {

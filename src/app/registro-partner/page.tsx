@@ -1,11 +1,27 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 import type { PartnerTier } from "@/types/partner";
 import { RegistroPartnerClient } from "./registro-partner-client";
 
 export const dynamic = "force-dynamic";
 
-export default async function RegistroPartnerPage() {
+export default async function RegistroPartnerPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
   const admin = createAdminClient();
+  if (user) {
+    const { data: partner } = await admin
+      .from("partners")
+      .select("id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (partner) redirect("/partner");
+  }
   const { data } = await admin
     .from("partner_tiers")
     .select("id, name, min_active_gyms, commission_pct, milestone_bonus_amount")
@@ -27,5 +43,12 @@ export default async function RegistroPartnerPage() {
     );
   }
 
-  return <RegistroPartnerClient tiers={tiers} />;
+  const params = await searchParams;
+  return (
+    <RegistroPartnerClient
+      tiers={tiers}
+      existingEmail={user?.email ?? undefined}
+      initialError={params.error}
+    />
+  );
 }

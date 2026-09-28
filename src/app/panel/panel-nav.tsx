@@ -79,7 +79,7 @@ export function getNavItems(tipoCuenta: string = "gym", rol: string = "dueno"): 
     { href: "/panel/buzon", label: "Buzón", seccion: "gestion", Icono: Inbox },
     { href: "/panel/ingresos", label: "Ingresos", seccion: "gestion", Icono: Wallet },
     { href: "/panel/plantillas", label: "Compartir rutina", corto: "Compartir", soloDesktop: true, seccion: "gestion", Icono: Share2 },
-    { href: "/panel/partner", label: "Partner", corto: "Partner", soloDesktop: true, seccion: "gestion", Icono: Award },
+    { href: "/partner", label: "Partner", corto: "Partner", soloDesktop: true, seccion: "gestion", Icono: Award },
     { href: "/panel/plan", label: "Mi plan", soloDesktop: true, seccion: "sistema", Icono: CreditCard },
     { href: "/panel/ajustes", label: "Ajustes", seccion: "sistema", Icono: Settings },
   ];
@@ -264,7 +264,7 @@ export function PanelTopbar({
       <div className="flex shrink-0 items-center gap-2">
         {rol !== "staff" ? (
           <Link
-            href="/panel/partner"
+            href="/partner"
             className="px-2.5 py-1 text-xs font-bold rounded-full inline-flex items-center gap-1 bg-emerald-500/15 text-emerald-600 dark:text-[#10e7a0] border border-emerald-500/30 active:scale-95 transition-all"
           >
             <Award className="size-3" />

@@ -1,7 +1,6 @@
 "use server";
 
-import { requireProfile } from "@/lib/auth";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { requirePartner } from "@/lib/partners/auth";
 import { createClient } from "@/lib/supabase/server";
 
 type SubJSON = {
@@ -9,29 +8,17 @@ type SubJSON = {
   keys: { p256dh: string; auth: string };
 };
 
-async function partnerIdActual(): Promise<string | null> {
-  const profile = await requireProfile();
-  const admin = createAdminClient();
-  const { data } = await admin
-    .from("partners")
-    .select("id")
-    .eq("user_id", profile.id)
-    .maybeSingle();
-  return data?.id ?? null;
-}
-
 export async function guardarSuscripcionPartner(
   sub: SubJSON,
 ): Promise<{ error?: string }> {
-  const partnerId = await partnerIdActual();
-  if (!partnerId) return { error: "No sos partner." };
+  const partner = await requirePartner();
   if (!sub?.endpoint || !sub.keys?.p256dh || !sub.keys?.auth)
     return { error: "Suscripción inválida." };
 
   const supabase = await createClient();
   const { error } = await supabase.from("push_subscriptions").upsert(
     {
-      partner_id: partnerId,
+      partner_id: partner.id,
       endpoint: sub.endpoint,
       p256dh: sub.keys.p256dh,
       auth: sub.keys.auth,
@@ -48,9 +35,13 @@ export async function guardarSuscripcionPartner(
 export async function borrarSuscripcionPartner(
   endpoint: string,
 ): Promise<{ error?: string }> {
-  await partnerIdActual();
+  const partner = await requirePartner();
   if (!endpoint) return {};
   const supabase = await createClient();
-  await supabase.from("push_subscriptions").delete().eq("endpoint", endpoint);
+  await supabase
+    .from("push_subscriptions")
+    .delete()
+    .eq("endpoint", endpoint)
+    .eq("partner_id", partner.id);
   return {};
 }
