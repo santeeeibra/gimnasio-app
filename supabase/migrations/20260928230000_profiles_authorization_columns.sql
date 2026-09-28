@@ -5,9 +5,9 @@
 -- other column to the Data API. service_role-backed actions retain their
 -- existing privileges for owner/staff administration.
 --
--- 0058 has three historical files with the same prefix. 0072 is the first
--- unused, unambiguous number after 0071; do not invoke the old runner with
--- only a duplicated prefix.
+-- Numeric prefixes are already ambiguous across active history (0058 and
+-- 0072_rol_entrenador in another applied line). Use a timestamp identifier so
+-- this migration stays unique when those histories are reconciled.
 
 revoke update on table public.profiles from public, anon, authenticated;
 grant update (debe_cambiar_clave, email_recuperacion)

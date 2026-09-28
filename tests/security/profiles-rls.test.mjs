@@ -77,7 +77,7 @@ test("actual Postgres grants + RLS prevent cross-gym privilege escalation", asyn
     assert.deepEqual(leaked.rows, [{ dato_privado: "privado B" }]);
     await db.exec(`update profiles set gimnasio_id = '${gymA}', rol = 'cliente' where id = '${userA}'`);
 
-    const migration = await readFile(new URL("../../supabase/migrations/0072_profiles_authorization_columns.sql", import.meta.url), "utf8");
+    const migration = await readFile(new URL("../../supabase/migrations/20260928230000_profiles_authorization_columns.sql", import.meta.url), "utf8");
     await db.exec(migration);
 
     for (const attemptedColumn of [

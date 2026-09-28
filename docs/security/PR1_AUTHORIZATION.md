@@ -12,7 +12,7 @@ bienvenida), `email_recuperacion` (recuperación de cuenta) y
 `tyc_aceptado_en` (constancia legal). `creado_at` tampoco es editable por el
 cliente. `nombre` y `telefono` son datos de contacto, sin efecto en RLS.
 
-La migración `0072_profiles_authorization_columns.sql` revoca UPDATE completo
+La migración `20260928230000_profiles_authorization_columns.sql` revoca UPDATE completo
 del Data API y concede únicamente `debe_cambiar_clave` y
 `email_recuperacion` a `authenticated`, sobre la propia fila. Se conservan
 esas dos escrituras existentes: la opción de mantener la clave en `/bienvenida`,
@@ -47,12 +47,13 @@ el usuario vuelve al login.
 
 ## Aplicación posterior
 
-El repo tiene tres archivos históricos con prefijo `0058`; no ejecutar el
-runner antiguo pasando solo `0058`. `0072` es posterior a `0071` y único.
+El repo tiene tres archivos históricos con prefijo `0058` y otra línea ya
+aplicada usa `0072_rol_entrenador`; no ejecutar el runner antiguo pasando solo
+un prefijo numérico. El timestamp `20260928230000` evita ambas colisiones.
 Antes de aplicar en un entorno remoto, comprobar el historial real y ejecutar
-**el archivo completo exacto** `supabase/migrations/0072_profiles_authorization_columns.sql`
+**el archivo completo exacto** `supabase/migrations/20260928230000_profiles_authorization_columns.sql`
 mediante el proceso de migración controlado del proyecto. Este PR no lo aplica.
 
 Pruebas locales: `npm run test:security` ejecuta Postgres embebido con el SQL
-exacto de 0072 y casos positivos/negativos; `npx tsc --noEmit` y
+exacto de la migración y casos positivos/negativos; `npx tsc --noEmit` y
 `npm run build` comprueban la integración TypeScript/Next.
