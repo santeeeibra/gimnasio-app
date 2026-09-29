@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  authUserIdsToDeleteWithGym,
   destinationForMemberships,
   partnerAccessDecision,
 } from "../../src/lib/partners/identity.ts";
@@ -31,6 +32,32 @@ test("login redirects keep gym and Partner memberships independent", () => {
   assert.equal(destination({ rol: "partner_legacy_disabled", activo: false }, activePartner), "/partner");
   assert.equal(destination(null, { ...activePartner, estado: "suspendido" }), null);
   assert.equal(destination(null, null, "super"), "/admin");
+});
+
+test("deleting a gym preserves Auth and /partner access for an Owner + Partner", () => {
+  assert.deepEqual(
+    authUserIdsToDeleteWithGym(
+      ["owner-partner", "gym-only-owner", "gym-only-member"],
+      ["owner-partner"],
+    ),
+    ["gym-only-owner", "gym-only-member"],
+  );
+
+  const partnerAfterProfileCascade = {
+    id: "partner-owner",
+    user_id: "owner-partner",
+    estado: "activo",
+  };
+  assert.equal(partnerAccessDecision("owner-partner", partnerAfterProfileCascade), "allow");
+  assert.equal(
+    destinationForMemberships({
+      userId: "owner-partner",
+      superadminId: "super",
+      profile: null,
+      partner: partnerAfterProfileCascade,
+    }),
+    "/partner",
+  );
 });
 
 test("failed new signup is compensated; existing accounts are never deleted", async () => {

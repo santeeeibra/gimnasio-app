@@ -7,6 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { enviarPush } from "@/lib/push/enviar";
 import { registrarAccionAdmin } from "@/lib/admin/audit";
 import { generarMagicToken } from "@/lib/magic-link";
+import { authUserIdsToDeleteWithGym } from "@/lib/partners/identity";
 
 // Las APIs de Auth de Supabase (updateUserById / deleteUser) no tienen versión
 // batch: hay que llamarlas una vez por usuario. Al menos no las hacemos en
@@ -966,6 +967,21 @@ export async function eliminarGimnasioDefinitivamente(
     .eq("gimnasio_id", gimnasioId);
   const profileIds = (profiles ?? []).map((p) => p.id as string);
 
+  const { data: partnerMemberships, error: partnerMembershipsError } =
+    profileIds.length > 0
+      ? await db.from("partners").select("user_id").in("user_id", profileIds)
+      : { data: [], error: null };
+  if (partnerMembershipsError) {
+    return {
+      ok: false,
+      msg: "No se pudo verificar qué cuentas también son Partner. No se borró nada.",
+    };
+  }
+  const authUserIdsToDelete = authUserIdsToDeleteWithGym(
+    profileIds,
+    (partnerMemberships ?? []).map((partner) => partner.user_id as string | null),
+  );
+
   // Auditar ANTES de borrar: después de este punto el gimnasio_id deja de
   // existir y el log quedaría huérfano (la FK de admin_audit_log es opcional
   // pero preferimos dejarlo asociado mientras se puede).
@@ -973,6 +989,7 @@ export async function eliminarGimnasioDefinitivamente(
     nombre: gym.nombre,
     slug: gym.slug,
     cantidad_perfiles: profileIds.length,
+    cuentas_auth_preservadas: profileIds.length - authUserIdsToDelete.length,
   });
 
   // Logo del bucket: best-effort, no bloquea el borrado si falla.
@@ -982,11 +999,10 @@ export async function eliminarGimnasioDefinitivamente(
     // noop
   }
 
-  // Borra cada cuenta de auth para que no quede un usuario huérfano ocupando
-  // el email sintético (dni@slug.gym.local) ni el cupo de Auth de Supabase.
-  // Auth -> profiles/clientes. Si la cuenta también era Partner, la FK nueva
-  // hace SET NULL en partners.user_id y preserva su historial comercial.
-  const fallosAuth = await enTandas(profileIds, async (profileId) => {
+  // Borra Auth solo para identidades exclusivas del gimnasio. Una cuenta que
+  // también sea Partner conserva auth.users + partners.user_id; al borrar el
+  // gimnasio pierde su profile por cascada, no su identidad comercial.
+  const fallosAuth = await enTandas(authUserIdsToDelete, async (profileId) => {
     const { error } = await db.auth.admin.deleteUser(profileId);
     return error ? `${profileId}: ${error.message}` : null;
   });

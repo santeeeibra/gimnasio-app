@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { PGlite } from "@electric-sql/pglite";
+import { authUserIdsToDeleteWithGym } from "../../src/lib/partners/identity.ts";
 
 const ids = {
   userA: "00000000-0000-4000-8000-000000000001",
@@ -185,6 +186,28 @@ test("PR2 migration enforces Partner isolation and preserves historical data", a
     assert.equal(legacyGymContext.rows[0].id, null);
     const ownerGymContext = await as(db, ids.userOwner, "select current_gimnasio_id() as id");
     assert.equal(ownerGymContext.rows[0].id, ids.gymOwner);
+
+    // Same selection used by eliminarGimnasioDefinitivamente: deleting the
+    // gym removes the profile but must preserve Auth + partners.user_id.
+    const ownerProfileIds = (await db.query(
+      `select id from profiles where gimnasio_id='${ids.gymOwner}'`,
+    )).rows.map((row) => row.id);
+    const ownerPartnerUserIds = (await db.query(
+      `select user_id from partners where user_id = any($1::uuid[])`,
+      [ownerProfileIds],
+    )).rows.map((row) => row.user_id);
+    const authIdsToDelete = authUserIdsToDeleteWithGym(
+      ownerProfileIds,
+      ownerPartnerUserIds,
+    );
+    assert.deepEqual(authIdsToDelete, []);
+    await db.exec(`delete from gimnasios where id='${ids.gymOwner}'`);
+    assert.equal((await db.query(`select id from auth.users where id='${ids.userOwner}'`)).rows.length, 1);
+    assert.equal((await db.query(`select id from profiles where id='${ids.userOwner}'`)).rows.length, 0);
+    assert.equal(
+      (await db.query(`select user_id from partners where id='${ids.partnerOwner}'`)).rows[0].user_id,
+      ids.userOwner,
+    );
 
     await db.exec(`delete from auth.users where id='${ids.userA}'`);
     const preservedPartner = await db.query(`select user_id from partners where id='${ids.partnerA}'`);

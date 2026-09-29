@@ -21,6 +21,14 @@ export type GymMembershipForRedirect = {
   debe_cambiar_clave?: boolean;
 } | null;
 
+export function authUserIdsToDeleteWithGym(
+  profileIds: string[],
+  partnerUserIds: Array<string | null>,
+): string[] {
+  const preserved = new Set(partnerUserIds.filter((id): id is string => id !== null));
+  return profileIds.filter((id) => !preserved.has(id));
+}
+
 export function destinationForMemberships(input: {
   userId: string;
   superadminId?: string;
