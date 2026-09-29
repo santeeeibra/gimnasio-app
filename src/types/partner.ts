@@ -5,9 +5,12 @@ export type EstadoPartner = "activo" | "suspendido";
 
 export type Partner = {
   id: string;
-  user_id: string;
+  user_id: string | null;
   nombre: string;
   email: string | null;
+  whatsapp: string | null;
+  ciudad: string | null;
+  provincia: string | null;
   referral_code: string;
   cbu_cvu: string | null;
   alias_mp: string | null;
@@ -15,6 +18,10 @@ export type Partner = {
   creado_at: string;
   datos_cobro_actualizados_at: string | null;
   override_commission_pct: number | null;
+  terminos_version: string | null;
+  terminos_aceptados_at: string | null;
+  actualizado_at: string;
+  legacy_profile_disabled_at: string | null;
 };
 
 export type DatosCobroPartner = {
@@ -25,8 +32,8 @@ export type DatosCobroPartner = {
 export type PartnerCommission = {
   id: string;
   partner_id: string;
-  gimnasio_id: string;
-  pago_plataforma_id: string;
+  gimnasio_id: string | null;
+  pago_plataforma_id: string | null;
   monto_base_ars: number;
   porcentaje: number;
   monto_comision_ars: number;
@@ -163,4 +170,3 @@ export type ResumenPartner = {
 export const LIMITE_ALUMNOS_GRATIS = 40;
 
 export const LIMIT_EXCEEDED_UPGRADE_REQUIRED = "LIMIT_EXCEEDED_UPGRADE_REQUIRED" as const;
-

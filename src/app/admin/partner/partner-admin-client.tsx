@@ -437,12 +437,12 @@ export function PartnerAdminClient({
 
           <div className="flex items-center gap-2">
             <Link
-              href="/panel/partner"
+              href="/partner"
               target="_blank"
               className="inline-flex h-8 items-center gap-1.5 rounded-[10px] bg-ink px-3 text-xs font-semibold text-paper shadow-sm hover:brightness-125 transition-all"
             >
               <Wallet className="size-3.5" />
-              <span>Mi Billetera (/panel/partner)</span>
+              <span>Mi Billetera (/partner)</span>
               <ExternalLink className="size-3 opacity-70" />
             </Link>
           </div>
@@ -1054,7 +1054,7 @@ export function PartnerAdminClient({
           </Link>
 
           <Link
-            href="/panel/partner"
+            href="/partner"
             target="_blank"
             className="group rounded-[14px] border border-rule bg-paper-2 p-4 transition-all hover:border-ink hover:shadow-sm"
           >
@@ -1064,7 +1064,7 @@ export function PartnerAdminClient({
               </span>
               <ArrowUpRight className="size-4 text-ink-soft group-hover:text-ink group-hover:translate-x-0.5 transition-transform" />
             </div>
-            <h4 className="text-xs font-bold text-ink">/panel/partner</h4>
+            <h4 className="text-xs font-bold text-ink">/partner</h4>
             <p className="mt-1 text-[11px] text-ink-soft">
               Vista real del partner: balance en vivo, retiros, ranking e hitos cobrados.
             </p>

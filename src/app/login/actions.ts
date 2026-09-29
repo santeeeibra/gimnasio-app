@@ -5,8 +5,31 @@ import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { dniAEmail } from "@/lib/auth";
+import { destinationForMemberships, type PartnerRowForAuth } from "@/lib/partners/identity";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type LoginState = { error?: string; slug?: string; nombre?: string };
+
+async function destinoDeUsuario(supabase: SupabaseClient, userId: string) {
+  const [{ data: profile }, { data: partner }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("rol, activo, debe_cambiar_clave")
+      .eq("id", userId)
+      .maybeSingle(),
+    supabase
+      .from("partners")
+      .select("id, user_id, estado")
+      .eq("user_id", userId)
+      .maybeSingle(),
+  ]);
+  return destinationForMemberships({
+    userId,
+    superadminId: process.env.SUPERADMIN_ID,
+    profile,
+    partner: partner as PartnerRowForAuth | null,
+  });
+}
 
 export async function login(
   _prev: LoginState,
@@ -99,7 +122,7 @@ export async function login(
     redirect("/admin");
   }
 
-  redirect(profile?.rol === "dueno" || profile?.rol === "staff" ? "/panel" : "/mi");
+  redirect((await destinoDeUsuario(supabase, authData.user.id)) ?? "/login?error=sin_acceso");
 }
 
 // Login "directo" sin gimnasio: pensado para cuentas individuales (atletas
@@ -250,7 +273,7 @@ export async function loginIndividual(
     redirect("/bienvenida");
   }
 
-  redirect(profile?.rol === "dueno" || profile?.rol === "staff" ? "/panel" : "/mi");
+  redirect((await destinoDeUsuario(supabase, userId)) ?? "/login?error=sin_acceso");
 }
 
 
@@ -265,6 +288,11 @@ export async function asegurarPerfilGoogleAction(): Promise<{
   if (!user) return { error: "No autenticado" };
 
   const admin = createAdminClient();
+  const { data: existingPartner } = await admin
+    .from("partners")
+    .select("id, user_id, estado")
+    .eq("user_id", user.id)
+    .maybeSingle();
   const { data: profile } = await admin
     .from("profiles")
     .select(
@@ -314,7 +342,23 @@ export async function asegurarPerfilGoogleAction(): Promise<{
     return { destino };
   }
 
-  // Si no tiene perfil aún, registrar automáticamente cuenta individual
+  // Una cuenta Partner sin membresía de gimnasio conserva exclusivamente su
+  // identidad comercial. Google Sign-In no debe crearle un gimnasio.
+  if (existingPartner) {
+    const destino = destinationForMemberships({
+      userId: user.id,
+      superadminId: process.env.SUPERADMIN_ID,
+      profile: null,
+      partner: existingPartner as PartnerRowForAuth,
+    });
+    return { destino: destino ?? "/login?error=sin_acceso" };
+  }
+
+  if (user.user_metadata?.signup_kind === "partner") {
+    return { error: "Tu alta Partner está incompleta. Volvé a registrarte o contactá a soporte." };
+  }
+
+  // Si no tiene perfil ni Partner, registrar automáticamente cuenta individual
   const userEmail = user.email?.toLowerCase() || "";
   const rawNombre =
     user.user_metadata?.full_name ||

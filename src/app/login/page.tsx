@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
-import { getSessionProfile } from "@/lib/auth";
+import { getSessionDestination } from "@/lib/auth";
 import { LoginForm } from "./login-form";
 
 export default async function LoginPage({
@@ -10,11 +10,8 @@ export default async function LoginPage({
   searchParams: Promise<{ g?: string; error?: string }>;
 }) {
   // 1. Si el usuario ya cuenta con sesión activa, redirigir directo
-  const profile = await getSessionProfile();
-  if (profile) {
-    if (profile.debe_cambiar_clave) redirect("/cambiar-clave");
-    redirect(profile.rol === "dueno" || profile.rol === "staff" ? "/panel" : "/mi");
-  }
+  const destination = await getSessionDestination();
+  if (destination) redirect(destination);
 
   // 2. Resolver parámetro de URL o cookie persistida
   const params = await searchParams;

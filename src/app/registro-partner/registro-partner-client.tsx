@@ -12,13 +12,23 @@ import {
   Mail,
   Lock,
   Phone,
+  MapPin,
+  CheckCircle2,
 } from "lucide-react";
 import { PulpoCard } from "@/components/mascota/pulpo";
 import { useHapticos } from "@/lib/ui/hapticos";
 import type { PartnerTier } from "@/types/partner";
 import { registrarPartnerAction, type RegistroPartnerState } from "./actions";
 
-export function RegistroPartnerClient({ tiers }: { tiers: PartnerTier[] }) {
+export function RegistroPartnerClient({
+  tiers,
+  existingEmail,
+  initialError,
+}: {
+  tiers: PartnerTier[];
+  existingEmail?: string;
+  initialError?: string;
+}) {
   const hapticos = useHapticos();
 
   // partner_tiers es la única fuente de verdad para % y bonos (ver
@@ -37,7 +47,7 @@ export function RegistroPartnerClient({ tiers }: { tiers: PartnerTier[] }) {
     .join(", ");
   const [state, formAction, isPending] = useActionState<RegistroPartnerState, FormData>(
     registrarPartnerAction,
-    {}
+    initialError ? { error: initialError } : {}
   );
 
   return (
@@ -128,7 +138,20 @@ export function RegistroPartnerClient({ tiers }: { tiers: PartnerTier[] }) {
         </a>
 
         {/* Formulario */}
-        <form
+        {state.success ? (
+          <div className="rounded-[16px] border border-emerald-500/30 bg-emerald-500/10 p-5 text-center space-y-3">
+            <CheckCircle2 className="mx-auto size-8 text-[#10e7a0]" />
+            <p className="font-bold">Cuenta Partner creada</p>
+            <p className="text-xs text-zinc-300">
+              {state.requiresEmailVerification
+                ? "Revisá tu email y confirmá la cuenta. Después vas a poder ingresar a /partner."
+                : "Ya podés ingresar a tu panel Partner."}
+            </p>
+            <Link href="/login" className="inline-block text-sm font-semibold text-[#10e7a0] hover:underline">
+              Ir al login
+            </Link>
+          </div>
+        ) : <form
           action={formAction}
           onSubmit={() => hapticos.medio()}
           className="space-y-4"
@@ -165,13 +188,15 @@ export function RegistroPartnerClient({ tiers }: { tiers: PartnerTier[] }) {
                 type="email"
                 name="email"
                 required
+                defaultValue={existingEmail}
+                readOnly={Boolean(existingEmail)}
                 placeholder="martin@ejemplo.com"
                 className="w-full h-11 pl-9 pr-3 rounded-[12px] bg-zinc-900 border border-zinc-700/80 text-white text-sm focus:outline-none focus:border-[#10e7a0] transition-colors"
               />
             </div>
           </div>
 
-          <div>
+          {!existingEmail && <div>
             <label className="text-xs font-semibold text-zinc-300 block mb-1">
               Contraseña para tu panel
             </label>
@@ -186,22 +211,44 @@ export function RegistroPartnerClient({ tiers }: { tiers: PartnerTier[] }) {
                 className="w-full h-11 pl-9 pr-3 rounded-[12px] bg-zinc-900 border border-zinc-700/80 text-white text-sm focus:outline-none focus:border-[#10e7a0] transition-colors"
               />
             </div>
-          </div>
+          </div>}
 
           <div>
             <label className="text-xs font-semibold text-zinc-400 block mb-1">
-              Teléfono / WhatsApp <span className="text-zinc-600">(opcional)</span>
+              WhatsApp
             </label>
             <div className="relative">
               <Phone className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-zinc-500 pointer-events-none" />
               <input
                 type="tel"
-                name="telefono"
+                name="whatsapp"
+                required
                 placeholder="ej. +54 9 11 1234-5678"
                 className="w-full h-11 pl-9 pr-3 rounded-[12px] bg-zinc-900 border border-zinc-700/80 text-white text-sm focus:outline-none focus:border-[#10e7a0] transition-colors"
               />
             </div>
           </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-semibold text-zinc-400 block mb-1">Ciudad</label>
+              <div className="relative">
+                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-zinc-500" />
+                <input name="ciudad" required className="w-full h-11 pl-9 pr-3 rounded-[12px] bg-zinc-900 border border-zinc-700/80 text-white text-sm focus:outline-none focus:border-[#10e7a0]" />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-zinc-400 block mb-1">Provincia</label>
+              <input name="provincia" required className="w-full h-11 px-3 rounded-[12px] bg-zinc-900 border border-zinc-700/80 text-white text-sm focus:outline-none focus:border-[#10e7a0]" />
+            </div>
+          </div>
+
+          <label className="flex items-start gap-2 text-xs text-zinc-300">
+            <input type="checkbox" name="acepta_terminos" required className="mt-0.5" />
+            <span>
+              Acepto los <Link href="/terminos" target="_blank" className="text-[#10e7a0] hover:underline">términos vigentes</Link> del servicio.
+            </span>
+          </label>
 
           <button
             type="submit"
@@ -211,7 +258,7 @@ export function RegistroPartnerClient({ tiers }: { tiers: PartnerTier[] }) {
             <span>{isPending ? "Creando tu cuenta…" : "Activar mi cuenta de Partner"}</span>
             <ArrowRight className="size-4" />
           </button>
-        </form>
+        </form>}
 
         <div className="pt-2 text-center text-xs text-zinc-400">
           ¿Ya tenés cuenta?{" "}

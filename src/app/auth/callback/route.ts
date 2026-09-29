@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { destinationForMemberships, type PartnerRowForAuth } from "@/lib/partners/identity";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -35,11 +36,17 @@ export async function GET(request: Request) {
   const user = data.user;
   const admin = createAdminClient();
 
+  const { data: partner } = await admin
+    .from("partners")
+    .select("id, user_id, estado")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
   // 1. Verificar si el usuario ya tiene profile asignado
   const { data: profile } = await admin
     .from("profiles")
     .select(
-      "id, rol, gimnasio_id, debe_cambiar_clave, gimnasios:gimnasio_id(slug, nombre, estado, tipo_cuenta)",
+      "id, rol, gimnasio_id, debe_cambiar_clave, activo, gimnasios:gimnasio_id(slug, nombre, estado, tipo_cuenta)",
     )
     .eq("id", user.id)
     .maybeSingle();
@@ -65,13 +72,12 @@ export async function GET(request: Request) {
       );
     }
 
-    const destino = profile.debe_cambiar_clave
-      ? profile.rol === "dueno"
-        ? "/bienvenida"
-        : "/cambiar-clave"
-      : profile.rol === "dueno"
-        ? "/panel"
-        : "/mi";
+    const destino = destinationForMemberships({
+      userId: user.id,
+      superadminId: process.env.SUPERADMIN_ID,
+      profile,
+      partner: partner as PartnerRowForAuth | null,
+    }) ?? "/login?error=sin_acceso";
 
     const response = NextResponse.redirect(`${origin}${destino}`);
 
@@ -91,7 +97,25 @@ export async function GET(request: Request) {
     return response;
   }
 
-  // 2. Si no tiene perfil aún, registrar automáticamente cuenta individual
+  // La confirmación de email de un Partner vuelve por este callback. Su
+  // ausencia de profile es intencional y no debe disparar el alta individual.
+  if (partner) {
+    const destino = destinationForMemberships({
+      userId: user.id,
+      superadminId: process.env.SUPERADMIN_ID,
+      profile: null,
+      partner: partner as PartnerRowForAuth,
+    }) ?? "/login?error=sin_acceso";
+    return NextResponse.redirect(`${origin}${destino}`);
+  }
+
+  if (user.user_metadata?.signup_kind === "partner") {
+    return NextResponse.redirect(
+      `${origin}/registro-partner?error=${encodeURIComponent("El alta Partner quedó incompleta. Reintentá o contactá a soporte.")}`,
+    );
+  }
+
+  // 2. Si no tiene perfil ni Partner, registrar automáticamente cuenta individual
   const userEmail = user.email?.toLowerCase() || "";
   const rawNombre =
     user.user_metadata?.full_name ||

@@ -1,11 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireProfile } from "@/lib/auth";
+import { requirePartner } from "@/lib/partners/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { registrarAccionAdmin } from "@/lib/admin/audit";
-import { sugerirReferralCode, esReferralCodeValido } from "@/lib/partners/codigos";
+import { registrarAccionPartner } from "@/lib/partners/audit";
 
 const COOLDOWN_ALIAS_MS = 48 * 60 * 60 * 1000;
 import {
@@ -19,9 +18,8 @@ import {
 } from "@/types/partner";
 
 /**
- * Obtiene o inicializa la cuenta de Partner para el usuario logueado.
- * Si aún no está enrolado como Partner, genera automáticamente su registro
- * con un referral_code único y limpio.
+ * Carga la cuenta comercial ya vinculada a la sesión. La creación se realiza
+ * exclusivamente en /registro-partner.
  */
 export async function obtenerODescargarPartnerAction(): Promise<{
   ok: boolean;
@@ -31,50 +29,8 @@ export async function obtenerODescargarPartnerAction(): Promise<{
   error?: string;
 }> {
   try {
-    const dueno = await requireProfile();
+    const partner = await requirePartner();
     const admin = createAdminClient();
-
-    // 1. Buscar partner existente
-    let { data: partner } = await admin
-      .from("partners")
-      .select("*")
-      .eq("user_id", dueno.id)
-      .maybeSingle();
-
-    // 2. Si no existe, crearlo automáticamente
-    if (!partner) {
-      let code = sugerirReferralCode(dueno.nombre);
-      if (!esReferralCodeValido(code)) {
-        code = `partner-${dueno.id.slice(0, 6)}`;
-      }
-
-      // Verificar colisión de código
-      const { data: existente } = await admin
-        .from("partners")
-        .select("id")
-        .eq("referral_code", code)
-        .maybeSingle();
-
-      if (existente) {
-        code = `${code}-${Math.floor(100 + Math.random() * 900)}`;
-      }
-
-      const { data: nuevo, error: createErr } = await admin
-        .from("partners")
-        .insert({
-          user_id: dueno.id,
-          nombre: dueno.nombre,
-          referral_code: code,
-          estado: "activo",
-        })
-        .select("*")
-        .single();
-
-      if (createErr || !nuevo) {
-        return { ok: false, error: "No se pudo registrar como Partner oficial." };
-      }
-      partner = nuevo;
-    }
 
     const partnerId = partner.id;
 
@@ -225,7 +181,7 @@ export async function actualizarDatosCobroAction(
   formData: FormData,
 ): Promise<{ ok?: boolean; error?: string; msg?: string }> {
   try {
-    const dueno = await requireProfile();
+    const partner = await requirePartner();
     const admin = createAdminClient();
 
     const cbu_cvu = String(formData.get("cbu_cvu") ?? "").trim() || null;
@@ -250,7 +206,7 @@ export async function actualizarDatosCobroAction(
       return { error: "Ingresá tu contraseña para confirmar el cambio de datos de cobro." };
     }
 
-    const { data: authUser } = await admin.auth.admin.getUserById(dueno.id);
+    const { data: authUser } = await admin.auth.admin.getUserById(partner.user_id!);
     const email = authUser?.user?.email;
     if (!email) {
       return { error: "No se pudo verificar tu cuenta. Reintentá más tarde." };
@@ -272,17 +228,17 @@ export async function actualizarDatosCobroAction(
         alias_mp,
         datos_cobro_actualizados_at: new Date().toISOString(),
       })
-      .eq("user_id", dueno.id);
+      .eq("id", partner.id);
 
     if (updErr) {
       return { error: "No se pudieron guardar los datos de cobro." };
     }
 
-    await registrarAccionAdmin(dueno.id, "partner_cambiar_datos_cobro", null, {
-      partner_user_id: dueno.id,
+    await registrarAccionPartner(partner.id, "partner_cambiar_datos_cobro", {
+      partner_user_id: partner.user_id,
     });
 
-    revalidatePath("/panel/partner");
+    revalidatePath("/partner");
     return {
       ok: true,
       msg: "Datos de cobro actualizados. Por seguridad, no vas a poder retirar hasta dentro de 48hs.",
@@ -302,7 +258,7 @@ export async function solicitarRetiroAction(
   formData: FormData,
 ): Promise<{ ok?: boolean; error?: string; msg?: string }> {
   try {
-    const dueno = await requireProfile();
+    const partner = await requirePartner();
     const admin = createAdminClient();
 
     const montoRaw = Number(formData.get("monto_ars") ?? 0);
@@ -310,17 +266,6 @@ export async function solicitarRetiroAction(
       return {
         error: `El monto mínimo de retiro es de $${RETIRO_MINIMO_ARS.toLocaleString("es-AR")} ARS.`,
       };
-    }
-
-    // Obtener partner y datos de cobro
-    const { data: partner } = await admin
-      .from("partners")
-      .select("*")
-      .eq("user_id", dueno.id)
-      .single();
-
-    if (!partner) {
-      return { error: "No tenés una cuenta de Partner activa." };
     }
 
     if (!partner.cbu_cvu && !partner.alias_mp) {
@@ -389,12 +334,12 @@ export async function solicitarRetiroAction(
       return { error: "No se pudo procesar la solicitud de retiro. Intentá nuevamente." };
     }
 
-    await registrarAccionAdmin(dueno.id, "partner_solicitar_retiro", null, {
+    await registrarAccionPartner(partner.id, "partner_solicitar_retiro", {
       partner_id: partner.id,
       monto_ars: montoRaw,
     });
 
-    revalidatePath("/panel/partner");
+    revalidatePath("/partner");
     return {
       ok: true,
       msg: `¡Solicitud enviada! Enviaremos $${montoRaw.toLocaleString("es-AR")} ARS a tu cuenta registrada.`,
@@ -407,15 +352,8 @@ export async function solicitarRetiroAction(
 
 export async function marcarNotificacionPartnerLeidaAction(notificacionId: string) {
   try {
-    const user = await requireProfile();
+    const partner = await requirePartner();
     const admin = createAdminClient();
-    const { data: partner } = await admin
-      .from("partners")
-      .select("id")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    if (!partner) return { ok: false };
 
     await admin
       .from("partner_notifications")
@@ -423,7 +361,7 @@ export async function marcarNotificacionPartnerLeidaAction(notificacionId: strin
       .eq("id", notificacionId)
       .eq("partner_id", partner.id);
 
-    revalidatePath("/panel/partner");
+    revalidatePath("/partner");
     return { ok: true };
   } catch (err) {
     return { ok: false };
