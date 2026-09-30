@@ -1,5 +1,103 @@
 @import "tailwindcss";
 
+/* Owner pilot: Konsta-inspired materials, with SysGym's own controls and
+   per-gym colors. No geometry changes; client screens keep their theme. */
+.panel-native {
+  --owner-surface: var(--paper-2);
+  --owner-accent-label: var(--accent);
+  --owner-shadow: var(--elev-shadow-sm);
+  --accent-weak: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+.panel-native[data-theme-polarity="light"] {
+  --owner-surface: color-mix(in srgb, white 94%, var(--paper-2));
+  --owner-accent-label: color-mix(in srgb, var(--accent) 42%, var(--ink));
+  --owner-shadow: 0 2px 8px color-mix(in srgb, var(--ink) 5%, transparent);
+  background: color-mix(in srgb, var(--paper) 12%, #f5f6f7);
+}
+.panel-native.capa-ambiental::before {
+  opacity: 0.06;
+}
+:is(.owner-summary, .owner-screen) {
+  --app-font-display: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+}
+:is(.owner-summary, .owner-screen) h1 {
+  font-weight: 650;
+}
+:is(.owner-summary, .owner-screen) .bg-paper-2 {
+  background-color: var(--owner-surface);
+  box-shadow: var(--owner-shadow);
+}
+:is(.owner-summary, .owner-screen) .owner-checkin {
+  border-color: var(--rule);
+}
+:is(.owner-summary, .owner-screen) .owner-shortcut {
+  position: relative;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+/* A tiny inset rail and consistent icon tiles form the sports signature.
+   Absolute decoration does not affect the card's dimensions or targets. */
+.owner-shortcut::after {
+  content: "";
+  position: absolute;
+  inset: 14px auto 14px 0;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--owner-accent-label);
+  opacity: 0.55;
+  pointer-events: none;
+}
+.owner-shortcut > div:first-child,
+.owner-checkin .grid {
+  color: var(--owner-accent-label);
+  background: var(--accent-weak);
+  border-color: color-mix(in srgb, var(--owner-accent-label) 18%, transparent);
+}
+.owner-shortcut > div:first-child svg,
+.owner-checkin .grid svg {
+  color: inherit;
+}
+:is(.owner-summary, .owner-screen) .owner-shortcut p:first-child {
+  color: var(--ink);
+}
+.owner-cash-status {
+  background: color-mix(in srgb, var(--ok) 6%, var(--owner-surface));
+  box-shadow: var(--owner-shadow);
+}
+:is(.owner-summary, .owner-screen) a:focus-visible,
+.owner-bottom-nav a:focus-visible {
+  outline: 2px solid var(--owner-accent-label);
+  outline-offset: 3px;
+}
+.owner-topbar {
+  background: color-mix(in srgb, var(--owner-surface) 92%, transparent);
+}
+.owner-topbar p {
+  font-family: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 600;
+}
+.owner-bottom-nav {
+  background: color-mix(in srgb, var(--owner-surface) 88%, transparent);
+  box-shadow: var(--elev-shadow-md);
+  font-family: var(--app-font-sans);
+}
+.panel-native[data-theme-polarity="light"] .owner-bottom-nav {
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--ink) 8%, transparent);
+}
+:is(.owner-summary, .owner-screen) a {
+  transition-property: transform, opacity;
+}
+@media (prefers-reduced-motion: reduce) {
+  :is(.owner-summary, .owner-screen) a,
+  .owner-bottom-nav a {
+    transition: none;
+  }
+}
+[data-motion="still"] :is(.owner-summary, .owner-screen) a,
+[data-motion="still"] .owner-bottom-nav a {
+  transition: none;
+}
+
 :root {
   --paper: #faf9f6;
   --paper-2: #f2efe7;
@@ -1137,3 +1235,16 @@ textarea {
     animation: none;
   }
 }
+
+/* Same materials for clients and cash; layout and card footprints stay intact. */
+.owner-screen .bg-paper-2 { background-color: var(--owner-surface); }
+.owner-screen .owner-cash-hero {
+  border-color: color-mix(in srgb, var(--ok) 25%, var(--rule));
+  box-shadow: var(--owner-shadow);
+}
+.owner-screen .owner-cash-balance {
+  background: color-mix(in srgb, var(--ok) 6%, var(--owner-surface));
+  box-shadow: var(--owner-shadow);
+}
+.owner-screen .owner-client-search { box-shadow: var(--owner-shadow); }
+.owner-screen button { -webkit-tap-highlight-color: transparent; }

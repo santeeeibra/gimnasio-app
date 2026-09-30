@@ -64,7 +64,7 @@ export function HistorialTurnos({ sesiones }: HistorialTurnosProps) {
         return (
           <div
             key={s.id}
-            className="rounded-[16px] border border-rule bg-paper-2 overflow-hidden transition-all shadow-sm"
+            className="rounded-[16px] border border-rule bg-paper-2 overflow-hidden transition-transform shadow-sm"
           >
             {/* Cabecera del turno */}
             <div
@@ -78,10 +78,10 @@ export function HistorialTurnos({ sesiones }: HistorialTurnosProps) {
                   <span
                     className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
                       esExacto
-                        ? "bg-[#10e7a0]/15 text-[#10e7a0] border border-[#10e7a0]/30"
+                        ? "bg-ok/15 text-ok border border-ok/30"
                         : esSobrante
                         ? "bg-blue-500/15 text-blue-400 border border-blue-500/30"
-                        : "bg-rose-500/15 text-rose-400 border border-rose-500/30"
+                        : "bg-danger/15 text-danger border border-danger/30"
                     }`}
                   >
                     {esExacto ? (
@@ -153,7 +153,7 @@ export function HistorialTurnos({ sesiones }: HistorialTurnosProps) {
                     <p className="text-ink-soft text-[10px]">Diferencia</p>
                     <p
                       className={`font-black text-sm mt-0.5 ${
-                        esExacto ? "text-[#10e7a0]" : esSobrante ? "text-blue-400" : "text-rose-400"
+                        esExacto ? "text-ok" : esSobrante ? "text-blue-400" : "text-danger"
                       }`}
                     >
                       {esExacto ? "$0" : `${esSobrante ? "+" : ""}$${dif.toLocaleString("es-AR")}`}
@@ -189,7 +189,7 @@ export function HistorialTurnos({ sesiones }: HistorialTurnosProps) {
                 </div>
 
                 {s.notas_cierre && (
-                  <div className="p-3 rounded-[10px] bg-amber-500/10 border border-amber-500/20 text-amber-200">
+                  <div className="p-3 rounded-[10px] bg-warn/10 border border-warn/20 text-warn">
                     <strong className="block text-[11px] mb-0.5">Notas de Cierre:</strong>
                     <p>{s.notas_cierre}</p>
                   </div>

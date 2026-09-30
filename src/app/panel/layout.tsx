@@ -36,7 +36,7 @@ export default async function PanelLayout({
 
   return (
     <div
-      className="capa-ambiental min-h-screen bg-paper text-ink md:grid md:grid-cols-[256px_1fr] 2xl:grid-cols-[280px_1fr] transition-[grid-template-columns] duration-200"
+      className="panel-native capa-ambiental min-h-screen bg-paper text-ink md:grid md:grid-cols-[256px_1fr] 2xl:grid-cols-[280px_1fr] transition-[grid-template-columns] duration-200"
       style={temaVars}
       data-estilo-visual={tema.estiloVisual}
       data-theme-polarity={polaridadTema(tema)}
@@ -70,7 +70,7 @@ export default async function PanelLayout({
         <main className="w-full max-w-[1440px] 2xl:max-w-[1720px] mx-auto flex-1 p-4 sm:p-6 md:p-8 2xl:p-10 pb-28 md:pb-10 transition-all">
           <PullToRefresh>{children}</PullToRefresh>
         </main>
-        <PanelBottomNav tipoCuenta={gym?.tipo_cuenta ?? "gym"} rol={profile.rol} />
+        <PanelBottomNav tipoCuenta={gym?.tipo_cuenta ?? "gym"} rol={profile.rol} motionMode={resolverMotion(tema)} />
       </div>
 
       {profile.rol === "dueno" ? <Tutorial rol="dueno" /> : null}

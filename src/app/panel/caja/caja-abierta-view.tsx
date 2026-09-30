@@ -92,21 +92,21 @@ export function CajaAbiertaView({ sesion, esDueno }: CajaAbiertaViewProps) {
   return (
     <div className="space-y-6">
       {/* Banner de Turno Activo */}
-      <div className="relative overflow-hidden rounded-[20px] border-2 border-[#10e7a0]/40 bg-paper-2 p-5 sm:p-6 shadow-[0_10px_35px_rgba(0,0,0,0.5)]">
+      <div className="owner-cash-hero relative overflow-hidden rounded-[20px] border-2 border-ok/40 bg-paper-2 p-5 sm:p-6 shadow-[0_10px_35px_rgba(0,0,0,0.5)]">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1.5">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#10e7a0]/15 text-[#10e7a0] border border-[#10e7a0]/30 text-xs font-bold uppercase tracking-wider">
-              <span className="size-2 rounded-full bg-[#10e7a0] animate-ping" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-ok/15 text-ok border border-ok/30 text-xs font-bold uppercase tracking-wider">
+              <span className="size-2 rounded-full bg-ok" />
               <span>TURNO EN CURSO</span>
             </div>
             <h2 className="text-2xl font-black text-ink">{sesion.turno_nombre}</h2>
             <div className="flex flex-wrap items-center gap-4 text-xs text-ink-soft">
               <span className="inline-flex items-center gap-1">
-                <Clock className="size-3.5 text-[#10e7a0]" />
+                <Clock className="size-3.5 text-ok" />
                 Iniciado a las {horaApertura} hs
               </span>
               <span className="inline-flex items-center gap-1">
-                <User className="size-3.5 text-[#10e7a0]" />
+                <User className="size-3.5 text-ok" />
                 Responsable: <strong className="text-ink">{sesion.abierta_por_nombre}</strong>
               </span>
             </div>
@@ -143,7 +143,7 @@ export function CajaAbiertaView({ sesion, esDueno }: CajaAbiertaViewProps) {
 
         {/* Total Ingresos */}
         <div className="rounded-[16px] border border-rule bg-paper-2 p-4">
-          <p className="text-xs font-medium text-[#10e7a0] flex items-center gap-1.5">
+          <p className="text-xs font-medium text-ok flex items-center gap-1.5">
             <ArrowUpRight className="size-3.5" />
             <span>Ingresos Turno</span>
           </p>
@@ -157,11 +157,11 @@ export function CajaAbiertaView({ sesion, esDueno }: CajaAbiertaViewProps) {
 
         {/* Total Egresos */}
         <div className="rounded-[16px] border border-rule bg-paper-2 p-4">
-          <p className="text-xs font-medium text-rose-400 flex items-center gap-1.5">
+          <p className="text-xs font-medium text-danger flex items-center gap-1.5">
             <ArrowDownRight className="size-3.5" />
             <span>Gastos / Egresos</span>
           </p>
-          <p className="text-xl sm:text-2xl font-black text-rose-400 mt-1">
+          <p className="text-xl sm:text-2xl font-black text-danger mt-1">
             -${totalEgresos.toLocaleString("es-AR")}
           </p>
           <p className="text-[10px] text-ink-soft mt-0.5">
@@ -170,8 +170,8 @@ export function CajaAbiertaView({ sesion, esDueno }: CajaAbiertaViewProps) {
         </div>
 
         {/* Efectivo Estimado en Caja */}
-        <div className="rounded-[16px] border-2 border-[#10e7a0]/40 bg-[#10e7a0]/5 p-4 shadow-[0_4px_20px_rgba(16,231,160,0.1)]">
-          <p className="text-xs font-bold text-[#10e7a0] flex items-center gap-1.5">
+        <div className="owner-cash-balance rounded-[16px] border-2 border-ok/40 bg-ok/5 p-4 shadow-[0_4px_20px_rgba(16,231,160,0.1)]">
+          <p className="text-xs font-bold text-ok flex items-center gap-1.5">
             <Banknote className="size-3.5" />
             <span>Efectivo en Cajón</span>
           </p>
@@ -207,7 +207,7 @@ export function CajaAbiertaView({ sesion, esDueno }: CajaAbiertaViewProps) {
             <button
               onClick={() => setFiltroTipo("ingreso")}
               className={`px-3 py-1 rounded-[6px] font-medium transition-colors ${
-                filtroTipo === "ingreso" ? "bg-[#10e7a0] text-black font-semibold" : "text-ink-soft hover:text-ink"
+                filtroTipo === "ingreso" ? "bg-accent text-accent-contrast font-semibold" : "text-ink-soft hover:text-ink"
               }`}
             >
               Ingresos
@@ -215,7 +215,7 @@ export function CajaAbiertaView({ sesion, esDueno }: CajaAbiertaViewProps) {
             <button
               onClick={() => setFiltroTipo("egreso")}
               className={`px-3 py-1 rounded-[6px] font-medium transition-colors ${
-                filtroTipo === "egreso" ? "bg-rose-500 text-white font-semibold" : "text-ink-soft hover:text-ink"
+                filtroTipo === "egreso" ? "bg-danger text-white font-semibold" : "text-ink-soft hover:text-ink"
               }`}
             >
               Gastos
@@ -241,7 +241,7 @@ export function CajaAbiertaView({ sesion, esDueno }: CajaAbiertaViewProps) {
                   <div className="flex items-center gap-3 min-w-0">
                     <div
                       className={`size-9 shrink-0 rounded-[10px] flex items-center justify-center ${
-                        esIngreso ? "bg-[#10e7a0]/15 text-[#10e7a0]" : "bg-rose-500/15 text-rose-400"
+                        esIngreso ? "bg-ok/15 text-ok" : "bg-danger/15 text-danger"
                       }`}
                     >
                       {esIngreso ? <ArrowUpRight className="size-4" /> : <ArrowDownRight className="size-4" />}
@@ -274,7 +274,7 @@ export function CajaAbiertaView({ sesion, esDueno }: CajaAbiertaViewProps) {
                   </div>
 
                   <div className="text-right shrink-0">
-                    <p className={`font-black text-sm ${esIngreso ? "text-[#10e7a0]" : "text-rose-400"}`}>
+                    <p className={`font-black text-sm ${esIngreso ? "text-ok" : "text-danger"}`}>
                       {esIngreso ? "+" : "-"}${m.monto.toLocaleString("es-AR")}
                     </p>
                   </div>

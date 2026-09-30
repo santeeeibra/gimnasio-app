@@ -62,7 +62,7 @@ export function ModalCerrarCaja({ turnoNombre }: ModalCerrarCajaProps) {
       <button
         type="button"
         onClick={handleAbrir}
-        className="inline-flex items-center gap-2 h-10 px-4 rounded-[12px] font-semibold text-xs border border-amber-500/40 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 active:scale-[0.98] transition-all"
+        className="inline-flex items-center gap-2 h-10 px-4 rounded-[12px] font-semibold text-xs border border-warn/40 bg-warn/10 text-warn hover:bg-warn/20 active:scale-[0.98] transition-transform"
       >
         <Lock className="size-3.5" />
         <span>Cerrar Turno y Arqueo</span>
@@ -72,14 +72,14 @@ export function ModalCerrarCaja({ turnoNombre }: ModalCerrarCajaProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200">
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md rounded-[24px] border-2 border-rule bg-paper-2 p-6 shadow-[0_25px_60px_rgba(0,0,0,0.8)] space-y-5 animate-in zoom-in-95 duration-200"
+            className="w-full max-w-md rounded-[24px] border-2 border-rule bg-paper-2 p-6 elev-md space-y-5 animate-in zoom-in-95 duration-200"
           >
             {!resultado ? (
               <>
                 {/* Header */}
                 <div className="flex items-start justify-between">
                   <div>
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/15 text-amber-400 border border-amber-500/30 mb-2">
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-warn/15 text-warn border border-warn/30 mb-2">
                       <Sparkles className="size-3" />
                       <span>Arqueo Ciego de Seguridad</span>
                     </div>
@@ -121,7 +121,7 @@ export function ModalCerrarCaja({ turnoNombre }: ModalCerrarCajaProps) {
                         placeholder="0"
                         value={montoDeclarado}
                         onChange={(e) => setMontoDeclarado(e.target.value)}
-                        className="w-full h-14 pl-9 pr-4 rounded-[12px] border border-rule bg-paper-2 text-2xl font-black tabular-nums font-mono text-ink placeholder:text-ink-soft/40 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20"
+                        className="w-full h-14 pl-9 pr-4 rounded-[12px] border border-rule bg-paper-2 text-2xl font-black tabular-nums font-mono text-ink placeholder:text-ink-soft/40 focus:outline-none focus:border-warn focus:ring-2 focus:ring-warn/20"
                         required
                         autoFocus
                       />
@@ -141,7 +141,7 @@ export function ModalCerrarCaja({ turnoNombre }: ModalCerrarCajaProps) {
                       placeholder="Ej: Se entregó sobre cerrado con la recaudación al dueño"
                       value={notas}
                       onChange={(e) => setNotas(e.target.value)}
-                      className="w-full p-3 rounded-[12px] border border-rule bg-paper text-xs text-ink placeholder:text-ink-soft/40 focus:outline-none focus:border-amber-400"
+                      className="w-full p-3 rounded-[12px] border border-rule bg-paper text-xs text-ink placeholder:text-ink-soft/40 focus:outline-none focus:border-warn"
                     />
                   </div>
 
@@ -158,7 +158,7 @@ export function ModalCerrarCaja({ turnoNombre }: ModalCerrarCajaProps) {
                     <button
                       type="submit"
                       disabled={isPending}
-                      className="flex-1 h-11 inline-flex items-center justify-center gap-2 rounded-[12px] bg-gradient-to-r from-amber-500 to-amber-600 font-bold text-sm text-black shadow-lg hover:brightness-105 active:scale-[0.98] transition-all disabled:opacity-50"
+                      className="flex-1 h-11 inline-flex items-center justify-center gap-2 rounded-[12px] bg-ink font-bold text-sm text-paper shadow-lg hover:brightness-105 active:scale-[0.98] transition-transform disabled:opacity-50"
                     >
                       {isPending ? (
                         <>
@@ -180,11 +180,11 @@ export function ModalCerrarCaja({ turnoNombre }: ModalCerrarCajaProps) {
               <div className="space-y-5 text-center py-2">
                 <div className="flex justify-center">
                   {resultado.diferencia === 0 ? (
-                    <div className="flex size-16 items-center justify-center rounded-full bg-[#10e7a0]/20 text-[#10e7a0] ring-4 ring-[#10e7a0]/10">
+                    <div className="flex size-16 items-center justify-center rounded-full bg-ok/20 text-ok ring-4 ring-accent/10">
                       <CheckCircle2 className="size-10" />
                     </div>
                   ) : (
-                    <div className="flex size-16 items-center justify-center rounded-full bg-amber-500/20 text-amber-400 ring-4 ring-amber-500/10">
+                    <div className="flex size-16 items-center justify-center rounded-full bg-warn/20 text-warn ring-4 ring-warn/10">
                       <AlertTriangle className="size-10" />
                     </div>
                   )}
@@ -221,10 +221,10 @@ export function ModalCerrarCaja({ turnoNombre }: ModalCerrarCajaProps) {
                     <span
                       className={`tabular-nums font-mono ${
                         resultado.diferencia === 0
-                          ? "text-[#10e7a0]"
+                          ? "text-ok"
                           : (resultado.diferencia ?? 0) > 0
                           ? "text-blue-400"
-                          : "text-rose-400"
+                          : "text-danger"
                       }`}
                     >
                       {resultado.diferencia === 0
@@ -237,7 +237,7 @@ export function ModalCerrarCaja({ turnoNombre }: ModalCerrarCajaProps) {
                 <button
                   type="button"
                   onClick={handleCerrar}
-                  className="w-full h-11 inline-flex items-center justify-center gap-2 rounded-[12px] bg-ink text-paper font-semibold text-sm hover:brightness-110 active:scale-[0.98] transition-all"
+                  className="w-full h-11 inline-flex items-center justify-center gap-2 rounded-[12px] bg-ink text-paper font-semibold text-sm hover:brightness-110 active:scale-[0.98] transition-transform"
                 >
                   <span>Aceptar y Continuar</span>
                   <ArrowRight className="size-4" />

@@ -60,7 +60,7 @@ export function ModalAbrirCaja() {
     <>
       <button
         onClick={handleAbrir}
-        className="inline-flex items-center gap-2 h-11 px-5 rounded-[12px] font-semibold text-sm bg-gradient-to-r from-[#10e7a0] to-[#22c55e] text-black shadow-[0_4px_20px_rgba(16,231,160,0.35)] hover:brightness-105 active:scale-[0.98] transition-all"
+        className="inline-flex items-center gap-2 h-11 px-5 rounded-[12px] font-semibold text-sm bg-accent text-accent-contrast shadow-sm hover:brightness-105 active:scale-[0.98] transition-transform"
       >
         <Coins className="size-4" />
         <span>Abrir Turno de Caja</span>
@@ -75,7 +75,7 @@ export function ModalAbrirCaja() {
             {/* Header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="flex size-10 items-center justify-center rounded-[10px] bg-[#10e7a0]/15 text-[#10e7a0]">
+                <div className="flex size-10 items-center justify-center rounded-[10px] bg-ok/15 text-ok">
                   <Coins className="size-5" />
                 </div>
                 <div>
@@ -117,14 +117,14 @@ export function ModalAbrirCaja() {
                           hapticoSeleccion();
                           setTurnoNombre(t.nombre);
                         }}
-                        className={`flex flex-col items-start p-3 rounded-[12px] border text-left transition-all ${
+                        className={`flex flex-col items-start p-3 rounded-[12px] border text-left transition-transform ${
                           activo
-                            ? "border-[#10e7a0] bg-[#10e7a0]/10 text-ink ring-1 ring-[#10e7a0]"
+                            ? "border-ok bg-ok/10 text-ink ring-1 ring-accent"
                             : "border-rule bg-paper hover:border-ink-soft/40 text-ink-soft"
                         }`}
                       >
                         <div className="flex items-center gap-1.5 font-medium text-xs text-ink">
-                          <Icono className={`size-3.5 ${activo ? "text-[#10e7a0]" : "text-ink-soft"}`} />
+                          <Icono className={`size-3.5 ${activo ? "text-ok" : "text-ink-soft"}`} />
                           <span>{t.nombre}</span>
                         </div>
                         <span className="text-[10px] text-ink-soft mt-0.5">{t.desc}</span>
@@ -150,7 +150,7 @@ export function ModalAbrirCaja() {
                     placeholder="0"
                     value={montoInicial}
                     onChange={(e) => setMontoInicial(e.target.value)}
-                    className="w-full h-12 pl-8 pr-4 rounded-[12px] border border-rule bg-paper text-lg font-bold tabular-nums font-mono text-ink placeholder:text-ink-soft/40 focus:outline-none focus:border-[#10e7a0] focus:ring-1 focus:ring-[#10e7a0]"
+                    className="w-full h-12 pl-8 pr-4 rounded-[12px] border border-rule bg-paper text-lg font-bold tabular-nums font-mono text-ink placeholder:text-ink-soft/40 focus:outline-none focus:border-ok focus:ring-1 focus:ring-accent"
                     required
                   />
                 </div>
@@ -169,7 +169,7 @@ export function ModalAbrirCaja() {
                   placeholder="Ej: Se dejaron 5 billetes de 1000 para cambio"
                   value={notas}
                   onChange={(e) => setNotas(e.target.value)}
-                  className="w-full p-3 rounded-[12px] border border-rule bg-paper text-xs text-ink placeholder:text-ink-soft/40 focus:outline-none focus:border-[#10e7a0] focus:ring-1 focus:ring-[#10e7a0]"
+                  className="w-full p-3 rounded-[12px] border border-rule bg-paper text-xs text-ink placeholder:text-ink-soft/40 focus:outline-none focus:border-ok focus:ring-1 focus:ring-accent"
                 />
               </div>
 
@@ -186,7 +186,7 @@ export function ModalAbrirCaja() {
                 <button
                   type="submit"
                   disabled={isPending}
-                  className="flex-1 h-11 inline-flex items-center justify-center gap-2 rounded-[12px] bg-[#10e7a0] font-semibold text-sm text-black shadow-md hover:brightness-105 active:scale-[0.98] transition-all disabled:opacity-50"
+                  className="flex-1 h-11 inline-flex items-center justify-center gap-2 rounded-[12px] bg-accent font-semibold text-sm text-accent-contrast shadow-md hover:brightness-105 active:scale-[0.98] transition-transform disabled:opacity-50"
                 >
                   {isPending ? (
                     <>

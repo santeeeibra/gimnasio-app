@@ -267,7 +267,7 @@ export default async function ResumenPage() {
       : null;
 
   return (
-    <div className="stagger space-y-6">
+    <div className="owner-summary stagger space-y-6">
       <WidgetAsistenciaSala
         iniciales={pedidosActivos}
         gimnasioId={dueno.gimnasio_id}
@@ -292,14 +292,14 @@ export default async function ResumenPage() {
           <div className="flex items-center gap-2.5 shrink-0">
             <Link
               href="/panel/clientes"
-              className="inline-flex min-h-10 items-center gap-2 rounded-[10px] bg-ink px-4 py-2 text-xs font-semibold text-paper hover:opacity-90 active:scale-95 transition-all"
+              className="inline-flex min-h-10 items-center gap-2 rounded-[10px] bg-ink px-4 py-2 text-xs font-semibold text-paper hover:opacity-90 active:scale-95 transition-transform"
             >
               <Users className="size-4" />
               <span>Ver Socios</span>
             </Link>
             <Link
               href="/checkin"
-              className="inline-flex min-h-10 items-center gap-2 rounded-[10px] bg-volt/20 border border-volt/35 px-4 py-2 text-xs font-semibold text-ink hover:bg-volt/30 active:scale-95 transition-all"
+              className="inline-flex min-h-10 items-center gap-2 rounded-[10px] bg-volt/20 border border-volt/35 px-4 py-2 text-xs font-semibold text-ink hover:bg-volt/30 active:scale-95 transition-transform"
             >
               <ScanLine className="size-4 text-volt" />
               <span>Check-in</span>
@@ -323,7 +323,7 @@ export default async function ResumenPage() {
               <div className="mt-3">
                 <Link
                   href="/panel/plan"
-                  className="inline-flex min-h-11 items-center justify-center rounded-[10px] bg-danger px-4 py-2 text-sm font-semibold text-white hover:opacity-90 active:scale-[0.98] transition-all"
+                  className="inline-flex min-h-11 items-center justify-center rounded-[10px] bg-danger px-4 py-2 text-sm font-semibold text-white hover:opacity-90 active:scale-[0.98] transition-transform"
                 >
                   Activar plan
                 </Link>
@@ -362,7 +362,7 @@ export default async function ResumenPage() {
       <div className="md:hidden">
         <Link
           href="/checkin"
-          className="flex items-center justify-between p-4 rounded-[14px] border border-volt/35 bg-paper-2 shadow-sm active:scale-[0.98] transition-all min-h-11"
+          className="owner-checkin flex items-center justify-between p-4 rounded-[14px] border border-volt/35 bg-paper-2 shadow-sm active:scale-[0.98] transition-transform min-h-11"
         >
           <div className="flex items-center gap-3.5 min-w-0">
             <div className="size-11 rounded-[10px] bg-volt/20 border border-volt/30 text-ink grid place-items-center shrink-0">
@@ -418,15 +418,15 @@ export default async function ResumenPage() {
       {/* 1. Estado de Caja del Turno */}
       {planInfo?.permiteControlCaja ? (
         sesionCaja ? (
-          <div className="rounded-[16px] 2xl:rounded-[22px] border border-emerald-500/30 bg-emerald-500/5 p-4 sm:p-5 2xl:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+          <div className="owner-cash-status rounded-[16px] 2xl:rounded-[22px] border border-ok/30 bg-ok/5 p-4 sm:p-5 2xl:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
             <div className="flex items-center gap-3.5 2xl:gap-4.5 min-w-0">
-              <div className="size-11 2xl:size-14 rounded-[12px] 2xl:rounded-[16px] bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 grid place-items-center shrink-0">
+              <div className="size-11 2xl:size-14 rounded-[12px] 2xl:rounded-[16px] bg-ok/15 border border-ok/25 text-ok grid place-items-center shrink-0">
                 <Coins className="size-6 2xl:size-7" />
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 text-xs 2xl:text-sm font-black uppercase tracking-wider text-emerald-400">
-                    <span className="size-2 2xl:size-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="inline-flex items-center gap-1.5 text-xs 2xl:text-sm font-black uppercase tracking-wider text-ok">
+                    <span className="size-2 2xl:size-2.5 rounded-full bg-ok" />
                     Caja Abierta · {sesionCaja.turno_nombre}
                   </span>
                   {sesionCaja.perfil_abrio?.nombre ? (
@@ -450,13 +450,13 @@ export default async function ResumenPage() {
             </div>
           </div>
         ) : (
-          <div className="rounded-[16px] 2xl:rounded-[22px] border border-amber-500/30 bg-amber-500/5 p-4 sm:p-5 2xl:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+          <div className="rounded-[16px] 2xl:rounded-[22px] border border-warn/30 bg-warn/5 p-4 sm:p-5 2xl:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
             <div className="flex items-center gap-3.5 2xl:gap-4.5 min-w-0">
-              <div className="size-11 2xl:size-14 rounded-[12px] 2xl:rounded-[16px] bg-amber-500/15 border border-amber-500/25 text-amber-400 grid place-items-center shrink-0">
+              <div className="size-11 2xl:size-14 rounded-[12px] 2xl:rounded-[16px] bg-warn/15 border border-warn/25 text-warn grid place-items-center shrink-0">
                 <Coins className="size-6 2xl:size-7" />
               </div>
               <div className="min-w-0">
-                <span className="text-xs 2xl:text-sm font-black uppercase tracking-wider text-amber-400">
+                <span className="text-xs 2xl:text-sm font-black uppercase tracking-wider text-warn">
                   ○ Sin turno de caja abierto
                 </span>
                 <p className="text-xs sm:text-sm 2xl:text-base text-ink-soft mt-0.5">
@@ -466,7 +466,7 @@ export default async function ResumenPage() {
             </div>
             <Link
               href="/panel/caja"
-              className="px-4 2xl:px-5 py-2 2xl:py-2.5 rounded-[10px] 2xl:rounded-[12px] bg-[#10e7a0] text-black text-xs 2xl:text-sm font-black hover:brightness-105 transition-all inline-flex items-center gap-1.5 shadow-xs shrink-0"
+              className="px-4 2xl:px-5 py-2 2xl:py-2.5 rounded-[10px] 2xl:rounded-[12px] bg-accent text-accent-contrast text-xs 2xl:text-sm font-black hover:brightness-105 transition-transform inline-flex items-center gap-1.5 shadow-xs shrink-0"
             >
               + Abrir Turno de Caja
             </Link>
@@ -483,13 +483,13 @@ export default async function ResumenPage() {
           {/* Cobrar Cuota */}
           <Link
             href="/panel/clientes"
-            className="group p-4 2xl:p-5.5 rounded-[16px] 2xl:rounded-[20px] border border-rule bg-paper-2 hover:border-volt/40 hover:bg-paper-2/80 active:scale-[0.98] transition-all flex flex-col justify-between shadow-xs min-h-[110px] 2xl:min-h-[135px]"
+            className="owner-shortcut group p-4 2xl:p-5.5 rounded-[16px] 2xl:rounded-[20px] border border-rule bg-paper-2 hover:border-volt/40 hover:bg-paper-2/80 active:scale-[0.98] transition-transform flex flex-col justify-between shadow-xs min-h-[110px] 2xl:min-h-[135px]"
           >
-            <div className="size-10 2xl:size-12 rounded-[10px] 2xl:rounded-[14px] bg-emerald-500/15 text-emerald-400 grid place-items-center group-hover:scale-105 transition-transform">
+            <div className="size-10 2xl:size-12 rounded-[10px] 2xl:rounded-[14px] bg-ok/15 text-ok grid place-items-center group-hover:scale-105 transition-transform">
               <CreditCard className="size-5 2xl:size-6" />
             </div>
             <div className="mt-2.5">
-              <p className="text-sm 2xl:text-base font-bold text-ink group-hover:text-emerald-400 transition-colors">
+              <p className="text-sm 2xl:text-base font-bold text-ink group-hover:text-ok transition-colors">
                 Cobrar Cuota
               </p>
               <p className="text-[11px] 2xl:text-xs text-ink-soft mt-0.5">
@@ -501,7 +501,7 @@ export default async function ResumenPage() {
           {/* Nuevo Socio */}
           <Link
             href="/panel/clientes"
-            className="group p-4 2xl:p-5.5 rounded-[16px] 2xl:rounded-[20px] border border-rule bg-paper-2 hover:border-volt/40 hover:bg-paper-2/80 active:scale-[0.98] transition-all flex flex-col justify-between shadow-xs min-h-[110px] 2xl:min-h-[135px]"
+            className="owner-shortcut group p-4 2xl:p-5.5 rounded-[16px] 2xl:rounded-[20px] border border-rule bg-paper-2 hover:border-volt/40 hover:bg-paper-2/80 active:scale-[0.98] transition-transform flex flex-col justify-between shadow-xs min-h-[110px] 2xl:min-h-[135px]"
           >
             <div className="size-10 2xl:size-12 rounded-[10px] 2xl:rounded-[14px] bg-cyan-400/15 text-cyan-400 grid place-items-center group-hover:scale-105 transition-transform">
               <UserPlus className="size-5 2xl:size-6" />
@@ -519,7 +519,7 @@ export default async function ResumenPage() {
           {/* Caja Diaria */}
           <Link
             href="/panel/caja"
-            className="group p-4 2xl:p-5.5 rounded-[16px] 2xl:rounded-[20px] border border-rule bg-paper-2 hover:border-volt/40 hover:bg-paper-2/80 active:scale-[0.98] transition-all flex flex-col justify-between shadow-xs min-h-[110px] 2xl:min-h-[135px]"
+            className="owner-shortcut group p-4 2xl:p-5.5 rounded-[16px] 2xl:rounded-[20px] border border-rule bg-paper-2 hover:border-volt/40 hover:bg-paper-2/80 active:scale-[0.98] transition-transform flex flex-col justify-between shadow-xs min-h-[110px] 2xl:min-h-[135px]"
           >
             <div className="size-10 2xl:size-12 rounded-[10px] 2xl:rounded-[14px] bg-volt/15 text-volt grid place-items-center group-hover:scale-105 transition-transform">
               <Coins className="size-5 2xl:size-6" />
@@ -537,7 +537,7 @@ export default async function ResumenPage() {
           {/* Modo Check-in */}
           <Link
             href="/checkin"
-            className="group p-4 2xl:p-5.5 rounded-[16px] 2xl:rounded-[20px] border border-rule bg-paper-2 hover:border-volt/40 hover:bg-paper-2/80 active:scale-[0.98] transition-all flex flex-col justify-between shadow-xs min-h-[110px] 2xl:min-h-[135px]"
+            className="owner-shortcut group p-4 2xl:p-5.5 rounded-[16px] 2xl:rounded-[20px] border border-rule bg-paper-2 hover:border-volt/40 hover:bg-paper-2/80 active:scale-[0.98] transition-transform flex flex-col justify-between shadow-xs min-h-[110px] 2xl:min-h-[135px]"
           >
             <div className="size-10 2xl:size-12 rounded-[10px] 2xl:rounded-[14px] bg-purple-500/15 text-purple-400 grid place-items-center group-hover:scale-105 transition-transform">
               <ScanLine className="size-5 2xl:size-6" />
@@ -591,7 +591,7 @@ export default async function ResumenPage() {
             <p className="text-2xl 2xl:text-3xl font-display font-bold text-ink mt-0.5">{porVencerCount}</p>
             <span className="text-[11px] 2xl:text-xs text-ink-soft">Próximos 7 días</span>
           </div>
-          <div className="size-10 2xl:size-12 rounded-[10px] 2xl:rounded-[14px] bg-amber-500/15 text-amber-400 grid place-items-center shrink-0">
+          <div className="size-10 2xl:size-12 rounded-[10px] 2xl:rounded-[14px] bg-warn/15 text-warn grid place-items-center shrink-0">
             <CalendarClock className="size-5 2xl:size-6" />
           </div>
         </div>

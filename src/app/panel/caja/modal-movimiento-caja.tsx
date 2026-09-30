@@ -196,7 +196,7 @@ export function ModalMovimientoCaja({ tipoInicial = "egreso" }: ModalMovimientoC
         <button
           type="button"
           onClick={() => handleAbrir("egreso")}
-          className="inline-flex items-center gap-1.5 h-10 px-3.5 rounded-[12px] font-medium text-xs border border-rose-500/30 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 active:scale-[0.98] transition-all"
+          className="inline-flex items-center gap-1.5 h-10 px-3.5 rounded-[12px] font-medium text-xs border border-danger/30 bg-danger/10 text-danger hover:bg-danger/20 active:scale-[0.98] transition-transform"
         >
           <ArrowDownRight className="size-3.5" />
           <span>Registrar Gasto / Egreso</span>
@@ -205,7 +205,7 @@ export function ModalMovimientoCaja({ tipoInicial = "egreso" }: ModalMovimientoC
         <button
           type="button"
           onClick={() => handleAbrir("ingreso")}
-          className="inline-flex items-center gap-1.5 h-10 px-3.5 rounded-[12px] font-medium text-xs border border-[#10e7a0]/30 bg-[#10e7a0]/10 text-[#10e7a0] hover:bg-[#10e7a0]/20 active:scale-[0.98] transition-all"
+          className="inline-flex items-center gap-1.5 h-10 px-3.5 rounded-[12px] font-medium text-xs border border-ok/30 bg-ok/10 text-ok hover:bg-ok/20 active:scale-[0.98] transition-transform"
         >
           <ArrowUpRight className="size-3.5" />
           <span>Ingreso Extra / Varios</span>
@@ -224,9 +224,9 @@ export function ModalMovimientoCaja({ tipoInicial = "egreso" }: ModalMovimientoC
                 <button
                   type="button"
                   onClick={() => handleCambiarTipo("egreso")}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[9px] text-xs font-semibold transition-all ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[9px] text-xs font-semibold transition-transform ${
                     tipo === "egreso"
-                      ? "bg-rose-500 text-white shadow-sm"
+                      ? "bg-danger text-white shadow-sm"
                       : "text-ink-soft hover:text-ink"
                   }`}
                 >
@@ -236,9 +236,9 @@ export function ModalMovimientoCaja({ tipoInicial = "egreso" }: ModalMovimientoC
                 <button
                   type="button"
                   onClick={() => handleCambiarTipo("ingreso")}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[9px] text-xs font-semibold transition-all ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[9px] text-xs font-semibold transition-transform ${
                     tipo === "ingreso"
-                      ? "bg-[#10e7a0] text-black shadow-sm"
+                      ? "bg-accent text-accent-contrast shadow-sm"
                       : "text-ink-soft hover:text-ink"
                   }`}
                 >
@@ -251,7 +251,7 @@ export function ModalMovimientoCaja({ tipoInicial = "egreso" }: ModalMovimientoC
                 type="button"
                 onClick={handleCerrar}
                 disabled={isPending}
-                className="rounded-full p-2 text-ink-soft hover:bg-paper hover:text-ink active:scale-95 transition-all"
+                className="rounded-full p-2 text-ink-soft hover:bg-paper hover:text-ink active:scale-95 transition-transform"
               >
                 <X className="size-5" />
               </button>
@@ -282,7 +282,7 @@ export function ModalMovimientoCaja({ tipoInicial = "egreso" }: ModalMovimientoC
                       placeholder="0"
                       value={monto}
                       onChange={(e) => setMonto(e.target.value)}
-                      className="w-full h-13 pl-10 pr-4 rounded-[14px] border border-rule bg-paper text-2xl font-bold text-ink placeholder:text-ink-soft/30 focus:outline-none focus:border-[#10e7a0] focus:ring-1 focus:ring-[#10e7a0]"
+                      className="w-full h-13 pl-10 pr-4 rounded-[14px] border border-rule bg-paper text-2xl font-bold text-ink placeholder:text-ink-soft/30 focus:outline-none focus:border-ok focus:ring-1 focus:ring-accent"
                       required
                     />
                   </div>
@@ -308,11 +308,11 @@ export function ModalMovimientoCaja({ tipoInicial = "egreso" }: ModalMovimientoC
                           key={cat}
                           type="button"
                           onClick={() => toggleCategoria(cat)}
-                          className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-[10px] text-xs font-medium border transition-all active:scale-95 ${
+                          className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-[10px] text-xs font-medium border transition-transform active:scale-95 ${
                             seleccionada
                               ? tipo === "egreso"
-                                ? "bg-rose-500/15 border-rose-500 text-rose-400 font-semibold"
-                                : "bg-[#10e7a0]/15 border-[#10e7a0] text-[#10e7a0] font-semibold"
+                                ? "bg-danger/15 border-danger text-danger font-semibold"
+                                : "bg-ok/15 border-ok text-ok font-semibold"
                               : "bg-paper border-rule text-ink-soft hover:border-ink-soft/40"
                           }`}
                         >
@@ -320,8 +320,8 @@ export function ModalMovimientoCaja({ tipoInicial = "egreso" }: ModalMovimientoC
                             className={`size-3.5 rounded-[4px] flex items-center justify-center border text-[9px] transition-colors ${
                               seleccionada
                                 ? tipo === "egreso"
-                                  ? "bg-rose-500 border-rose-500 text-white"
-                                  : "bg-[#10e7a0] border-[#10e7a0] text-black"
+                                  ? "bg-danger border-danger text-white"
+                                  : "bg-accent border-accent text-accent-contrast"
                                 : "border-ink-soft/40 bg-transparent"
                             }`}
                           >
@@ -348,11 +348,11 @@ export function ModalMovimientoCaja({ tipoInicial = "egreso" }: ModalMovimientoC
                           key={p.id}
                           type="button"
                           onClick={() => toggleItemRapido(p)}
-                          className={`p-2.5 rounded-[12px] border text-left flex items-start gap-2.5 transition-all active:scale-[0.97] ${
+                          className={`p-2.5 rounded-[12px] border text-left flex items-start gap-2.5 transition-transform active:scale-[0.97] ${
                             activo
                               ? tipo === "egreso"
-                                ? "border-rose-500/80 bg-rose-500/10 ring-1 ring-rose-500"
-                                : "border-[#10e7a0] bg-[#10e7a0]/10 ring-1 ring-[#10e7a0]"
+                                ? "border-danger/80 bg-danger/10 ring-1 ring-danger"
+                                : "border-ok bg-ok/10 ring-1 ring-accent"
                               : "border-rule bg-paper hover:border-ink-soft/30"
                           }`}
                         >
@@ -362,7 +362,7 @@ export function ModalMovimientoCaja({ tipoInicial = "egreso" }: ModalMovimientoC
                               {p.label}
                             </p>
                             {p.precioDefault ? (
-                              <p className="text-[11px] font-mono font-semibold text-[#10e7a0] mt-0.5">
+                              <p className="text-[11px] font-mono font-semibold text-ok mt-0.5">
                                 +${p.precioDefault.toLocaleString("es-AR")}
                               </p>
                             ) : (
@@ -387,7 +387,7 @@ export function ModalMovimientoCaja({ tipoInicial = "egreso" }: ModalMovimientoC
                       }
                       value={concepto}
                       onChange={(e) => setConcepto(e.target.value)}
-                      className="w-full h-11 px-3.5 rounded-[12px] border border-rule bg-paper text-sm text-ink placeholder:text-ink-soft/40 focus:outline-none focus:border-[#10e7a0]"
+                      className="w-full h-11 px-3.5 rounded-[12px] border border-rule bg-paper text-sm text-ink placeholder:text-ink-soft/40 focus:outline-none focus:border-ok"
                       required
                     />
                   </div>
@@ -414,9 +414,9 @@ export function ModalMovimientoCaja({ tipoInicial = "egreso" }: ModalMovimientoC
                             hapticoSeleccion();
                             setMedioPago(mp.id);
                           }}
-                          className={`h-11 px-2.5 rounded-[12px] border text-xs font-medium flex items-center justify-center gap-1.5 transition-all active:scale-95 ${
+                          className={`h-11 px-2.5 rounded-[12px] border text-xs font-medium flex items-center justify-center gap-1.5 transition-transform active:scale-95 ${
                             activo
-                              ? "border-[#10e7a0] bg-[#10e7a0]/15 text-ink ring-1 ring-[#10e7a0] font-semibold"
+                              ? "border-ok bg-ok/15 text-ink ring-1 ring-accent font-semibold"
                               : "border-rule bg-paper text-ink-soft hover:border-ink-soft/30"
                           }`}
                         >
@@ -438,7 +438,7 @@ export function ModalMovimientoCaja({ tipoInicial = "egreso" }: ModalMovimientoC
                     placeholder="Ej: Factura 001-4921 o N° Operación"
                     value={comprobanteRef}
                     onChange={(e) => setComprobanteRef(e.target.value)}
-                    className="w-full h-10 px-3.5 rounded-[12px] border border-rule bg-paper text-xs text-ink placeholder:text-ink-soft/40 focus:outline-none focus:border-[#10e7a0]"
+                    className="w-full h-10 px-3.5 rounded-[12px] border border-rule bg-paper text-xs text-ink placeholder:text-ink-soft/40 focus:outline-none focus:border-ok"
                   />
                 </div>
               </form>
@@ -450,7 +450,7 @@ export function ModalMovimientoCaja({ tipoInicial = "egreso" }: ModalMovimientoC
                 type="button"
                 onClick={handleCerrar}
                 disabled={isPending}
-                className="flex-1 h-11 rounded-[12px] border border-rule text-sm font-medium text-ink hover:bg-paper active:scale-98 transition-all"
+                className="flex-1 h-11 rounded-[12px] border border-rule text-sm font-medium text-ink hover:bg-paper active:scale-98 transition-transform"
               >
                 Cancelar
               </button>
@@ -458,10 +458,10 @@ export function ModalMovimientoCaja({ tipoInicial = "egreso" }: ModalMovimientoC
                 type="submit"
                 form="form-movimiento-caja"
                 disabled={isPending}
-                className={`flex-1 h-11 inline-flex items-center justify-center gap-2 rounded-[12px] font-semibold text-sm shadow-md active:scale-[0.98] transition-all disabled:opacity-50 ${
+                className={`flex-1 h-11 inline-flex items-center justify-center gap-2 rounded-[12px] font-semibold text-sm shadow-md active:scale-[0.98] transition-transform disabled:opacity-50 ${
                   tipo === "egreso"
-                    ? "bg-rose-500 hover:bg-rose-600 text-white"
-                    : "bg-[#10e7a0] hover:brightness-105 text-black"
+                    ? "bg-danger hover:bg-danger-strong text-white"
+                    : "bg-accent hover:brightness-105 text-accent-contrast"
                 }`}
               >
                 {isPending ? (

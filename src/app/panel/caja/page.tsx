@@ -116,13 +116,13 @@ export default async function CajaPage() {
   const esDueno = profile.rol === "dueno";
 
   const contenidoPrincipal = (
-    <div className="space-y-8 pb-12">
+    <div className="owner-screen space-y-8 pb-12">
       {/* Encabezado */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl sm:text-3xl font-black text-ink">Caja Diaria y Turnos</h1>
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#10e7a0]/15 text-[#10e7a0] border border-[#10e7a0]/30">
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-ok/15 text-ok border border-ok/30">
               ✦ PLAN ELITE
             </span>
           </div>
@@ -143,7 +143,7 @@ export default async function CajaPage() {
         <CajaAbiertaView sesion={sesionAbierta} esDueno={esDueno} />
       ) : (
         <div className="rounded-[24px] border-2 border-dashed border-rule bg-paper-2/60 p-8 sm:p-12 text-center space-y-4">
-          <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-[#10e7a0]/15 text-[#10e7a0]">
+          <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-ok/15 text-ok">
             <Coins className="size-7" />
           </div>
           <div className="max-w-md mx-auto space-y-1">
