@@ -18,20 +18,20 @@ const TRAMO_CONFIG: Record<
   { color: string; glow: string; mensaje: string; imagen: string }
 > = {
   tranquilo: {
-    color: "#10e7a0",
-    glow: "rgba(16,231,160,0.55)",
+    color: "var(--ok)",
+    glow: "color-mix(in srgb, var(--ok) 25%, transparent)",
     mensaje: "Gym despejado • Ideal para entrenar sin esperas",
     imagen: "/mascota/aforo-tranquilo.jpg",
   },
   moderado: {
-    color: "#f5b400",
-    glow: "rgba(245,180,0,0.55)",
+    color: "var(--warn)",
+    glow: "color-mix(in srgb, var(--warn) 25%, transparent)",
     mensaje: "Afluencia media • Buen ritmo en máquinas",
     imagen: "/mascota/aforo-moderado.jpg",
   },
   concurrido: {
-    color: "#ff3d5a",
-    glow: "rgba(255,61,90,0.6)",
+    color: "var(--danger)",
+    glow: "color-mix(in srgb, var(--danger) 25%, transparent)",
     mensaje: "Horario pico • Aforo alto",
     imagen: "/mascota/aforo-concurrido.jpg",
   },
@@ -54,7 +54,7 @@ export function BarraAforoAnimada({ aforo }: { aforo: AforoInfo }) {
         type="button"
         onClick={handleTap}
         aria-expanded={abierto}
-        className="w-full text-left rounded-[16px] border border-rule/60 bg-paper-2/75 backdrop-blur-xl p-3.5 shadow-sm transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.99]"
+        className="member-occupancy w-full text-left rounded-[16px] border border-rule/60 bg-paper-2/75 backdrop-blur-xl p-3.5 shadow-sm transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.99]"
       >
         <div className="flex items-center gap-3">
           <div className="relative size-12 shrink-0 overflow-hidden rounded-[10px] border border-rule bg-paper shadow-sm">

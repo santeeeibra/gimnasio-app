@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { SelectorMusculos } from "@/components/rutinas/selector-musculos";
 import { Button, Select, linkClasses } from "@/components/ui";
 import { hapticoSeleccion } from "@/lib/ui/hapticos";
 import {
@@ -641,6 +642,18 @@ export function GenerarRutinaForm({
         onSelectNivel={(n) => setNivel(n)}
       />
 
+      <div className="sm:col-span-2 space-y-2">
+        <SelectorMusculos
+          label="¿Qué músculos querés priorizar?"
+          opciones={ENFASIS.map(value => ({ value, label: ENFASIS_LABEL[value] }))}
+          seleccionados={enfasis}
+          onToggle={value => toggleEnfasis(value as Enfasis)}
+          max={MAX_ENFASIS}
+          name="enfasis"
+        />
+        <p className="text-xs text-ink-soft">Opcional: agregá énfasis a esas zonas. La rutina sigue trabajando el resto del cuerpo.</p>
+      </div>
+
       {/* INPUTS OCULTOS PARA EL SUBMIT DE NAVEGADOR */}
       <input type="hidden" name="preferencia" value={preferenciaEquipo} />
 
@@ -655,12 +668,12 @@ export function GenerarRutinaForm({
         >
           <div className="flex items-center gap-2.5">
             <SlidersHorizontal className="size-4 text-accent" />
-            <span>Opciones opcionales: Enfoque, molestias y equipamiento</span>
+            <span>Molestias y equipamiento</span>
           </div>
           <div className="flex items-center gap-2">
-            {enfasis.length + zonasDolor.length > 0 ? (
+            {zonasDolor.length > 0 ? (
               <span className="px-2 py-0.5 rounded-full bg-accent text-accent-contrast font-bold text-[10px]">
-                {enfasis.length + zonasDolor.length} activos
+                {zonasDolor.length} activos
               </span>
             ) : (
               <span className="text-ink-soft text-[11px]">Personalizar</span>
@@ -688,7 +701,7 @@ export function GenerarRutinaForm({
                   Preferencias opcionales
                 </h2>
                 <p className="text-xs text-ink-soft mt-0.5">
-                  Ajustá la zona a enfocar, molestias articulares y equipo disponible.
+                  Ajustá molestias articulares y equipo disponible.
                 </p>
               </div>
 
@@ -700,38 +713,6 @@ export function GenerarRutinaForm({
                 <X className="size-4" />
               </button>
             </div>
-
-            <fieldset className="space-y-2">
-              <legend className="text-[13px] font-semibold text-ink mb-1.5">
-                Zona a enfocar{" "}
-                <span className="font-normal text-ink-soft/70 text-xs">
-                  (hasta {MAX_ENFASIS})
-                </span>
-              </legend>
-              <div className="flex flex-wrap gap-2">
-                {ENFASIS.map((e) => {
-                  const on = enfasis.includes(e);
-                  return (
-                    <label key={e} className="cursor-pointer touch-manipulation">
-                      <input
-                        type="checkbox"
-                        name="enfasis"
-                        value={e}
-                        checked={on}
-                        onChange={() => toggleEnfasis(e)}
-                        className="peer sr-only"
-                      />
-                      <span className="inline-flex h-10 items-center rounded-[8px] border border-rule px-3 text-xs font-medium transition-colors peer-checked:border-accent peer-checked:bg-accent peer-checked:text-accent-contrast">
-                        {ENFASIS_LABEL[e]}
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
-              <p className="text-xs text-ink-soft">
-                Se agregan series extra para esa zona muscular.
-              </p>
-            </fieldset>
 
             <fieldset className="space-y-2">
               <legend className="text-[13px] font-semibold text-ink mb-1.5">

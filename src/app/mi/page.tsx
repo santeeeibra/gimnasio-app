@@ -109,7 +109,7 @@ export default async function MiPage() {
   const diasParaAnillo = dias !== null && dias >= 0 ? dias : 0;
 
   return (
-    <main className="stagger max-w-md mx-auto min-h-full p-6 pb-24 space-y-6">
+    <main className="member-home stagger max-w-md mx-auto min-h-full p-6 pb-24 space-y-6">
       <CacheAlVuelo
         clave="cuota:mi"
         data={{
@@ -176,6 +176,7 @@ export default async function MiPage() {
           gymNombre={gym?.nombre}
           estadoCuota={estado === "vencido" ? "vencida" : "al_dia"}
           fullAncho
+          className="member-entry"
         />
       </div>
 
@@ -292,7 +293,7 @@ export default async function MiPage() {
         </div>
       ) : null}
 
-      <ul className="stagger-in card-cut overflow-hidden border border-rule bg-paper-2 divide-y divide-rule">
+      <ul className="member-shortcuts stagger-in card-cut overflow-hidden border border-rule bg-paper-2 divide-y divide-rule">
         <li>
           <Link
             href="/mi/perfil"
@@ -376,7 +377,7 @@ export default async function MiPage() {
       </ul>
  
       <div className="mt-4 space-y-3">
-        <BotonCompartirApp variant="card" />
+        <BotonCompartirApp variant="card" className="member-share" />
         <BotonInstalarApp variant="card" />
       </div>
 

@@ -98,6 +98,77 @@
   transition: none;
 }
 
+/* Client materials share the owner sports identity, preserving layout and gym palette. */
+.member-native {
+  --member-surface: var(--paper-2);
+  --member-label: var(--accent);
+  --accent-weak: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+.member-native[data-theme-polarity="light"] {
+  --member-surface: color-mix(in srgb, white 94%, var(--paper-2));
+  --member-label: color-mix(in srgb, var(--accent) 42%, var(--ink));
+  background: color-mix(in srgb, var(--paper) 12%, #f5f6f7);
+}
+.member-native.capa-ambiental::before { opacity: 0.06; }
+.member-content, .member-native #portal-root {
+  --app-font-display: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-hero: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.member-content h1 { font-weight: 650; }
+.member-content .card-cut { clip-path: none; border-radius: 16px; overflow: hidden; }
+.member-content .bg-paper-2, .member-content .member-occupancy { background-color: var(--member-surface); }
+.member-content .card-cut, .member-content .member-session, .member-content .member-occupancy { box-shadow: var(--elev-shadow-sm); }
+.member-content .member-entry {
+  background: var(--accent); border-color: var(--accent);
+  color: var(--accent-contrast); box-shadow: var(--elev-shadow-sm);
+}
+.member-entry svg { color: inherit; }
+.member-shortcuts svg { color: var(--member-label); }
+.member-content .member-session { border-color: color-mix(in srgb, var(--accent) 20%, var(--rule)); }
+.member-session::after {
+  content: ""; position: absolute; inset: 14px auto 14px 0;
+  width: 3px; border-radius: 0 3px 3px 0; background: var(--member-label);
+  opacity: 0.6; pointer-events: none;
+}
+.member-content .member-set-tracker {
+  background: color-mix(in srgb, var(--accent) 4%, var(--member-surface));
+  border-color: color-mix(in srgb, var(--accent) 18%, var(--rule));
+}
+.member-set-tracker button[aria-label^="Serie"] { color: var(--ink); box-shadow: var(--elev-shadow-sm); }
+.member-set-tracker button.bg-accent { color: var(--accent-contrast); }
+.member-content .member-guide { background: var(--paper); border-color: var(--rule); }
+.member-guide > span:first-child { color: var(--member-label); }
+.member-content .member-share {
+  background: var(--member-surface); box-shadow: var(--elev-shadow-sm);
+  border-color: var(--rule); backdrop-filter: none;
+}
+.member-share p { color: var(--ink); }
+.member-share p:first-child { color: var(--member-label); }
+.member-share svg { color: inherit; animation: none; }
+.member-share .shrink-0:not(button) {
+  color: var(--member-label); background: var(--accent-weak);
+  border-color: var(--rule); box-shadow: none;
+}
+.member-share button { background: var(--accent); color: var(--accent-contrast); box-shadow: var(--elev-shadow-sm); }
+.member-bottom-nav {
+  background: color-mix(in srgb, var(--member-surface) 94%, transparent);
+  box-shadow: 0 -2px 12px color-mix(in srgb, var(--ink) 5%, transparent);
+}
+.member-nav-active::before {
+  content: ""; position: absolute; top: 5px; left: calc(50% - 20px);
+  width: 40px; height: 30px; border-radius: 10px;
+  background: var(--accent-weak); pointer-events: none;
+}
+.member-nav-active svg { position: relative; color: var(--member-label); }
+.member-content a, .member-content button { -webkit-tap-highlight-color: transparent; transition-property: transform, opacity; }
+.member-content :is(a, button, input, textarea, select):focus-visible { outline: 2px solid var(--member-label); outline-offset: 3px; }
+.member-content .animate-ping, .member-content .futurista-fondo::before { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .member-content :is(a, button), .member-bottom-nav span { transition: none; }
+}
+[data-motion="still"] .member-content :is(a, button), [data-motion="still"] .member-bottom-nav span { transition: none; }
+
 :root {
   --paper: #faf9f6;
   --paper-2: #f2efe7;

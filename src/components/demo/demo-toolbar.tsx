@@ -125,7 +125,7 @@ export function DemoToolbar({
   }
 
   return (
-    <div className="fixed bottom-24 right-4 md:bottom-6 z-40 flex flex-col items-end gap-2">
+    <div data-demo-toolbar className="fixed bottom-24 right-4 md:bottom-6 z-40 flex flex-col items-end gap-2">
       {mensaje ? (
         <div
           className={`max-w-[220px] rounded-[10px] border px-3 py-2 text-xs shadow-lg ${

@@ -22,6 +22,7 @@ import {
   type Tecnica,
 } from "@/lib/rutina/tipos";
 import { resolverWarmupSesion } from "@/lib/rutinas/warmup-engine";
+import { SelectorMusculos } from "@/components/rutinas/selector-musculos";
 import { WarmupGeneralCard } from "@/components/rutinas/warmup-general-card";
 
 const campoCls =
@@ -352,6 +353,7 @@ export function RutinaEditor({
   // (wizard), para minimizar distracción y errores de tap.
   const [zenMode, setZenMode] = useState(false);
   const [pasoZen, setPasoZen] = useState(0);
+  const [filtroMusculo, setFiltroMusculo] = useState("");
   useWakeLock(zenMode);
 
   function toggleZenMode() {
@@ -368,6 +370,7 @@ export function RutinaEditor({
   // actual, volver al primer ejercicio para no quedar fuera de rango.
   useEffect(() => {
     setPasoZen(0);
+    setFiltroMusculo("");
   }, [activo]);
 
   // Series guardadas en caliente: el tiempo estimado se recalcula sin recargar.
@@ -635,7 +638,7 @@ export function RutinaEditor({
               {/* Hero Card: Resumen del Día y Progreso de Sesión */}
               <div
                 id="hero-resumen-dia"
-                className="relative overflow-hidden rounded-[16px] border border-rule bg-paper-2 p-4 shadow-sm"
+                className="member-session relative overflow-hidden rounded-[16px] border border-rule bg-paper-2 p-4 shadow-sm"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
@@ -780,6 +783,16 @@ export function RutinaEditor({
                   )}
                 </div>
 
+                {!zenMode ? (
+                  <div className="mb-3">
+                    <SelectorMusculos label="Ver ejercicios por músculo" todos
+                      opciones={[...new Set(dia.items.map(it => it.ejercicio?.grupo_muscular).filter((g): g is string => Boolean(g)))].map(value => ({ value, label: GRUPO_MUSCULAR_LABEL[value] ?? value }))}
+                      seleccionados={filtroMusculo ? [filtroMusculo] : []}
+                      onToggle={value => setFiltroMusculo(value === filtroMusculo ? "" : value)} />
+                    {filtroMusculo ? <p role="status" className="mt-2 text-xs text-ink-soft">Mostrando {dia.items.filter(it => it.ejercicio?.grupo_muscular === filtroMusculo).length} de {dia.items.length} ejercicios. El progreso incluye todo el día.</p> : null}
+                  </div>
+                ) : null}
+
                 {zenMode ? (
                   <>
                     <ul
@@ -857,6 +870,7 @@ export function RutinaEditor({
                 ) : (
                   <ul className="stagger-in divide-y divide-rule overflow-hidden rounded-[16px] border border-rule bg-paper-2 shadow-sm">
                     {dia.items.map((item, i) => (
+                      !filtroMusculo || item.ejercicio?.grupo_muscular === filtroMusculo ?
                       <ItemFila
                         key={item.id}
                         indice={i + 1}
@@ -878,7 +892,7 @@ export function RutinaEditor({
                         colores={colores}
                         mostrarGuiaSerie={!guiaVista && seriesHechasActivo === 0 && i === 0}
                         zenMode={zenMode}
-                      />
+                      /> : null
                     ))}
                   </ul>
                 )}
@@ -1328,7 +1342,7 @@ function ItemFila({
   const numSeries = Number(series) || item.series;
 
   return (
-    <li className="p-4 transition-colors duration-150">
+    <li className="member-exercise p-4">
       <div className="flex items-start gap-3">
         <div className="flex flex-col items-center gap-2 shrink-0 w-[84px]">
           <ExThumb ej={ej} onOpen={() => ej && onVer(ej)} />
@@ -1562,14 +1576,14 @@ function ItemFila({
           ) : null}
 
           {item.nota ? (
-            <div className="mt-2 flex items-start gap-1.5 rounded-[8px] border border-accent/20 bg-accent/5 px-2.5 py-1.5 text-[11px] text-ink-soft">
+            <div className="member-guide mt-2 flex items-start gap-1.5 rounded-[8px] border border-accent/20 bg-accent/5 px-2.5 py-1.5 text-[11px] text-ink-soft">
               <span className="font-semibold text-accent shrink-0">💡 Guía:</span>
               <span className="line-clamp-2">{item.nota}</span>
             </div>
           ) : null}
 
           {/* Tracker táctil de series de hoy con editor individual */}
-          <div className="mt-2.5 rounded-[10px] border border-rule bg-paper p-2">
+          <div className="member-set-tracker mt-2.5 rounded-[10px] border border-rule bg-paper p-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-1.5">
                 <span className="text-[11px] font-semibold text-ink-soft">

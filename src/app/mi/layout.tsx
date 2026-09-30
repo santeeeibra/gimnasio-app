@@ -94,7 +94,7 @@ export default async function MiLayout({
 
   return (
     <div
-      className="capa-ambiental min-h-screen bg-paper text-ink"
+      className="member-native capa-ambiental min-h-screen bg-paper text-ink"
       style={temaToVars(tema)}
       data-estilo-visual={tema.estiloVisual}
       data-theme-polarity={polaridadTema(tema)}
@@ -124,7 +124,7 @@ export default async function MiLayout({
       ) : (
         <div className="h-[env(safe-area-inset-top,0px)]" />
       )}
-      <div className="pb-20 md:pb-0">
+      <div className="member-content pb-20 md:pb-0">
         <PullToRefresh>{children}</PullToRefresh>
       </div>
       <MiBottomNav />

@@ -329,7 +329,7 @@ export function PulpoAsistenteChat({
         {trigger ?? <Sparkles className="size-4" />}
       </button>
 
-      {typeof document !== "undefined" &&
+      {abierto && typeof document !== "undefined" &&
         createPortal(
           <>
             {/* Backdrop estilo iOS */}
@@ -754,7 +754,7 @@ export function PulpoAsistenteChat({
         </div>
       </div>
           </>,
-          document.body
+          document.getElementById("portal-root") ?? document.body
         )}
     </>
   );

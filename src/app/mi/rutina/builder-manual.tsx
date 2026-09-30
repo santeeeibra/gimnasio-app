@@ -1,10 +1,12 @@
 "use client";
 
 import { useActionState, useMemo, useState } from "react";
+import { SelectorMusculos } from "@/components/rutinas/selector-musculos";
 import { Button } from "@/components/ui";
 import { hapticoSeleccion } from "@/lib/ui/hapticos";
 import {
   GRUPO_A_ENFASIS,
+  GRUPO_MUSCULAR_LABEL,
   MAX_DIAS_MANUAL,
   MAX_EJERCICIOS_DIA,
   MAX_ENFASIS,
@@ -72,7 +74,9 @@ export function BuilderManual({ ejercicios }: { ejercicios: Ejercicio[] }) {
 
   const [filtroNivel, setFiltroNivel] = useState<"todos" | Nivel>("todos");
 
-  const ejerciciosFiltrados = useMemo(() => {
+  const [filtroMusculo, setFiltroMusculo] = useState("");
+
+  const ejerciciosNivel = useMemo(() => {
     if (filtroNivel === "todos") return ejercicios;
     if (filtroNivel === "principiante") {
       return ejercicios.filter((e) => e.nivel === "principiante");
@@ -84,6 +88,9 @@ export function BuilderManual({ ejercicios }: { ejercicios: Ejercicio[] }) {
     }
     return ejercicios;
   }, [ejercicios, filtroNivel]);
+
+  const opcionesMusculos = useMemo(() => [...new Set(ejercicios.map(e => e.grupo_muscular).filter((g): g is string => Boolean(g)))].map(value => ({ value, label: GRUPO_MUSCULAR_LABEL[value] ?? value })), [ejercicios]);
+  const ejerciciosFiltrados = useMemo(() => ejerciciosNivel.filter(e => !filtroMusculo || e.grupo_muscular === filtroMusculo), [ejerciciosNivel, filtroMusculo]);
 
   const grupos = useMemo(() => {
     const m = new Map<string, Ejercicio[]>();
@@ -209,7 +216,7 @@ export function BuilderManual({ ejercicios }: { ejercicios: Ejercicio[] }) {
             </span>
             <p className="mt-0.5 text-[11px] text-ink-soft">
               {filtroNivel === "todos"
-                ? "Mostrando los 74 ejercicios disponibles."
+                ? `Mostrando ${ejerciciosFiltrados.length} ejercicios disponibles.`
                 : filtroNivel === "principiante"
                 ? "Mostrando únicamente ejercicios seguros y guiados para principiantes."
                 : filtroNivel === "intermedio"
@@ -241,6 +248,11 @@ export function BuilderManual({ ejercicios }: { ejercicios: Ejercicio[] }) {
           </div>
         </div>
       </div>
+
+      <SelectorMusculos label="Buscar ejercicios por músculo" opciones={opcionesMusculos}
+        seleccionados={filtroMusculo ? [filtroMusculo] : []}
+        onToggle={value => setFiltroMusculo(value === filtroMusculo ? "" : value)} todos />
+      {ejerciciosFiltrados.length === 0 ? <p role="status" className="text-xs text-ink-soft">No hay ejercicios para estos filtros. Probá otro músculo o nivel.</p> : null}
 
       {dias.map((dia, di) => (
         <section
@@ -289,6 +301,9 @@ export function BuilderManual({ ejercicios }: { ejercicios: Ejercicio[] }) {
                     className={`${campoCls} min-w-0 flex-1 px-2`}
                   >
                     <option value="">Elegí un ejercicio…</option>
+                    {fila.ejercicioId && !ejerciciosFiltrados.some(e => e.id === fila.ejercicioId) ? (
+                      <option value={fila.ejercicioId}>{ejercicios.find(e => e.id === fila.ejercicioId)?.nombre ?? "Ejercicio seleccionado"} (seleccionado)</option>
+                    ) : null}
                     {grupos.map((g) => (
                       <optgroup key={g.nombre} label={g.nombre}>
                         {g.ejercicios.map((ej) => (

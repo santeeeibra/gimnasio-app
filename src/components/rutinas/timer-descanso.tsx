@@ -532,64 +532,47 @@ export function TimerDescanso() {
     hasMoved: boolean;
   }>({ startX: 0, startY: 0, elemX: 0, elemY: 0, hasMoved: false });
 
-  // Posición inicial por defecto al montar en cliente
+  function floatingBounds() {
+    const nav = document.querySelector<HTMLElement>("[data-mi-bottom-nav]");
+    const navHeight = nav?.getBoundingClientRect().height ?? 70;
+    const width = containerRef.current?.offsetWidth ?? 160;
+    const height = containerRef.current?.offsetHeight ?? 48;
+    return { width, height,
+      maxX: Math.max(12, window.innerWidth - width - 12),
+      maxY: Math.max(10, window.innerHeight - navHeight - height - 12),
+    };
+  }
+
+  function safePosition(x: number, y: number) {
+    const { width, height, maxX, maxY } = floatingBounds();
+    let nextX = Math.max(12, Math.min(maxX, x));
+    let nextY = Math.max(10, Math.min(maxY, y));
+    const demo = document.querySelector<HTMLElement>("[data-demo-toolbar]")?.getBoundingClientRect();
+    if (demo && nextX < demo.right + 8 && nextX + width > demo.left - 8 &&
+        nextY < demo.bottom + 8 && nextY + height > demo.top - 8) {
+      if (demo.left - width - 8 >= 12) nextX = demo.left - width - 8;
+      else nextY = Math.max(10, demo.top - height - 8);
+    }
+    return { x: nextX, y: nextY };
+  }
+
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-    // Por defecto abajo a la derecha, por encima de la bottom nav (~70px)
-    const initX = Math.max(16, w - 170);
-    const initY = Math.max(20, h - 130);
-    setPos({ x: initX, y: initY });
+    setPos(safePosition(window.innerWidth - 170, window.innerHeight - 130));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Mantener dentro del viewport al rotar o redimensionar
   useEffect(() => {
-    const handleResize = () => {
-      setPos((prev) => {
-        if (!prev) return prev;
-        const w = window.innerWidth;
-        const h = window.innerHeight;
-        const elemWidth = 160;
-        const elemHeight = 48;
-        const margin = 12;
-        const bottomNavHeight = 70;
-        const topMargin = 10;
-
-        const maxX = Math.max(margin, w - elemWidth - margin);
-        const maxY = Math.max(topMargin, h - bottomNavHeight - elemHeight - margin);
-
-        return {
-          x: Math.max(margin, Math.min(maxX, prev.x)),
-          y: Math.max(topMargin, Math.min(maxY, prev.y)),
-        };
-      });
-    };
+    const handleResize = () => setPos((prev) => prev ? safePosition(prev.x, prev.y) : prev);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function snapToClosestEdge(currentX: number, currentY: number) {
-    if (typeof window === "undefined") return;
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-    const elemWidth = containerRef.current?.offsetWidth || 160;
-    const elemHeight = containerRef.current?.offsetHeight || 48;
-    const margin = 12;
-    const bottomNavHeight = 70;
-    const topMargin = 10;
-
-    const minX = margin;
-    const maxX = Math.max(margin, w - elemWidth - margin);
-    const minY = topMargin;
-    const maxY = Math.max(topMargin, h - bottomNavHeight - elemHeight - margin);
-
-    const midPointX = w / 2;
-    const targetX = currentX + elemWidth / 2 < midPointX ? minX : maxX;
-    const targetY = Math.max(minY, Math.min(maxY, currentY));
-
+    const { width, maxX } = floatingBounds();
+    const targetX = currentX + width / 2 < window.innerWidth / 2 ? 12 : maxX;
     setSnapping(true);
-    setPos({ x: targetX, y: targetY });
+    setPos(safePosition(targetX, currentY));
     setTimeout(() => setSnapping(false), 280);
   }
 
@@ -623,19 +606,9 @@ export function TimerDescanso() {
       dragInfoRef.current.hasMoved = true;
     }
 
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-    const elemWidth = containerRef.current?.offsetWidth || 160;
-    const elemHeight = containerRef.current?.offsetHeight || 48;
-    const margin = 8;
-    const bottomNavHeight = 70;
-    const topMargin = 10;
-
-    let nextX = dragInfoRef.current.elemX + dx;
-    let nextY = dragInfoRef.current.elemY + dy;
-
-    nextX = Math.max(margin, Math.min(w - elemWidth - margin, nextX));
-    nextY = Math.max(topMargin, Math.min(h - bottomNavHeight - elemHeight - margin, nextY));
+    const { maxX, maxY } = floatingBounds();
+    const nextX = Math.max(12, Math.min(maxX, dragInfoRef.current.elemX + dx));
+    const nextY = Math.max(10, Math.min(maxY, dragInfoRef.current.elemY + dy));
 
     setPos({ x: nextX, y: nextY });
   }
@@ -648,11 +621,7 @@ export function TimerDescanso() {
     } catch {}
 
     if (dragInfoRef.current.hasMoved) {
-      setPos((latest) => {
-        if (!latest) return latest;
-        snapToClosestEdge(latest.x, latest.y);
-        return latest;
-      });
+      if (pos) snapToClosestEdge(pos.x, pos.y);
     } else {
       setColapsado(false);
     }
@@ -666,6 +635,7 @@ export function TimerDescanso() {
       {colapsado && !hayModalAbierto && (
         <div
           ref={containerRef}
+          data-timer-floating
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
@@ -685,8 +655,14 @@ export function TimerDescanso() {
           <div
             role="button"
             tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                setColapsado(false);
+              }
+            }}
             aria-label={alertFinalizado ? "Descanso terminado. Abrir timer" : "Abrir descanso entre series"}
-            className={`flex h-12 min-w-[48px] items-center gap-2.5 rounded-full border bg-paper/95 px-3 py-1.5 shadow-xl backdrop-blur-md transition-[transform,border-color,box-shadow] duration-200 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
+            className={`flex h-12 min-w-[48px] items-center gap-2.5 rounded-full border bg-paper/95 px-3 py-1.5 shadow-xl backdrop-blur-md transition-transform duration-200 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
               alertFinalizado
                 ? "border-accent bg-accent/15 text-accent shadow-[0_0_16px_var(--accent)] animate-timer-alert"
                 : corriendo
@@ -949,6 +925,6 @@ export function TimerDescanso() {
         </div>
       )}
     </>,
-    document.body,
+    document.getElementById("portal-root") ?? document.body,
   );
 }

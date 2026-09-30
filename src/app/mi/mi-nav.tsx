@@ -22,10 +22,14 @@ function isActive(pathname: string, href: string) {
 /** Mobile: navegación fija abajo, siempre a 1 tap. */
 export function MiBottomNav() {
   const pathname = usePathname();
+  return <MemberBottomNav pathname={pathname} />;
+}
+
+export function MemberBottomNav({ pathname }: { pathname: string }) {
   const activeIdx = NAV.findIndex((item) => isActive(pathname, item.href));
 
   return (
-    <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-rule bg-paper/95 backdrop-blur-sm pb-[env(safe-area-inset-bottom)]">
+    <nav aria-label="Navegación del socio" data-mi-bottom-nav className="member-bottom-nav md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-rule bg-paper/95 backdrop-blur-sm pb-[env(safe-area-inset-bottom)]">
       <div className="relative flex">
         {/* Indicador: un solo nodo que se desliza entre ítems. Movimiento en
             pantalla ⇒ --ease-in-out (REGLAS §8). Nunca aparece/desaparece. */}
@@ -53,8 +57,8 @@ export function MiBottomNav() {
               prefetch={true}
               onClick={() => hapticoNavegacionPantalla()}
               aria-current={active ? "page" : undefined}
-              className={`relative flex-1 flex min-h-14 flex-col items-center justify-center gap-1 py-2 text-[11px] tracking-tight touch-manipulation active:scale-95 transition-[transform,color] duration-150 [transition-timing-function:var(--ease-out)] ${
-                active ? "text-ink" : "text-ink-soft"
+              className={`relative flex-1 flex min-h-14 flex-col items-center justify-center gap-1 py-2 text-[11px] tracking-tight touch-manipulation active:scale-95 transition-transform duration-150 [transition-timing-function:var(--ease-out)] ${
+                active ? "member-nav-active text-ink" : "text-ink-soft"
               }`}
             >
               <item.Icono

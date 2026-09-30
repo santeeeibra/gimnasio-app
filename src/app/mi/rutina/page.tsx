@@ -239,7 +239,7 @@ export default async function MiRutinaPage() {
   // el timer de descanso — colapsado ~62px, expandido ~214px — ambos fijos.
   // pb-64 (256px) deja el último ejercicio visible incluso con el timer abierto.
   return (
-    <main className="stagger max-w-md mx-auto px-5 pt-6 pb-64 space-y-6">
+    <main className="member-workout stagger max-w-md mx-auto px-5 pt-6 pb-64 space-y-6">
       {/* 1. Header (Volver / Actualizar) + 2. Aforo en vivo + 3. Título "Tu rutina" */}
       <div>
         <div className="flex items-center justify-between gap-2">
