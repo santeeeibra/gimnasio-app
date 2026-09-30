@@ -3,6 +3,33 @@ import { test, expect } from "@playwright/test";
 const GIMNASIO = "sante";
 
 test.describe("Login con DNI (gimnasio)", () => {
+  test("gimnasio vacío conserva el foco mientras se escribe letra por letra", async ({ page }) => {
+    await page.goto("/login");
+    await page.getByRole("button", { name: "Con DNI (Gimnasio)" }).click();
+    const gym = page.locator("#gimnasio-input");
+    await gym.click();
+    for (const letra of GIMNASIO) {
+      await page.keyboard.type(letra);
+      await expect(gym).toBeFocused();
+      await expect(gym).toBeVisible();
+    }
+    await expect(gym).toHaveValue(GIMNASIO);
+  });
+
+  test("permite editar un gimnasio recordado sin perder el teclado", async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem("gym.ultimo_slug", JSON.stringify({ slug: "anterior", nombre: "Anterior" }));
+    });
+    await page.goto("/login");
+    await page.getByRole("button", { name: "Con DNI (Gimnasio)" }).click();
+    await page.getByRole("button", { name: "Cambiar", exact: true }).click();
+    const gym = page.locator("#gimnasio-input");
+    await gym.fill("");
+    await gym.pressSequentially(GIMNASIO);
+    await expect(gym).toBeFocused();
+    await expect(gym).toHaveValue(GIMNASIO);
+  });
+
   test("cliente con credenciales validas entra a /mi", async ({ page }) => {
     await page.goto("/login");
 

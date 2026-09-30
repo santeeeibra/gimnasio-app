@@ -56,7 +56,7 @@ export function LoginForm({
   const [gimnasioNombre, setGimnasioNombre] = useState<string | null>(
     initialGymNombre ?? null,
   );
-  const [cambiandoGimnasio, setCambiandoGimnasio] = useState(false);
+  const [cambiandoGimnasio, setCambiandoGimnasio] = useState(!initialGymSlug);
   const [dni, setDni] = useState("");
   const [clave, setClave] = useState("");
   const [loadingProvider, setLoadingProvider] = useState<string | null>(null);
@@ -109,6 +109,7 @@ export function LoginForm({
         if (data.slug) {
           setGimnasio(data.slug);
           setGimnasioNombre(data.nombre || data.slug);
+          setCambiandoGimnasio(false);
         }
       } catch {
         localStorage.removeItem(STORAGE_KEY);

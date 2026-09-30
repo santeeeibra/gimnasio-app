@@ -10,13 +10,18 @@ export function AutoRedirectSuperadmin() {
   const pathname = usePathname();
 
   useEffect(() => {
+    const controller = new AbortController();
     async function chequear() {
-      if (pathname.startsWith("/admin")) return;
+      // Las vistas protegidas tienen sus propios guards. El auto-redirect
+      // solo resuelve la entrada, nunca interrumpe una vista de soporte.
+      if (pathname !== "/login" && pathname !== "/") return;
       try {
-        const res = await fetch("/api/soy-superadmin", { cache: "no-store" });
+        const res = await fetch("/api/soy-superadmin", {
+          cache: "no-store", signal: controller.signal,
+        });
         if (!res.ok) return;
         const { esSuperadmin } = await res.json();
-        if (esSuperadmin) router.push("/admin");
+        if (esSuperadmin && !controller.signal.aborted) router.push("/admin");
       } catch {
         // Sin red: no hacemos nada, se reintenta la próxima vez que vuelva.
       }
@@ -32,6 +37,7 @@ export function AutoRedirectSuperadmin() {
     window.addEventListener("focus", alVolver);
 
     return () => {
+      controller.abort();
       document.removeEventListener("visibilitychange", alVolver);
       window.removeEventListener("focus", alVolver);
     };

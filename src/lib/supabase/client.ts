@@ -1,14 +1,17 @@
 import { createBrowserClient } from "@supabase/ssr";
 
 export function createClient() {
-  return createBrowserClient(
+  const client = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
-      // Sin esto, el auto-refresh de supabase-js (se dispara en focus/visibilitychange)
-      // reescribe las cookies con la sesión vieja guardada en localStorage del navegador,
-      // pisando la sesión impersonada del server y expulsando al superadmin de vuelta a /admin.
+      // El middleware renueva la sesión del servidor. SSR 0.5.2 sobrescribe
+      // esta opción; también detenemos el timer y listener con la API de Auth.
       auth: { autoRefreshToken: false },
     },
   );
+  // Esperar la inicialización: Auth instala su listener de visibilitychange
+  // al terminar. Detenerlo antes dejaría que se vuelva a activar después.
+  void client.auth.initialize().then(() => client.auth.stopAutoRefresh());
+  return client;
 }
