@@ -40,6 +40,7 @@ import {
   type DialVerticalProgresoHandle,
 } from "@/components/progreso/dial-vertical-progreso";
 import { HistorialEjercicio } from "@/components/progreso/historial-ejercicio";
+import { consultarHistorial } from "@/lib/progreso/consultar-historial";
 import { EquipamientoSugerido } from "@/components/monetizacion/equipamiento-sugerido";
 import { PanelDropSet } from "@/components/progreso/panel-dropset";
 import {
@@ -1926,12 +1927,9 @@ function ItemFila({
           {/* Historial y gráfico del ejercicio */}
           {clienteId && item.ejercicio && (
             <HistorialEjercicio
+              key={`${clienteId}:${creadoPor}:${item.ejercicio.id}`}
               ejercicioNombre={item.ejercicio.nombre ?? "Ejercicio"}
-              fetchHistorial={async () =>
-                creadoPor === "dueno"
-                  ? obtenerProgresoSocio(clienteId, item.ejercicio!.id)
-                  : obtenerProgresoCliente(item.ejercicio!.id)
-              }
+              fetchHistorial={() => consultarHistorial(item.ejercicio!.id, creadoPor === "dueno" ? clienteId : undefined)}
             />
           )}
 

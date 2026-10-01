@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { hapticoSeleccion } from "@/lib/ui/hapticos";
 import { GraficoProgreso } from "./grafico-progreso";
 import type { RegistroProgreso } from "@/lib/progreso/actions";
 
@@ -15,18 +16,26 @@ export function HistorialEjercicio({
   const [abierto, setAbierto] = useState(false);
   const [registros, setRegistros] = useState<RegistroProgreso[]>([]);
   const [cargando, setCargando] = useState(false);
+  const [error, setError] = useState(false);
   const cargadoRef = useRef(false);
 
   async function cargar() {
-    if (cargadoRef.current) return;
-    cargadoRef.current = true;
+    if (cargadoRef.current || cargando) return;
     setCargando(true);
-    const data = await fetchHistorial();
-    setRegistros(data);
-    setCargando(false);
+    setError(false);
+    try {
+      const data = await fetchHistorial();
+      setRegistros(data);
+      cargadoRef.current = true;
+    } catch {
+      setError(true);
+    } finally {
+      setCargando(false);
+    }
   }
 
   function toggle() {
+    hapticoSeleccion();
     const nuevoEstado = !abierto;
     setAbierto(nuevoEstado);
     if (nuevoEstado) cargar();
@@ -87,6 +96,13 @@ export function HistorialEjercicio({
           {cargando ? (
             <div className="flex h-[110px] items-center justify-center">
               <div className="h-5 w-5 animate-spin rounded-full border-2 border-rule border-t-accent" />
+            </div>
+          ) : error ? (
+            <div role="status" className="text-xs text-ink-soft">
+              <p>No pudimos cargar tu progreso. Volvé a intentar.</p>
+              <button type="button" onClick={() => { hapticoSeleccion(); void cargar(); }} className="mt-2 min-h-11 rounded-[10px] border border-rule px-3 font-medium text-ink">
+                Reintentar
+              </button>
             </div>
           ) : registros.length === 0 ? (
             <p className="text-xs text-ink-soft">

@@ -158,3 +158,5 @@
 
 
 
+
+2026-09-30: Historial de progreso usa GET autenticado independiente de la cola de Server Actions; timeout 8s, error/reintento y estado por cliente/ejercicio. Typecheck y 3 pruebas PASS.
