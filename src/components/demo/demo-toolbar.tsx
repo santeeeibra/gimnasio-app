@@ -55,10 +55,6 @@ const CONTEXTUALES_DUENO: { prefix: string; acciones: Accion[] }[] = [
     acciones: [{ label: "Registrar pago random", run: demoRegistrarPago }],
   },
   {
-    prefix: "/panel/asistencia",
-    acciones: [{ label: "Simular check-in", run: demoCheckin }],
-  },
-  {
     prefix: "/checkin",
     acciones: [{ label: "Salir del check-in sin PIN (soporte)", run: salirCheckinSoporte }],
   },

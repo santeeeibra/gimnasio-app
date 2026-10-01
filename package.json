@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev -H 0.0.0.0",
-    "build": "next build",
+    "build": "npm run check:routes && next build",
+    "check:routes": "node scripts/check-routes.mjs",
+    "test:routes": "node --test tests/routes.test.mjs",
     "start": "next start",
     "lint": "next lint",
     "test:fast": "node scripts/test-rapido.mjs",

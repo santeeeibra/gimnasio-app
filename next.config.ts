@@ -23,7 +23,9 @@ const nextConfig: NextConfig = {
         source: '/partner',
         destination: '/registro-partner',
         permanent: true,
-      }
+      },
+      // La asistencia ahora está integrada en el resumen del gimnasio.
+      { source: '/panel/asistencia', destination: '/panel', permanent: true },
     ];
   },
 };

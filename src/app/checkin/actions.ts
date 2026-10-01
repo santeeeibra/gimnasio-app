@@ -187,7 +187,7 @@ async function marcarIngresoInterno(
       }
     }
 
-    revalidatePath("/panel/asistencia");
+    revalidatePath(`/panel/clientes/${cliente.id}`);
     revalidatePath("/panel");
 
     if (cliente.en_prueba && esPrimerIngreso && !cliente.prueba_iniciada_en) {
