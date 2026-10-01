@@ -164,3 +164,5 @@
 2026-09-30: Corregido 404 de Peso en cuentas individuales: nueva ruta /mi/peso con CardPeso, acciones existentes y consulta limitada al profile/gimnasio autenticado. Typecheck PASS.
 
 2026-09-30: Auditoría de rutas: 448 referencias internas, 0 destinos faltantes tras corregir referencias de /panel/asistencia y alias hacia /panel. Check AST de páginas/endpoints/assets integrado al build, 404 con retorno a inicio. 5 tests, typecheck y build PASS.
+
+2026-09-30: Cuentas individuales (incluyendo Google/Partners) muestran InicioIndividual en /panel y /mi antes de consultas operativas; navegación individual consistente en Rutina/Peso, sin tutorial dueño ni demo operativa. No se cambian roles ni identidad. 10 tests y build PASS.

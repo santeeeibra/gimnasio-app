@@ -23,6 +23,7 @@ import { BarraAforoAnimada } from "@/components/mi/barra-aforo-animada";
 import { obtenerAforo } from "@/lib/aforo/actions";
 import { Pulpo } from "@/components/mascota/pulpo";
 import { CredencialQRModal } from "@/components/mi/credencial-qr-modal";
+import { InicioIndividual } from "@/components/mi/inicio-individual";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -48,6 +49,10 @@ export default async function MiPage() {
       .eq("profile_id", profile.id)
       .eq("leido", false),
   ]);
+
+  if (gym?.tipo_cuenta === "individual") {
+    return <InicioIndividual nombre={profile.nombre} />;
+  }
 
   const estadoGimnasio = gym?.estado ?? "prueba";
   const soloLectura = estadoGimnasio === "solo_lectura";

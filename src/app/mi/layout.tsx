@@ -9,6 +9,7 @@ import {
   resolverMotion,
 } from "@/lib/tema";
 import { MiBottomNav } from "./mi-nav";
+import { PanelBottomNav } from "@/app/panel/panel-nav";
 import { Tutorial } from "@/components/tutorial/tutorial";
 import { ImpersonationBanner, ImpersonationControls } from "@/components/impersonation/banner";
 import { OfflineProvider } from "@/components/offline/provider";
@@ -127,7 +128,9 @@ export default async function MiLayout({
       <div className="member-content pb-20 md:pb-0">
         <PullToRefresh>{children}</PullToRefresh>
       </div>
-      <MiBottomNav />
+      {gym?.tipo_cuenta === "individual" ? (
+        <PanelBottomNav tipoCuenta="individual" rol={profile.rol} motionMode={resolverMotion(tema)} />
+      ) : <MiBottomNav />}
       <Tutorial rol="cliente" />
       <DemoToolbar rol="socio" habilitado={puedeVerDemo} />
       <div id="portal-root" />

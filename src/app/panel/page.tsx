@@ -29,6 +29,7 @@ import { BotonInstalarApp } from "@/components/pwa/boton-instalar-app";
 import { WidgetAsistenciaSala } from "@/components/panel/widget-asistencia-sala";
 import { obtenerPedidosActivos } from "./asistencia/actions";
 import { GatingPlanInicialBanner } from "@/components/plataforma/gating-plan-inicial";
+import { InicioIndividual } from "@/components/mi/inicio-individual";
 
 // Saludo según hora del día en vez de un chip de fecha genérico.
 function saludoPorHora(ahora: Date): string {
@@ -47,6 +48,17 @@ export default async function ResumenPage() {
   const dueno = await requireStaffODueno();
   const esStaff = dueno.rol === "staff";
   const supabase = await createClient();
+  const { data: gym, error: gymError } = await supabase
+    .from("gimnasios")
+    .select("estado, nombre, tipo_cuenta")
+    .eq("id", dueno.gimnasio_id)
+    .single();
+  if (gymError || !gym) throw new Error("No se pudo cargar tu cuenta.");
+  // Las cuentas personales usan un perfil dueño para su espacio privado,
+  // pero su inicio debe resolverse por tipo de cuenta, nunca por el proveedor OAuth.
+  if (gym.tipo_cuenta === "individual") {
+    return <InicioIndividual nombre={dueno.nombre} />;
+  }
   const adminDb = createAdminClient();
 
   const ahora = new Date();
@@ -67,7 +79,6 @@ export default async function ResumenPage() {
   const hace30Str = `${hace30.getFullYear()}-${pad2(hace30.getMonth() + 1)}-${pad2(hace30.getDate())}`;
 
   const [
-    { data: gym },
     cupo,
     { data: clientesData },
     { count: planesCount },
@@ -79,11 +90,6 @@ export default async function ResumenPage() {
     { data: sesionCajaRaw },
     planInfo,
   ] = await Promise.all([
-    supabase
-      .from("gimnasios")
-      .select("estado, nombre")
-      .eq("id", dueno.gimnasio_id)
-      .single(),
     esStaff
       ? Promise.resolve({ ok: true, usados: 0, max: null, esGratuito: false } as any)
       : cupoSocios(adminDb, dueno.gimnasio_id),

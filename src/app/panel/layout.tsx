@@ -73,8 +73,8 @@ export default async function PanelLayout({
         <PanelBottomNav tipoCuenta={gym?.tipo_cuenta ?? "gym"} rol={profile.rol} motionMode={resolverMotion(tema)} />
       </div>
 
-      {profile.rol === "dueno" ? <Tutorial rol="dueno" /> : null}
-      <DemoToolbar rol="dueno" habilitado={puedeVerDemo} />
+      {profile.rol === "dueno" && gym?.tipo_cuenta !== "individual" ? <Tutorial rol="dueno" /> : null}
+      <DemoToolbar rol={gym?.tipo_cuenta === "individual" ? "socio" : "dueno"} habilitado={puedeVerDemo} />
       <div id="portal-root" />
     </div>
   );
