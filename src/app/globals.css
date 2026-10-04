@@ -1378,3 +1378,94 @@ textarea {
 }
 .owner-screen .owner-client-search { box-shadow: var(--owner-shadow); }
 .owner-screen button { -webkit-tap-highlight-color: transparent; }
+
+/* Owner professional refresh. Shared by the real panel and public owner demo.
+   All colors derive from gym tokens; member screens keep their existing style. */
+:is(.panel-native, .capa-ambiental:has(.owner-summary)) {
+  --owner-surface: color-mix(in srgb, var(--paper-2) 95%, var(--ink));
+  --owner-accent-label: color-mix(in srgb, var(--accent) 85%, var(--ink));
+  --owner-shadow: 0 8px 24px color-mix(in srgb, var(--paper) 48%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--ink) 4%, transparent);
+  background: var(--paper);
+}
+:is(.panel-native, .capa-ambiental:has(.owner-summary))[data-theme-polarity="light"] {
+  --owner-surface: var(--paper-2);
+  --owner-accent-label: color-mix(in srgb, var(--accent) 42%, var(--ink));
+  --owner-shadow: 0 4px 16px color-mix(in srgb, var(--ink) 6%, transparent);
+}
+:is(.panel-native, .capa-ambiental:has(.owner-summary))::before { background-image: none; opacity: 0; }
+.owner-summary {
+  --app-font-display: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.owner-heading h1 { letter-spacing: -0.035em; line-height: 1.15; }
+.owner-heading p { line-height: 1.6; }
+.owner-summary :is(.owner-surface, .bg-paper-2) {
+  background-color: var(--owner-surface);
+  box-shadow: var(--owner-shadow);
+  border-color: color-mix(in srgb, var(--ink) 9%, var(--paper-2));
+}
+.owner-summary :is(.owner-shortcut, .owner-metric)::after,
+.owner-summary .owner-metric::before { content: none; }
+.owner-summary .owner-shortcut > div:first-child {
+  border-radius: 12px;
+  color: var(--owner-accent-label);
+  background: var(--accent-weak);
+}
+.owner-summary .owner-shortcut p:first-child { font-weight: 600; }
+.owner-summary .owner-metric { background-image: none; }
+.owner-summary .owner-metric[data-tone="warn"] { background-image: linear-gradient(135deg, color-mix(in srgb, var(--warn) 8%, transparent), transparent); }
+.owner-summary .owner-metric[data-tone="danger"] { background-image: linear-gradient(135deg, color-mix(in srgb, var(--danger) 8%, transparent), transparent); }
+.owner-summary .owner-revenue {
+  background-image: linear-gradient(120deg, color-mix(in srgb, var(--accent) 8%, transparent), transparent 75%);
+  border-color: color-mix(in srgb, var(--accent) 20%, var(--rule));
+}
+.owner-revenue-value { font-size: clamp(1.8rem, 8vw, 2.5rem); line-height: 1.1; overflow-wrap: anywhere; }
+.owner-summary .owner-attention-card {
+  background-image: linear-gradient(135deg, color-mix(in srgb, var(--warn) 10%, transparent), transparent);
+  border-color: color-mix(in srgb, var(--warn) 32%, var(--rule));
+}
+.owner-attention > div > div:first-child > span { font-size: 1rem; font-weight: 600; }
+.owner-topbar {
+  background: var(--owner-surface);
+  backdrop-filter: none;
+}
+.owner-topbar-actions { justify-content: flex-end; }
+.owner-topbar-actions :is(a, button) { white-space: nowrap; }
+.owner-bottom-nav {
+  grid-template-columns: repeat(var(--owner-nav-columns, 5), minmax(0, 1fr));
+  background: color-mix(in srgb, var(--owner-surface) 96%, transparent);
+  border-color: var(--rule);
+  box-shadow: var(--owner-shadow);
+}
+.owner-bottom-nav > a { min-width: 44px; font-size: 11px; letter-spacing: 0; }
+.owner-bottom-nav > a[aria-current="page"] { color: var(--owner-accent-label); }
+.panel-native:has(.owner-bottom-nav > a:nth-child(6)) main { padding-bottom: calc(10rem + env(safe-area-inset-bottom, 0px)); }
+.owner-demo-nav { background: var(--owner-surface); border-color: var(--rule); }
+.owner-demo-nav button { min-width: 44px; }
+.capa-ambiental:has(.owner-summary) .demo-header {
+  flex-wrap: wrap;
+  gap: 8px;
+  background: var(--owner-surface);
+  backdrop-filter: none;
+}
+.capa-ambiental:has(.owner-summary) .demo-header > div:last-child { margin-left: auto; }
+.capa-ambiental:has(.owner-summary) .demo-header a { min-height: 44px; white-space: nowrap; }
+.capa-ambiental:has(.owner-summary) .demo-header > div:first-child > span:last-child > span:last-child { max-width: 130px; }
+.capa-ambiental:has(.owner-summary) nav[aria-label="Elegir demo"] { background: var(--paper); }
+.owner-summary :is(a, button, input, textarea):focus-visible,
+.owner-demo-nav button:focus-visible { outline: 2px solid var(--owner-accent-label); outline-offset: 3px; }
+@media (max-width: 480px) {
+  .owner-topbar-actions { flex-basis: 100%; justify-content: flex-start; }
+  .owner-summary .owner-metric:last-child:nth-child(odd) { grid-column: 1 / -1; }
+}
+@media (min-width: 768px) {
+  .panel-native:has(.owner-bottom-nav > a:nth-child(6)) main { padding-bottom: 2.5rem; }
+}
+
+@media (max-width: 480px) {
+  .owner-demo-summary .owner-metric:last-child:nth-child(odd) {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  }
+  .owner-demo-summary .owner-metric:last-child:nth-child(odd) p { margin-top: 0; }
+}

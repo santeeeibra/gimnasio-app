@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Coins, LayoutDashboard, MessageSquare, Tags, Users } from "lucide-react";
+import { AlertCircle, ArrowUpRight, Coins, LayoutDashboard, MessageSquare, Tags, Users } from "lucide-react";
+import { OwnerRevenueCard } from "@/components/panel/owner-revenue-card";
 import { hapticoSeleccion } from "@/lib/ui/hapticos";
 
 const SOCIOS = [
@@ -36,24 +37,25 @@ export default function DemoDueno() {
   function ir(id: Seccion) { hapticoSeleccion(); setSeccion(id); setSeleccionado(null); }
 
   return (
-    <main className="owner-summary space-y-5 px-5 pt-6">
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-wider text-volt">Vista de dueño · Demo temporal</p>
+    <main className="owner-summary owner-demo-summary space-y-5 px-5 pt-6">
+      <div className="owner-heading">
+        <p className="text-xs font-medium text-ink-soft">Panel del dueño · Datos de ejemplo</p>
         <h1 className="mt-2 font-display text-2xl font-semibold">Gimnasio Demo</h1>
-        <p className="mt-1 text-xs leading-relaxed text-ink-soft">Una muestra de las funciones del panel con datos ficticios. Las acciones de esta demo no modifican cuentas reales.</p>
+        <p className="mt-1 text-xs leading-relaxed text-ink-soft">Datos ficticios. Esta demo no modifica cuentas reales.</p>
       </div>
 
       {seccion === "resumen" && <>
         <h2 className="font-display text-lg font-semibold">Tu gimnasio, de un vistazo</h2>
+        <OwnerRevenueCard amount={3850000} comparison="Importe ilustrativo · Demo" />
         <div className="grid grid-cols-2 gap-3">
-          {[["Socios activos", "124"], ["En sala ahora", "18"], ["Cobrado este mes", "$3.850.000"], ["Cuotas por vencer", "9"]].map(([label, valor]) => (
+          {[["Socios activos", "124"], ["En sala ahora", "18"], ["Cuotas por vencer", "9"]].map(([label, valor]) => (
             <div key={label} className={`owner-metric ${card}`} data-tone={label === "Cuotas por vencer" ? "warn" : undefined}><p className="text-xs text-ink-soft">{label}</p><p className="mt-2 text-xl font-bold tabular-nums">{valor}</p></div>
           ))}
         </div>
-        <div className={card}>
-          <h3 className="font-semibold">Para atender hoy</h3>
+        <div className={`owner-attention-card ${card}`}>
+          <h3 className="inline-flex items-center gap-2 font-semibold"><AlertCircle aria-hidden className="size-5 text-warn" />Para atender hoy</h3>
           <p className="mt-2 text-sm text-ink-soft">3 cuotas vencidas · 9 próximos vencimientos</p>
-          <button onClick={() => ir("clientes")} className="mt-3 min-h-11 rounded-[12px] bg-volt px-4 text-sm font-semibold text-volt-ink transition-transform active:scale-95">Ver clientes</button>
+          <button onClick={() => ir("clientes")} className="mt-4 flex w-full min-h-11 items-center justify-between rounded-[12px] bg-volt px-4 text-sm font-semibold text-volt-ink transition-transform active:scale-95">Ver clientes<ArrowUpRight aria-hidden className="size-4" /></button>
         </div>
         <div className={card}><h3 className="font-semibold">Últimos cobros</h3><Movimientos /></div>
       </>}
@@ -61,7 +63,7 @@ export default function DemoDueno() {
       {seccion === "clientes" && <>
         <h2 className="font-display text-lg font-semibold">Clientes y cuotas</h2>
         <label className="block text-xs text-ink-soft">Buscar por nombre
-          <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar cliente…" className="mt-2 min-h-11 w-full rounded-[12px] border border-rule bg-paper-2 px-3 text-sm text-ink" />
+          <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar cliente…" className="mt-2 min-h-11 w-full rounded-[12px] border border-rule bg-paper-2 px-3 text-[16px] text-ink" />
         </label>
         <div className="space-y-2">
           {SOCIOS.filter((s) => s.nombre.toLowerCase().includes(busqueda.toLowerCase())).map((s) => (
@@ -104,13 +106,13 @@ export default function DemoDueno() {
         <div className={card}><h3 className="font-semibold">Vista previa para el socio</h3><p className="mt-2 whitespace-pre-wrap break-words text-sm text-ink-soft">{aviso}</p></div>
       </>}
 
-      <nav aria-label="Secciones del dueño" className="fixed inset-x-0 bottom-0 z-40 mx-auto flex max-w-md justify-center gap-1 border-t border-rule bg-paper/95 px-2 pt-2 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] backdrop-blur-xl">
-        {SECCIONES.map(({ id, label, Icono }) => <button key={id} onClick={() => ir(id)} aria-current={seccion === id ? "page" : undefined} className={`flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-[12px] text-[11px] transition-transform active:scale-95 ${seccion === id ? "bg-ink text-paper" : "text-ink-soft"}`}><Icono className="size-5" aria-hidden /><span>{label}</span></button>)}
+      <nav aria-label="Secciones del dueño" className="owner-demo-nav fixed inset-x-0 bottom-0 z-40 mx-auto flex max-w-md justify-center gap-1 border-t border-rule bg-paper/95 px-2 pt-2 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] backdrop-blur-xl">
+        {SECCIONES.map(({ id, label, Icono }) => <button key={id} onClick={() => ir(id)} aria-current={seccion === id ? "page" : undefined} className={`flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-[12px] text-[11px] transition-transform active:scale-95 ${seccion === id ? "bg-accent/10 text-[color:var(--owner-accent-label)]" : "text-ink-soft"}`}><Icono className="size-5" aria-hidden /><span>{label}</span></button>)}
       </nav>
     </main>
   );
 }
 
 function Movimientos() {
-  return <ul className="mt-3 divide-y divide-rule">{MOVIMIENTOS.map((m) => <li key={m.concepto} className="flex items-center justify-between gap-2 py-3"><span><span className="block text-sm font-medium">{m.concepto}</span><span className="text-xs text-ink-soft">{m.medio}</span></span><span className="text-sm font-semibold tabular-nums">{m.monto}</span></li>)}</ul>;
+  return <ul className="mt-3 divide-y divide-rule">{MOVIMIENTOS.map((m) => <li key={m.concepto} className="flex items-center justify-between gap-2 py-3"><span className="flex min-w-0 items-center gap-3"><span aria-hidden className="grid size-9 shrink-0 place-items-center rounded-full bg-accent/10 text-xs font-semibold text-[color:var(--owner-accent-label)]">{m.concepto.split(" · ")[1].split(" ").map((p) => p[0]).join("")}</span><span className="min-w-0"><span className="block text-sm font-medium">{m.concepto}</span><span className="text-xs text-ink-soft">{m.medio}</span></span></span><span className="shrink-0 text-sm font-semibold tabular-nums">{m.monto}</span></li>)}</ul>;
 }

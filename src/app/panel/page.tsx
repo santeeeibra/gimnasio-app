@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { OwnerRevenueCard } from "@/components/panel/owner-revenue-card";
 import {
   CreditCard,
   UserPlus,
@@ -408,7 +409,7 @@ export default async function ResumenPage() {
           ───────────────────────────────────────────────────────────── */}
 
       {/* Encabezado */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="owner-heading flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl sm:text-3xl 2xl:text-4xl font-bold tracking-tight text-ink">
             {saludoPorHora(ahora)}, {primerNombre(dueno.nombre)}
@@ -420,6 +421,14 @@ export default async function ResumenPage() {
           </p>
         </div>
       </div>
+
+      {!esStaff ? (
+        <OwnerRevenueCard
+          amount={null}
+          href="/panel/ingresos"
+          protectedSummary
+        />
+      ) : null}
 
       {/* 1. Estado de Caja del Turno */}
       {planInfo?.permiteControlCaja ? (
@@ -610,10 +619,10 @@ export default async function ResumenPage() {
         gimnasioId={dueno.gimnasio_id}
       />
 
-      <div className="pt-2">
+      <div className="owner-attention pt-2">
         {/* Socios con atención pendiente (Vencidos o por vencer) */}
         <div className="space-y-3">
-          <div className="flex items-baseline justify-between px-0.5">
+          <div className="flex flex-wrap items-center justify-between gap-2 px-0.5">
             <span className="text-sm font-bold text-ink">
               Cobros y Vencimientos Próximos
             </span>
@@ -703,9 +712,9 @@ export default async function ResumenPage() {
             <div className="pt-2">
               <Link
                 href="/panel/ingresos"
-                className="w-full flex items-center justify-between p-3 rounded-[12px] border border-rule bg-paper-2 hover:bg-paper-3 transition-colors text-xs text-ink-soft hover:text-ink"
+                className="w-full min-h-11 flex flex-wrap gap-2 items-center justify-between p-3 rounded-[12px] border border-rule bg-paper-2 hover:bg-paper-3 transition-colors text-xs text-ink-soft hover:text-ink"
               >
-                <span>📈 ¿Querés ver los ingresos y facturación histórica?</span>
+                <span className="inline-flex items-center gap-2"><TrendingUp aria-hidden className="size-4 shrink-0" /> Ingresos y facturación histórica</span>
                 <span className="font-semibold text-ink inline-flex items-center gap-1">
                   Ir a Ingresos →
                 </span>

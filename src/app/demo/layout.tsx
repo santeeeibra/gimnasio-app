@@ -31,7 +31,7 @@ export default function DemoLayout({
       data-motion={resolverMotion(tema)}
     >
       <div className="relative mx-auto flex min-h-screen w-full max-w-md flex-col md:border-x md:border-rule/70 md:bg-paper md:shadow-[0_0_60px_rgba(0,0,0,0.35)]">
-        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-rule bg-paper/95 backdrop-blur-md px-5 py-3 pt-[calc(env(safe-area-inset-top,0px)+0.75rem)] md:pt-3.5">
+        <header className="demo-header sticky top-0 z-30 flex items-center justify-between border-b border-rule bg-paper/95 backdrop-blur-md px-5 py-3 pt-[calc(env(safe-area-inset-top,0px)+0.75rem)] md:pt-3.5">
           <div className="flex min-w-0 items-center gap-2.5">
             <span className="grid size-9 shrink-0 place-items-center rounded-[10px] border border-volt/30 bg-volt/15 text-sm font-bold text-volt shadow-xs">
               S
@@ -41,7 +41,7 @@ export default function DemoLayout({
                 SysGym
               </span>
               <span className="block text-[11px] leading-tight text-ink-soft">
-                Demo · probá sin registrarte
+                Demo sin registro
               </span>
             </span>
           </div>
@@ -51,7 +51,7 @@ export default function DemoLayout({
               href="/login"
               className="inline-flex min-h-9 items-center justify-center rounded-full px-3 text-xs font-semibold text-ink-soft hover:text-ink transition-colors active:scale-95"
             >
-              Iniciar sesión
+              Ingresar
             </Link>
             <Link
               href="/registrarse"

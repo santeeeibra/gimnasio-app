@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { CSSProperties } from "react";
 import { usePathname } from "next/navigation";
 import { LayoutGroup, motion, useReducedMotion } from "motion/react";
 import { logout } from "@/app/actions";
@@ -257,16 +258,16 @@ export function PanelTopbar({
   rol?: string;
 }) {
   return (
-    <header className="owner-topbar md:hidden sticky top-0 z-30 flex items-center justify-between border-b border-rule bg-paper/95 backdrop-blur-md px-5 pb-3 pt-[calc(env(safe-area-inset-top,0px)+0.75rem)]">
+    <header className="owner-topbar md:hidden sticky top-0 z-30 flex flex-wrap gap-3 items-center justify-between border-b border-rule bg-paper/95 backdrop-blur-md px-5 pb-3 pt-[calc(env(safe-area-inset-top,0px)+0.75rem)]">
       <div className="flex min-w-0 items-center gap-2">
         <LogoMark logo={logo} size="size-7" />
         <p className="font-display text-base leading-tight truncate">{nombre}</p>
       </div>
-      <div className="flex shrink-0 items-center gap-2">
+      <div className="owner-topbar-actions flex flex-wrap items-center gap-2">
         {rol !== "staff" ? (
           <Link
             href="/panel/partner"
-            className="px-2.5 py-1 text-xs font-bold rounded-full inline-flex items-center gap-1 bg-ok/10 text-ok border border-ok/20 active:scale-[0.97] transition-transform"
+            className="min-h-11 px-2.5 py-1 text-xs font-bold rounded-full inline-flex items-center gap-1 bg-ok/10 text-ok border border-ok/20 active:scale-[0.97] transition-transform"
           >
             <Award className="size-3" />
             <span>Partner</span>
@@ -327,7 +328,7 @@ export function OwnerBottomNav({ items, pathname, motionMode = "full" }: {
   return (
     <div className="md:hidden pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center px-3 pb-[calc(env(safe-area-inset-bottom,0px)+0.55rem)] pt-2">
       <LayoutGroup id="owner-bottom-nav">
-        <nav aria-label="Navegación principal" className="owner-bottom-nav pointer-events-auto flex w-full max-w-md items-stretch gap-0.5 rounded-[22px] border border-rule/70 bg-paper/70 p-1.5 shadow-[0_10px_34px_rgb(0_0_0_/_0.18)] backdrop-blur-xl backdrop-saturate-150">
+        <nav aria-label="Navegación principal" style={{ "--owner-nav-columns": Math.min(items.length, 5) } as CSSProperties} className="owner-bottom-nav pointer-events-auto grid w-full max-w-md items-stretch gap-0.5 rounded-[22px] border border-rule/70 bg-paper/70 p-1.5 shadow-[0_10px_34px_rgb(0_0_0_/_0.18)] backdrop-blur-xl backdrop-saturate-150">
           {items.map((item) => {
             const active = isActive(pathname, item.href);
             return (
@@ -339,7 +340,7 @@ export function OwnerBottomNav({ items, pathname, motionMode = "full" }: {
                 aria-current={active ? "page" : undefined}
                 className={`relative isolate flex min-h-[52px] flex-1 flex-col items-center justify-center gap-1 rounded-[16px] px-0.5 py-1.5 text-[10px] tracking-tight touch-manipulation transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] ${
                   active
-                    ? "text-paper"
+                    ? "text-[color:var(--owner-accent-label)]"
                     : "text-ink-soft hover:text-ink"
                 }`}
               >
@@ -347,7 +348,7 @@ export function OwnerBottomNav({ items, pathname, motionMode = "full" }: {
                   <motion.span
                     aria-hidden="true"
                     layoutId="active-tab"
-                    className="absolute inset-0 -z-10 rounded-[16px] bg-ink"
+                    className="absolute inset-0 -z-10 rounded-[16px] bg-accent/10"
                     transition={still ? { duration: 0 } : { type: "spring", stiffness: 480, damping: 38 }}
                   />
                 ) : null}
