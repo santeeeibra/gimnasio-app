@@ -1453,7 +1453,7 @@ function DemoRutina() {
                     {/* Tracker táctil de series de hoy (mínimo 44x44px con disparo de timer automático) */}
                     <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 rounded-[10px] border border-rule bg-paper p-2">
                       <span className="text-[11px] font-semibold text-ink-soft">
-                        Series de hoy:
+                        Series de hoy · <span className="series-summary">{completadas.length}/{it.series}</span>
                       </span>
                       <div className="flex flex-wrap items-center gap-1.5">
                         {Array.from({ length: it.series }).map((_, sIdx) => {
@@ -1463,15 +1463,16 @@ function DemoRutina() {
                               key={sIdx}
                               type="button"
                               onClick={() => toggleSet(it.key, sIdx, it.nota)}
+                              aria-pressed={hecho}
                               aria-label={`Serie ${sIdx + 1} de ${it.series} ${hecho ? "completada" : "pendiente"}`}
-                              className={`grid size-11 min-w-[44px] place-items-center rounded-[10px] border text-xs font-bold transition-all duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+                              className={`series-toggle grid size-11 min-w-[44px] place-items-center rounded-[10px] border text-xs font-bold transition-transform duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
                                 hecho
                                   ? "border-accent bg-accent text-accent-ink shadow-sm"
                                   : "border-rule bg-paper-2 text-ink-soft hover:border-ink/40 hover:text-ink"
                               }`}
                               style={{ fontFamily: "var(--font-hero)" }}
                             >
-                              {hecho ? "✓" : sIdx + 1}
+                              <span aria-hidden>{hecho ? "✓" : sIdx + 1}</span>
                             </button>
                           );
                         })}

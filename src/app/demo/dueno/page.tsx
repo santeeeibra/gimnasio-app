@@ -36,7 +36,7 @@ export default function DemoDueno() {
   function ir(id: Seccion) { hapticoSeleccion(); setSeccion(id); setSeleccionado(null); }
 
   return (
-    <main className="space-y-5 px-5 pt-6">
+    <main className="owner-summary space-y-5 px-5 pt-6">
       <div>
         <p className="text-xs font-semibold uppercase tracking-wider text-volt">Vista de dueño · Demo temporal</p>
         <h1 className="mt-2 font-display text-2xl font-semibold">Gimnasio Demo</h1>
@@ -47,7 +47,7 @@ export default function DemoDueno() {
         <h2 className="font-display text-lg font-semibold">Tu gimnasio, de un vistazo</h2>
         <div className="grid grid-cols-2 gap-3">
           {[["Socios activos", "124"], ["En sala ahora", "18"], ["Cobrado este mes", "$3.850.000"], ["Cuotas por vencer", "9"]].map(([label, valor]) => (
-            <div key={label} className={card}><p className="text-xs text-ink-soft">{label}</p><p className="mt-2 text-xl font-bold tabular-nums">{valor}</p></div>
+            <div key={label} className={`owner-metric ${card}`} data-tone={label === "Cuotas por vencer" ? "warn" : undefined}><p className="text-xs text-ink-soft">{label}</p><p className="mt-2 text-xl font-bold tabular-nums">{valor}</p></div>
           ))}
         </div>
         <div className={card}>

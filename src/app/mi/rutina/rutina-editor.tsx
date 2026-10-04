@@ -1588,7 +1588,7 @@ function ItemFila({
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-1.5">
                 <span className="text-[11px] font-semibold text-ink-soft">
-                  Series de hoy:
+                  Series de hoy · <span className="series-summary">{setsCompletados.filter((s) => s >= 0 && s < numSeries).length}/{numSeries}</span>
                 </span>
                 <button
                   type="button"
@@ -1687,10 +1687,11 @@ function ItemFila({
                           }
                           onToggleSet(sIdx);
                         }}
+                        aria-pressed={hecho}
                         aria-label={`Serie ${sIdx + 1} de ${numSeries} (${repsEstaSerie} reps) ${
                           esDropSetSerie ? "Drop Set " : ""
                         }${hecho ? "completada" : "pendiente"}`}
-                        className={`grid place-items-center rounded-[10px] border font-bold font-mono tabular-nums transition-all duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${
+                        className={`series-toggle grid place-items-center rounded-[10px] border font-bold font-mono tabular-nums transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${
                           zenMode ? "size-14 min-w-[56px]" : "size-11 min-w-[44px]"
                         } ${
                           hecho

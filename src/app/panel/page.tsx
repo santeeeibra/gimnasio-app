@@ -449,7 +449,7 @@ export default async function ResumenPage() {
             <div className="flex items-center gap-2 shrink-0">
               <Link
                 href="/panel/caja"
-                className="px-4 2xl:px-5 py-2 2xl:py-2.5 rounded-[10px] 2xl:rounded-[12px] bg-ink text-paper text-xs 2xl:text-sm font-bold hover:opacity-90 transition-opacity inline-flex items-center gap-1.5 shadow-xs"
+                className="min-h-11 px-4 2xl:px-5 py-2 2xl:py-2.5 rounded-[10px] 2xl:rounded-[12px] bg-ink text-paper text-xs 2xl:text-sm font-bold hover:opacity-90 transition-opacity inline-flex items-center gap-1.5 shadow-xs"
               >
                 Gestionar Turno <ArrowUpRight className="size-3.5 2xl:size-4" />
               </Link>
@@ -472,7 +472,7 @@ export default async function ResumenPage() {
             </div>
             <Link
               href="/panel/caja"
-              className="px-4 2xl:px-5 py-2 2xl:py-2.5 rounded-[10px] 2xl:rounded-[12px] bg-accent text-accent-contrast text-xs 2xl:text-sm font-black hover:brightness-105 transition-transform inline-flex items-center gap-1.5 shadow-xs shrink-0"
+              className="min-h-11 px-4 2xl:px-5 py-2 2xl:py-2.5 rounded-[10px] 2xl:rounded-[12px] bg-accent text-accent-contrast text-xs 2xl:text-sm font-black hover:brightness-105 transition-transform inline-flex items-center gap-1.5 shadow-xs shrink-0"
             >
               + Abrir Turno de Caja
             </Link>
@@ -567,7 +567,7 @@ export default async function ResumenPage() {
 
       {/* 3. Indicadores Operativos del Día */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 2xl:gap-5">
-        <div className="rounded-[14px] 2xl:rounded-[18px] border border-rule bg-paper-2 p-4 2xl:p-5 shadow-xs flex items-center justify-between">
+        <div data-tone="accent" className="owner-metric rounded-[14px] 2xl:rounded-[18px] border border-rule bg-paper-2 p-4 2xl:p-5 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-[11px] 2xl:text-xs uppercase tracking-wider text-ink-soft font-semibold">Check-ins Hoy</span>
             <p className="text-2xl 2xl:text-3xl font-display font-bold text-ink mt-0.5">{asistenciasHoy}</p>
@@ -578,7 +578,7 @@ export default async function ResumenPage() {
           </div>
         </div>
 
-        <div className="rounded-[14px] 2xl:rounded-[18px] border border-rule bg-paper-2 p-4 2xl:p-5 shadow-xs flex items-center justify-between">
+        <div data-tone={vencidosCount > 0 ? "danger" : "accent"} className="owner-metric rounded-[14px] 2xl:rounded-[18px] border border-rule bg-paper-2 p-4 2xl:p-5 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-[11px] 2xl:text-xs uppercase tracking-wider text-ink-soft font-semibold">Cuotas Vencidas</span>
             <p className={`text-2xl 2xl:text-3xl font-display font-bold mt-0.5 ${vencidosCount > 0 ? "text-danger" : "text-ink"}`}>
@@ -591,7 +591,7 @@ export default async function ResumenPage() {
           </div>
         </div>
 
-        <div className="rounded-[14px] 2xl:rounded-[18px] border border-rule bg-paper-2 p-4 2xl:p-5 shadow-xs flex items-center justify-between">
+        <div data-tone="warn" className="owner-metric rounded-[14px] 2xl:rounded-[18px] border border-rule bg-paper-2 p-4 2xl:p-5 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-[11px] 2xl:text-xs uppercase tracking-wider text-ink-soft font-semibold">Vencen Esta Semana</span>
             <p className="text-2xl 2xl:text-3xl font-display font-bold text-ink mt-0.5">{porVencerCount}</p>
@@ -617,7 +617,7 @@ export default async function ResumenPage() {
             <span className="text-sm font-bold text-ink">
               Cobros y Vencimientos Próximos
             </span>
-            <Link href="/panel/clientes" className={`text-xs ${linkClasses.inline}`}>
+            <Link href="/panel/clientes" className={`text-xs ${linkClasses.accion}`}>
               Ver todos los clientes →
             </Link>
           </div>

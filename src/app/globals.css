@@ -169,6 +169,65 @@
 }
 [data-motion="still"] .member-content :is(a, button), [data-motion="still"] .member-bottom-nav span { transition: none; }
 
+/* UI pilot: restrained tactile feedback, using the existing gym palette.
+   These layers do not change card geometry or animate layout properties. */
+.owner-metric {
+  --metric-tone: var(--owner-accent-label, var(--accent));
+  position: relative;
+  overflow: hidden;
+  font-variant-numeric: tabular-nums;
+  background-image: linear-gradient(135deg, color-mix(in srgb, var(--metric-tone) 5%, transparent), transparent 65%);
+}
+.owner-metric[data-tone="danger"] { --metric-tone: var(--danger); }
+.owner-metric[data-tone="warn"] { --metric-tone: var(--warn); }
+.owner-metric::before {
+  content: "";
+  position: absolute;
+  inset: 14px auto 14px 0;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--metric-tone);
+  opacity: 0.6;
+  pointer-events: none;
+}
+.owner-summary .owner-metric p { font-weight: 650; letter-spacing: -0.025em; }
+.owner-summary .owner-shortcut { isolation: isolate; }
+.owner-shortcut::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--accent-weak);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+@media (hover: hover) {
+  .owner-shortcut:hover::before { opacity: 0.45; }
+}
+.owner-shortcut:active::before { opacity: 0.65; }
+.series-toggle {
+  position: relative;
+  isolation: isolate;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.series-toggle[aria-pressed="true"] > :first-child {
+  animation: series-confirm var(--dur-base) var(--ease-spring);
+}
+@keyframes series-confirm {
+  from { transform: scale(0.7); opacity: 0.35; }
+  to { transform: scale(1); opacity: 1; }
+}
+.series-summary { font-variant-numeric: tabular-nums; }
+[data-motion="still"] .series-toggle > :first-child,
+[data-motion="reduced"] .series-toggle > :first-child { animation: none; }
+[data-motion="still"] :is(.series-toggle, .owner-shortcut::before) { transition: none; }
+@media (prefers-reduced-motion: reduce) {
+  .series-toggle > :first-child { animation: none !important; }
+  .series-toggle, .owner-shortcut::before { transition: none; }
+}
+
 :root {
   --paper: #faf9f6;
   --paper-2: #f2efe7;
