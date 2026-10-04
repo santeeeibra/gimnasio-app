@@ -28,13 +28,12 @@ export default async function PlanesPage() {
   const planes = (planesRaw ?? []) as unknown as PlanItem[];
 
   return (
-    <div className="stagger space-y-8">
+    <div className="owner-screen stagger space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Planes de socios</h1>
         <p className="mt-1 text-sm text-ink-soft">
-          Los planes de membresía que les cobrás a tus socios. Por defecto están seteados a{" "}
-          <strong className="text-ink font-medium">30 días corridos</strong> con descuentos
-          configurables (estudiantes, jubilados, etc.). Para tu propio plan de la plataforma, andá a{" "}
+          Administrá las membresías y sus descuentos. Duración predeterminada:{" "}
+          <strong className="text-ink font-medium">30 días corridos</strong>; podés personalizarla en cada plan. La suscripción de tu gimnasio está en{" "}
           <a href="/panel/plan" className={linkClasses.inline}>
             Mi plan
           </a>

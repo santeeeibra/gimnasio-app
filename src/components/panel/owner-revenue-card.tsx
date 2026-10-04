@@ -8,6 +8,11 @@ export function OwnerRevenueCard({ amount, comparison, href, protectedSummary = 
   href?: string;
   protectedSummary?: boolean;
 }) {
+  if (protectedSummary && href) return <Link href={href} className="owner-revenue owner-surface flex min-h-11 items-center gap-3 rounded-[16px] border border-rule p-4 transition-transform active:scale-[0.99]">
+    <span className="grid size-11 shrink-0 place-items-center rounded-[12px] bg-accent/10 text-[color:var(--owner-accent-label)]"><Wallet aria-hidden className="size-5" /></span>
+    <span className="min-w-0 flex-1"><span className="block text-base font-semibold text-ink">Consultar ingresos</span><span className="block text-xs text-ink-soft mt-1">Cobros y movimientos del gimnasio</span></span>
+    <ArrowUpRight aria-hidden className="size-5 shrink-0 text-ink-soft" />
+  </Link>;
   const content = <>
     <div className="flex items-center justify-between gap-3">
       <span className="inline-flex items-center gap-2 text-sm font-medium text-ink-soft">

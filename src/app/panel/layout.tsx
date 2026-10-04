@@ -67,7 +67,7 @@ export default async function PanelLayout({
           esSuper={esSuper}
           rol={profile.rol}
         />
-        <main className="w-full max-w-[1440px] 2xl:max-w-[1720px] mx-auto flex-1 p-4 sm:p-6 md:p-8 2xl:p-10 pb-28 md:pb-10 transition-all">
+        <main className="owner-content w-full max-w-[1440px] 2xl:max-w-[1720px] mx-auto flex-1 p-4 sm:p-6 md:p-8 2xl:p-10 pb-28 md:pb-10 transition-all">
           <PullToRefresh>{children}</PullToRefresh>
         </main>
         <PanelBottomNav tipoCuenta={gym?.tipo_cuenta ?? "gym"} rol={profile.rol} motionMode={resolverMotion(tema)} />

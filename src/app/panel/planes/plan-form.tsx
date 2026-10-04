@@ -7,6 +7,7 @@ import {
   type PlanState,
   type DescuentoPlan,
 } from "./actions";
+import { X } from "lucide-react";
 import { Button, Field } from "@/components/ui";
 
 interface PlanFormProps {
@@ -98,11 +99,7 @@ export function PlanForm({ planInicial, onCancel }: PlanFormProps) {
       />
 
       <div
-        className={`grid gap-4 items-end ${
-          personalizado
-            ? "sm:grid-cols-[1fr_auto_auto_auto]"
-            : "sm:grid-cols-[1fr_auto_auto]"
-        }`}
+        className="grid gap-4 items-end sm:grid-cols-2"
       >
         <div>
           <Field
@@ -142,12 +139,12 @@ export function PlanForm({ planInicial, onCancel }: PlanFormProps) {
           <input type="hidden" name="duracion_dias" value={30} />
         )}
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 sm:col-span-2">
           {esEdicion && onCancel ? (
             <button
               type="button"
               onClick={onCancel}
-              className="h-10 px-3 rounded-[5px] border border-rule bg-paper text-sm text-ink-soft hover:text-ink transition-colors"
+              className="min-h-11 px-3 rounded-[12px] border border-rule bg-paper text-sm text-ink-soft hover:text-ink transition-colors"
             >
               Cancelar
             </button>
@@ -192,7 +189,7 @@ export function PlanForm({ planInicial, onCancel }: PlanFormProps) {
             <button
               type="button"
               onClick={() => setMostrarNuevoDesc(true)}
-              className="text-xs font-medium text-ink-soft hover:text-ink underline transition-colors"
+              className="min-h-11 text-xs font-medium text-ink-soft hover:text-ink underline"
             >
               + Agregar otra categoría
             </button>
@@ -206,12 +203,12 @@ export function PlanForm({ planInicial, onCancel }: PlanFormProps) {
               placeholder="Ej: Familiar, Convenio, Docente..."
               value={nuevoNombreDesc}
               onChange={(e) => setNuevoNombreDesc(e.target.value)}
-              className="h-8 px-2.5 rounded-[5px] border border-rule bg-paper text-xs text-ink outline-none focus:border-ink flex-1"
+              className="min-h-11 min-w-0 px-2.5 rounded-[10px] border border-rule bg-paper text-xs text-ink outline-none focus:border-ink flex-1"
             />
             <button
               type="button"
               onClick={agregarDescuento}
-              className="h-8 px-3 rounded-[5px] bg-paper-3 border border-rule text-xs font-medium text-ink hover:border-ink"
+              className="min-h-11 px-3 rounded-[10px] bg-paper-3 border border-rule text-xs font-medium text-ink hover:border-ink"
             >
               Añadir
             </button>
@@ -221,9 +218,10 @@ export function PlanForm({ planInicial, onCancel }: PlanFormProps) {
                 setMostrarNuevoDesc(false);
                 setNuevoNombreDesc("");
               }}
-              className="text-xs text-ink-soft hover:text-ink px-1"
+              aria-label="Cancelar nueva categoría"
+              className="size-11 shrink-0 flex items-center justify-center text-ink-soft"
             >
-              ✕
+              <X aria-hidden className="size-4" />
             </button>
           </div>
         ) : null}
@@ -261,6 +259,7 @@ export function PlanForm({ planInicial, onCancel }: PlanFormProps) {
                 <div className="flex items-center gap-1.5 shrink-0">
                   <input
                     type="number"
+                    aria-label={`Descuento para ${d.nombre} (%)`}
                     min="0"
                     max="100"
                     step="1"
@@ -268,16 +267,17 @@ export function PlanForm({ planInicial, onCancel }: PlanFormProps) {
                     onChange={(e) =>
                       actualizarPorcentaje(index, Number(e.target.value))
                     }
-                    className="w-14 h-8 px-2 rounded-[5px] border border-rule bg-paper text-xs text-right font-mono outline-none focus:border-ink"
+                    className="w-16 min-h-11 px-2 rounded-[10px] border border-rule bg-paper text-xs text-right font-mono outline-none focus:border-ink"
                   />
                   <span className="text-xs font-mono text-ink-soft">%</span>
                   <button
                     type="button"
                     onClick={() => eliminarDescuento(index)}
-                    className="text-xs text-ink-soft/60 hover:text-danger p-1 transition-colors"
+                    className="size-11 flex items-center justify-center text-ink-soft hover:text-danger"
+                    aria-label={`Eliminar descuento ${d.nombre}`}
                     title="Eliminar este descuento"
                   >
-                    ✕
+                    <X aria-hidden className="size-4" />
                   </button>
                 </div>
               </div>

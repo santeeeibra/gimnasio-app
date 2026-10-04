@@ -2,11 +2,10 @@
 
 import { useState, useEffect, type ReactNode } from "react";
 import { createPortal, useFormStatus } from "react-dom";
-import { pillClasses } from "@/components/ui";
 import { PlanForm } from "./plan-form";
 import { alternarPlan, eliminarPlan, type DescuentoPlan } from "./actions";
 
-import { Plus, X } from "lucide-react";
+import { Plus, X, Pencil, Power, Trash2, Tags } from "lucide-react";
 import { useHapticos } from "@/lib/ui/hapticos";
 
 /**
@@ -65,7 +64,7 @@ export function PlanesManager({ planes }: PlanesManagerProps) {
   return (
     <div className="space-y-4">
       {/* HEADER DE SECCIÓN */}
-      <div className="flex items-center justify-between gap-3 border-b border-rule pb-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-rule pb-3">
         <h2 className="text-lg font-bold text-ink">Planes vigentes</h2>
 
         <button
@@ -73,9 +72,9 @@ export function PlanesManager({ planes }: PlanesManagerProps) {
             hapticos.medio();
             setMostrarNuevoForm(true);
           }}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-[10px] bg-accent text-accent-contrast shadow-sm hover:opacity-95 active:scale-95 transition-all"
+          className="inline-flex min-h-11 items-center justify-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-[12px] bg-accent text-accent-contrast shadow-sm active:scale-95 transition-transform"
         >
-          <Plus className="size-4" />
+          <Plus aria-hidden className="size-4" />
           <span>Crear nuevo plan</span>
         </button>
       </div>
@@ -84,6 +83,7 @@ export function PlanesManager({ planes }: PlanesManagerProps) {
       {mounted && mostrarNuevoForm ? createPortal(
         <div
           role="dialog"
+          aria-label="Nuevo plan"
           aria-modal="true"
           onClick={() => {
             hapticos.suave();
@@ -107,9 +107,10 @@ export function PlanesManager({ planes }: PlanesManagerProps) {
                   hapticos.suave();
                   setMostrarNuevoForm(false);
                 }}
-                className="size-9 shrink-0 inline-flex items-center justify-center rounded-[10px] border border-rule bg-paper-2 text-ink-soft hover:text-ink hover:bg-paper active:scale-90 transition-all"
+                aria-label="Cerrar formulario"
+                className="size-11 shrink-0 inline-flex items-center justify-center rounded-[10px] border border-rule bg-paper-2 text-ink-soft hover:text-ink hover:bg-paper active:scale-90 transition-transform"
               >
-                <X className="size-4" />
+                <X aria-hidden className="size-4" />
               </button>
             </div>
             <PlanForm onCancel={() => setMostrarNuevoForm(false)} />
@@ -122,6 +123,7 @@ export function PlanesManager({ planes }: PlanesManagerProps) {
       {mounted && planEnEdicion ? createPortal(
         <div
           role="dialog"
+          aria-label="Modificar plan"
           aria-modal="true"
           onClick={() => {
             hapticos.suave();
@@ -147,9 +149,10 @@ export function PlanesManager({ planes }: PlanesManagerProps) {
                   hapticos.suave();
                   setEditandoPlanId(null);
                 }}
-                className="size-9 shrink-0 inline-flex items-center justify-center rounded-[10px] border border-rule bg-paper-2 text-ink-soft hover:text-ink hover:bg-paper active:scale-90 transition-all"
+                aria-label="Cerrar formulario"
+                className="size-11 shrink-0 inline-flex items-center justify-center rounded-[10px] border border-rule bg-paper-2 text-ink-soft hover:text-ink hover:bg-paper active:scale-90 transition-transform"
               >
-                <X className="size-4" />
+                <X aria-hidden className="size-4" />
               </button>
             </div>
             <PlanForm
@@ -165,7 +168,7 @@ export function PlanesManager({ planes }: PlanesManagerProps) {
       {planes.length === 0 ? (
         <div className="card-cut border border-dashed border-rule bg-paper-2/50 p-8 text-center space-y-3">
           <div className="size-10 mx-auto rounded-full bg-accent/10 text-accent grid place-items-center text-lg font-bold">
-            ⭐
+            <Tags aria-hidden className="size-5" />
           </div>
           <p className="text-base font-semibold text-ink">
             Aún no configuraste planes para tus socios
@@ -176,7 +179,7 @@ export function PlanesManager({ planes }: PlanesManagerProps) {
           </p>
         </div>
       ) : (
-        <ul className="card-cut overflow-hidden border border-rule divide-y divide-rule">
+        <ul className="owner-plan-list space-y-4">
           {planes.map((p) => {
             const esDefecto = p.duracion_dias === 30;
             const descuentosActivos = (p.descuentos ?? []).filter(
@@ -186,7 +189,7 @@ export function PlanesManager({ planes }: PlanesManagerProps) {
             return (
               <li
                 key={p.id}
-                className={`p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors ${
+                className={`owner-plan-card rounded-[16px] border border-rule p-5 flex flex-col xl:flex-row xl:items-center justify-between gap-5 ${
                   editandoPlanId === p.id ? "bg-accent/5" : "bg-paper-2"
                 }`}
               >
@@ -211,8 +214,8 @@ export function PlanesManager({ planes }: PlanesManagerProps) {
                     ) : null}
                   </div>
 
-                  <p className="text-sm font-mono text-ink-soft">
-                    <strong className="text-ink text-base">
+                  <p className="flex flex-wrap items-baseline gap-x-2 text-sm text-ink-soft">
+                    <strong className="text-ink text-2xl font-semibold tabular-nums">
                       ${p.precio.toLocaleString("es-AR")}
                     </strong>{" "}
                     base general
@@ -249,16 +252,16 @@ export function PlanesManager({ planes }: PlanesManagerProps) {
                   )}
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                <div className="owner-plan-actions grid grid-cols-3 gap-2 xl:flex xl:items-center xl:shrink-0">
                   <button
                     type="button"
                     onClick={() => {
                       setEditandoPlanId(p.id);
                       setMostrarNuevoForm(false);
                     }}
-                    className="h-8 px-3 rounded-[5px] border border-rule bg-paper text-xs font-medium text-ink hover:border-ink transition-colors"
+                    className="owner-plan-action owner-plan-edit"
                   >
-                    ✏️ Editar
+                    <Pencil aria-hidden className="size-4 shrink-0" /> Editar
                   </button>
 
                   <form action={alternarPlan}>
@@ -269,12 +272,9 @@ export function PlanesManager({ planes }: PlanesManagerProps) {
                       value={String(p.activo)}
                     />
                     <BotonSubmit
-                      className={
-                        p.activo
-                          ? pillClasses.destructiva
-                          : pillClasses.neutra
-                      }
+                      className="owner-plan-action"
                     >
+                      <Power aria-hidden className="size-4 shrink-0" />
                       {p.activo ? "Desactivar" : "Reactivar"}
                     </BotonSubmit>
                   </form>
@@ -293,10 +293,10 @@ export function PlanesManager({ planes }: PlanesManagerProps) {
                   >
                     <input type="hidden" name="id" value={p.id} />
                     <BotonSubmit
-                      className="h-8 px-2.5 rounded-[5px] border border-rule bg-paper text-xs font-medium text-ink-soft hover:text-danger hover:border-danger/40 transition-colors"
+                      className="owner-plan-action owner-plan-delete"
                       title="Eliminar este plan permanentemente"
                     >
-                      🗑️ Borrar
+                      <Trash2 aria-hidden className="size-4 shrink-0" /> Borrar
                     </BotonSubmit>
                   </form>
                 </div>

@@ -1469,3 +1469,39 @@ textarea {
   }
   .owner-demo-summary .owner-metric:last-child:nth-child(odd) p { margin-top: 0; }
 }
+
+/* Real owner workspace: shared typography and materials on every route. */
+.owner-content, .panel-native #portal-root {
+  --app-font-display: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-hero: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.owner-content :is(h1, h2, h3) { font-family: var(--app-font-display); }
+.owner-content h1 { letter-spacing: -0.035em; line-height: 1.15; }
+.owner-content :is(.card-cut, .card-cut-lg) { clip-path: none; border-radius: 16px; }
+.owner-content .bg-paper-2 { background-color: var(--owner-surface); }
+.owner-content :is(.card-cut, .owner-plan-card) { box-shadow: var(--owner-shadow); }
+.owner-content :is(button, input:not([type="checkbox"]):not([type="radio"]), select) { min-height: 44px; }
+.owner-content :is(button, a, input, select, textarea):focus-visible,
+.panel-native #portal-root :is(button, input, select):focus-visible { outline: 2px solid var(--owner-accent-label); outline-offset: 3px; }
+.owner-content :is(input, select, textarea), .panel-native #portal-root :is(input:not([type="checkbox"]), select, textarea) { font-size: 16px; }
+.owner-plan-card { overflow-wrap: anywhere; }
+.owner-plan-actions form { min-width: 0; }
+.owner-plan-action {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 44px; width: 100%; padding: 10px 8px; border-radius: 12px;
+  border: 1px solid var(--rule); background: var(--paper); color: var(--ink-soft);
+  font-size: 12px; font-weight: 600; white-space: nowrap;
+}
+.owner-plan-edit { background: var(--accent-weak); border-color: color-mix(in srgb, var(--accent) 25%, var(--rule)); color: var(--owner-accent-label); }
+.owner-plan-delete { background: color-mix(in srgb, var(--danger) 6%, var(--paper)); color: var(--danger); border-color: color-mix(in srgb, var(--danger) 22%, var(--rule)); }
+@media (hover: hover) { .owner-plan-action:hover { border-color: currentColor; } }
+@media (max-width: 380px) { .owner-plan-action { flex-direction: column; gap: 4px; min-height: 56px; white-space: normal; } }
+@media (min-width: 1280px) { .owner-plan-action { width: auto; padding-inline: 14px; } }
+@media (max-width: 767px) {
+  .panel-native .demo-floating-toolbar { bottom: calc(6rem + env(safe-area-inset-bottom, 0px)); }
+  .panel-native:has(.owner-bottom-nav > a:nth-child(6)) .demo-floating-toolbar { bottom: calc(9rem + env(safe-area-inset-bottom, 0px)); }
+}
+
+.panel-native #portal-root :is(button, input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), select) { min-height: 44px; }
+.owner-topbar { --app-font-display: var(--font-archivo), ui-sans-serif, system-ui, sans-serif; }
