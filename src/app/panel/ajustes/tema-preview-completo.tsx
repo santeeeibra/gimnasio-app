@@ -1,200 +1,72 @@
 "use client";
 
-import {
-  temaToVars,
-  polaridadTema,
-  resolverMotion,
-  type Tema,
-} from "@/lib/tema";
+import { LayoutDashboard, Users, Coins, MessageSquare, Settings } from "lucide-react";
+import { Button, Field } from "@/components/ui";
+import { SkinMotif } from "@/components/skin-motif";
+import { temaToVars, polaridadTema, resolverMotion, type Tema } from "@/lib/tema";
 
-/** Preview expandido con maqueta completa de la app */
+const NAV = [
+  { label: "Resumen", Icono: LayoutDashboard },
+  { label: "Clientes", Icono: Users },
+  { label: "Caja", Icono: Coins },
+  { label: "Mensajes", Icono: MessageSquare },
+  { label: "Ajustes", Icono: Settings },
+];
+
+/** Muestra el acabado con los mismos componentes y medidas de la app. */
 export function TemaPreviewCompleto({ tema }: { tema: Tema }) {
-  const vars = temaToVars(tema);
-
-  // Tamaño del número héroe según densidad
-  const heroSize = {
-    compact: "text-5xl",
-    comfortable: "text-6xl",
-    spacious: "text-7xl",
-  }[tema.densidad];
-
-  // Padding según espaciado (visual aproximado)
-  const cardPadding = {
-    compact: "p-2.5",
-    normal: "p-3",
-    spacious: "p-4",
-  }[tema.espaciado];
-
   return (
-    <div>
-      <span className="block text-[13px] font-medium text-ink-soft mb-1.5">
-        Vista previa
-      </span>
+    <section aria-label="Vista previa de apariencia">
+      <p className="mb-2 text-[13px] font-medium text-ink-soft">Vista previa de apariencia</p>
+      <p className="mb-3 text-xs text-ink-soft">Datos de muestra. La distribución y los accesos de tu gimnasio se conservan.</p>
       <div
-        style={vars}
+        style={temaToVars(tema)}
         data-estilo-visual={tema.estiloVisual}
         data-theme-polarity={polaridadTema(tema)}
         data-motion={resolverMotion(tema)}
-        className="rounded-lg border-2 border-[color:var(--rule)] overflow-hidden bg-[color:var(--paper)] shadow-lg h-[60vh] max-h-[460px] flex flex-col"
+        className="skin-app skin-preview flex h-[460px] max-h-[65vh] min-h-[320px] flex-col overflow-hidden rounded-[16px] border border-rule bg-paper text-ink"
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 bg-[color:var(--paper-2)] border-b border-[color:var(--rule)]">
-          <span
-            className="font-display text-sm font-semibold text-[color:var(--ink)]"
-            style={{ fontFamily: "var(--app-font-display)" }}
-          >
-            Mi Gimnasio
-          </span>
-          <button className="text-xs text-[color:var(--ink-soft)] underline decoration-transparent underline-offset-[3px] hover:decoration-[color:var(--rule)]">
-            Salir
-          </button>
-        </div>
-
-        {/* Navegación móvil (top) */}
-        {tema.navegacionMovil === "top" && (
-          <div className="flex border-b border-[color:var(--rule)] bg-[color:var(--paper)]">
-            <NavItem label="Panel" active />
-            <NavItem label="Clientes" />
-            <NavItem label="Mensajes" />
-          </div>
-        )}
-
-        {/* Contenido scrollable */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 font-sans" style={{ fontFamily: "var(--app-font-sans)" }}>
-          {/* Número héroe */}
+        <header className="flex shrink-0 items-center justify-between border-b border-rule bg-paper px-4 py-3">
+          <span className="font-display text-sm font-semibold">Mi Gimnasio</span>
+          <span className="text-xs text-ink-soft">Vista móvil</span>
+        </header>
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4 font-sans">
           <div>
-            <p
-              className={`font-display tracking-tight ${heroSize} text-[color:var(--ok)] leading-none`}
-              style={{ 
-                fontFamily: "var(--app-font-display)",
-                fontSize: `calc(${heroSize === "text-5xl" ? "3rem" : heroSize === "text-6xl" ? "3.75rem" : "4.5rem"} * var(--font-scale))`,
-              }}
-            >
-              42
-            </p>
-            <p className="mt-2 text-sm text-[color:var(--ink-soft)]" style={{ fontSize: `calc(0.875rem * var(--font-scale))` }}>
-              clientes al día
-            </p>
+            <p className="text-xs text-ink-soft">Mostrador</p>
+            <h2 className="mt-1 font-display text-2xl">Todo listo para entrenar</h2>
           </div>
-
-          {/* Card de cliente */}
-          <div
-            className={`${cardPadding} border border-[color:var(--rule)] border-l-2 border-l-[color:var(--accent)] bg-[color:var(--paper-2)]`}
-            style={{ borderRadius: "var(--radius-md)" }}
-          >
-            <p className="text-sm font-medium text-[color:var(--ink)]" style={{ fontSize: `calc(0.875rem * var(--font-scale))` }}>
-              Lucía Fernández
-            </p>
-            <p className="text-xs text-[color:var(--ink-soft)] mt-1" style={{ fontSize: `calc(0.75rem * var(--font-scale))` }}>
-              Vence en 12 días
-            </p>
+          <div className="skin-metric futurista-fondo rounded-[16px] border border-rule bg-paper-2 p-4">
+            <SkinMotif />
+            <p className="text-xs text-ink-soft">Socios al día</p>
+            <p className="skin-metric-value mt-2 text-5xl leading-none tabular-nums text-ink">42</p>
+            <p className="mt-2 text-xs text-ok">Cuotas vigentes</p>
           </div>
-
-          {/* Stat cards */}
           <div className="grid grid-cols-2 gap-3">
-            <div
-              className={`${cardPadding} border border-[color:var(--rule)] bg-[color:var(--paper-2)]`}
-              style={{ borderRadius: "var(--radius-md)" }}
-            >
-              <p className="font-display text-xl font-semibold text-[color:var(--ink)]" style={{ fontFamily: "var(--app-font-display)" }}>
-                24
-              </p>
-              <p className="text-xs text-[color:var(--ink-soft)] mt-1" style={{ fontSize: `calc(0.75rem * var(--font-scale))` }}>
-                Activos
-              </p>
+            <div className="skin-tile rounded-[16px] border border-rule bg-paper-2 p-3">
+              <p className="font-display text-xl tabular-nums">24</p>
+              <p className="mt-1 text-xs text-ink-soft">Entradas hoy</p>
             </div>
-            <div
-              className={`${cardPadding} border border-[color:var(--rule)] border-l-2 border-l-[color:var(--danger)] bg-[color:var(--paper-2)]`}
-              style={{ borderRadius: "var(--radius-md)" }}
-            >
-              <p className="font-display text-xl font-semibold text-[color:var(--danger)]" style={{ fontFamily: "var(--app-font-display)" }}>
-                3
-              </p>
-              <p className="text-xs text-[color:var(--ink-soft)] mt-1" style={{ fontSize: `calc(0.75rem * var(--font-scale))` }}>
-                Por vencer
-              </p>
+            <div className="skin-tile rounded-[16px] border border-rule bg-paper-2 p-3">
+              <p className="font-display text-xl tabular-nums text-warn">3</p>
+              <p className="mt-1 text-xs text-ink-soft">Cuotas por vencer</p>
             </div>
           </div>
-
-          {/* Botón */}
-          <button
-            className="w-full h-10 bg-[color:var(--accent)] text-[color:var(--accent-contrast)] font-medium text-sm"
-            style={{ 
-              borderRadius: "var(--radius-md)",
-              fontSize: `calc(0.875rem * var(--font-scale))`,
-            }}
-          >
-            Registrar pago
-          </button>
-
-          {/* Input */}
-          <input
-            className="w-full h-10 px-3 border border-[color:var(--rule)] bg-[color:var(--paper)] text-sm"
-            placeholder="Buscar cliente…"
-            readOnly
-            style={{ 
-              borderRadius: "var(--radius-md)",
-              fontSize: `calc(0.875rem * var(--font-scale))`,
-            }}
-          />
-
-          {/* Badge */}
-          <div
-            className={`${cardPadding} border border-[color:var(--rule)] border-l-2 border-l-[color:var(--accent)] bg-[color:var(--paper-2)]`}
-            style={{ borderRadius: "var(--radius-md)" }}
-          >
-            <div className="flex items-center gap-2">
-              <span
-                className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-semibold bg-[color:var(--accent)] text-[color:var(--accent-contrast)]"
-                style={{ 
-                  borderRadius: "var(--radius-sm)",
-                  fontSize: `calc(0.625rem * var(--font-scale))`,
-                }}
-              >
-                nuevo
-              </span>
-              <p className="text-sm font-medium text-[color:var(--ink)]" style={{ fontSize: `calc(0.875rem * var(--font-scale))` }}>
-                Mensaje de cliente
-              </p>
-            </div>
+          <div className="rounded-[16px] border border-rule bg-paper-2 p-3">
+            <p className="text-sm font-medium">Lucía Fernández</p>
+            <p className="mt-1 text-xs text-ink-soft">Vence en 12 días</p>
           </div>
+          <Button type="button" variant="volt" className="w-full" aria-disabled="true">Registrar pago · Muestra</Button>
+          <Field label="Buscar cliente" placeholder="Nombre o DNI" readOnly tabIndex={-1} />
         </div>
-
-        {/* Navegación bottom */}
-        {tema.navegacionMovil === "bottom" && (
-          <nav className="flex border-t border-[color:var(--rule)] bg-[color:var(--paper)]">
-            <NavItem label="Panel" active />
-            <NavItem label="Clientes" />
-            <NavItem label="Mensajes" />
-          </nav>
-        )}
-
-        {/* Indicador sidebar */}
-        {tema.navegacionMovil === "sidebar" && (
-          <div className="flex items-center justify-center py-3 border-t border-[color:var(--rule)] bg-[color:var(--paper-2)]">
-            <p className="text-xs text-[color:var(--ink-soft)]">☰ Menú lateral deslizable</p>
-          </div>
-        )}
+        <nav aria-label="Navegación de muestra" className="flex shrink-0 border-t border-rule bg-paper p-1">
+          {NAV.map(({ label, Icono }, i) => (
+            <span key={label} className={`flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-[12px] text-[10px] ${i === 0 ? "bg-accent-weak text-accent" : "text-ink-soft"}`}>
+              <Icono aria-hidden className="size-5" />
+              {label}
+            </span>
+          ))}
+        </nav>
       </div>
-    </div>
-  );
-}
-
-function NavItem({ label, active }: { label: string; active?: boolean }) {
-  return (
-    <div className="relative flex-1 flex flex-col items-center gap-1 py-2.5">
-      <span
-        className={`absolute top-0 h-0.5 w-8 rounded-full ${
-          active ? "bg-[color:var(--accent)]" : "bg-transparent"
-        }`}
-      />
-      <span
-        className={`text-[11px] ${
-          active ? "text-[color:var(--ink)] font-medium" : "text-[color:var(--ink-soft)]"
-        }`}
-      >
-        {label}
-      </span>
-    </div>
+    </section>
   );
 }

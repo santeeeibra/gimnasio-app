@@ -7,6 +7,7 @@ import { ActivarNotificaciones } from "./activar-notificaciones";
 import { VerTutorialDeNuevo } from "@/components/tutorial/tutorial";
 import { AnilloProgreso } from "@/components/anillo-progreso";
 import { pillClasses } from "@/components/ui";
+import { SkinMotif } from "@/components/skin-motif";
 import { ChevronRight, CreditCard, Dumbbell, Inbox, MessageSquare, User } from "lucide-react";
 import { RachaConstancia } from "@/components/mi/racha-constancia";
 import { RachaSeccion } from "@/components/logros/racha-seccion";
@@ -186,7 +187,8 @@ export default async function MiPage() {
       </div>
 
       {esIndividual ? (
-        <div className="card-cut card-cut-lg futurista-fondo border border-rule bg-paper-2 p-5 border-l-2 border-l-ok">
+        <div className="skin-account skin-metric card-cut card-cut-lg futurista-fondo border border-rule bg-paper-2 p-5 border-l-2 border-l-ok">
+          <SkinMotif />
           <p className="text-xs text-ink-soft mb-1">Tu cuenta</p>
           <div className="flex items-center justify-between">
             <div>
@@ -202,7 +204,7 @@ export default async function MiPage() {
         </div>
       ) : (
         <div
-          className={`card-cut card-cut-lg futurista-fondo border border-rule bg-paper-2 p-5 border-l-2 ${
+          className={`skin-account skin-metric card-cut card-cut-lg futurista-fondo border border-rule bg-paper-2 p-5 border-l-2 ${
             estado === "vencido"
               ? "border-l-danger"
               : estado === "por_vencer"
@@ -210,6 +212,7 @@ export default async function MiPage() {
                 : "border-l-ok"
           }`}
         >
+          <SkinMotif />
           <p className="text-xs text-ink-soft mb-4">Tu cuota</p>
           
           <div className="flex items-center gap-6">

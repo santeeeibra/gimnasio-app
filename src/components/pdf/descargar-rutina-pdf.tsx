@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { PROGRESO_GUARDADO, type ProgresoGuardado } from "@/lib/progreso/eventos";
 import type { DiaEditable } from "@/app/mi/rutina/rutina-editor";
 import { hapticoExito } from "@/lib/ui/hapticos";
 
@@ -26,8 +27,18 @@ export function DescargarRutinaPdf({
   pesosPorEjercicio,
 }: Props) {
   const [generando, setGenerando] = useState(false);
+  const pesosGuardados = useRef<Record<string, number>>({});
+  useEffect(() => {
+    function actualizar(event: Event) {
+      const { ejercicioId, peso } = (event as CustomEvent<ProgresoGuardado>).detail;
+      pesosGuardados.current[ejercicioId] = peso;
+    }
+    window.addEventListener(PROGRESO_GUARDADO, actualizar);
+    return () => window.removeEventListener(PROGRESO_GUARDADO, actualizar);
+  }, []);
 
   async function generar() {
+    const pesosActuales = { ...pesosPorEjercicio, ...pesosGuardados.current };
     setGenerando(true);
     try {
       // Importación dinámica — no sube el bundle inicial
@@ -136,7 +147,7 @@ export function DescargarRutinaPdf({
 
         const body = dia.items.map((item) => {
           const pesoEj = item.ejercicio?.id
-            ? pesosPorEjercicio?.[item.ejercicio.id]
+            ? pesosActuales[item.ejercicio.id]
             : undefined;
           return [
             item.ejercicio?.nombre ?? "Ejercicio",

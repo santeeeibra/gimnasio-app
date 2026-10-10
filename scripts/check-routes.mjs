@@ -65,7 +65,7 @@ function files(directory) {
 
 export function auditRoutes(root = process.cwd()) {
   const app = path.join(root, "src/app");
-  const routes = files(app).filter((file) => /\/(page|route)\.[cm]?[jt]sx?$/.test(file)).map((file) => {
+  const routes = files(app).filter((file) => /^(page|route)\.[cm]?[jt]sx?$/.test(path.basename(file))).map((file) => {
     const segments = path.relative(app, path.dirname(file)).split(path.sep)
       .filter((segment) => segment && !segment.startsWith("(") && !segment.startsWith("@"));
     return "/" + segments.join("/");

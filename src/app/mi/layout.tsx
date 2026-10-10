@@ -95,7 +95,7 @@ export default async function MiLayout({
 
   return (
     <div
-      className="member-native capa-ambiental min-h-screen bg-paper text-ink"
+      className="member-native capa-ambiental skin-app min-h-screen bg-paper text-ink"
       style={temaToVars(tema)}
       data-estilo-visual={tema.estiloVisual}
       data-theme-polarity={polaridadTema(tema)}

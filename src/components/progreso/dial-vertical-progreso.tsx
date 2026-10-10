@@ -14,11 +14,13 @@ import type { ProgresoState } from "@/lib/progreso/actions";
 import {
   iniciarAudioHaptico,
   hapticoDial,
+  hapticoSeleccion,
   hapticoExito,
   hapticoError,
   hapticoRecordPersonal,
 } from "@/lib/ui/hapticos";
 import { encolar } from "@/lib/offline/cola";
+import { avisarProgresoGuardado } from "@/lib/progreso/eventos";
 import { CartelLogro } from "@/components/logros/cartel-logro";
 import { tituloRecord } from "@/lib/logros/compartir";
 import type { ColoresImagen } from "@/lib/logros/imagen";
@@ -55,6 +57,7 @@ export const DialVerticalProgreso = forwardRef<
     ejercicioId: string;
     action: (prev: ProgresoState, fd: FormData) => Promise<ProgresoState>;
     fetchUltimoPeso: (eid: string) => Promise<{ peso: number; reps: number | null } | null>;
+    registroInicial?: { peso: number; reps: number | null } | null;
     tipoEquipo?: TipoEquipoDial;
     esCorporal?: boolean;
     /** Datos para el <CartelLogro> de récord. Si faltan, no se ofrece compartir. */
@@ -74,6 +77,7 @@ export const DialVerticalProgreso = forwardRef<
     ejercicioId,
     action,
     fetchUltimoPeso,
+    registroInicial,
     tipoEquipo = "otro",
     esCorporal: esCorporalLegacy,
     ejercicioNombre,
@@ -94,9 +98,9 @@ export const DialVerticalProgreso = forwardRef<
   const esBarra = tipoEquipo === "barra";
   const esMancuerna = tipoEquipo === "mancuerna";
 
-  const pesoInicial = esCorporal ? 0 : 20;
+  const pesoInicial = registroInicial?.peso ?? (esCorporal ? 0 : 20);
   const [peso, setPeso] = useState<number>(pesoInicial);
-  const [reps, setReps] = useState<number>(repsIniciales);
+  const [reps, setReps] = useState<number>(registroInicial?.reps ?? repsIniciales);
   const weightRef = useRef(pesoInicial);
   const isDraggingRef = useRef(false);
   const startYRef = useRef(0);
@@ -120,16 +124,22 @@ export const DialVerticalProgreso = forwardRef<
         typeof navigator !== "undefined" && !navigator.onLine;
       if (offline) {
         encolar("progreso_ejercicio", payload);
+        avisarProgresoGuardado({ ejercicioId: payload.ejercicio_id, peso: payload.peso, reps: payload.reps });
         return { ok: "✓" };
       }
       try {
-        return await action(prev, fd);
+        const resultado = await action(prev, fd);
+        if (resultado.ok) {
+          avisarProgresoGuardado({ ejercicioId: payload.ejercicio_id, peso: payload.peso, reps: payload.reps });
+        }
+        return resultado;
       } catch (err) {
         if (
           err instanceof TypeError ||
           (err instanceof Error && /fetch|network/i.test(err.message))
         ) {
           encolar("progreso_ejercicio", payload);
+          avisarProgresoGuardado({ ejercicioId: payload.ejercicio_id, peso: payload.peso, reps: payload.reps });
           return { ok: "✓" };
         }
         throw err;
@@ -144,6 +154,18 @@ export const DialVerticalProgreso = forwardRef<
 
   // Cargar último peso y reps registrado como punto de partida
   useEffect(() => {
+    // La vista del socio ya leyó todos los pesos en una sola consulta.
+    // Evita una Server Action por dial, que Next despacha en serie y puede
+    // dejar el botón Guardar esperando detrás de todas esas lecturas.
+    if (registroInicial !== undefined) {
+      const inicial = registroInicial?.peso ?? (esCorporal ? 0 : 20);
+      setPeso(inicial);
+      weightRef.current = inicial;
+      lastEmittedRef.current = inicial;
+      setReps(registroInicial?.reps ?? repsIniciales);
+      draw();
+      return;
+    }
     fetchUltimoPeso(ejercicioId).then((r) => {
       if (r && r.peso !== undefined && r.peso !== null) {
         setPeso(r.peso);
@@ -514,27 +536,27 @@ export const DialVerticalProgreso = forwardRef<
         </button>
       </div>
 
-      {/* Botón guardar rápido de 1 tap (Feedback optimista instantáneo 0ms) */}
+      {/* Confirmar sólo al terminar; no encolar submits duplicados mientras espera. */}
       <button
         type="submit"
-        disabled={pending && !feedbackOk}
+        disabled={pending}
+        aria-busy={pending}
         onClick={() => {
           iniciarAudioHaptico();
-          hapticoExito();
-          setFeedbackOk(true);
-          setTimeout(() => setFeedbackOk(false), 2000);
+          hapticoSeleccion();
+          setFeedbackOk(false);
         }}
         aria-label="Guardar peso y reps de este ejercicio"
-        className={`w-full h-6 rounded-[6px] text-[10px] font-bold tracking-tight transition-all duration-150 flex items-center justify-center gap-1 active:scale-95 disabled:opacity-50 my-0.5 ${
+        className={`w-full h-6 rounded-[6px] text-[10px] font-bold tracking-tight transition-transform duration-150 flex items-center justify-center gap-1 active:scale-95 disabled:opacity-50 my-0.5 ${
           feedbackOk
-            ? "bg-ok text-ok-ink border border-ok shadow-sm"
+            ? "bg-ok text-paper border border-ok shadow-sm"
             : "bg-[#ff9f0a]/20 hover:bg-[#ff9f0a]/30 border border-[#ff9f0a]/40 text-[#ff9f0a]"
         }`}
       >
-        {feedbackOk ? (
-          <span>✓ Listo</span>
-        ) : pending ? (
+        {pending ? (
           <Spinner className="size-3 text-[#ff9f0a]" />
+        ) : feedbackOk ? (
+          <span>✓ Listo</span>
         ) : (
           <span>Guardar</span>
         )}
@@ -544,6 +566,7 @@ export const DialVerticalProgreso = forwardRef<
          serie a la derecha); este dial sólo maneja peso. El valor de reps
          que viaja en el submit queda fijo en el último cargado/inicial. */}
       <input type="hidden" name="reps" value={reps} />
+      {state.error && <p role="alert" className="w-full text-[10px] text-danger">{state.error}</p>}
 
     </form>
     </>

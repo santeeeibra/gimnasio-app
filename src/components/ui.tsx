@@ -27,7 +27,7 @@ export function Button({
   loading?: boolean;
 }) {
   const base =
-    "inline-flex items-center justify-center gap-2 h-11 px-4 text-sm font-medium rounded-[12px] select-none touch-manipulation transition-[transform,background-color,border-color,color] duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] disabled:opacity-50 disabled:pointer-events-none";
+    "skin-control inline-flex items-center justify-center gap-2 min-h-11 px-4 text-sm font-medium rounded-[12px] select-none touch-manipulation transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] disabled:opacity-50 disabled:pointer-events-none";
   const styles = {
     primary: "bg-ink text-paper hover:brightness-125 shadow-sm",
     ghost: "border border-rule text-ink hover:bg-paper-2",
@@ -96,7 +96,7 @@ export function LinkButton({
 }: ComponentProps<typeof Link>) {
   return (
     <Link
-      className={`inline-flex items-center justify-center gap-2 h-10 px-4 text-sm font-medium rounded-[10px] border border-rule text-ink hover:bg-paper-2 transition-colors ${className}`}
+      className={`skin-control inline-flex min-h-11 items-center justify-center gap-2 px-4 text-sm font-medium rounded-[10px] border border-rule text-ink hover:bg-paper-2 transition-transform active:scale-[0.97] ${className}`}
       {...props}
     />
   );
@@ -114,7 +114,7 @@ export function Field({
         {label}
       </span>
       <input
-        className={`w-full h-11 px-3 rounded-[10px] border border-rule bg-paper text-[16px] outline-none transition-[border-color,box-shadow] duration-150 [transition-timing-function:var(--ease-out)] focus:border-ink focus:shadow-[0_0_0_3px_rgb(22_24_29_/_0.08)] ${className ?? ""}`}
+        className={`skin-control w-full h-11 px-3 rounded-[10px] border border-rule bg-paper text-[16px] outline-none focus-visible:border-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${className ?? ""}`}
         {...props}
       />
       {hint ? (
@@ -138,7 +138,7 @@ export function Select({
       </span>
       <span className="relative block">
         <select
-          className={`w-full h-11 pl-3 pr-9 rounded-[10px] border border-rule bg-paper text-[16px] appearance-none outline-none transition-[border-color,box-shadow] duration-150 [transition-timing-function:var(--ease-out)] focus:border-ink focus:shadow-[0_0_0_3px_rgb(22_24_29_/_0.08)] ${className ?? ""}`}
+          className={`skin-control w-full h-11 pl-3 pr-9 rounded-[10px] border border-rule bg-paper text-[16px] appearance-none outline-none focus-visible:border-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${className ?? ""}`}
           {...props}
         >
           {children}
@@ -187,7 +187,7 @@ export function Toggle({
 }) {
   return (
     <label
-      className={`flex items-start gap-3 select-none touch-manipulation ${
+      className={`flex min-h-11 items-center gap-3 select-none touch-manipulation ${
         disabled ? "opacity-50" : "cursor-pointer"
       } ${className}`}
     >
@@ -206,7 +206,7 @@ export function Toggle({
         />
         <span
           aria-hidden
-          className="block h-[30px] w-[52px] rounded-full border-2 border-rule bg-paper-3 transition-all duration-200 [transition-timing-function:var(--ease-out)] peer-checked:border-volt peer-checked:bg-volt peer-checked:shadow-[0_0_12px_rgba(16,231,160,0.35)] peer-focus-visible:ring-2 peer-focus-visible:ring-volt/40"
+          className="block h-[30px] w-[52px] rounded-full border-2 border-rule bg-paper-3 peer-checked:border-volt peer-checked:bg-volt peer-focus-visible:ring-2 peer-focus-visible:ring-volt/40"
         />
         <span
           aria-hidden

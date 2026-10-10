@@ -9,8 +9,8 @@
 import { useEffect, useState } from "react";
 
 const FLAG = "sysgym:splash:v3";
-const VISIBLE_MS = 1400;
-const FADE_MS = 450;
+const VISIBLE_MS = 240;
+const FADE_MS = 160;
 
 type Fase = "idle" | "visible" | "saliendo";
 
@@ -75,8 +75,8 @@ export function SplashScreen() {
       <div className="absolute bottom-[3.6%] left-1/2 -translate-x-1/2 w-[70%] max-w-[260px] z-10 flex flex-col items-center">
         <div className="relative w-full h-[14px] rounded-full bg-zinc-950/90 border border-[#10e7a0]/50 p-0.5 shadow-[0_0_20px_rgba(16,231,160,0.3)] overflow-hidden backdrop-blur-sm">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-[#10e7a0] to-cyan-300 shadow-[0_0_12px_#10e7a0] transition-all duration-[1250ms] [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] relative"
-            style={{ width: `${progreso}%` }}
+            className="h-full w-full origin-left rounded-full bg-gradient-to-r from-emerald-500 via-[#10e7a0] to-cyan-300 shadow-[0_0_12px_#10e7a0] transition-transform duration-200 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] relative"
+            style={{ transform: `scaleX(${progreso / 100})` }}
           >
             <span className="absolute right-0 top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-white shadow-[0_0_8px_#ffffff,0_0_14px_#10e7a0] animate-pulse" />
           </div>

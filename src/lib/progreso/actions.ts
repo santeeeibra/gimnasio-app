@@ -1,9 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { requireProfile, requireDueno } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { evaluarRecordCliente, registrarLogroEnFeed } from "@/lib/logros/actions";
+import { detectarRecord } from "@/lib/logros/deteccion";
 import type { ResultadoRecord } from "@/lib/logros/tipos";
 
 export type ProgresoState = {
@@ -45,48 +46,71 @@ export async function guardarProgresoCliente(
   const reps = repsRaw ? Number(repsRaw) : null;
 
   if (!ejercicioId) return { error: "Falta el ejercicio." };
-  if (pesoRaw < 0 || pesoRaw >= 10000) {
+  if (!Number.isFinite(pesoRaw) || pesoRaw < 0 || pesoRaw >= 10000) {
     return { error: "Ingresá un peso válido." };
   }
   if (reps !== null && (!Number.isInteger(reps) || reps <= 0 || reps >= 1000)) {
     return { error: "Las reps deben ser un número positivo." };
   }
 
-  const { error } = await supabase
+  const hoy = new Date().toISOString().slice(0, 10);
+  // El historial no depende de la escritura: ambas consultas comparten la
+  // identidad ya validada, sin autenticar y resolver la ficha por cada logro.
+  const historialPromise = Promise.resolve(supabase
+    .from("registro_progreso")
+    .select("peso, fecha")
+    .eq("cliente_id", clienteId)
+    .eq("ejercicio_id", ejercicioId)
+    .order("fecha", { ascending: false })
+    .limit(200))
+    .catch(() => ({ data: null, error: true }));
+  const [{ error }, historial] = await Promise.all([supabase
     .from("registro_progreso")
     .upsert(
       {
         gimnasio_id: gimnasioId,
         cliente_id: clienteId,
         ejercicio_id: ejercicioId,
-        fecha: new Date().toISOString().slice(0, 10),
+        fecha: hoy,
         peso: pesoRaw,
         reps,
         creado_por: "cliente",
       },
       { onConflict: "cliente_id,ejercicio_id,fecha" },
-    );
+    ), historialPromise]);
 
   if (error) return { error: "No se pudo guardar el progreso." };
 
-  revalidatePath("/mi/rutina");
+  // /mi/rutina es force-dynamic. Revalidarla desde esta acción fuerza a
+  // reconstruir toda la pantalla antes de responder por un solo peso.
+  // El dial y el PDF reciben el valor confirmado en el cliente.
 
   // Detección de récord (no bloquea el guardado si falla).
   let record: ResultadoRecord | undefined;
   try {
-    record = await evaluarRecordCliente(ejercicioId, pesoRaw);
+    if (historial.error) return { ok: "✓" };
+    record = detectarRecord(pesoRaw, historial.data ?? [], { excluirFecha: hoy });
     if (record.esRecord) {
-      const { data: ejercicio } = await supabase
-        .from("ejercicios")
-        .select("nombre")
-        .eq("id", ejercicioId)
-        .maybeSingle();
-      const nombreEjercicio = (ejercicio as { nombre: string } | null)?.nombre ?? "un ejercicio";
-      await registrarLogroEnFeed(
-        "record",
-        `${ejercicioId}:${pesoRaw}`,
-        `Nuevo récord en ${nombreEjercicio}: ${pesoRaw}kg`,
-      );
+      // La celebración vuelve con la respuesta; el feed no bloquea el botón.
+      after(async () => {
+        try {
+          const { data: ejercicio } = await supabase
+            .from("ejercicios")
+            .select("nombre")
+            .eq("id", ejercicioId)
+            .maybeSingle();
+          const nombreEjercicio = (ejercicio as { nombre: string } | null)?.nombre ?? "un ejercicio";
+          await supabase.from("logros_gimnasio").upsert({
+            gimnasio_id: gimnasioId,
+            cliente_id: clienteId,
+            tipo_logro: "record",
+            clave_logro: `${ejercicioId}:${pesoRaw}`,
+            titulo: `Nuevo récord en ${nombreEjercicio}: ${pesoRaw}kg`,
+          }, { onConflict: "cliente_id,tipo_logro,clave_logro", ignoreDuplicates: true });
+        } catch {
+          // Best-effort: el progreso ya está guardado.
+        }
+      });
     }
   } catch {
     record = undefined;

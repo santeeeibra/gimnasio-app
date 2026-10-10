@@ -294,6 +294,7 @@
 @theme inline {
   --color-paper: var(--paper);
   --color-paper-2: var(--paper-2);
+  --color-paper-3: var(--paper-3);
   --color-ink: var(--ink);
   --color-ink-soft: var(--ink-soft);
   --color-rule: var(--rule);
@@ -305,6 +306,7 @@
   --color-ok: var(--ok);
   --color-accent: var(--accent);
   --color-accent-contrast: var(--accent-contrast);
+  --color-accent-ink: var(--accent-contrast);
   --color-accent-weak: var(--accent-weak);
   --font-display: var(--app-font-display);
   --font-sans: var(--app-font-sans);
@@ -382,7 +384,7 @@ textarea {
   }
 }
 .animate-fade-in {
-  animation: fade-in 400ms var(--ease-out) forwards;
+  animation: fade-in 140ms var(--ease-out) forwards;
 }
 
 /* Slide up */
@@ -397,7 +399,7 @@ textarea {
   }
 }
 .animate-slide-up {
-  animation: slide-up 350ms var(--ease-out) forwards;
+  animation: slide-up 180ms var(--ease-out) forwards;
 }
 
 /* Shake for errors */
@@ -469,7 +471,7 @@ textarea {
   }
 }
 .page-transition {
-  animation: page-enter 180ms var(--ease-out);
+  animation: page-enter 120ms var(--ease-out);
 }
 
 @view-transition {
@@ -492,34 +494,36 @@ textarea {
   }
 }
 .stagger-in > * {
-  animation: list-in 320ms var(--ease-out) both;
+  animation: list-in 160ms var(--ease-out) both;
 }
 .stagger-in > *:nth-child(1) {
   animation-delay: 0ms;
 }
 .stagger-in > *:nth-child(2) {
-  animation-delay: 40ms;
+  animation-delay: 15ms;
 }
 .stagger-in > *:nth-child(3) {
-  animation-delay: 80ms;
+  animation-delay: 30ms;
 }
 .stagger-in > *:nth-child(4) {
-  animation-delay: 120ms;
+  animation-delay: 45ms;
 }
 .stagger-in > *:nth-child(5) {
-  animation-delay: 160ms;
+  animation-delay: 60ms;
 }
 .stagger-in > *:nth-child(6) {
-  animation-delay: 200ms;
+  animation-delay: 75ms;
 }
 .stagger-in > *:nth-child(7) {
-  animation-delay: 240ms;
+  animation-delay: 90ms;
 }
 .stagger-in > *:nth-child(8) {
-  animation-delay: 280ms;
+  animation-delay: 105ms;
 }
 @media (prefers-reduced-motion: reduce) {
-  .page-transition {
+  .page-transition,
+  .animate-fade-in,
+  .animate-slide-up {
     animation: none !important;
   }
   .stagger-in > * {
@@ -709,6 +713,97 @@ textarea {
 }
 .elev-md {
   box-shadow: var(--elev-shadow-md);
+}
+
+/* Skins: materiales sin cambios de grid, orden ni medidas.
+   Cada raíz reinicia los tokens: una preview anidada nunca hereda otra skin.
+   La mascota conserva su superficie fija de plataforma. */
+.skin-app {
+  color-scheme: light;
+  font-family: var(--app-font-sans);
+  /* Las derivaciones de :root se resuelven allí: recalcularlas por gimnasio. */
+  --accent-weak: color-mix(in srgb, var(--accent) 12%, transparent);
+  --accent-strong: color-mix(in srgb, var(--accent), var(--ink) 18%);
+  --paper-3: color-mix(in srgb, var(--paper-2), var(--ink) 6%);
+  --ring: color-mix(in srgb, var(--ink) 22%, transparent);
+  --texture-color: var(--rule);
+  --danger-weak: color-mix(in srgb, var(--danger) 14%, transparent);
+  --danger-strong: color-mix(in srgb, var(--danger), #000 14%);
+  --skin-surface-image: none;
+  --skin-surface-size: auto;
+  --skin-surface-shadow: var(--elev-shadow-sm);
+  --skin-nav-image: none;
+  --skin-nav-shadow: none;
+  --skin-selected-shadow: none;
+  --skin-action-shadow: none;
+  --skin-action-image: none;
+  --skin-feature-image: none;
+  --skin-feature-size: auto;
+  --skin-feature-opacity: 0.35;
+  --skin-hover-shadow: var(--elev-shadow-md);
+  --skin-cut: polygon(0 0, calc(100% - var(--cut)) 0, 100% var(--cut), 100% 100%, 0 100%);
+}
+.skin-app[data-theme-polarity="dark"] {
+  color-scheme: dark;
+  --paper-3: color-mix(in srgb, var(--paper-2), #fff 8%);
+  --danger-strong: color-mix(in srgb, var(--danger), #fff 10%);
+}
+.skin-app :where(.border.bg-paper-2),
+.skin-app :where(.skin-control) { border-radius: var(--skin-radius, 12px); }
+.skin-app :where(.border.bg-paper-2) {
+  background-image: var(--skin-surface-image);
+  background-size: var(--skin-surface-size);
+  box-shadow: var(--skin-surface-shadow);
+}
+.skin-app :where(nav, aside) {
+  background-image: var(--skin-nav-image);
+  box-shadow: var(--skin-nav-shadow);
+}
+.skin-app :where([aria-current="page"], [aria-pressed="true"]) {
+  box-shadow: var(--skin-selected-shadow);
+}
+.skin-app :where(.bg-volt, .bg-accent) {
+  background-image: var(--skin-action-image);
+  box-shadow: var(--skin-action-shadow);
+}
+.skin-app :where(.card-cut) { clip-path: var(--skin-cut); }
+.skin-app :where(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+.skin-app[data-estilo-visual="futurista"] {
+  --skin-feature-image: repeating-linear-gradient(0deg, color-mix(in srgb, var(--rule) 55%, transparent) 0 1px, transparent 1px 40px), repeating-linear-gradient(90deg, color-mix(in srgb, var(--rule) 55%, transparent) 0 1px, transparent 1px 40px);
+  --skin-feature-size: 40px 40px;
+  --skin-surface-image: linear-gradient(145deg, color-mix(in srgb, var(--ink) 3%, transparent), transparent 65%);
+  --skin-surface-shadow: inset 0 1px 0 color-mix(in srgb, var(--ink) 8%, transparent), var(--elev-shadow-sm);
+  --skin-selected-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent), 0 0 16px var(--glow-soft);
+  --skin-hover-shadow: inset 0 0 0 1px var(--accent), 0 0 20px var(--glow-soft);
+}
+.skin-app[data-estilo-visual="futurista"][data-theme-polarity="dark"] {
+  background-image: radial-gradient(ellipse at 90% 0%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 48%);
+  --skin-nav-image: linear-gradient(180deg, color-mix(in srgb, var(--accent) 4%, transparent), transparent 70%);
+  --skin-nav-shadow: inset 0 1px 0 color-mix(in srgb, var(--accent) 20%, transparent);
+  --skin-action-shadow: 0 0 18px var(--glow-soft), inset 0 1px 0 color-mix(in srgb, var(--ink) 30%, transparent);
+}
+.skin-app[data-estilo-visual="estudio"] {
+  --skin-feature-image: radial-gradient(ellipse at 0% 0%, color-mix(in srgb, var(--accent) 7%, transparent), transparent 65%);
+  --skin-surface-image: radial-gradient(color-mix(in srgb, var(--ink) 5%, transparent) 0.5px, transparent 0.5px);
+  --skin-surface-size: 6px 6px;
+  --skin-surface-shadow: var(--elev-shadow-md);
+  --skin-nav-shadow: inset 0 1px 0 color-mix(in srgb, var(--ink) 8%, transparent);
+  --skin-cut: none;
+}
+.skin-app[data-estilo-visual="concreto"] {
+  --skin-feature-image: repeating-linear-gradient(45deg, color-mix(in srgb, var(--rule) 60%, transparent) 0 1px, transparent 1px 9px);
+  --skin-surface-image: repeating-linear-gradient(135deg, color-mix(in srgb, var(--rule) 12%, transparent) 0 1px, transparent 1px 8px);
+  --skin-surface-shadow: inset 0 1px 0 color-mix(in srgb, var(--ink) 10%, transparent), var(--elev-shadow-sm);
+  --skin-action-image: repeating-linear-gradient(135deg, transparent 0 6px, rgb(0 0 0 / 8%) 6px 7px);
+}
+.skin-app[data-estilo-visual="cancha"] {
+  --skin-feature-image: linear-gradient(115deg, transparent 0 58%, color-mix(in srgb, var(--accent) 16%, transparent) 58% 61%, transparent 61%);
+}
+@media (hover: hover) {
+  .skin-app :where(a.border.bg-paper-2):hover { box-shadow: var(--skin-hover-shadow); }
 }
 
 /* Glow de anillo/indicador semántico. Reemplaza al viejo
@@ -1165,7 +1260,7 @@ textarea {
   }
 }
 .animate-trophy-pop {
-  animation: trophy-pop 700ms var(--ease-out) both;
+  animation: trophy-pop 240ms var(--ease-out) both;
 }
 
 @keyframes trophy-glow-pulse {
@@ -1177,7 +1272,7 @@ textarea {
   }
 }
 .animate-trophy-glow {
-  animation: trophy-glow-pulse 2.4s var(--ease-in-out) infinite;
+  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--accent) 40%, transparent));
 }
 
 @keyframes sticky-slide-down {
@@ -1286,7 +1381,7 @@ textarea {
   color: #ffffff;
   opacity: 1;
   transform: scale(1);
-  transition: opacity 450ms var(--ease-out), transform 450ms var(--ease-out);
+  transition: opacity 160ms var(--ease-out), transform 160ms var(--ease-out);
   will-change: opacity, transform;
   overflow: hidden;
 }
@@ -1505,3 +1600,136 @@ textarea {
 
 .panel-native #portal-root :is(button, input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), select) { min-height: 44px; }
 .owner-topbar { --app-font-display: var(--font-archivo), ui-sans-serif, system-ui, sans-serif; }
+
+/* El token de la raíz más cercana también aísla los efectos de previews anidadas.
+   Texturas y halos estáticos: no se anima background-position, filter ni sombras. */
+.skin-app .futurista-fondo::before {
+  background-image: var(--skin-feature-image);
+  background-size: var(--skin-feature-size);
+  opacity: var(--skin-feature-opacity);
+  animation: none;
+}
+.skin-app .futurista-anillo-glow,
+.skin-app .anillo-glow--pulso {
+  animation: none !important;
+  filter: drop-shadow(0 0 3px var(--glow-soft));
+}
+.skin-app .animate-timer-breathe { animation: none; }
+
+/* Firmas gráficas: telemetría, arco editorial y placa industrial.
+   Arte absoluto dentro de los bloques existentes; no cambia su huella. */
+.skin-app {
+  --skin-motif-neon: none;
+  --skin-motif-performance: none;
+  --skin-metric-weight: 500;
+  --skin-metric-tracking: normal;
+  --skin-motif-studio: none;
+  --skin-motif-industrial: none;
+  --skin-motif-opacity: .14;
+  --skin-metric-clip: none;
+  --skin-metric-border: var(--rule);
+  --skin-metric-image: var(--skin-surface-image);
+  --skin-metric-shadow: var(--skin-surface-shadow);
+  --skin-frame-color: transparent;
+  --skin-frame-clip: none;
+  --skin-frame-radius: var(--skin-radius);
+}
+.skin-app[data-estilo-visual="futurista"] {
+  --skin-motif-neon: inline;
+  --skin-motif-opacity: .35;
+  --skin-metric-border: color-mix(in srgb, var(--accent) 28%, var(--rule));
+  --skin-metric-image: radial-gradient(ellipse at 100% 50%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 70%), linear-gradient(135deg, color-mix(in srgb, var(--ink) 4%, transparent), transparent);
+  --skin-metric-shadow: inset 0 0 0 4px var(--paper), inset 0 0 0 5px color-mix(in srgb, var(--accent) 12%, transparent), 0 8px 32px rgb(0 0 0 / 12%);
+  --skin-frame-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  --skin-frame-clip: polygon(0 0, 28px 0, 28px 2px, 2px 2px, 2px 28px, 0 28px, 0 0, 100% 0, 100% 100%, calc(100% - 28px) 100%, calc(100% - 28px) calc(100% - 2px), calc(100% - 2px) calc(100% - 2px), calc(100% - 2px) calc(100% - 28px), 100% calc(100% - 28px), 100% 0);
+}
+.skin-app[data-estilo-visual="estudio"] {
+  --skin-motif-studio: inline;
+  --skin-motif-opacity: .14;
+  --skin-metric-border: color-mix(in srgb, var(--rule) 55%, transparent);
+  --skin-metric-shadow: 0 6px 0 color-mix(in srgb, var(--rule) 28%, var(--paper)), 0 12px 28px color-mix(in srgb, var(--ink) 6%, transparent);
+  --skin-frame-color: color-mix(in srgb, var(--rule) 50%, transparent);
+  --skin-frame-radius: 50% 50% 12px 12px;
+}
+.skin-app[data-estilo-visual="concreto"] {
+  --skin-motif-industrial: inline;
+  --skin-motif-opacity: .23;
+  --skin-metric-clip: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px));
+  --skin-metric-border: color-mix(in srgb, var(--accent) 30%, var(--rule));
+  --skin-metric-shadow: inset 0 0 0 4px var(--paper), inset 0 0 0 5px var(--rule);
+  --skin-frame-color: color-mix(in srgb, var(--accent) 35%, transparent);
+  --skin-frame-radius: 2px;
+}
+.skin-app .skin-metric {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-top-color: var(--skin-metric-border);
+  border-right-color: var(--skin-metric-border);
+  border-bottom-color: var(--skin-metric-border);
+  background-image: var(--skin-metric-image);
+  box-shadow: var(--skin-metric-shadow);
+  clip-path: var(--skin-metric-clip);
+}
+.skin-metric > :not(.skin-motif) { position: relative; z-index: 1; }
+.skin-metric > .skin-motif {
+  position: absolute;
+  pointer-events: none;
+  right: -22px;
+  top: 0;
+  width: min(58%, 280px);
+  height: 100%;
+  color: var(--accent);
+  opacity: var(--skin-motif-opacity);
+  z-index: 0;
+}
+.skin-app .skin-metric-value {
+  font-family: var(--font-hero);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--skin-metric-weight);
+  letter-spacing: var(--skin-metric-tracking);
+}
+/* Volt Performance: referente deportivo, una luz focal y diagonales de pista.
+   El contenido y las superficies de trabajo permanecen libres de efectos. */
+.skin-app[data-estilo-visual="rendimiento"] {
+  --skin-motif-performance: inline;
+  --skin-motif-opacity: .22;
+  --skin-metric-weight: 800;
+  --skin-metric-tracking: -.05em;
+  --skin-metric-border: color-mix(in srgb, var(--accent) 38%, var(--rule));
+  --skin-metric-image: radial-gradient(ellipse at 100% 0%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 65%);
+  --skin-metric-shadow: inset 3px 0 0 var(--accent), 0 12px 28px rgb(0 0 0 / 16%);
+  --skin-surface-image: linear-gradient(150deg, color-mix(in srgb, var(--ink) 3%, transparent), transparent 70%);
+  --skin-feature-image: none;
+  --skin-cut: none;
+  --skin-nav-shadow: inset 0 1px 0 color-mix(in srgb, var(--accent) 15%, transparent);
+  --skin-selected-shadow: inset 3px 0 0 var(--accent);
+  --skin-action-image: linear-gradient(110deg, transparent 75%, rgb(0 0 0 / 10%) 75% 82%, transparent 82% 87%, rgb(0 0 0 / 10%) 87%);
+  --skin-action-shadow: 0 4px 18px var(--glow-soft);
+  --skin-hover-shadow: inset 0 0 0 1px var(--accent);
+}
+.skin-app[data-estilo-visual="rendimiento"][data-theme-polarity="dark"] {
+  background-image: radial-gradient(ellipse at 100% 0%, color-mix(in srgb, var(--accent) 6%, transparent), transparent 45%);
+}
+.skin-app .skin-account {
+  /* El estado de cuota mantiene su borde semántico, sin una franja lima encima. */
+  --skin-metric-shadow: var(--skin-surface-shadow);
+}
+.skin-tile { position: relative; isolation: isolate; }
+.skin-tile::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  pointer-events: none;
+  border: 1px solid var(--skin-frame-color);
+  border-radius: var(--skin-frame-radius);
+  clip-path: var(--skin-frame-clip);
+  opacity: .7;
+}
+.skin-tile > * { position: relative; z-index: 1; }
+
+/* El panel conserva su acabado profesional y respeta la tipografía elegida. */
+.skin-app :is(.owner-content, .owner-summary, .owner-topbar, #portal-root) {
+  --app-font-display: inherit;
+  --font-hero: inherit;
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { RotateCw, Check } from "lucide-react";
 import { pillClasses } from "@/components/ui";
@@ -26,19 +26,29 @@ export function BotonActualizar({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [justDone, setJustDone] = useState(false);
+  const estabaActualizando = useRef(false);
+  useEffect(() => {
+    const terminado = estabaActualizando.current && !isPending;
+    estabaActualizando.current = isPending;
+    if (terminado) {
+      hapticoExito();
+      setJustDone(true);
+    }
+  }, [isPending]);
+  useEffect(() => {
+    if (!justDone) return;
+    const timer = setTimeout(() => setJustDone(false), 1400);
+    return () => clearTimeout(timer);
+  }, [justDone]);
 
   function handleActualizar() {
     if (isPending) return;
     hapticoImpactoMedio();
+    setJustDone(false);
 
-    startTransition(async () => {
+    startTransition(() => {
       // Iniciar el refresh de los Server Components
       router.refresh();
-      // Pequeño retardo defensivo para dar sensación de procesamiento táctil
-      await new Promise((res) => setTimeout(res, 350));
-      hapticoExito();
-      setJustDone(true);
-      setTimeout(() => setJustDone(false), 1400);
     });
   }
 
@@ -48,6 +58,7 @@ export function BotonActualizar({
         type="button"
         onClick={handleActualizar}
         disabled={isPending}
+        aria-busy={isPending}
         title="Actualizar datos"
         aria-label="Actualizar datos"
         className={`inline-flex min-h-11 min-w-11 items-center justify-center rounded-[10px] border border-rule bg-paper-2 text-ink-soft select-none touch-manipulation transition-[background-color,border-color,color,transform] duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper hover:text-ink active:scale-95 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${className}`}
@@ -71,6 +82,7 @@ export function BotonActualizar({
       type="button"
       onClick={handleActualizar}
       disabled={isPending}
+      aria-busy={isPending}
       className={`${pillClasses.neutra} ${className}`}
       aria-label={label}
     >

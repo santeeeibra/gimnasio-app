@@ -61,15 +61,22 @@ export default async function MiRutinaPage() {
 
   const clienteSexo = (cliente?.sexo as Sexo | null) ?? null;
 
-  const aforo = cliente?.gimnasio_id ? await obtenerAforo(cliente.gimnasio_id) : null;
-
-  const { data: gymData } = cliente
-    ? await supabase
-        .from("gimnasios")
-        .select("nombre, logo_url, tema, tipo_cuenta, estado, pago_alias, pago_cbu, pago_titular, slug")
-        .eq("id", cliente.gimnasio_id ?? "")
-        .maybeSingle()
-    : { data: null };
+  // Consultas independientes: no encadenar aforo, gimnasio y rutina.
+  const [aforo, { data: gymData }, { data: rutina }] = await Promise.all([
+    cliente?.gimnasio_id ? obtenerAforo(cliente.gimnasio_id) : Promise.resolve(null),
+    cliente
+      ? supabase.from("gimnasios")
+          .select("nombre, logo_url, tema, tipo_cuenta, estado, pago_alias, pago_cbu, pago_titular, slug")
+          .eq("id", cliente.gimnasio_id ?? "")
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+    cliente
+      ? supabase.from("rutinas")
+          .select("id, objetivo, nivel, dias_por_semana, dias_titulos, preferencias, origen")
+          .eq("cliente_id", cliente.id)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
 
   const temaGym = parseTema(gymData?.tema);
   const coloresLogro = {
@@ -87,16 +94,6 @@ export default async function MiRutinaPage() {
     !esIndividual &&
     (cliente?.estado_cuota === "vencido" || cliente?.acceso_habilitado === false) &&
     !cliente?.en_prueba;
-
-  const { data: rutina } = cliente
-    ? await supabase
-        .from("rutinas")
-        .select(
-          "id, objetivo, nivel, dias_por_semana, dias_titulos, preferencias, origen",
-        )
-        .eq("cliente_id", cliente.id)
-        .maybeSingle()
-    : { data: null };
 
   const prefs = (rutina?.preferencias as Prefs) ?? null;
 
@@ -127,7 +124,7 @@ export default async function MiRutinaPage() {
           .limit(1),
         supabase
           .from("registro_progreso")
-          .select("ejercicio_id, peso, fecha")
+          .select("ejercicio_id, peso, reps, fecha")
           .eq("cliente_id", cliente.id)
           .order("fecha", { ascending: false }),
       ])
@@ -137,9 +134,11 @@ export default async function MiRutinaPage() {
     pesoRows && pesoRows.length > 0 ? Number(pesoRows[0].peso) : null;
 
   const pesosPorEjercicio: Record<string, number> = {};
-  for (const r of (progresoRows ?? []) as { ejercicio_id: string; peso: number }[]) {
+  const progresoInicial: Record<string, { peso: number; reps: number | null }> = {};
+  for (const r of (progresoRows ?? []) as { ejercicio_id: string; peso: number; reps: number | null }[]) {
     if (r.ejercicio_id && pesosPorEjercicio[r.ejercicio_id] === undefined) {
       pesosPorEjercicio[r.ejercicio_id] = Number(r.peso);
+      progresoInicial[r.ejercicio_id] = { peso: Number(r.peso), reps: r.reps };
     }
   }
 
@@ -328,6 +327,7 @@ export default async function MiRutinaPage() {
               (rutina.dias_titulos as string[] | null) ?? null,
             )}
             ejercicios={ejercicios}
+            progresoInicial={progresoInicial}
             mostrarTecnica={rutina.origen === "manual"}
             clienteId={cliente?.id}
             creadoPor="cliente"

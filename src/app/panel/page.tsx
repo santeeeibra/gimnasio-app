@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { linkClasses } from "@/components/ui";
+import { SkinMotif } from "@/components/skin-motif";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireStaffODueno } from "@/lib/auth";
 import { diasRestantes, estadoDesdeDias } from "@/lib/cuota";
@@ -299,14 +300,14 @@ export default async function ResumenPage() {
           <div className="flex items-center gap-2.5 shrink-0">
             <Link
               href="/panel/clientes"
-              className="inline-flex min-h-10 items-center gap-2 rounded-[10px] bg-ink px-4 py-2 text-xs font-semibold text-paper hover:opacity-90 active:scale-95 transition-transform"
+              className="inline-flex min-h-11 items-center gap-2 rounded-[10px] bg-ink px-4 py-2 text-xs font-semibold text-paper hover:opacity-90 active:scale-95 transition-transform"
             >
               <Users className="size-4" />
               <span>Ver Socios</span>
             </Link>
             <Link
               href="/checkin"
-              className="inline-flex min-h-10 items-center gap-2 rounded-[10px] bg-volt/20 border border-volt/35 px-4 py-2 text-xs font-semibold text-ink hover:bg-volt/30 active:scale-95 transition-transform"
+              className="inline-flex min-h-11 items-center gap-2 rounded-[10px] bg-volt/20 border border-volt/35 px-4 py-2 text-xs font-semibold text-ink hover:bg-volt/30 active:scale-95 transition-transform"
             >
               <ScanLine className="size-4 text-volt" />
               <span>Check-in</span>
@@ -330,7 +331,7 @@ export default async function ResumenPage() {
               <div className="mt-3">
                 <Link
                   href="/panel/plan"
-                  className="inline-flex min-h-11 items-center justify-center rounded-[10px] bg-danger px-4 py-2 text-sm font-semibold text-white hover:opacity-90 active:scale-[0.98] transition-transform"
+                  className="inline-flex min-h-11 items-center justify-center rounded-[10px] bg-danger px-4 py-2 text-sm font-semibold text-paper hover:opacity-90 active:scale-[0.98] transition-transform"
                 >
                   Activar plan
                 </Link>
@@ -458,7 +459,7 @@ export default async function ResumenPage() {
             <div className="flex items-center gap-2 shrink-0">
               <Link
                 href="/panel/caja"
-                className="min-h-11 px-4 2xl:px-5 py-2 2xl:py-2.5 rounded-[10px] 2xl:rounded-[12px] bg-ink text-paper text-xs 2xl:text-sm font-bold hover:opacity-90 transition-opacity inline-flex items-center gap-1.5 shadow-xs"
+                className="px-4 2xl:px-5 py-2 2xl:py-2.5 rounded-[10px] 2xl:rounded-[12px] bg-ink text-paper text-xs 2xl:text-sm font-bold hover:opacity-90 transition-opacity min-h-11 inline-flex items-center gap-1.5 shadow-xs"
               >
                 Gestionar Turno <ArrowUpRight className="size-3.5 2xl:size-4" />
               </Link>
@@ -481,7 +482,7 @@ export default async function ResumenPage() {
             </div>
             <Link
               href="/panel/caja"
-              className="min-h-11 px-4 2xl:px-5 py-2 2xl:py-2.5 rounded-[10px] 2xl:rounded-[12px] bg-accent text-accent-contrast text-xs 2xl:text-sm font-black hover:brightness-105 transition-transform inline-flex items-center gap-1.5 shadow-xs shrink-0"
+              className="px-4 2xl:px-5 py-2 2xl:py-2.5 rounded-[10px] 2xl:rounded-[12px] bg-accent text-accent-contrast text-xs 2xl:text-sm font-black hover:brightness-105 transition-transform min-h-11 inline-flex items-center gap-1.5 shadow-xs shrink-0"
             >
               + Abrir Turno de Caja
             </Link>
@@ -498,7 +499,7 @@ export default async function ResumenPage() {
           {/* Cobrar Cuota */}
           <Link
             href="/panel/clientes"
-            className="owner-shortcut group p-4 2xl:p-5.5 rounded-[16px] 2xl:rounded-[20px] border border-rule bg-paper-2 hover:border-volt/40 hover:bg-paper-2/80 active:scale-[0.98] transition-transform flex flex-col justify-between shadow-xs min-h-[110px] 2xl:min-h-[135px]"
+            className="owner-shortcut skin-tile group p-4 2xl:p-5.5 rounded-[16px] 2xl:rounded-[20px] border border-rule bg-paper-2 hover:border-volt/40 hover:bg-paper-2/80 active:scale-[0.98] transition-transform flex flex-col justify-between shadow-xs min-h-[110px] 2xl:min-h-[135px]"
           >
             <div className="size-10 2xl:size-12 rounded-[10px] 2xl:rounded-[14px] bg-ok/15 text-ok grid place-items-center group-hover:scale-105 transition-transform">
               <CreditCard className="size-5 2xl:size-6" />
@@ -516,13 +517,13 @@ export default async function ResumenPage() {
           {/* Nuevo Socio */}
           <Link
             href="/panel/clientes"
-            className="owner-shortcut group p-4 2xl:p-5.5 rounded-[16px] 2xl:rounded-[20px] border border-rule bg-paper-2 hover:border-volt/40 hover:bg-paper-2/80 active:scale-[0.98] transition-transform flex flex-col justify-between shadow-xs min-h-[110px] 2xl:min-h-[135px]"
+            className="owner-shortcut skin-tile group p-4 2xl:p-5.5 rounded-[16px] 2xl:rounded-[20px] border border-rule bg-paper-2 hover:border-volt/40 hover:bg-paper-2/80 active:scale-[0.98] transition-transform flex flex-col justify-between shadow-xs min-h-[110px] 2xl:min-h-[135px]"
           >
-            <div className="size-10 2xl:size-12 rounded-[10px] 2xl:rounded-[14px] bg-cyan-400/15 text-cyan-400 grid place-items-center group-hover:scale-105 transition-transform">
+            <div className="size-10 2xl:size-12 rounded-[10px] 2xl:rounded-[14px] bg-accent/15 text-accent grid place-items-center group-hover:scale-105 transition-transform">
               <UserPlus className="size-5 2xl:size-6" />
             </div>
             <div className="mt-2.5">
-              <p className="text-sm 2xl:text-base font-bold text-ink group-hover:text-cyan-400 transition-colors">
+              <p className="text-sm 2xl:text-base font-bold text-ink group-hover:text-accent transition-colors">
                 Nuevo Socio
               </p>
               <p className="text-[11px] 2xl:text-xs text-ink-soft mt-0.5">
@@ -534,7 +535,7 @@ export default async function ResumenPage() {
           {/* Caja Diaria */}
           <Link
             href="/panel/caja"
-            className="owner-shortcut group p-4 2xl:p-5.5 rounded-[16px] 2xl:rounded-[20px] border border-rule bg-paper-2 hover:border-volt/40 hover:bg-paper-2/80 active:scale-[0.98] transition-transform flex flex-col justify-between shadow-xs min-h-[110px] 2xl:min-h-[135px]"
+            className="owner-shortcut skin-tile group p-4 2xl:p-5.5 rounded-[16px] 2xl:rounded-[20px] border border-rule bg-paper-2 hover:border-volt/40 hover:bg-paper-2/80 active:scale-[0.98] transition-transform flex flex-col justify-between shadow-xs min-h-[110px] 2xl:min-h-[135px]"
           >
             <div className="size-10 2xl:size-12 rounded-[10px] 2xl:rounded-[14px] bg-volt/15 text-volt grid place-items-center group-hover:scale-105 transition-transform">
               <Coins className="size-5 2xl:size-6" />
@@ -552,14 +553,14 @@ export default async function ResumenPage() {
           {/* Modo Check-in */}
           <Link
             href="/checkin"
-            className="owner-shortcut group p-4 2xl:p-5.5 rounded-[16px] 2xl:rounded-[20px] border border-rule bg-paper-2 hover:border-volt/40 hover:bg-paper-2/80 active:scale-[0.98] transition-transform flex flex-col justify-between shadow-xs min-h-[110px] 2xl:min-h-[135px]"
+            className="owner-shortcut skin-tile group p-4 2xl:p-5.5 rounded-[16px] 2xl:rounded-[20px] border border-rule bg-paper-2 hover:border-volt/40 hover:bg-paper-2/80 active:scale-[0.98] transition-transform flex flex-col justify-between shadow-xs min-h-[110px] 2xl:min-h-[135px]"
           >
-            <div className="size-10 2xl:size-12 rounded-[10px] 2xl:rounded-[14px] bg-purple-500/15 text-purple-400 grid place-items-center group-hover:scale-105 transition-transform">
+            <div className="size-10 2xl:size-12 rounded-[10px] 2xl:rounded-[14px] bg-accent/15 text-accent grid place-items-center group-hover:scale-105 transition-transform">
               <ScanLine className="size-5 2xl:size-6" />
             </div>
             <div className="mt-2.5">
               <div className="flex items-center gap-1.5">
-                <p className="text-sm 2xl:text-base font-bold text-ink group-hover:text-purple-400 transition-colors">
+                <p className="text-sm 2xl:text-base font-bold text-ink group-hover:text-accent transition-colors">
                   Modo Check-in
                 </p>
                 <span className="rounded-full bg-volt/20 px-1.5 py-0.2 text-[8px] 2xl:text-[9px] font-bold uppercase text-ink">
@@ -576,10 +577,11 @@ export default async function ResumenPage() {
 
       {/* 3. Indicadores Operativos del Día */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 2xl:gap-5">
-        <div data-tone="accent" className="owner-metric rounded-[14px] 2xl:rounded-[18px] border border-rule bg-paper-2 p-4 2xl:p-5 shadow-xs flex items-center justify-between">
+        <div data-tone="accent" className="owner-metric skin-metric rounded-[14px] 2xl:rounded-[18px] border border-rule bg-paper-2 p-4 2xl:p-5 shadow-xs flex items-center justify-between">
+          <SkinMotif />
           <div>
             <span className="text-[11px] 2xl:text-xs uppercase tracking-wider text-ink-soft font-semibold">Check-ins Hoy</span>
-            <p className="text-2xl 2xl:text-3xl font-display font-bold text-ink mt-0.5">{asistenciasHoy}</p>
+            <p className="skin-metric-value text-2xl 2xl:text-3xl font-display font-bold text-ink mt-0.5">{asistenciasHoy}</p>
             <span className="text-[11px] 2xl:text-xs text-ink-soft">Socios que ingresaron</span>
           </div>
           <div className="size-10 2xl:size-12 rounded-[10px] 2xl:rounded-[14px] bg-volt/15 text-volt grid place-items-center shrink-0">
@@ -587,10 +589,11 @@ export default async function ResumenPage() {
           </div>
         </div>
 
-        <div data-tone={vencidosCount > 0 ? "danger" : "accent"} className="owner-metric rounded-[14px] 2xl:rounded-[18px] border border-rule bg-paper-2 p-4 2xl:p-5 shadow-xs flex items-center justify-between">
+        <div data-tone={vencidosCount > 0 ? "danger" : "accent"} className="owner-metric skin-metric rounded-[14px] 2xl:rounded-[18px] border border-rule bg-paper-2 p-4 2xl:p-5 shadow-xs flex items-center justify-between">
+          <SkinMotif />
           <div>
             <span className="text-[11px] 2xl:text-xs uppercase tracking-wider text-ink-soft font-semibold">Cuotas Vencidas</span>
-            <p className={`text-2xl 2xl:text-3xl font-display font-bold mt-0.5 ${vencidosCount > 0 ? "text-danger" : "text-ink"}`}>
+            <p className={`skin-metric-value text-2xl 2xl:text-3xl font-display font-bold mt-0.5 ${vencidosCount > 0 ? "text-danger" : "text-ink"}`}>
               {vencidosCount}
             </p>
             <span className="text-[11px] 2xl:text-xs text-ink-soft">Para cobrar en recepción</span>
@@ -600,10 +603,11 @@ export default async function ResumenPage() {
           </div>
         </div>
 
-        <div data-tone="warn" className="owner-metric rounded-[14px] 2xl:rounded-[18px] border border-rule bg-paper-2 p-4 2xl:p-5 shadow-xs flex items-center justify-between">
+        <div data-tone="warn" className="owner-metric skin-metric rounded-[14px] 2xl:rounded-[18px] border border-rule bg-paper-2 p-4 2xl:p-5 shadow-xs flex items-center justify-between">
+          <SkinMotif />
           <div>
             <span className="text-[11px] 2xl:text-xs uppercase tracking-wider text-ink-soft font-semibold">Vencen Esta Semana</span>
-            <p className="text-2xl 2xl:text-3xl font-display font-bold text-ink mt-0.5">{porVencerCount}</p>
+            <p className="skin-metric-value text-2xl 2xl:text-3xl font-display font-bold text-ink mt-0.5">{porVencerCount}</p>
             <span className="text-[11px] 2xl:text-xs text-ink-soft">Próximos 7 días</span>
           </div>
           <div className="size-10 2xl:size-12 rounded-[10px] 2xl:rounded-[14px] bg-warn/15 text-warn grid place-items-center shrink-0">

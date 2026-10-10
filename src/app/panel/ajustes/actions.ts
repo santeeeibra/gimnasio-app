@@ -583,12 +583,17 @@ export async function actualizarTema(
 
   // La pantalla de reposo del check-in vive en el mismo jsonb pero no la edita
   // este form: la preservamos para no pisarla al guardar colores/tipografía.
-  const { data: prevRow } = await supabase
+  const { data: prevRow, error: prevError } = await supabase
     .from("gimnasios")
     .select("tema")
     .eq("id", gimnasioId)
     .single();
-  tema.reposoCheckin = parseTema(prevRow?.tema).reposoCheckin;
+  if (prevError) {
+    return { error: "No se pudo recuperar la apariencia actual. Probá de nuevo." };
+  }
+  const temaPrevio = parseTema(prevRow?.tema);
+  tema.reposoCheckin = temaPrevio.reposoCheckin;
+  tema.checkinFondo = temaPrevio.checkinFondo;
 
   const { error } = await supabase
     .from("gimnasios")

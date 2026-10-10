@@ -27,6 +27,7 @@ export type EstiloVisual =
   | "futurista"
   | "estudio"
   | "concreto"
+  | "rendimiento"
   | "cancha";
 
 export type ReposoIntensidad = "sutil" | "normal" | "estatico";
@@ -291,6 +292,53 @@ export type PresetTema = {
   temaCompleto?: Tema;
 };
 
+/** Skins: materiales y acabado, con la misma distribución de pantallas. */
+export const TEMA_NEON: Tema = {
+  ...TEMA_OBSIDIAN,
+  paper: "#090b09",
+  paper2: "#151915",
+  inkSoft: "#a9b5a7",
+  rule: "#394638",
+  volt: "#d4ff00",
+  voltInk: "#172000",
+  fuente: "condensado",
+  estiloVisual: "rendimiento",
+  radiosBordes: "normal",
+};
+
+export const TEMA_STUDIO: Tema = {
+  ...TEMA_TITANIUM,
+  paper: "#f7f4ee",
+  paper2: "#fffdf8",
+  ink: "#242c29",
+  inkSoft: "#58645f",
+  rule: "#c7c7b9",
+  volt: "#28654f",
+  voltInk: "#ffffff",
+  fuente: "editorial",
+  estiloVisual: "estudio",
+  radiosBordes: "soft",
+};
+
+export const SKINS_TEMA = [
+  { key: "neon", label: "Volt Performance", hint: "Deportivo · Lima eléctrica y trazos de velocidad", tema: TEMA_NEON },
+  { key: "studio", label: "Studio", hint: "Editorial · Papel y superficies cálidas", tema: TEMA_STUDIO },
+  { key: "crimson", label: "Crimson", hint: "Industrial · Metal y trama diagonal", tema: TEMA_CRIMSON },
+  { key: "obsidian", label: "Obsidian", hint: "Oscuro · Alto rendimiento", tema: TEMA_OBSIDIAN },
+  { key: "titanium", label: "Titanium", hint: "Claro · Limpio y deportivo", tema: TEMA_TITANIUM },
+];
+
+/** Nunca reemplazar preferencias de distribución ni configuración del kiosko. */
+export function aplicarSkin(actual: Tema, skin: Tema): Tema {
+  return {
+    ...actual,
+    ...Object.fromEntries(CAMPOS_COLOR.map(({ key }) => [key, skin[key]])),
+    fuente: skin.fuente,
+    estiloVisual: skin.estiloVisual,
+    radiosBordes: skin.radiosBordes,
+  };
+}
+
 /**
  * Paletas prearmadas y validadas (pasan los bloqueos de contraste). Un tap y
  * listo: el dueño no necesita entender de color. Mantienen tipografía y layout.
@@ -453,6 +501,22 @@ export const ESTILOS_VISUALES: Record<
     ambiental: boolean;
   }
 > = {
+  rendimiento: {
+    label: "Rendimiento",
+    hint: "Negro, luz lima y trazos de velocidad",
+    fuente: "condensado",
+    fontHero: `var(--font-archivo), ${STACK}`,
+    ambiental: true,
+    colores: {
+      paper: TEMA_NEON.paper,
+      paper2: TEMA_NEON.paper2,
+      ink: TEMA_NEON.ink,
+      inkSoft: TEMA_NEON.inkSoft,
+      rule: TEMA_NEON.rule,
+      volt: TEMA_NEON.volt,
+      voltInk: TEMA_NEON.voltInk,
+    },
+  },
   clasico: {
     label: "Clásico",
     hint: "Limpio, sin efectos",
@@ -728,16 +792,17 @@ export function polaridadTema(t: Tema): "light" | "dark" {
 }
 
 /** Umbral de contraste mínimo de los colores semánticos contra el fondo.
- *  4.0: no toca casi nada en temas claros, sube el rojo/ámbar/verde fijo en
+ *  4.5: no toca casi nada en temas claros, sube el rojo/ámbar/verde fijo en
  *  temas oscuros (donde hoy quedan ilegibles). */
-const UMBRAL_SEMANTICO = 4.0;
+const UMBRAL_SEMANTICO = 4.5;
 const SEMANTICOS_BASE = {
   danger: "#c1362f",
   warn: "#b9791a",
   ok: "#2f7d4f",
 } as const;
 
-function forzarContraste(color: string, fondo: string): string {
+function forzarContraste(color: string, fondos: string[]): string {
+  const fondo = fondos.reduce((peor, actual) => ratio(color, actual) < ratio(color, peor) ? actual : peor);
   return ratio(color, fondo) < UMBRAL_SEMANTICO
     ? sugerirAjuste(fondo, color, UMBRAL_SEMANTICO)
     : color;
@@ -754,9 +819,10 @@ export function derivarAmbiente(t: Tema): Record<string, string> {
   const pol = polaridadTema(t);
   const motion = resolverMotion(t);
 
-  const danger = forzarContraste(SEMANTICOS_BASE.danger, t.paper);
-  const warn = forzarContraste(SEMANTICOS_BASE.warn, t.paper);
-  const ok = forzarContraste(SEMANTICOS_BASE.ok, t.paper);
+  const fondos = [t.paper, t.paper2];
+  const danger = forzarContraste(SEMANTICOS_BASE.danger, fondos);
+  const warn = forzarContraste(SEMANTICOS_BASE.warn, fondos);
+  const ok = forzarContraste(SEMANTICOS_BASE.ok, fondos);
 
   // Glow: el acento sólo lee como "luz emitida" si es más claro que el fondo
   // o el tema es oscuro. Si no, un halo de --ink hace de elevación (nunca un
@@ -824,6 +890,7 @@ export function temaToVars(t: Tema): React.CSSProperties {
     "--radius-sm": radios.sm,
     "--radius-md": radios.md,
     "--radius-lg": radios.lg,
+    "--skin-radius": { tight: "10px", normal: "12px", soft: "16px" }[t.radiosBordes],
     "--spacing-scale": espaciadoMult.toString(),
     "--nav-mobile": t.navegacionMovil,
     "--nav-desktop": t.navegacionDesktop,

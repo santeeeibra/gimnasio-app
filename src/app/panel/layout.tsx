@@ -36,7 +36,7 @@ export default async function PanelLayout({
 
   return (
     <div
-      className="panel-native capa-ambiental min-h-screen bg-paper text-ink md:grid md:grid-cols-[256px_1fr] 2xl:grid-cols-[280px_1fr] transition-[grid-template-columns] duration-200"
+      className="panel-native capa-ambiental skin-app min-h-screen bg-paper text-ink md:grid md:grid-cols-[256px_1fr] 2xl:grid-cols-[280px_1fr]"
       style={temaVars}
       data-estilo-visual={tema.estiloVisual}
       data-theme-polarity={polaridadTema(tema)}
@@ -67,7 +67,7 @@ export default async function PanelLayout({
           esSuper={esSuper}
           rol={profile.rol}
         />
-        <main className="owner-content w-full max-w-[1440px] 2xl:max-w-[1720px] mx-auto flex-1 p-4 sm:p-6 md:p-8 2xl:p-10 pb-28 md:pb-10 transition-all">
+        <main className="owner-content w-full min-w-0 max-w-[1440px] 2xl:max-w-[1720px] mx-auto flex-1 p-4 sm:p-6 md:p-8 2xl:p-10 pb-28 md:pb-10">
           <PullToRefresh>{children}</PullToRefresh>
         </main>
         <PanelBottomNav tipoCuenta={gym?.tipo_cuenta ?? "gym"} rol={profile.rol} motionMode={resolverMotion(tema)} />

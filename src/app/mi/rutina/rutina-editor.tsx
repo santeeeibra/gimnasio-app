@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { ejerciciosSimilares, estaBloqueado } from "@/lib/rutina/motor";
 import { obtenerClasificacionEjercicio } from "@/lib/rutina/clasificacion-muscular";
 import { Spinner } from "@/components/ui";
+import { PROGRESO_GUARDADO, type ProgresoGuardado } from "@/lib/progreso/eventos";
 import {
   GRUPO_MUSCULAR_LABEL,
   MOLESTIAS,
@@ -320,6 +321,7 @@ function VisorEjercicio({
 export function RutinaEditor({
   dias,
   ejercicios,
+  progresoInicial,
   mostrarTecnica = false,
   clienteId,
   creadoPor,
@@ -331,6 +333,7 @@ export function RutinaEditor({
 }: {
   dias: DiaEditable[];
   ejercicios: Ejercicio[];
+  progresoInicial?: Record<string, { peso: number; reps: number | null }>;
   mostrarTecnica?: boolean;
   clienteId?: string;
   creadoPor?: 'cliente' | 'dueno';
@@ -344,6 +347,16 @@ export function RutinaEditor({
   objetivo?: Objetivo;
 }) {
   const [visor, setVisor] = useState<Ejercicio | null>(null);
+  const [progresoLocal, setProgresoLocal] = useState(progresoInicial);
+  useEffect(() => { setProgresoLocal(progresoInicial); }, [progresoInicial]);
+  useEffect(() => {
+    function actualizar(event: Event) {
+      const { ejercicioId, peso, reps } = (event as CustomEvent<ProgresoGuardado>).detail;
+      setProgresoLocal((actual) => actual ? { ...actual, [ejercicioId]: { peso, reps } } : actual);
+    }
+    window.addEventListener(PROGRESO_GUARDADO, actualizar);
+    return () => window.removeEventListener(PROGRESO_GUARDADO, actualizar);
+  }, []);
   const [activo, setActivo] = useState(dias[0]?.numero ?? 1);
   const [logroAbierto, setLogroAbierto] = useState(false);
   const logroMostradoRef = useRef<Record<number, boolean>>({});
@@ -750,8 +763,8 @@ export function RutinaEditor({
                   </div>
                   <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full border border-rule bg-paper">
                     <div
-                      className="h-full bg-accent transition-[width] duration-300 [transition-timing-function:var(--ease-out)]"
-                      style={{ width: `${pct}%` }}
+                      className="h-full w-full origin-left bg-accent transition-transform duration-150 motion-reduce:transition-none [transition-timing-function:var(--ease-out)]"
+                      style={{ transform: `scaleX(${pct / 100})` }}
                     />
                   </div>
                 </div>
@@ -805,6 +818,7 @@ export function RutinaEditor({
                           key={dia.items[pasoZen].id}
                           indice={pasoZen + 1}
                           item={dia.items[pasoZen]}
+                          registroInicial={progresoLocal ? progresoLocal[dia.items[pasoZen].ejercicio?.id ?? ""] ?? null : undefined}
                           itemsDelDia={dia.items}
                           ejercicios={ejercicios}
                           mostrarTecnica={mostrarTecnica}
@@ -876,6 +890,7 @@ export function RutinaEditor({
                         key={item.id}
                         indice={i + 1}
                         item={item}
+                        registroInicial={progresoLocal ? progresoLocal[item.ejercicio?.id ?? ""] ?? null : undefined}
                         itemsDelDia={dia.items}
                         ejercicios={ejercicios}
                         mostrarTecnica={mostrarTecnica}
@@ -937,7 +952,7 @@ function DiaTabs({
               onSelect(d.numero);
             }}
             aria-pressed={on}
-            className={`relative inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full px-3.5 text-xs font-bold transition-all duration-200 ease-out active:scale-95 whitespace-nowrap select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${
+            className={`relative inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full px-3.5 text-xs font-bold transition-transform duration-200 ease-out active:scale-95 whitespace-nowrap select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 ${
               on
                 ? "bg-accent text-accent-ink font-black shadow-md shadow-accent/25 ring-1 ring-accent/30"
                 : "text-ink-soft hover:bg-paper-3/70 hover:text-ink"
@@ -1092,6 +1107,7 @@ function ItemFila({
   indice,
   itemsDelDia = [],
   ejercicios,
+  registroInicial,
   mostrarTecnica,
   onVer,
   onSeriesGuardadas,
@@ -1110,6 +1126,7 @@ function ItemFila({
   indice: number;
   itemsDelDia?: ItemEditable[];
   ejercicios: Ejercicio[];
+  registroInicial?: { peso: number; reps: number | null } | null;
   mostrarTecnica: boolean;
   onVer: (ej: Ejercicio) => void;
   onSeriesGuardadas: (series: number) => void;
@@ -1381,6 +1398,7 @@ function ItemFila({
               <DialVerticalProgreso
                 ref={dialRef}
                 ejercicioId={item.ejercicio.id}
+                registroInicial={registroInicial}
                 tipoEquipo={tipoEquipo}
                 ejercicioNombre={ej?.nombre ?? item.ejercicio.nombre}
                 repsIniciales={targetReps}
@@ -2012,7 +2030,7 @@ function ItemFila({
                                 on ? p.filter((x) => x !== m) : [...p, m],
                               )
                             }
-                            className={`h-8 rounded-[8px] border px-2.5 text-[11px] font-semibold transition-all active:scale-95 ${
+                            className={`h-8 rounded-[8px] border px-2.5 text-[11px] font-semibold transition-transform active:scale-95 ${
                               on
                                 ? "border-accent bg-accent text-accent-ink shadow-xs"
                                 : "border-rule bg-paper text-ink-soft hover:border-ink/40 hover:text-ink"
@@ -2083,7 +2101,7 @@ function ItemFila({
                       type="button"
                       onClick={() => handleSeleccionarAlternativa({ ejercicio: alt, solapaCon })}
                       disabled={pending}
-                      className={`flex items-center gap-3 p-2.5 rounded-[12px] border text-left transition-all duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 disabled:opacity-50 w-full ${
+                      className={`flex items-center gap-3 p-2.5 rounded-[12px] border text-left transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 disabled:opacity-50 w-full ${
                         solapaCon
                           ? "border-rule/80 bg-paper/50 hover:border-amber-500/40 text-ink-soft"
                           : "border-rule bg-paper-2 hover:border-accent/40 text-ink"

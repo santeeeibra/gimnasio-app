@@ -1,5 +1,7 @@
 "use client";
 
+import { hapticoSeleccion } from "@/lib/ui/hapticos";
+
 export function Radios({
   label,
   name,
@@ -24,14 +26,14 @@ export function Radios({
         {options.map((opt) => (
           <label
             key={opt.value}
-            className="flex items-start gap-3 cursor-pointer p-3 rounded-[5px] border border-rule bg-paper-2 transition-colors duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper active:scale-[0.99]"
+            className="flex min-h-11 items-start gap-3 cursor-pointer p-3 rounded-[10px] border border-rule bg-paper-2 transition-transform duration-150 [transition-timing-function:var(--ease-out)] hover:bg-paper active:scale-[0.99] focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-ink"
           >
             <input
               type="radio"
               name={name}
               value={opt.value}
               checked={value === opt.value}
-              onChange={(e) => onChange?.(e.target.value)}
+              onChange={(e) => { hapticoSeleccion(); onChange?.(e.target.value); }}
               className="peer sr-only"
             />
             <span className="size-4 shrink-0 mt-0.5 rounded-full border-2 border-rule bg-paper transition-colors duration-150 [transition-timing-function:var(--ease-out)] peer-checked:border-volt peer-checked:bg-volt peer-checked:shadow-[inset_0_0_0_3px_var(--paper)]" />

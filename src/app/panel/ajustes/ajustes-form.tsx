@@ -11,9 +11,10 @@ import {
   ESTILOS_VISUALES_KEYS,
   FUENTES,
   PRESETS_TEMA,
-  TEMA_CRIMSON,
-  TEMA_OBSIDIAN,
+  SKINS_TEMA,
+  TEMA_NEON,
   TEMA_TITANIUM,
+  aplicarSkin,
   polaridadTema,
   resolverMotion,
   temaToVars,
@@ -109,6 +110,12 @@ export function AjustesForm({
     <div className="min-w-0 space-y-6">
       <form action={formAction} className="min-w-0 space-y-6">
         <input type="hidden" name="gimnasio_id" value={gimnasioId} />
+        {/* Preferencias históricas: se conservan, sin ofrecer cambios de layout. */}
+        <input type="hidden" name="escalaFuente" value={draft.escalaFuente} />
+        <input type="hidden" name="espaciado" value={draft.espaciado} />
+        <input type="hidden" name="densidad" value={draft.densidad} />
+        <input type="hidden" name="navegacionMovil" value={draft.navegacionMovil} />
+        <input type="hidden" name="navegacionDesktop" value={draft.navegacionDesktop} />
 
         {/* Vista previa compacta + Guardar rápido, sticky arriba sin scroll */}
         <div className="sticky top-0 z-10 -mt-1 rounded-[14px] border border-rule bg-paper-2/95 backdrop-blur shadow-md p-3 space-y-2">
@@ -199,52 +206,48 @@ export function AjustesForm({
           />
         </div>
 
-        {/* 3 Temas Principales Prearmados (1-Click) */}
+        <div className="space-y-2">
+          <span className="block text-[13px] font-medium text-ink-soft">Modo de apariencia</span>
+          <div className="flex gap-2" role="group" aria-label="Modo de apariencia">
+            {[{ label: "Oscuro", modo: "dark", tema: TEMA_NEON }, { label: "Claro", modo: "light", tema: TEMA_TITANIUM }].map((opcion) => (
+              <Button key={opcion.modo} type="button" variant="ghost"
+                aria-pressed={polaridadTema(draft) === opcion.modo}
+                className={polaridadTema(draft) === opcion.modo ? "border-accent bg-accent-weak" : ""}
+                onClick={() => { hapticos.seleccion(); setDraft((d) => ({ ...d, ...Object.fromEntries(CLAVES_COLOR.map((k) => [k, opcion.tema[k]])) })); }}>
+                {opcion.label}
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        {/* Identidad visual completa, manteniendo la distribución. */}
         <div className="space-y-3">
           <div>
             <span className="block text-[11px] uppercase tracking-[0.08em] text-ink-soft">
-              Temas recomendados (1 click)
+              Skins con identidad
             </span>
             <p className="mt-1 text-xs text-ink-soft">
-              Elegí un estilo completo prearmado. Aplica colores, tipografía y diseño al instante; podés seguir ajustándolo a mano abajo.
+              Cambiá materiales, texturas, luces y tipografía. Tus pantallas y accesos mantienen su lugar.
             </p>
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            {[
-              {
-                id: "obsidian",
-                nombre: "Obsidian",
-                sub: "Oscuro · Alto Rendimiento",
-                badge: "WCAG AAA",
-                tema: TEMA_OBSIDIAN,
-              },
-              {
-                id: "titanium",
-                nombre: "Titanium",
-                sub: "Claro · Luminoso Deportivo",
-                badge: "WCAG AA",
-                tema: TEMA_TITANIUM,
-              },
-              {
-                id: "crimson",
-                nombre: "Crimson",
-                sub: "Brutalismo · Magma y Fuerza",
-                badge: "WCAG AA",
-                tema: TEMA_CRIMSON,
-              },
-            ].map((t) => {
+            {SKINS_TEMA.map((t) => {
               const activo =
-                draft.paper.toLowerCase() === t.tema.paper.toLowerCase() &&
-                draft.volt.toLowerCase() === t.tema.volt.toLowerCase() &&
-                draft.ink.toLowerCase() === t.tema.ink.toLowerCase();
+                CLAVES_COLOR.every((k) => draft[k].toLowerCase() === t.tema[k].toLowerCase()) &&
+                draft.fuente === t.tema.fuente &&
+                draft.estiloVisual === t.tema.estiloVisual &&
+                draft.radiosBordes === t.tema.radiosBordes;
 
               return (
                 <button
-                  key={t.id}
+                  key={t.key}
                   type="button"
-                  onClick={() => setDraft((d) => ({ ...d, ...t.tema }))}
+                  onClick={() => {
+                    hapticos.seleccion();
+                    setDraft((d) => aplicarSkin(d, t.tema));
+                  }}
                   aria-pressed={activo}
-                  className={`group relative flex flex-col justify-between rounded-[14px] border p-3.5 text-left transition-[transform,border-color,box-shadow] duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
+                  className={`group relative flex flex-col justify-between rounded-[14px] border p-3.5 text-left transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
                     activo
                       ? "border-accent ring-2 ring-accent/30 shadow-md bg-paper-2"
                       : "border-rule bg-paper hover:border-ink/40"
@@ -253,20 +256,20 @@ export function AjustesForm({
                   <div>
                     <div className="flex items-center justify-between gap-1 mb-1">
                       <span className="font-display text-sm font-bold text-ink">
-                        {t.nombre}
+                        {t.label}
                       </span>
                       <span
                         className={`rounded-[4px] px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wider ${
-                          t.id === "obsidian"
+                          polaridadTema(t.tema) === "dark"
                             ? "bg-ok/15 text-ok border border-ok/30"
                             : "bg-ink-soft/15 text-ink-soft border border-rule"
                         }`}
                       >
-                        {t.badge}
+                        {polaridadTema(t.tema) === "dark" ? "Oscuro" : "Claro"}
                       </span>
                     </div>
                     <p className="text-[11.5px] leading-tight text-ink-soft">
-                      {t.sub}
+                      {t.hint}
                     </p>
                   </div>
 
@@ -431,7 +434,7 @@ export function AjustesForm({
                   name="fuente"
                   value={draft.fuente}
                   onChange={(e) => set("fuente", e.target.value as FuenteKey)}
-                  className="w-full h-10 px-3 rounded-[5px] border border-rule bg-paper text-sm outline-none focus:border-ink transition-[border-color] duration-150 [transition-timing-function:var(--ease-out)]"
+                  className="skin-control w-full h-11 px-3 rounded-[10px] border border-rule bg-paper text-[16px] outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
                 >
                   {Object.entries(FUENTES).map(([key, f]) => (
                     <option key={key} value={key}>
@@ -441,122 +444,29 @@ export function AjustesForm({
                 </select>
               </label>
 
-              <label className="block">
-                <span className="block text-[13px] font-medium text-ink-soft mb-1.5">
-                  Tamaño de fuente base
-                </span>
-                <select
-                  name="escalaFuente"
-                  value={draft.escalaFuente}
-                  onChange={(e) =>
-                    set("escalaFuente", parseFloat(e.target.value))
-                  }
-                  className="w-full h-10 px-3 rounded-[5px] border border-rule bg-paper text-sm outline-none focus:border-ink transition-[border-color] duration-150 [transition-timing-function:var(--ease-out)]"
-                >
-                  <option value="0.875">Pequeña (87.5%)</option>
-                  <option value="1">Normal (100%)</option>
-                  <option value="1.125">Grande (112.5%)</option>
-                  <option value="1.25">Muy grande (125%)</option>
-                </select>
-              </label>
             </Seccion>
 
             {/* Sección: Bordes y espaciado */}
-            <Seccion titulo="Bordes y espaciado">
+            <Seccion titulo="Acabado de bordes">
               <Radios
                 label="Redondeo de bordes"
                 name="radiosBordes"
                 value={draft.radiosBordes}
                 options={[
-                  { value: "tight", label: "Ajustado", hint: "3-6px" },
-                  { value: "normal", label: "Normal", hint: "5-8px" },
-                  { value: "soft", label: "Suave", hint: "6-10px" },
+                  { value: "tight", label: "Ajustado", hint: "Industrial" },
+                  { value: "normal", label: "Normal", hint: "Equilibrado" },
+                  { value: "soft", label: "Suave", hint: "Suave" },
                 ]}
                 onChange={(v) => set("radiosBordes", v as Tema["radiosBordes"])}
               />
 
-              <Radios
-                label="Espaciado"
-                name="espaciado"
-                value={draft.espaciado}
-                options={[
-                  { value: "compact", label: "Compacto", hint: "87.5%" },
-                  { value: "normal", label: "Normal", hint: "100%" },
-                  { value: "spacious", label: "Amplio", hint: "125%" },
-                ]}
-                onChange={(v) => set("espaciado", v as Tema["espaciado"])}
-              />
-            </Seccion>
-
-            {/* Sección: Navegación */}
-            <Seccion titulo="Navegación">
-              <Radios
-                label="Navegación móvil"
-                name="navegacionMovil"
-                value={draft.navegacionMovil}
-                options={[
-                  {
-                    value: "bottom",
-                    label: "Barra inferior",
-                    hint: "Fija abajo (recomendado)",
-                  },
-                  { value: "top", label: "Barra superior", hint: "Fija arriba" },
-                  { value: "sidebar", label: "Menú lateral", hint: "Deslizable" },
-                ]}
-                onChange={(v) =>
-                  set("navegacionMovil", v as Tema["navegacionMovil"])
-                }
-              />
-
-              <Radios
-                label="Navegación desktop"
-                name="navegacionDesktop"
-                value={draft.navegacionDesktop}
-                options={[
-                  {
-                    value: "sidebar",
-                    label: "Sidebar izquierdo",
-                    hint: "Layout clásico",
-                  },
-                  { value: "top", label: "Barra superior", hint: "Horizontal" },
-                ]}
-                onChange={(v) =>
-                  set("navegacionDesktop", v as Tema["navegacionDesktop"])
-                }
-              />
-            </Seccion>
-
-            {/* Sección: Densidad */}
-            <Seccion titulo="Densidad de información">
-              <Radios
-                name="densidad"
-                value={draft.densidad}
-                options={[
-                  {
-                    value: "compact",
-                    label: "Compacta",
-                    hint: "Más datos, menos espacio",
-                  },
-                  {
-                    value: "comfortable",
-                    label: "Cómoda",
-                    hint: "Balance ideal",
-                  },
-                  {
-                    value: "spacious",
-                    label: "Espaciosa",
-                    hint: "Máximo respiro visual",
-                  },
-                ]}
-                onChange={(v) => set("densidad", v as Tema["densidad"])}
-              />
             </Seccion>
           </div>
         </div>
 
         {/* Nota: los controles de "Personalizar a mano" quedan montados aunque el
             panel esté plegado (sólo se ocultan con `hidden`), así el formulario
-            siempre envía fuente, colores, navegación y densidad. */}
+            siempre envía fuente y colores; el resto se conserva en inputs ocultos. */}
 
         {/* Bloqueos: no se pueden guardar */}
         {bloqueos.bloqueado ? (
