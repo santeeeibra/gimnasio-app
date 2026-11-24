@@ -1,6 +1,7 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { getSessionProfile } from "@/lib/auth";
 
 /** Duración típica de una sesión de entreno: ventana para contar "en sala ahora". */
 const VENTANA_SESION_MIN = 90;
@@ -15,10 +16,16 @@ export type AforoInfo = {
  * Aforo en tiempo real de un gimnasio: cuenta los `registros_entrada` de los
  * últimos VENTANA_SESION_MIN minutos como "socios en sala ahora" (no existe
  * check-out, así que se aproxima con la duración típica de una sesión).
+ *
+ * Cuenta con service_role: la RLS de `registros_entrada` sólo le deja al socio
+ * ver sus propias entradas, y con su cliente el aforo daba siempre ~0%. Por eso
+ * se valida que el gimnasio sea el de la sesión y sólo se devuelve el número.
  */
 export async function obtenerAforo(gimnasioId: string): Promise<AforoInfo | null> {
   if (!gimnasioId) return null;
-  const supabase = await createClient();
+  const profile = await getSessionProfile();
+  if (!profile || profile.gimnasio_id !== gimnasioId) return null;
+  const supabase = createAdminClient();
 
   const desde = new Date(Date.now() - VENTANA_SESION_MIN * 60 * 1000).toISOString();
 
