@@ -25,6 +25,8 @@ import {
 } from "@/lib/ui/hapticos";
 import { createClient } from "@/lib/supabase/client";
 import { GoogleOneTap } from "@/components/auth/google-one-tap";
+import { RegistroForm } from "./registro-form";
+import type { PerfilRegistro } from "./registro-actions";
 
 const STORAGE_KEY = "gym.ultimo_slug";
 
@@ -32,13 +34,25 @@ interface LoginFormProps {
   initialGymSlug?: string | null;
   initialGymNombre?: string | null;
   initialError?: string | null;
+  /** /login?registro=individual|dueno|socio abre directo la pestaña "Crear cuenta". */
+  initialRegistro?: PerfilRegistro | null;
+  /** Código de partner que trae el enlace de referido (?ref=). */
+  refCode?: string;
 }
 
 export function LoginForm({
   initialGymSlug = null,
   initialGymNombre = null,
   initialError = null,
+  initialRegistro = null,
+  refCode = "",
 }: LoginFormProps) {
+  const [vista, setVista] = useState<"entrar" | "registro">(
+    initialRegistro ? "registro" : "entrar",
+  );
+  const [perfilRegistro, setPerfilRegistro] = useState<PerfilRegistro>(
+    initialRegistro ?? "individual",
+  );
   const [state, formAction, pending] = useActionState<LoginState, FormData>(
     login,
     {},
@@ -94,6 +108,17 @@ export function LoginForm({
       setLoadingProvider(null);
     }
   };
+
+  // Llegando desde un enlace de registro (landing, referido de partner), en
+  // el celular el póster ocupa toda la primera pantalla: se baja al formulario.
+  useEffect(() => {
+    if (!initialRegistro) return;
+    const tarjeta = document.getElementById("acceso");
+    // Solo en pantallas angostas (en escritorio póster y tarjeta van lado a lado).
+    if (tarjeta && window.innerWidth < 1024 && tarjeta.getBoundingClientRect().top > 80) {
+      tarjeta.scrollIntoView({ block: "start" });
+    }
+  }, [initialRegistro]);
 
   // Cargar gimnasio recordado desde localStorage si no vino precargado por SSR
   useEffect(() => {
@@ -168,7 +193,7 @@ export function LoginForm({
 
           {/* Columna Derecha: Módulo de Entrada (Card Sólido de Alto Contraste) */}
           <div className="lg:col-span-5 flex flex-col justify-center">
-            <div className="relative overflow-hidden rounded-[28px] border border-white/[0.16] bg-[#161922] shadow-[0_24px_70px_rgba(0,0,0,0.85)] p-6 sm:p-8">
+            <div id="acceso" className="relative scroll-mt-4 overflow-hidden rounded-[28px] border border-white/[0.16] bg-[#161922] shadow-[0_24px_70px_rgba(0,0,0,0.85)] p-6 sm:p-8">
               {/* Specular hairline superior */}
               <div
                 aria-hidden="true"
@@ -191,6 +216,47 @@ export function LoginForm({
                 </div>
               ) : null}
 
+              {/* Entrar / Crear cuenta: el login es la única puerta de alta */}
+              <div role="tablist" aria-label="Entrar o crear cuenta" className="grid grid-cols-2 border-b border-white/10 mb-5 -mt-1">
+                {(
+                  [
+                    ["entrar", "Entrar"],
+                    ["registro", "Crear cuenta"],
+                  ] as const
+                ).map(([valor, texto]) => (
+                  <button
+                    key={valor}
+                    type="button"
+                    role="tab"
+                    aria-selected={vista === valor}
+                    onClick={() => {
+                      hapticoSeleccion();
+                      setVista(valor);
+                    }}
+                    className={`relative h-11 text-[15px] font-semibold transition-colors ${
+                      vista === valor ? "text-white" : "text-slate-400 hover:text-slate-200"
+                    }`}
+                  >
+                    {texto}
+                    <span
+                      aria-hidden
+                      className={`absolute inset-x-6 -bottom-px h-0.5 rounded-full transition-colors ${
+                        vista === valor ? "bg-volt" : "bg-transparent"
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+
+              {vista === "registro" ? (
+                <RegistroForm
+                  perfil={perfilRegistro}
+                  onPerfil={setPerfilRegistro}
+                  gimnasioInicial={gimnasioNombre || gimnasio}
+                  refCode={refCode}
+                />
+              ) : (
+              <>
               {/* Selector de modo: Cuenta Directa (Email) vs Gimnasio (DNI) */}
               <div className="flex rounded-xl bg-[#11131a] p-1 border border-white/10 mb-5">
                 <button
@@ -304,13 +370,18 @@ export function LoginForm({
                     </button>
                   </div>
 
-                  <div className="pt-2 text-center">
-                    <Link
-                      href="/registrarse"
-                      className="text-xs text-volt hover:underline font-medium"
+                  <div className="pt-1 text-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        hapticoSeleccion();
+                        setPerfilRegistro("individual");
+                        setVista("registro");
+                      }}
+                      className="min-h-[44px] px-3 text-[13px] text-volt hover:underline font-medium"
                     >
-                      ¿No tenés cuenta? Registrate gratis acá
-                    </Link>
+                      ¿No tenés cuenta? Creala gratis
+                    </button>
                   </div>
                 </form>
               ) : (
@@ -553,15 +624,20 @@ export function LoginForm({
               </div>
             </form>
           )}
+              </>
+              )}
 
-            {/* Separador y opción de autenticación OAuth Google */}
+            {/* Google/Facebook/X: sirven para entrar y para crear una cuenta
+                individual; un gimnasio o un socio se registran con DNI. */}
+            {vista === "entrar" || perfilRegistro === "individual" ? (
+            <>
             <div className="relative my-5">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-white/10" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
                 <span className="bg-[#161922] px-2.5 text-slate-400 font-semibold tracking-wider text-[11px]">
-                  O continuar con
+                  {vista === "registro" ? "O registrate con" : "O continuar con"}
                 </span>
               </div>
             </div>
@@ -635,7 +711,11 @@ export function LoginForm({
               </button>
             </div>
 
+            </>
+            ) : null}
+
             {/* Botón Probar App sin cuenta (Demo) */}
+            {vista === "entrar" ? (
             <div className="pt-4 border-t border-white/10 mt-5 text-center">
               <Link
                 href="/demo"
@@ -650,6 +730,7 @@ export function LoginForm({
                 Probá rutinas, timer y seguimiento sin registrarte
               </p>
             </div>
+            ) : null}
           </div>
         </div>
       </div>

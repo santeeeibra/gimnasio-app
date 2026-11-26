@@ -3,11 +3,20 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { getSessionProfile } from "@/lib/auth";
 import { LoginForm } from "./login-form";
+import type { PerfilRegistro } from "./registro-actions";
+
+const PERFILES: PerfilRegistro[] = ["individual", "dueno", "socio"];
 
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ g?: string; error?: string }>;
+  searchParams: Promise<{
+    g?: string;
+    error?: string;
+    registro?: string;
+    ref?: string;
+    codigo?: string;
+  }>;
 }) {
   // 1. Si el usuario ya cuenta con sesión activa, redirigir directo
   const profile = await getSessionProfile();
@@ -21,6 +30,15 @@ export default async function LoginPage({
   let initialGymSlug = params?.g ?? null;
   let initialGymNombre: string | null = null;
   const initialError = params?.error ?? null;
+  const refCode = (params?.ref ?? params?.codigo ?? "").trim();
+  // Un enlace de referido de partner es siempre para un gimnasio.
+  const initialRegistro: PerfilRegistro | null = PERFILES.includes(params?.registro as PerfilRegistro)
+    ? (params?.registro as PerfilRegistro)
+    : params?.registro !== undefined || refCode
+      ? refCode
+        ? "dueno"
+        : "individual"
+      : null;
 
   if (!initialGymSlug) {
     try {
@@ -42,6 +60,8 @@ export default async function LoginPage({
         initialGymSlug={initialGymSlug}
         initialGymNombre={initialGymNombre}
         initialError={initialError}
+        initialRegistro={initialRegistro}
+        refCode={refCode}
       />
     </Suspense>
   );

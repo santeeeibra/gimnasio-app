@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { dniAEmail } from "@/lib/auth";
+import { crearCuentaConEmail } from "@/lib/plataforma/alta-individual";
 
 export type RegistroState = {
   error?: string;
@@ -26,67 +27,51 @@ export async function registrarGimnasio(
     return { error: "Tenés que aceptar los Términos y Condiciones para continuar." };
   }
 
+  if (!nombreDueno || !clave || clave.length < 6) {
+    return { error: "Por favor completá tu nombre y una contraseña de al menos 6 caracteres." };
+  }
+
+  // Atleta Solo: cuenta individual con gimnasio propio (mismo alta que
+  // /registrarse). Antes iban todos a un gimnasio compartido "atletas" y
+  // quedaban como compañeros entre sí (feed, ranking, aforo, mensajes).
+  if (tipoCuenta === "solo") {
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(emailRecuperacion)) {
+      return { error: "Ingresá un email válido: lo vas a usar para entrar." };
+    }
+    const alta = await crearCuentaConEmail({
+      nombre: nombreDueno,
+      email: emailRecuperacion,
+      password: clave,
+      tipo: "individual",
+      tycAceptado: true,
+    });
+    if (alta.error) return alta;
+    redirect("/panel");
+  }
+
   const dniLimpio = dniRaw.replace(/\D/g, "");
   if (!dniLimpio || dniLimpio.length < 5) {
     return { error: "El DNI/Documento debe ser numérico y tener al menos 5 dígitos." };
   }
 
-  if (!nombreDueno || !clave || clave.length < 6) {
-    return { error: "Por favor completá tu nombre y una contraseña de al menos 6 caracteres." };
-  }
-
   const admin = createAdminClient();
 
-  // Si es Atleta Independiente (B2C Solo), asignamos o buscamos el gimnasio genérico 'atletas'
-  let slugGym = "";
-  let nombreGymFinal = "";
-
-  if (tipoCuenta === "solo") {
-    slugGym = "atletas";
-    nombreGymFinal = "Atletas SysGym";
-  } else {
-    if (!nombreGymRaw) {
-      return { error: "Ingresá el nombre de tu gimnasio o centro de entrenamiento." };
-    }
-    nombreGymFinal = nombreGymRaw;
-    // Generar slug limpio
-    slugGym = nombreGymRaw
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9]/g, "-")
-      .replace(/-+/g, "-")
-      .replace(/^-|-$/g, "");
-
-    if (!slugGym) slugGym = `gym-${Date.now()}`;
+  if (!nombreGymRaw) {
+    return { error: "Ingresá el nombre de tu gimnasio o centro de entrenamiento." };
   }
+  const nombreGymFinal = nombreGymRaw;
+  let slugGym = nombreGymRaw
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+  if (!slugGym) slugGym = `gym-${Date.now()}`;
 
-  // Buscar si ya existe el gimnasio por slug (si no es 'atletas')
   let gymId = "";
 
-  if (tipoCuenta === "solo") {
-    const { data: gymExistente } = await admin
-      .from("gimnasios")
-      .select("id")
-      .eq("slug", "atletas")
-      .maybeSingle();
-
-    if (gymExistente) {
-      gymId = gymExistente.id;
-    } else {
-      const { data: nuevoGym, error: errGym } = await admin
-        .from("gimnasios")
-        .insert({
-          nombre: "Atletas SysGym",
-          slug: "atletas",
-          estado: "activo",
-        })
-        .select("id")
-        .single();
-      if (errGym) return { error: "Error al configurar la cuenta de atleta. Intentá de nuevo." };
-      gymId = nuevoGym.id;
-    }
-  } else {
+  {
     // Verificar slug duplicado
     const { data: existente } = await admin
       .from("gimnasios")
@@ -167,7 +152,7 @@ export async function registrarGimnasio(
   }
 
   // Asignar Perfil
-  const rol = tipoCuenta === "solo" ? "cliente" : "dueno";
+  const rol = "dueno";
   const { error: errProf } = await admin.from("profiles").insert({
     id: createdUser.user.id,
     gimnasio_id: gymId,
@@ -183,19 +168,6 @@ export async function registrarGimnasio(
     return { error: `Error al guardar perfil: ${errProf.message}` };
   }
 
-  // Si es Atleta Solo, crear también su ficha de cliente (requerida por /mi/rutina, /mi/peso, etc.)
-  if (rol === "cliente") {
-    const { error: errCliente } = await admin.from("clientes").insert({
-      gimnasio_id: gymId,
-      profile_id: createdUser.user.id,
-      estado_cuota: "al_dia",
-      email: emailRecuperacion || null,
-    });
-    if (errCliente) {
-      return { error: `Error al guardar tu ficha de atleta: ${errCliente.message}` };
-    }
-  }
-
   // Iniciar sesión inmediatamente
   const supabase = await createClient();
   const { error: errLogin } = await supabase.auth.signInWithPassword({
@@ -207,6 +179,5 @@ export async function registrarGimnasio(
     redirect(`/login?gimnasio=${slugGym}&dni=${dniLimpio}`);
   }
 
-  // Redirigir al panel correspondiente
-  redirect(rol === "dueno" ? "/panel" : "/mi");
+  redirect("/panel");
 }

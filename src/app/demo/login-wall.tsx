@@ -39,7 +39,7 @@ export function LoginWall({
         <p className="mt-2 text-sm leading-snug text-ink-soft">{detalle}</p>
 
         <div className="mt-6 space-y-2.5">
-          <Link href="/registrarse" className="block" onClick={() => hapticoImpactoMedio()}>
+          <Link href="/login?registro=individual" className="block" onClick={() => hapticoImpactoMedio()}>
             <Button variant="volt" className="min-h-12 w-full rounded-[12px] text-sm font-semibold shadow-sm active:scale-[0.98] transition-transform duration-150 [transition-timing-function:var(--ease-out)]">
               Crear cuenta gratis
             </Button>

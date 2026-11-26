@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { crearEstructuraIndividual, destinoInicio } from "@/lib/plataforma/alta-individual";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -69,9 +70,7 @@ export async function GET(request: Request) {
       ? profile.rol === "dueno"
         ? "/bienvenida"
         : "/cambiar-clave"
-      : profile.rol === "dueno"
-        ? "/panel"
-        : "/mi";
+      : destinoInicio(profile.rol, gym?.tipo_cuenta);
 
     const response = NextResponse.redirect(`${origin}${destino}`);
 
@@ -99,45 +98,23 @@ export async function GET(request: Request) {
     userEmail.split("@")[0] ||
     "Mi Cuenta";
   const nombre = String(rawNombre).trim();
-  const slug = `user-${user.id.substring(0, 8)}`;
 
-  const { data: gymData, error: gymErr } = await admin
-    .from("gimnasios")
-    .insert({
-      nombre,
-      slug,
-      estado: "prueba",
-      tipo_cuenta: "individual",
-    })
-    .select("id")
-    .single();
+  const alta = await crearEstructuraIndividual(admin, {
+    uid: user.id,
+    nombre,
+    email: userEmail || null,
+    tipo: "individual",
+  });
 
-  if (!gymErr && gymData) {
-    const dni = `DNI-${user.id.substring(0, 8)}`;
-
-    await admin.from("profiles").insert({
-      id: user.id,
-      gimnasio_id: gymData.id,
-      rol: "dueno",
-      dni,
-      nombre,
-      debe_cambiar_clave: false,
-      email_recuperacion: userEmail || null,
-    });
-
-    await admin.from("clientes").insert({
-      gimnasio_id: gymData.id,
-      profile_id: user.id,
-      estado_cuota: "al_dia",
-      email: userEmail || null,
-    });
-
-    // Cuenta individual: NO se escribe la cookie gym_ultimo. Esa cookie es para
-    // socios que entran por DNI a un gimnasio real; una cuenta personal no debe
-    // aparecer como "gimnasio" en la pantalla de login.
-    return NextResponse.redirect(`${origin}/panel`);
+  if (alta.error) {
+    await supabase.auth.signOut();
+    return NextResponse.redirect(
+      `${origin}/login?error=${encodeURIComponent(alta.error)}`,
+    );
   }
 
-  // Fallback si hubo error de inserción
-  return NextResponse.redirect(`${origin}/panel`);
+  // Cuenta individual: NO se escribe la cookie gym_ultimo. Esa cookie es para
+  // socios que entran por DNI a un gimnasio real; una cuenta personal no debe
+  // aparecer como "gimnasio" en la pantalla de login.
+  return NextResponse.redirect(`${origin}/mi`);
 }

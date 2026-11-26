@@ -19,6 +19,7 @@ import { SplashScreen } from "@/components/mascota/splash-screen";
 import { PullToRefresh } from "@/components/mascota/pull-to-refresh";
 import { DemoToolbar } from "@/components/demo/demo-toolbar";
 import { puedeImpersonar } from "@/lib/impersonation";
+import { logout } from "@/app/actions";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -85,9 +86,18 @@ export default async function MiLayout({
         <div className="w-full max-w-sm text-center">
           <h1 className="font-display text-xl">Tu cuenta está pendiente</h1>
           <p className="mt-2 text-sm text-ink-soft">
-            {gym?.nombre ?? "El gimnasio"} todavía no registró tu primer pago.
-            Apenas lo haga, vas a poder entrar con estos mismos datos.
+            {gym?.nombre ?? "El gimnasio"} todavía no habilitó tu cuenta. Apenas
+            apruebe tu alta o registre tu primer pago, vas a poder entrar con
+            estos mismos datos.
           </p>
+          <form action={logout} className="mt-6">
+            <button
+              type="submit"
+              className="min-h-11 rounded-[12px] border border-rule px-4 text-sm font-medium text-ink-soft transition-transform active:scale-[0.98] hover:text-ink"
+            >
+              Cerrar sesión
+            </button>
+          </form>
         </div>
       </div>
     );

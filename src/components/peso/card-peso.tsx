@@ -375,11 +375,14 @@ export function CardPeso({
   creadoPor,
   action,
   fetchRegistros,
+  historialAbierto = false,
 }: {
   clienteId: string;
   creadoPor: "cliente" | "dueno";
   action: (prev: PesoState, fd: FormData) => Promise<PesoState>;
   fetchRegistros: () => Promise<RegistroPeso[]>;
+  /** En /mi/peso el historial es el contenido principal: arranca abierto y con más filas. */
+  historialAbierto?: boolean;
 }) {
   const [registros, setRegistros] = useState<RegistroPeso[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -552,7 +555,7 @@ export function CardPeso({
 
       {/* Historial colapsado con gráfico */}
       {!cargando && registros.length > 0 && (
-        <details className="group border-t border-rule">
+        <details className="group border-t border-rule" open={historialAbierto}>
           <summary
             onClick={() => hapticoImpactoSuave()}
             className="flex cursor-pointer select-none list-none items-center justify-between px-5 py-3.5 text-xs font-medium text-ink-soft hover:text-ink active:bg-paper-3/40 transition-colors [&::-webkit-details-marker]:hidden"
@@ -587,7 +590,7 @@ export function CardPeso({
               <GraficoPeso registros={registros} />
             </div>
             <ul className="divide-y divide-rule rounded-[10px] border border-rule bg-paper overflow-hidden text-sm">
-              {registros.slice(0, 8).map((r) => (
+              {registros.slice(0, historialAbierto ? 30 : 8).map((r) => (
                 <li
                   key={r.id}
                   className="flex items-center justify-between px-3 py-2.5"

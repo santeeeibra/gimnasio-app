@@ -6,6 +6,11 @@ type CookieToSet = { name: string; value: string; options: CookieOptions };
 const PUBLIC_PATHS = [
   "/login",
   "/registrarse",
+  // Alta de gimnasio / Atleta Solo: la enlaza la landing a gente sin sesión.
+  "/registro-gimnasio",
+  "/registro",
+  // Los formularios de alta enlazan los términos antes de tener cuenta.
+  "/terminos",
   "/registro-partner",
   // Landing pública de reclutamiento del programa de partners.
   "/partners",

@@ -9,6 +9,15 @@ Para ubicar cualquier archivo al instante sin recorrer el repo:
 6. **UI, UX & Rutinas (Prioridad Suprema):** Se rige por las skills en `.agents/skills`:
    1º `sysgym-ux-patterns`, 2º `apple-design-skill`, 3º `60fps-animation`, 4º `sysgym-mascot-skill`, 5º `science-workout-engine`, 6º `ios-ux-prototype`.
    Toda interacción debe tener feedback táctil/acústico (`src/lib/ui/hapticos.ts`), 60fps compositor-only y presencia de la mascota oficial (Pulpo Volt verde `#10e7a0`).
+7. **Logo oficial:** el tentáculo verde agarrando la mancuerna (con "SYSGYM" abajo): `public/icon-512.png`, `icon-192.png`, `apple-icon.png`. Usar ese, no otro dibujo ni el Pulpo en su lugar. `public/logo-sysgym.png` es solo la marca en texto. Ojo: Glob a veces no lista los PNG de `public/`; confirmar con `git ls-files public`.
+
+# Datos de usuarios: NO perder nada
+
+Ya hay gente registrada en producción (Supabase en la nube). Prohibido borrar
+o recrear cuentas, perfiles, clientes, pesos, rutinas o pagos existentes. Toda
+migración de datos: primero contar y mostrar qué filas toca, respaldar
+(exportar a archivo local) y pedir OK a Santi; mover o copiar, nunca borrar el
+origen hasta verificar el destino.
 
 # Credenciales y datos sensibles
 

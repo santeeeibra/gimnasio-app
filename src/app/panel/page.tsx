@@ -27,6 +27,8 @@ import { cupoSocios } from "@/lib/plataforma/cupo";
 import { verificarPlanGimnasio } from "@/lib/plataforma/plan-gate";
 import type { ClienteVista } from "./clientes/cliente-row";
 import { OnboardingDueno } from "./onboarding-dueno";
+import { SolicitudesAlta, type Solicitud } from "./solicitudes-alta";
+import { esSolicitudAlta } from "@/lib/plataforma/alta-socio";
 import { BotonInstalarApp } from "@/components/pwa/boton-instalar-app";
 import { WidgetAsistenciaSala } from "@/components/panel/widget-asistencia-sala";
 import { obtenerPedidosActivos } from "./asistencia/actions";
@@ -62,6 +64,32 @@ export default async function ResumenPage() {
     return <InicioIndividual nombre={dueno.nombre} />;
   }
   const adminDb = createAdminClient();
+
+  // Socios que pidieron el alta solos desde el login. Solo los marcados por
+  // alta-socio.ts: los cargados sin pago por el dueño no aparecen acá.
+  const { data: solicitudesRaw } = await supabase
+    .from("clientes")
+    .select("id, profile_id, creado_at, profile:profiles(nombre, dni, telefono)")
+    .eq("gimnasio_id", dueno.gimnasio_id)
+    .eq("acceso_habilitado", false)
+    .order("creado_at", { ascending: true })
+    .limit(20);
+  const candidatas = (solicitudesRaw ?? []) as any[];
+  const marcas = await Promise.all(
+    candidatas.map((c) => (c.profile_id ? esSolicitudAlta(adminDb, c.profile_id) : Promise.resolve(false))),
+  );
+  const solicitudes: Solicitud[] = candidatas
+    .filter((_, i) => marcas[i])
+    .map((c) => {
+      const p = Array.isArray(c.profile) ? c.profile[0] : c.profile;
+      return {
+        id: c.id,
+        creado_at: c.creado_at ?? null,
+        nombre: p?.nombre ?? "Sin nombre",
+        dni: p?.dni ?? "",
+        telefono: p?.telefono ?? null,
+      };
+    });
 
   const ahora = new Date();
   const anioActual = ahora.getFullYear();
@@ -393,6 +421,8 @@ export default async function ResumenPage() {
           <ArrowUpRight className="size-4 text-ink-soft shrink-0 ml-2" />
         </Link>
       </div>
+
+      <SolicitudesAlta solicitudes={solicitudes} />
 
       {/* Onboarding y Acceso PWA (Solo Dueño) */}
       {!esStaff ? (

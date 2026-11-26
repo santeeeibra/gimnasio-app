@@ -54,7 +54,7 @@ export default function DemoLayout({
               Ingresar
             </Link>
             <Link
-              href="/registrarse"
+              href="/login?registro=individual"
               className="inline-flex min-h-9 items-center justify-center rounded-full bg-volt px-3.5 text-xs font-semibold text-volt-ink shadow-sm transition-[transform,filter] duration-150 [transition-timing-function:var(--ease-out)] hover:brightness-95 active:scale-95"
             >
               Crear cuenta

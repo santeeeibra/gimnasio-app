@@ -59,6 +59,7 @@ export async function guardarPesoCliente(
 
   revalidatePath("/mi");
   revalidatePath("/mi/rutina");
+  revalidatePath("/mi/peso");
   return { ok: "Peso guardado ✓" };
 }
 

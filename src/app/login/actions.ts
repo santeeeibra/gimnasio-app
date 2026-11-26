@@ -5,6 +5,8 @@ import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { dniAEmail } from "@/lib/auth";
+import { crearEstructuraIndividual, destinoInicio } from "@/lib/plataforma/alta-individual";
+import { buscarGimnasioReal } from "@/lib/plataforma/gimnasio-publico";
 
 export type LoginState = { error?: string; slug?: string; nombre?: string };
 
@@ -32,13 +34,7 @@ export async function login(
   // Google, y su `nombre` es el nombre real de la persona — sin este filtro
   // aparecían como si fueran un gimnasio real en el login por DNI.
   const admin = createAdminClient();
-  const { data: gym } = await admin
-    .from("gimnasios")
-    .select("slug, nombre, estado")
-    .eq("tipo_cuenta", "gym")
-    .or(`slug.eq.${gimnasio},nombre.ilike.${gimnasio}`)
-    .limit(1)
-    .maybeSingle();
+  const gym = await buscarGimnasioReal(admin, gimnasio);
 
   if (!gym) return { error: "No encontramos ese gimnasio." };
 
@@ -143,14 +139,31 @@ export async function loginIndividual(
   // tipo_cuenta = "individual" (nunca gimnasios reales, para no repetir el
   // bug de "Gimnasio: nombre de una persona" en el login por DNI).
   if (!userId) {
-    const { data: individualMatch } = await admin
+    // El teléfono se guarda solo con dígitos y "+" (ver ajustes/actions.ts):
+    // se normaliza igual para que "11 2345-6789" encuentre "1123456789".
+    // Los valores van entre comillas dobles para que una coma o un paréntesis
+    // en el nombre no rompa el filtro .or(); en el nombre se escapan los
+    // comodines de ilike para que "%" no matchee a cualquiera.
+    const telefono = identificador.replace(/[^\d+]/g, "");
+    const comillas = (v: string) => `"${v.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+    const nombreLiteral = identificador.replace(/[\\%_]/g, (m) => `\\${m}`);
+    const filtros = [`nombre.ilike.${comillas(nombreLiteral)}`];
+    if (telefono.replace("+", "").length >= 6) {
+      filtros.unshift(`telefono.eq.${comillas(telefono)}`);
+    }
+    const { data: coincidencias } = await admin
       .from("profiles")
       .select(
         "id, nombre, telefono, email_recuperacion, gimnasios:gimnasio_id!inner(tipo_cuenta)",
       )
       .eq("gimnasios.tipo_cuenta", "individual")
-      .or(`telefono.eq.${identificador},nombre.ilike.${identificador}`)
-      .maybeSingle();
+      .or(filtros.join(","))
+      .limit(2);
+    // Con dos personas del mismo nombre no se adivina: que entren por email.
+    const individualMatch = coincidencias?.length === 1 ? coincidencias[0] : null;
+    if (coincidencias && coincidencias.length > 1) {
+      return { error: "Hay más de una cuenta con ese nombre. Entrá con tu email o teléfono." };
+    }
 
     if (individualMatch?.email_recuperacion) {
       const { data: authIndividual } = await supabase.auth.signInWithPassword({
@@ -237,7 +250,7 @@ export async function loginIndividual(
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("rol, debe_cambiar_clave, activo")
+    .select("rol, debe_cambiar_clave, activo, gimnasios:gimnasio_id(tipo_cuenta)")
     .eq("id", userId)
     .single();
 
@@ -250,7 +263,11 @@ export async function loginIndividual(
     redirect("/bienvenida");
   }
 
-  redirect(profile?.rol === "dueno" || profile?.rol === "staff" ? "/panel" : "/mi");
+  const gymPerfil = profile?.gimnasios as unknown;
+  const tipoCuentaPerfil = (Array.isArray(gymPerfil) ? gymPerfil[0] : gymPerfil) as
+    | { tipo_cuenta?: string }
+    | null;
+  redirect(destinoInicio(profile?.rol, tipoCuentaPerfil?.tipo_cuenta));
 }
 
 
@@ -307,9 +324,7 @@ export async function asegurarPerfilGoogleAction(): Promise<{
 
     const destino = profile.debe_cambiar_clave
       ? "/bienvenida"
-      : profile.rol === "dueno" || profile.rol === "staff"
-        ? "/panel"
-        : "/mi";
+      : destinoInicio(profile.rol, gym?.tipo_cuenta);
 
     return { destino };
   }
@@ -322,44 +337,18 @@ export async function asegurarPerfilGoogleAction(): Promise<{
     userEmail.split("@")[0] ||
     "Mi Cuenta";
   const nombre = String(rawNombre).trim();
-  const slug = `user-${user.id.substring(0, 8)}`;
 
-  const { data: gymData, error: gymErr } = await admin
-    .from("gimnasios")
-    .insert({
-      nombre,
-      slug,
-      estado: "prueba",
-      tipo_cuenta: "individual",
-    })
-    .select("id")
-    .single();
-
-  if (!gymErr && gymData) {
-    const dni = `DNI-${user.id.substring(0, 8)}`;
-
-    await admin.from("profiles").insert({
-      id: user.id,
-      gimnasio_id: gymData.id,
-      rol: "dueno",
-      dni,
-      nombre,
-      debe_cambiar_clave: false,
-      email_recuperacion: userEmail || null,
-    });
-
-    await admin.from("clientes").insert({
-      gimnasio_id: gymData.id,
-      profile_id: user.id,
-      estado_cuota: "al_dia",
-      email: userEmail || null,
-    });
-
-    // Cuenta individual: NO se escribe la cookie gym_ultimo. Esa cookie es para
-    // socios que entran por DNI a un gimnasio real; una cuenta personal no debe
-    // aparecer como "gimnasio" en la pantalla de login.
-    return { destino: "/panel" };
+  const alta = await crearEstructuraIndividual(admin, {
+    uid: user.id,
+    nombre,
+    email: userEmail || null,
+    tipo: "individual",
+  });
+  if (alta.error) {
+    await supabase.auth.signOut();
+    return { error: alta.error };
   }
 
+  // Cuenta individual: NO se escribe la cookie gym_ultimo (ver auth/callback).
   return { destino: "/panel" };
 }

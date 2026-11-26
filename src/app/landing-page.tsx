@@ -67,7 +67,7 @@ export default function LandingPage() {
             Ingresar
           </Link>
           <Link
-            href="/registro-gimnasio"
+            href="/login?registro=dueno"
             onClick={() => hapticoImpactoSuave()}
             className="px-4 py-2 text-xs sm:text-sm font-bold text-black bg-[#c8ff00] hover:bg-[#b5e600] rounded-[12px] shadow-[0_0_15px_rgba(200,255,0,0.3)] transition-all transform active:scale-95"
           >
@@ -112,7 +112,7 @@ export default function LandingPage() {
         {/* CTA Group */}
         <div className="flex flex-col sm:flex-row items-center gap-4 w-full max-w-md justify-center mb-12">
           <Link
-            href="/registro-gimnasio"
+            href="/login?registro=dueno"
             onClick={() => hapticoImpactoSuave()}
             className="w-full sm:w-auto px-8 py-4 text-base font-bold text-black bg-[#c8ff00] hover:bg-[#b5e600] rounded-[16px] shadow-[0_0_25px_rgba(200,255,0,0.35)] transition-all transform hover:-translate-y-0.5 active:scale-95 flex items-center justify-center gap-2"
           >
