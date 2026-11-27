@@ -61,7 +61,7 @@ export default async function ResumenPage() {
   // Las cuentas personales usan un perfil dueño para su espacio privado,
   // pero su inicio debe resolverse por tipo de cuenta, nunca por el proveedor OAuth.
   if (gym.tipo_cuenta === "individual") {
-    return <InicioIndividual nombre={dueno.nombre} />;
+    return <InicioIndividual profileId={dueno.id} nombre={dueno.nombre} />;
   }
   const adminDb = createAdminClient();
 

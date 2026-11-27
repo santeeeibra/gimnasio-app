@@ -13,9 +13,11 @@
 export function RachaConstancia({
   dias,
   total,
+  unidad = ["visita", "visitas"],
 }: {
   dias: boolean[];
   total: number;
+  unidad?: [string, string];
 }) {
   return (
     <div className="card-cut border border-rule bg-paper-2 p-4">
@@ -30,7 +32,7 @@ export function RachaConstancia({
           >
             {total}
           </span>{" "}
-          {total === 1 ? "visita" : "visitas"} · 30 días
+          {total === 1 ? unidad[0] : unidad[1]} · 30 días
         </p>
       </div>
       <div className="mt-2.5 flex h-9 items-end gap-1" aria-hidden>

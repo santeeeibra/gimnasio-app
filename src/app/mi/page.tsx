@@ -52,7 +52,7 @@ export default async function MiPage() {
   ]);
 
   if (gym?.tipo_cuenta === "individual") {
-    return <InicioIndividual nombre={profile.nombre} />;
+    return <InicioIndividual profileId={profile.id} nombre={profile.nombre} />;
   }
 
   const estadoGimnasio = gym?.estado ?? "prueba";
