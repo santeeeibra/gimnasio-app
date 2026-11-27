@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/cuotas",
       "schedule": "0 12 * * *"
+    },
+    {
+      "path": "/api/cron/mantener-activo",
+      "schedule": "17 9 * * *"
     }
   ]
 }
